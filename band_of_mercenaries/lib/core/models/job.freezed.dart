@@ -1,0 +1,432 @@
+// coverage:ignore-file
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
+
+part of 'job.dart';
+
+// **************************************************************************
+// FreezedGenerator
+// **************************************************************************
+
+T _$identity<T>(T value) => value;
+
+final _privateConstructorUsedError = UnsupportedError(
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+
+Job _$JobFromJson(Map<String, dynamic> json) {
+  return _Job.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Job {
+  @JsonKey(name: 'ID')
+  String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'Tier')
+  int get tier => throw _privateConstructorUsedError;
+  @JsonKey(name: 'Name')
+  String get name => throw _privateConstructorUsedError;
+  @JsonKey(name: 'BaseAtk')
+  int get baseAtk => throw _privateConstructorUsedError;
+  @JsonKey(name: 'BaseDef')
+  int get baseDef => throw _privateConstructorUsedError;
+  @JsonKey(name: 'BaseHp')
+  int get baseHp => throw _privateConstructorUsedError;
+  @JsonKey(name: 'Speed')
+  double get speed => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $JobCopyWith<Job> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $JobCopyWith<$Res> {
+  factory $JobCopyWith(Job value, $Res Function(Job) then) =
+      _$JobCopyWithImpl<$Res, Job>;
+  @useResult
+  $Res call(
+      {@JsonKey(name: 'ID') String id,
+      @JsonKey(name: 'Tier') int tier,
+      @JsonKey(name: 'Name') String name,
+      @JsonKey(name: 'BaseAtk') int baseAtk,
+      @JsonKey(name: 'BaseDef') int baseDef,
+      @JsonKey(name: 'BaseHp') int baseHp,
+      @JsonKey(name: 'Speed') double speed});
+}
+
+/// @nodoc
+class _$JobCopyWithImpl<$Res, $Val extends Job> implements $JobCopyWith<$Res> {
+  _$JobCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? tier = null,
+    Object? name = null,
+    Object? baseAtk = null,
+    Object? baseDef = null,
+    Object? baseHp = null,
+    Object? speed = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      tier: null == tier
+          ? _value.tier
+          : tier // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      baseAtk: null == baseAtk
+          ? _value.baseAtk
+          : baseAtk // ignore: cast_nullable_to_non_nullable
+              as int,
+      baseDef: null == baseDef
+          ? _value.baseDef
+          : baseDef // ignore: cast_nullable_to_non_nullable
+              as int,
+      baseHp: null == baseHp
+          ? _value.baseHp
+          : baseHp // ignore: cast_nullable_to_non_nullable
+              as int,
+      speed: null == speed
+          ? _value.speed
+          : speed // ignore: cast_nullable_to_non_nullable
+              as double,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$JobImplCopyWith<$Res> implements $JobCopyWith<$Res> {
+  factory _$$JobImplCopyWith(_$JobImpl value, $Res Function(_$JobImpl) then) =
+      __$$JobImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(name: 'ID') String id,
+      @JsonKey(name: 'Tier') int tier,
+      @JsonKey(name: 'Name') String name,
+      @JsonKey(name: 'BaseAtk') int baseAtk,
+      @JsonKey(name: 'BaseDef') int baseDef,
+      @JsonKey(name: 'BaseHp') int baseHp,
+      @JsonKey(name: 'Speed') double speed});
+}
+
+/// @nodoc
+class __$$JobImplCopyWithImpl<$Res> extends _$JobCopyWithImpl<$Res, _$JobImpl>
+    implements _$$JobImplCopyWith<$Res> {
+  __$$JobImplCopyWithImpl(_$JobImpl _value, $Res Function(_$JobImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? tier = null,
+    Object? name = null,
+    Object? baseAtk = null,
+    Object? baseDef = null,
+    Object? baseHp = null,
+    Object? speed = null,
+  }) {
+    return _then(_$JobImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      tier: null == tier
+          ? _value.tier
+          : tier // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      baseAtk: null == baseAtk
+          ? _value.baseAtk
+          : baseAtk // ignore: cast_nullable_to_non_nullable
+              as int,
+      baseDef: null == baseDef
+          ? _value.baseDef
+          : baseDef // ignore: cast_nullable_to_non_nullable
+              as int,
+      baseHp: null == baseHp
+          ? _value.baseHp
+          : baseHp // ignore: cast_nullable_to_non_nullable
+              as int,
+      speed: null == speed
+          ? _value.speed
+          : speed // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$JobImpl implements _Job {
+  const _$JobImpl(
+      {@JsonKey(name: 'ID') required this.id,
+      @JsonKey(name: 'Tier') required this.tier,
+      @JsonKey(name: 'Name') required this.name,
+      @JsonKey(name: 'BaseAtk') required this.baseAtk,
+      @JsonKey(name: 'BaseDef') required this.baseDef,
+      @JsonKey(name: 'BaseHp') required this.baseHp,
+      @JsonKey(name: 'Speed') required this.speed});
+
+  factory _$JobImpl.fromJson(Map<String, dynamic> json) =>
+      _$$JobImplFromJson(json);
+
+  @override
+  @JsonKey(name: 'ID')
+  final String id;
+  @override
+  @JsonKey(name: 'Tier')
+  final int tier;
+  @override
+  @JsonKey(name: 'Name')
+  final String name;
+  @override
+  @JsonKey(name: 'BaseAtk')
+  final int baseAtk;
+  @override
+  @JsonKey(name: 'BaseDef')
+  final int baseDef;
+  @override
+  @JsonKey(name: 'BaseHp')
+  final int baseHp;
+  @override
+  @JsonKey(name: 'Speed')
+  final double speed;
+
+  @override
+  String toString() {
+    return 'Job(id: $id, tier: $tier, name: $name, baseAtk: $baseAtk, baseDef: $baseDef, baseHp: $baseHp, speed: $speed)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$JobImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.tier, tier) || other.tier == tier) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.baseAtk, baseAtk) || other.baseAtk == baseAtk) &&
+            (identical(other.baseDef, baseDef) || other.baseDef == baseDef) &&
+            (identical(other.baseHp, baseHp) || other.baseHp == baseHp) &&
+            (identical(other.speed, speed) || other.speed == speed));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, id, tier, name, baseAtk, baseDef, baseHp, speed);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$JobImplCopyWith<_$JobImpl> get copyWith =>
+      __$$JobImplCopyWithImpl<_$JobImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$JobImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Job implements Job {
+  const factory _Job(
+      {@JsonKey(name: 'ID') required final String id,
+      @JsonKey(name: 'Tier') required final int tier,
+      @JsonKey(name: 'Name') required final String name,
+      @JsonKey(name: 'BaseAtk') required final int baseAtk,
+      @JsonKey(name: 'BaseDef') required final int baseDef,
+      @JsonKey(name: 'BaseHp') required final int baseHp,
+      @JsonKey(name: 'Speed') required final double speed}) = _$JobImpl;
+
+  factory _Job.fromJson(Map<String, dynamic> json) = _$JobImpl.fromJson;
+
+  @override
+  @JsonKey(name: 'ID')
+  String get id;
+  @override
+  @JsonKey(name: 'Tier')
+  int get tier;
+  @override
+  @JsonKey(name: 'Name')
+  String get name;
+  @override
+  @JsonKey(name: 'BaseAtk')
+  int get baseAtk;
+  @override
+  @JsonKey(name: 'BaseDef')
+  int get baseDef;
+  @override
+  @JsonKey(name: 'BaseHp')
+  int get baseHp;
+  @override
+  @JsonKey(name: 'Speed')
+  double get speed;
+  @override
+  @JsonKey(ignore: true)
+  _$$JobImplCopyWith<_$JobImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+JobList _$JobListFromJson(Map<String, dynamic> json) {
+  return _JobList.fromJson(json);
+}
+
+/// @nodoc
+mixin _$JobList {
+  @JsonKey(name: 'Jobs')
+  List<Job> get items => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $JobListCopyWith<JobList> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $JobListCopyWith<$Res> {
+  factory $JobListCopyWith(JobList value, $Res Function(JobList) then) =
+      _$JobListCopyWithImpl<$Res, JobList>;
+  @useResult
+  $Res call({@JsonKey(name: 'Jobs') List<Job> items});
+}
+
+/// @nodoc
+class _$JobListCopyWithImpl<$Res, $Val extends JobList>
+    implements $JobListCopyWith<$Res> {
+  _$JobListCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? items = null,
+  }) {
+    return _then(_value.copyWith(
+      items: null == items
+          ? _value.items
+          : items // ignore: cast_nullable_to_non_nullable
+              as List<Job>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$JobListImplCopyWith<$Res> implements $JobListCopyWith<$Res> {
+  factory _$$JobListImplCopyWith(
+          _$JobListImpl value, $Res Function(_$JobListImpl) then) =
+      __$$JobListImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({@JsonKey(name: 'Jobs') List<Job> items});
+}
+
+/// @nodoc
+class __$$JobListImplCopyWithImpl<$Res>
+    extends _$JobListCopyWithImpl<$Res, _$JobListImpl>
+    implements _$$JobListImplCopyWith<$Res> {
+  __$$JobListImplCopyWithImpl(
+      _$JobListImpl _value, $Res Function(_$JobListImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? items = null,
+  }) {
+    return _then(_$JobListImpl(
+      items: null == items
+          ? _value._items
+          : items // ignore: cast_nullable_to_non_nullable
+              as List<Job>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$JobListImpl implements _JobList {
+  const _$JobListImpl({@JsonKey(name: 'Jobs') required final List<Job> items})
+      : _items = items;
+
+  factory _$JobListImpl.fromJson(Map<String, dynamic> json) =>
+      _$$JobListImplFromJson(json);
+
+  final List<Job> _items;
+  @override
+  @JsonKey(name: 'Jobs')
+  List<Job> get items {
+    if (_items is EqualUnmodifiableListView) return _items;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_items);
+  }
+
+  @override
+  String toString() {
+    return 'JobList(items: $items)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$JobListImpl &&
+            const DeepCollectionEquality().equals(other._items, _items));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(_items));
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$JobListImplCopyWith<_$JobListImpl> get copyWith =>
+      __$$JobListImplCopyWithImpl<_$JobListImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$JobListImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _JobList implements JobList {
+  const factory _JobList(
+      {@JsonKey(name: 'Jobs') required final List<Job> items}) = _$JobListImpl;
+
+  factory _JobList.fromJson(Map<String, dynamic> json) = _$JobListImpl.fromJson;
+
+  @override
+  @JsonKey(name: 'Jobs')
+  List<Job> get items;
+  @override
+  @JsonKey(ignore: true)
+  _$$JobListImplCopyWith<_$JobListImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
