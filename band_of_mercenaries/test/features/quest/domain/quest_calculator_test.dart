@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 
 void main() {
@@ -108,6 +109,24 @@ void main() {
         final duration = QuestCalculator.calculateDispatchDuration(baseDuration: 60, difficulty: 1, speedMultiplier: 10.0);
         expect(duration.inSeconds, 6);
       });
+    });
+
+    group('calculateTotalWage', () {
+      final wages = [
+        const MercenaryWage(tier: 1, wage: 10),
+        const MercenaryWage(tier: 2, wage: 25),
+        const MercenaryWage(tier: 3, wage: 50),
+        const MercenaryWage(tier: 4, wage: 100),
+        const MercenaryWage(tier: 5, wage: 200),
+      ];
+      test('single tier 1 costs 10G', () => expect(QuestCalculator.calculateTotalWage([1], wages), 10));
+      test('mixed party', () => expect(QuestCalculator.calculateTotalWage([1, 3, 5], wages), 260));
+      test('empty party', () => expect(QuestCalculator.calculateTotalWage([], wages), 0));
+    });
+
+    group('calculateNetProfit', () {
+      test('positive profit', () => expect(QuestCalculator.calculateNetProfit(totalReward: 300, totalWage: 100, dispatchCost: 50), 150));
+      test('negative profit', () => expect(QuestCalculator.calculateNetProfit(totalReward: 100, totalWage: 150, dispatchCost: 50), -100));
     });
   });
 }

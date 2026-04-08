@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 
 enum QuestResultType { greatSuccess, success, failure, criticalFailure }
 
@@ -57,5 +58,18 @@ class QuestCalculator {
     final multiplier = 1.0 + (difficulty - 1) * 0.2;
     final seconds = (baseDuration * multiplier / speedMultiplier).round();
     return Duration(seconds: seconds);
+  }
+
+  static int calculateTotalWage(List<int> mercTiers, List<MercenaryWage> wages) {
+    int total = 0;
+    for (final tier in mercTiers) {
+      final wage = wages.firstWhere((w) => w.tier == tier, orElse: () => const MercenaryWage(tier: 1, wage: 10));
+      total += wage.wage;
+    }
+    return total;
+  }
+
+  static int calculateNetProfit({required int totalReward, required int totalWage, required int dispatchCost}) {
+    return totalReward - totalWage - dispatchCost;
   }
 }
