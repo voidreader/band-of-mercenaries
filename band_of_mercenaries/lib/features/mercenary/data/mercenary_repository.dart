@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
+import 'package:band_of_mercenaries/features/quest/domain/experience_service.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
@@ -53,5 +54,13 @@ class MercenaryRepository {
   Future<void> removeDead(String mercId) async {
     final index = _box.values.toList().indexWhere((m) => m.id == mercId);
     if (index >= 0) await _box.deleteAt(index);
+  }
+
+  Future<void> addXpAndCheckLevel(String mercId, int xpGain) async {
+    final merc = _box.values.firstWhere((m) => m.id == mercId);
+    merc.xp += xpGain;
+    final newLevel = ExperienceService.checkLevelUp(currentLevel: merc.level, currentXp: merc.xp);
+    merc.level = newLevel;
+    await merc.save();
   }
 }
