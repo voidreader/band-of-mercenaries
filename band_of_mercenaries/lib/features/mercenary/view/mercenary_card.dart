@@ -3,6 +3,7 @@ import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/experience_service.dart';
 import 'package:band_of_mercenaries/shared/widgets/status_badge.dart';
 
 class MercenaryCard extends StatelessWidget {
@@ -17,11 +18,22 @@ class MercenaryCard extends StatelessWidget {
     required this.trait,
   });
 
+  static const List<int> _levelThresholds = [0, 100, 350, 850, 1850];
+
+  double _xpProgress(int level, int xp) {
+    if (level >= ExperienceService.maxLevel) return 1.0;
+    final current = _levelThresholds[level - 1];
+    final next = _levelThresholds[level];
+    if (next <= current) return 1.0;
+    return ((xp - current) / (next - current)).clamp(0.0, 1.0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tierColor = AppTheme.tierColor(job.tier);
     final tierBg = AppTheme.tierBgColor(job.tier);
     final traitColor = AppTheme.traitColors[trait.id] ?? AppTheme.textHint;
+    final isMaxLevel = mercenary.level >= ExperienceService.maxLevel;
 
     String? timerText;
     if (mercenary.status == MercenaryStatus.injured && mercenary.injuryEndTime != null) {
@@ -53,6 +65,23 @@ class MercenaryCard extends StatelessWidget {
                 children: [
                   Text(mercenary.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   const SizedBox(width: 6),
+                  // Level badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade100,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: Text(
+                      'Lv.${mercenary.level}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.amber.shade800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   Text(job.name, style: TextStyle(fontSize: 13, color: tierColor, fontWeight: FontWeight.w600)),
                   const SizedBox(width: 4),
                   Container(
@@ -79,6 +108,19 @@ class MercenaryCard extends StatelessWidget {
                 StatusBadge(status: mercenary.status, timerText: timerText),
             ],
           ),
+          // XP progress bar (hidden at max level)
+          if (!isMaxLevel) ...[
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: _xpProgress(mercenary.level, mercenary.xp),
+                minHeight: 4,
+                backgroundColor: Colors.amber.shade50,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.amber.shade600),
+              ),
+            ),
+          ],
           const SizedBox(height: 6),
           Text(
             'ATK ${mercenary.atk} · DEF ${mercenary.def} · HP ${mercenary.hp} · ',

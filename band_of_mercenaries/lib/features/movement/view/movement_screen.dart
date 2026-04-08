@@ -6,6 +6,7 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_provider.dart';
+import 'package:band_of_mercenaries/features/home/domain/reputation_service.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
@@ -53,6 +54,14 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
         );
         final speedMult = ref.watch(speedMultiplierProvider);
         final moveTime = UserData.calculateMoveTime(distance, speedMultiplier: speedMult);
+        final isTargetAccessible = ReputationService.isRegionAccessible(
+          targetRegion.regionTier, userData.reputation, data.ranks,
+        );
+        // Find the rank required to access this tier
+        final requiredRank = data.ranks.firstWhere(
+          (r) => r.unlockTier >= targetRegion.regionTier,
+          orElse: () => data.ranks.last,
+        );
 
         return Column(
           children: [
@@ -133,13 +142,31 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                               ),
                               const SizedBox(width: 14),
                               SizedBox(
-                                width: 110,
+                                width: 130,
                                 child: Column(
                                   children: [
                                     Text('지역 $_selectedRegion',
                                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                                     Text('${targetRegion.regionName} · Tier ${targetRegion.regionTier}',
                                         style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
+                                    if (!isTargetAccessible) ...[
+                                      const SizedBox(height: 4),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.tier5Bg,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          '잠김',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.tier5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -224,10 +251,32 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                         style: const TextStyle(fontSize: 14, color: AppTheme.timerBlue, fontWeight: FontWeight.w600),
                       ),
                     const SizedBox(height: 10),
+                    if (!isTargetAccessible)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.tier5Bg,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.tier5.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            '이 지역은 잠겨 있습니다. 필요 등급: ${requiredRank.name}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.tier5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: userData.isMoving || distance == 0
+                        onPressed: userData.isMoving || distance == 0 || !isTargetAccessible
                             ? null
                             : () {
                                 ref.read(movementProvider.notifier)
