@@ -4,8 +4,11 @@ import 'package:band_of_mercenaries/features/quest/data/quest_repository.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
+import 'package:band_of_mercenaries/features/quest/domain/experience_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/features/home/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
@@ -39,26 +42,50 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     final region = staticData.regions.firstWhere((r) => r.region == userData.region);
 
+    // Use intelligence facility bonus for quest count
+    int questCount = 5;
+    final intelligenceLevel = userData.facilities['intelligence'] ?? 0;
+    if (intelligenceLevel > 0) {
+      final intelligenceFacility = staticData.facilities.firstWhere(
+        (f) => f.id == 'intelligence',
+        orElse: () => staticData.facilities.first,
+      );
+      questCount += FacilityService.getExtraQuestCount(intelligenceFacility, intelligenceLevel);
+    }
+
     await _repo.clearPending();
     final quests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
       questPools: staticData.questPools,
       questTypes: staticData.questTypes,
-      count: 5,
+      count: questCount,
       random: Random(),
     );
     await _repo.addQuests(quests);
     _load();
   }
 
-  Future<void> dispatch(String questId, List<String> mercIds) async {
+  Future<bool> dispatch(String questId, List<String> mercIds) async {
     final staticData = ref.read(staticDataProvider).value;
     final speedMult = ref.read(speedMultiplierProvider);
-    if (staticData == null) return;
+    if (staticData == null) return false;
 
     final quest = state.firstWhere((q) => q.id == questId);
     final questType = staticData.questTypes.firstWhere((t) => t.id == quest.questTypeId);
+
+    // Check dispatch cost
+    final difficulty = staticData.difficulties.firstWhere(
+      (d) => d.level == quest.difficulty.clamp(1, 5),
+      orElse: () => staticData.difficulties.first,
+    );
+    final userData = ref.read(userDataProvider);
+    if (userData == null || userData.gold < difficulty.dispatchCost) {
+      return false;
+    }
+
+    // Deduct dispatch cost
+    await ref.read(userDataProvider.notifier).spendGold(difficulty.dispatchCost);
 
     final duration = QuestCalculator.calculateDispatchDuration(
       baseDuration: questType.baseDuration,
@@ -75,6 +102,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     }
     mercNotifier.refresh();
     _load();
+    return true;
   }
 
   void _checkCompletions() {
@@ -128,19 +156,44 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     await _repo.completeQuest(quest.id, questResult);
 
-    // Process rewards
+    // Process rewards with wage deduction
     if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {
-      final reward = QuestCalculator.calculateReward(
+      final grossReward = QuestCalculator.calculateReward(
         baseReward: questType.baseReward,
         rewardMultiplier: difficulty.rewardMultiplier,
         isGreatSuccess: resultType == QuestResultType.greatSuccess,
       );
-      await ref.read(userDataProvider.notifier).addGold(reward);
+
+      // Get merc tiers for wage calculation
+      final mercTiers = mercs.map((merc) {
+        final job = staticData.jobs.firstWhere(
+          (j) => j.id == merc.jobId,
+          orElse: () => staticData.jobs.first,
+        );
+        return job.tier;
+      }).toList();
+
+      final totalWage = QuestCalculator.calculateTotalWage(mercTiers, staticData.mercenaryWages);
+      final netReward = (grossReward - totalWage).clamp(0, grossReward);
+      await ref.read(userDataProvider.notifier).addGold(netReward);
     }
 
     // Process damage
     final mercRepo = ref.read(mercenaryRepositoryProvider);
     final speedMult = ref.read(speedMultiplierProvider);
+
+    // Get infirmary bonus for recovery time reduction
+    double recoveryReduction = 0.0;
+    if (userData != null) {
+      final infirmaryLevel = userData.facilities['infirmary'] ?? 0;
+      if (infirmaryLevel > 0) {
+        final infirmaryFacility = staticData.facilities.firstWhere(
+          (f) => f.id == 'infirmary',
+          orElse: () => staticData.facilities.first,
+        );
+        recoveryReduction = FacilityService.getEffectValue(infirmaryFacility, infirmaryLevel);
+      }
+    }
 
     for (final merc in mercs) {
       await mercRepo.setDispatched(merc.id, false);
@@ -157,8 +210,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         if (damageResult == DamageResult.dead) {
           await mercRepo.updateStatus(merc.id, MercenaryStatus.dead);
         } else if (damageResult == DamageResult.injured) {
-          final recoverySeconds = (difficulty.level * 10 * 60 / speedMult).round();
-          final recoveryTime = DateTime.now().add(Duration(seconds: recoverySeconds));
+          final baseRecoverySeconds = (difficulty.level * 10 * 60 / speedMult).round();
+          final adjustedRecoverySeconds = (baseRecoverySeconds * (1.0 - recoveryReduction)).round();
+          final recoveryTime = DateTime.now().add(Duration(seconds: adjustedRecoverySeconds));
           await mercRepo.updateStatus(merc.id, MercenaryStatus.injured, endTime: recoveryTime);
         }
       } else {
@@ -167,6 +221,48 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         final tiredEnd = DateTime.now().add(Duration(seconds: tiredSeconds));
         await mercRepo.updateStatus(merc.id, MercenaryStatus.tired, endTime: tiredEnd);
       }
+    }
+
+    // Task 13: XP distribution
+    final resultName = switch (resultType) {
+      QuestResultType.greatSuccess => 'greatSuccess',
+      QuestResultType.success => 'success',
+      QuestResultType.failure => 'failure',
+      QuestResultType.criticalFailure => 'criticalFailure',
+    };
+    final xpMultiplier = ExperienceService.resultMultiplier(resultName);
+
+    double trainingBonus = 0.0;
+    if (userData != null) {
+      final trainingLevel = userData.facilities['training'] ?? 0;
+      if (trainingLevel > 0) {
+        final trainingFacility = staticData.facilities.firstWhere(
+          (f) => f.id == 'training',
+          orElse: () => staticData.facilities.first,
+        );
+        trainingBonus = FacilityService.getEffectValue(trainingFacility, trainingLevel);
+      }
+    }
+
+    final xpGain = ExperienceService.calculateXpGain(
+      difficulty: quest.difficulty.clamp(1, 5),
+      resultMultiplier: xpMultiplier,
+      facilityBonus: trainingBonus,
+    );
+
+    for (final merc in mercs) {
+      if (merc.status != MercenaryStatus.dead) {
+        await mercRepo.addXpAndCheckLevel(merc.id, xpGain);
+      }
+    }
+
+    // Task 13: Reputation gain on success/great success
+    if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {
+      final repGain = ReputationService.calculateQuestReputation(
+        difficulty: quest.difficulty.clamp(1, 5),
+        isGreatSuccess: resultType == QuestResultType.greatSuccess,
+      );
+      await ref.read(userDataProvider.notifier).addReputation(repGain);
     }
 
     ref.read(mercenaryListProvider.notifier).refresh();
