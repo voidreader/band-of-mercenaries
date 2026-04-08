@@ -82,4 +82,13 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     await state!.save();
     state = state;
   }
+
+  Future<bool> upgradeFacility(String facilityId, int cost) async {
+    if (state == null || state!.gold < cost) return false;
+    state!.gold -= cost;
+    state!.facilities[facilityId] = (state!.facilities[facilityId] ?? 0) + 1;
+    await state!.save();
+    state = state;
+    return true;
+  }
 }
