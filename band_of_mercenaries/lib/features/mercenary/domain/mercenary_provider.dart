@@ -3,6 +3,7 @@ import 'package:band_of_mercenaries/features/mercenary/data/mercenary_repository
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
+import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 
 final mercenaryRepositoryProvider = Provider((ref) => MercenaryRepository());
 
@@ -18,6 +19,10 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     _repo = ref.read(mercenaryRepositoryProvider);
     _load();
     ref.listen(gameTickProvider, (prev, next) => _checkTimers());
+    // 첫 실행 시 initializeNewGame() 완료 후 용병 목록 다시 로드
+    ref.listen(userDataProvider, (prev, next) {
+      if (prev == null && next != null) _load();
+    });
   }
 
   void _load() {

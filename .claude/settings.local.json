@@ -46,7 +46,12 @@
       "Bash(/Users/radiogaga/Documents/flutter/bin/dart run:*)",
       "Bash(/Users/radiogaga/Documents/flutter/bin/dart:*)",
       "Bash(/Users/radiogaga/Documents/flutter/bin/flutter analyze:*)",
-      "Bash(/Users/radiogaga/Documents/flutter/bin/flutter test:*)"
+      "Bash(/Users/radiogaga/Documents/flutter/bin/flutter test:*)",
+      "Bash(flutter pub:*)",
+      "Bash(dart run:*)",
+      "Bash(flutter devices:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter analyze:*)"
     ]
   }
 }
