@@ -34,6 +34,12 @@ class UserData extends HiveObject {
   @HiveField(9)
   final DateTime createdAt;
 
+  @HiveField(10)
+  int reputation;
+
+  @HiveField(11)
+  Map<String, int> facilities;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -45,7 +51,9 @@ class UserData extends HiveObject {
     this.moveEndTime,
     required this.lastFreeRecruit,
     required this.createdAt,
-  });
+    this.reputation = 0,
+    Map<String, int>? facilities,
+  }) : facilities = facilities ?? {};
 
   static int calculateDistance(
       int fromRegion, int fromSector, int toRegion, int toSector) {
