@@ -8,6 +8,10 @@ import 'package:band_of_mercenaries/core/models/region.dart';
 import 'package:band_of_mercenaries/core/models/quest_type.dart';
 import 'package:band_of_mercenaries/core/models/quest_pool.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
+import 'package:band_of_mercenaries/core/models/travel_event.dart';
+import 'package:band_of_mercenaries/core/models/facility.dart';
+import 'package:band_of_mercenaries/core/models/rank.dart';
+import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -17,6 +21,10 @@ class StaticGameData {
   final List<QuestType> questTypes;
   final List<QuestPool> questPools;
   final List<PersonName> personNames;
+  final List<TravelEvent> travelEvents;
+  final List<Facility> facilities;
+  final List<Rank> ranks;
+  final List<MercenaryWage> mercenaryWages;
 
   const StaticGameData({
     required this.difficulties,
@@ -26,6 +34,10 @@ class StaticGameData {
     required this.questTypes,
     required this.questPools,
     required this.personNames,
+    required this.travelEvents,
+    required this.facilities,
+    required this.ranks,
+    required this.mercenaryWages,
   });
 }
 
@@ -38,6 +50,10 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     rootBundle.loadString('assets/json/QuestType.json'),
     rootBundle.loadString('assets/json/QuestPool.json'),
     rootBundle.loadString('assets/json/PersonName.json'),
+    rootBundle.loadString('assets/json/TravelEvent.json'),
+    rootBundle.loadString('assets/json/Facility.json'),
+    rootBundle.loadString('assets/json/Rank.json'),
+    rootBundle.loadString('assets/json/MercenaryWage.json'),
   ]);
 
   return StaticGameData(
@@ -48,5 +64,9 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     questTypes: JsonLoader.parseQuestTypes(results[4]),
     questPools: JsonLoader.parseQuestPools(results[5]),
     personNames: JsonLoader.parsePersonNames(results[6]),
+    travelEvents: JsonLoader.parseTravelEvents(results[7]),
+    facilities: JsonLoader.parseFacilities(results[8]),
+    ranks: JsonLoader.parseRanks(results[9]),
+    mercenaryWages: JsonLoader.parseMercenaryWages(results[10]),
   );
 });

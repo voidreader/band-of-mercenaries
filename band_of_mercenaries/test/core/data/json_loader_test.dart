@@ -59,5 +59,41 @@ void main() {
       expect(result.length, 2);
       expect(result[0].korean, '에이드리안');
     });
+
+    test('parseTravelEvents parses JSON correctly', () {
+      const jsonString = '{"TravelEvents": [{"ID": "te_find_gold_s", "Name": "금화 주머니 발견", "Type": "discovery", "EffectType": "gold", "Magnitude": 20.0, "MinTier": 1, "MaxTier": 2, "Description": "길가에 금화 주머니를 발견했다."}]}';
+      final result = JsonLoader.parseTravelEvents(jsonString);
+      expect(result.length, 1);
+      expect(result[0].id, 'te_find_gold_s');
+      expect(result[0].effectType, 'gold');
+      expect(result[0].magnitude, 20.0);
+    });
+
+    test('parseFacilities parses JSON correctly', () {
+      const jsonString = '{"Facilities": [{"ID": "training", "Name": "훈련소", "EffectType": "xp_bonus", "MaxLevel": 5, "Costs": [500, 1000, 2000, 4000, 8000], "Values": [0.1, 0.2, 0.3, 0.4, 0.5]}]}';
+      final result = JsonLoader.parseFacilities(jsonString);
+      expect(result.length, 1);
+      expect(result[0].id, 'training');
+      expect(result[0].maxLevel, 5);
+      expect(result[0].costs.length, 5);
+    });
+
+    test('parseRanks parses JSON correctly', () {
+      const jsonString = '{"Ranks": [{"Grade": "F", "Name": "무명", "RequiredReputation": 0, "UnlockTier": 1}]}';
+      final result = JsonLoader.parseRanks(jsonString);
+      expect(result.length, 1);
+      expect(result[0].grade, 'F');
+      expect(result[0].requiredReputation, 0);
+      expect(result[0].unlockTier, 1);
+    });
+
+    test('parseMercenaryWages parses JSON correctly', () {
+      const jsonString = '{"MercenaryWages": [{"Tier": 1, "Wage": 10}, {"Tier": 2, "Wage": 25}]}';
+      final result = JsonLoader.parseMercenaryWages(jsonString);
+      expect(result.length, 2);
+      expect(result[0].tier, 1);
+      expect(result[0].wage, 10);
+      expect(result[1].tier, 2);
+    });
   });
 }
