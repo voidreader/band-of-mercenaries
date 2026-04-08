@@ -75,4 +75,11 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     await state!.save();
     state = state;
   }
+
+  Future<void> addReputation(int amount) async {
+    if (state == null) return;
+    state!.reputation += amount;
+    await state!.save();
+    state = state;
+  }
 }
