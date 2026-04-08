@@ -35,4 +35,26 @@ void main() {
       expect(merc.isAvailable, true);
     });
   });
+
+  group('level stat bonuses', () {
+    test('level 1 has no bonus (100 atk stays 100)', () {
+      final merc = Mercenary(id: 'test', name: 'Test', jobId: 'farmer', traitId: 'strong', atk: 100, def: 100, hp: 100, speed: 1.0, level: 1);
+      expect(merc.effectiveAtk, 100);
+    });
+
+    test('level 3 gets +20% bonus (100 atk becomes 120)', () {
+      final merc = Mercenary(id: 'test', name: 'Test', jobId: 'farmer', traitId: 'strong', atk: 100, def: 100, hp: 100, speed: 1.0, level: 3);
+      expect(merc.effectiveAtk, 120);
+    });
+
+    test('level 5 gets +40% bonus (100 atk becomes 140)', () {
+      final merc = Mercenary(id: 'test', name: 'Test', jobId: 'farmer', traitId: 'strong', atk: 100, def: 100, hp: 100, speed: 1.0, level: 5);
+      expect(merc.effectiveAtk, 140);
+    });
+
+    test('tired + level 3 stacks multiplicatively (100 * 1.2 * 0.8 = 96)', () {
+      final merc = Mercenary(id: 'test', name: 'Test', jobId: 'farmer', traitId: 'strong', atk: 100, def: 100, hp: 100, speed: 1.0, level: 3, status: MercenaryStatus.tired);
+      expect(merc.effectiveAtk, 96);
+    });
+  });
 }

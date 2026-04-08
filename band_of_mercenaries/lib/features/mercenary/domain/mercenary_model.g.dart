@@ -29,13 +29,15 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       tiredEndTime: fields[9] as DateTime?,
       injuryEndTime: fields[10] as DateTime?,
       isDispatched: fields[11] as bool,
+      xp: fields[12] as int,
+      level: fields[13] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, Mercenary obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -59,7 +61,11 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       ..writeByte(10)
       ..write(obj.injuryEndTime)
       ..writeByte(11)
-      ..write(obj.isDispatched);
+      ..write(obj.isDispatched)
+      ..writeByte(12)
+      ..write(obj.xp)
+      ..writeByte(13)
+      ..write(obj.level);
   }
 
   @override

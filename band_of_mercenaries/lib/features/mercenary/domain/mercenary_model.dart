@@ -52,6 +52,12 @@ class Mercenary extends HiveObject {
   @HiveField(11)
   bool isDispatched;
 
+  @HiveField(12)
+  int xp;
+
+  @HiveField(13)
+  int level;
+
   Mercenary({
     required this.id,
     required this.name,
@@ -65,16 +71,26 @@ class Mercenary extends HiveObject {
     this.tiredEndTime,
     this.injuryEndTime,
     this.isDispatched = false,
+    this.xp = 0,
+    this.level = 1,
   });
 
-  int get effectiveAtk =>
-      status == MercenaryStatus.tired ? (atk * 0.8).round() : atk;
+  double get _levelBonus => (level - 1) * 0.1;
 
-  int get effectiveDef =>
-      status == MercenaryStatus.tired ? (def * 0.8).round() : def;
+  int get effectiveAtk {
+    final withLevel = (atk * (1.0 + _levelBonus)).round();
+    return status == MercenaryStatus.tired ? (withLevel * 0.8).round() : withLevel;
+  }
 
-  int get effectiveHp =>
-      status == MercenaryStatus.tired ? (hp * 0.8).round() : hp;
+  int get effectiveDef {
+    final withLevel = (def * (1.0 + _levelBonus)).round();
+    return status == MercenaryStatus.tired ? (withLevel * 0.8).round() : withLevel;
+  }
+
+  int get effectiveHp {
+    final withLevel = (hp * (1.0 + _levelBonus)).round();
+    return status == MercenaryStatus.tired ? (withLevel * 0.8).round() : withLevel;
+  }
 
   bool get isAvailable =>
       status != MercenaryStatus.dead &&
