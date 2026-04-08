@@ -1,0 +1,8 @@
+{
+  "Facilities": [
+    {"ID": "training", "Name": "훈련소", "EffectType": "xp_bonus", "MaxLevel": 5, "Costs": [500, 1000, 2000, 4000, 8000], "Values": [0.1, 0.2, 0.3, 0.4, 0.5]},
+    {"ID": "infirmary", "Name": "의무실", "EffectType": "recovery_reduction", "MaxLevel": 5, "Costs": [300, 600, 1200, 2400, 4800], "Values": [0.1, 0.2, 0.3, 0.4, 0.5]},
+    {"ID": "barracks", "Name": "주둔지", "EffectType": "max_mercenaries", "MaxLevel": 5, "Costs": [400, 800, 1600, 3200, 6400], "Values": [2.0, 4.0, 6.0, 8.0, 10.0]},
+    {"ID": "intelligence", "Name": "정보망", "EffectType": "quest_count", "MaxLevel": 3, "Costs": [1000, 3000, 9000], "Values": [1.0, 2.0, 3.0]}
+  ]
+}

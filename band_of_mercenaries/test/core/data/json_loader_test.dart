@@ -4,7 +4,7 @@ import 'package:band_of_mercenaries/core/data/json_loader.dart';
 void main() {
   group('JsonLoader', () {
     test('parseDifficulties parses JSON correctly', () {
-      const jsonString = '{"Difficultys": [{"Level": 1, "EnemyPower": 10, "RewardMultiplier": 1.0, "SuccessPenalty": 0.0, "InjuryRate": 0.1, "DeathRate": 0.05}]}';
+      const jsonString = '{"Difficultys": [{"Level": 1, "EnemyPower": 10, "RewardMultiplier": 1.0, "SuccessPenalty": 0.0, "InjuryRate": 0.1, "DeathRate": 0.05, "DispatchCost": 20}]}';
       final result = JsonLoader.parseDifficulties(jsonString);
       expect(result.length, 1);
       expect(result[0].level, 1);

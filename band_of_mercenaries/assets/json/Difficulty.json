@@ -1,44 +1,9 @@
 {
   "Difficultys": [
-    {
-      "Level": 1,
-      "EnemyPower": 10,
-      "RewardMultiplier": 1.0,
-      "SuccessPenalty": 0.0,
-      "InjuryRate": 0.1,
-      "DeathRate": 0.05
-    },
-    {
-      "Level": 2,
-      "EnemyPower": 20,
-      "RewardMultiplier": 1.5,
-      "SuccessPenalty": 0.1,
-      "InjuryRate": 0.2,
-      "DeathRate": 0.1
-    },
-    {
-      "Level": 3,
-      "EnemyPower": 35,
-      "RewardMultiplier": 2.2,
-      "SuccessPenalty": 0.2,
-      "InjuryRate": 0.3,
-      "DeathRate": 0.15
-    },
-    {
-      "Level": 4,
-      "EnemyPower": 55,
-      "RewardMultiplier": 3.2,
-      "SuccessPenalty": 0.3,
-      "InjuryRate": 0.45,
-      "DeathRate": 0.22
-    },
-    {
-      "Level": 5,
-      "EnemyPower": 80,
-      "RewardMultiplier": 4.5,
-      "SuccessPenalty": 0.4,
-      "InjuryRate": 0.6,
-      "DeathRate": 0.3
-    }
+    {"Level": 1, "EnemyPower": 10, "RewardMultiplier": 1.0, "SuccessPenalty": 0.0, "InjuryRate": 0.1, "DeathRate": 0.05, "DispatchCost": 20},
+    {"Level": 2, "EnemyPower": 20, "RewardMultiplier": 1.5, "SuccessPenalty": 0.1, "InjuryRate": 0.2, "DeathRate": 0.1, "DispatchCost": 50},
+    {"Level": 3, "EnemyPower": 35, "RewardMultiplier": 2.2, "SuccessPenalty": 0.2, "InjuryRate": 0.3, "DeathRate": 0.15, "DispatchCost": 100},
+    {"Level": 4, "EnemyPower": 55, "RewardMultiplier": 3.2, "SuccessPenalty": 0.3, "InjuryRate": 0.45, "DeathRate": 0.22, "DispatchCost": 200},
+    {"Level": 5, "EnemyPower": 80, "RewardMultiplier": 4.5, "SuccessPenalty": 0.4, "InjuryRate": 0.6, "DeathRate": 0.3, "DispatchCost": 400}
   ]
 }

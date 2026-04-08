@@ -1,0 +1,10 @@
+{
+  "Ranks": [
+    {"Grade": "F", "Name": "무명", "RequiredReputation": 0, "UnlockTier": 1},
+    {"Grade": "E", "Name": "신출내기", "RequiredReputation": 500, "UnlockTier": 2},
+    {"Grade": "D", "Name": "일반", "RequiredReputation": 2000, "UnlockTier": 3},
+    {"Grade": "C", "Name": "숙련", "RequiredReputation": 8000, "UnlockTier": 4},
+    {"Grade": "B", "Name": "정예", "RequiredReputation": 25000, "UnlockTier": 5},
+    {"Grade": "A", "Name": "전설", "RequiredReputation": 80000, "UnlockTier": 5}
+  ]
+}

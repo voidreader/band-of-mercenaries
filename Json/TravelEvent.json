@@ -1,0 +1,16 @@
+{
+  "TravelEvents": [
+    {"ID": "te_find_gold_s", "Name": "금화 주머니 발견", "Type": "discovery", "EffectType": "gold", "Magnitude": 20.0, "MinTier": 1, "MaxTier": 2, "Description": "길가에 떨어진 작은 금화 주머니를 발견했다."},
+    {"ID": "te_find_gold_m", "Name": "상인의 분실물 발견", "Type": "discovery", "EffectType": "gold", "Magnitude": 50.0, "MinTier": 2, "MaxTier": 4, "Description": "상인이 떨어뜨린 듯한 금화 자루를 발견했다."},
+    {"ID": "te_find_gold_l", "Name": "숨겨진 보물상자", "Type": "discovery", "EffectType": "gold", "Magnitude": 120.0, "MinTier": 4, "MaxTier": 5, "Description": "오래된 나무 밑에서 보물상자를 발견했다."},
+    {"ID": "te_bandit_s", "Name": "산적 습격", "Type": "raid", "EffectType": "gold", "Magnitude": -30.0, "MinTier": 1, "MaxTier": 3, "Description": "이동 중 산적의 습격을 받아 금화를 빼앗겼다."},
+    {"ID": "te_bandit_m", "Name": "도적단 매복", "Type": "raid", "EffectType": "gold", "Magnitude": -60.0, "MinTier": 3, "MaxTier": 5, "Description": "도적단의 매복에 걸려 상당한 금화를 잃었다."},
+    {"ID": "te_bandit_injury", "Name": "야수 습격", "Type": "raid", "EffectType": "injury", "Magnitude": 1.0, "MinTier": 2, "MaxTier": 5, "Description": "이동 중 야수의 습격을 받아 용병 한 명이 부상당했다."},
+    {"ID": "te_storm_s", "Name": "갑작스런 폭우", "Type": "weather", "EffectType": "delay", "Magnitude": 0.2, "MinTier": 1, "MaxTier": 5, "Description": "갑작스런 폭우로 이동이 지연되었다."},
+    {"ID": "te_storm_l", "Name": "거센 눈보라", "Type": "weather", "EffectType": "delay", "Magnitude": 0.5, "MinTier": 3, "MaxTier": 5, "Description": "거센 눈보라로 이동이 크게 지연되었다."},
+    {"ID": "te_merchant", "Name": "떠돌이 상인과 거래", "Type": "luck", "EffectType": "gold", "Magnitude": 40.0, "MinTier": 1, "MaxTier": 3, "Description": "떠돌이 상인에게 좋은 거래를 성사시켰다."},
+    {"ID": "te_healer", "Name": "방랑 치료사", "Type": "luck", "EffectType": "heal_tired", "Magnitude": 1.0, "MinTier": 1, "MaxTier": 4, "Description": "방랑 치료사를 만나 피곤한 용병의 기력을 회복시켰다."},
+    {"ID": "te_merc_group", "Name": "다른 용병단과 조우", "Type": "encounter", "EffectType": "reputation", "Magnitude": 10.0, "MinTier": 1, "MaxTier": 3, "Description": "다른 용병단과 우호적인 만남을 가졌다."},
+    {"ID": "te_noble_encounter", "Name": "귀족 호위대 조우", "Type": "encounter", "EffectType": "reputation", "Magnitude": 15.0, "MinTier": 3, "MaxTier": 5, "Description": "귀족의 호위대와 만나 용병단의 이름을 알렸다."}
+  ]
+}
