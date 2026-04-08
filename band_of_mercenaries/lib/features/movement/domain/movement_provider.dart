@@ -16,6 +16,14 @@ final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
 final lastTravelEventProvider = StateProvider<TravelEvent?>((ref) => null);
 
+/// Returns true if the given region tier is accessible at the current reputation rank.
+final canAccessRegionTierProvider = Provider.family<bool, int>((ref, regionTier) {
+  final staticData = ref.watch(staticDataProvider).value;
+  final userData = ref.watch(userDataProvider);
+  if (staticData == null || userData == null) return false;
+  return ReputationService.isRegionAccessible(regionTier, userData.reputation, staticData.ranks);
+});
+
 final movementProvider = StateNotifierProvider<MovementNotifier, UserData?>((ref) {
   return MovementNotifier(ref);
 });
