@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/features/mercenary/data/mercenary_repository.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
@@ -58,6 +59,17 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
   Future<Mercenary?> recruit() async {
     final staticData = ref.read(staticDataProvider).value;
     if (staticData == null) return null;
+
+    // Capacity check: enforce barracks max
+    final userData = ref.read(userDataProvider);
+    final barracksData = staticData.facilities.where((f) => f.id == 'barracks').firstOrNull;
+    if (userData != null && barracksData != null) {
+      final barracksLevel = userData.facilities['barracks'] ?? 0;
+      final maxMercs = FacilityService.getMaxMercenaries(barracksData, barracksLevel);
+      final aliveCount = state.where((m) => m.status != MercenaryStatus.dead).length;
+      if (aliveCount >= maxMercs) return null;
+    }
+
     final merc = await _repo.recruit(
       jobs: staticData.jobs,
       traits: staticData.traits,

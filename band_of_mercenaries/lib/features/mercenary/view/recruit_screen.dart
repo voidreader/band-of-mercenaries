@@ -4,6 +4,7 @@ import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_card.dart';
@@ -28,7 +29,15 @@ class RecruitScreen extends ConsumerWidget {
     final remaining = nextFreeRecruit.difference(DateTime.now());
 
     return staticData.when(
-      data: (data) => Column(
+      data: (data) {
+        final barracksData = data.facilities.where((f) => f.id == 'barracks').firstOrNull;
+        final barracksLevel = userData.facilities['barracks'] ?? 0;
+        final maxMercs = barracksData != null
+            ? FacilityService.getMaxMercenaries(barracksData, barracksLevel)
+            : FacilityService.baseMercenaryMax;
+        final isAtCapacity = aliveMercs.length >= maxMercs;
+
+        return Column(
         children: [
           // Top bar
           Container(
@@ -41,7 +50,16 @@ class RecruitScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('💰 ${userData.gold}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                Text('용병단 ${aliveMercs.length}명', style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary)),
+                Row(
+                  children: [
+                    Text('용병: ${aliveMercs.length} / $maxMercs',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isAtCapacity ? AppTheme.tier5 : AppTheme.textTertiary,
+                          fontWeight: isAtCapacity ? FontWeight.w700 : FontWeight.normal,
+                        )),
+                  ],
+                ),
               ],
             ),
           ),
@@ -49,48 +67,73 @@ class RecruitScreen extends ConsumerWidget {
           // Recruit buttons
           Padding(
             padding: const EdgeInsets.all(14),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: canFreeRecruit
-                        ? () async {
-                            await ref.read(mercenaryListProvider.notifier).recruit();
-                            userData.lastFreeRecruit = DateTime.now();
-                            await userData.save();
-                          }
-                        : null,
-                    child: Column(
-                      children: [
-                        const Text('무료 모집'),
-                        Text(
-                          canFreeRecruit ? '가능!' : '${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}',
-                          style: TextStyle(fontSize: 12, color: canFreeRecruit ? Colors.white70 : Colors.grey),
+                if (isAtCapacity)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.tier5Bg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.tier5.withValues(alpha: 0.3)),
+                    ),
+                    child: const Text(
+                      '정원 초과 — 막사를 업그레이드하거나 용병을 해고하세요',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: AppTheme.tier5, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: canFreeRecruit && !isAtCapacity
+                            ? () async {
+                                await ref.read(mercenaryListProvider.notifier).recruit();
+                                userData.lastFreeRecruit = DateTime.now();
+                                await userData.save();
+                              }
+                            : null,
+                        child: Column(
+                          children: [
+                            Text(isAtCapacity ? '정원 초과' : '무료 모집'),
+                            Text(
+                              isAtCapacity
+                                  ? ''
+                                  : (canFreeRecruit
+                                      ? '가능!'
+                                      : '${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}'),
+                              style: TextStyle(fontSize: 12, color: canFreeRecruit ? Colors.white70 : Colors.grey),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: userData.gold >= 100
-                        ? () async {
-                            await ref.read(userDataProvider.notifier).spendGold(100);
-                            await ref.read(mercenaryListProvider.notifier).recruit();
-                          }
-                        : null,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: AppTheme.border),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: userData.gold >= 100 && !isAtCapacity
+                            ? () async {
+                                await ref.read(userDataProvider.notifier).spendGold(100);
+                                await ref.read(mercenaryListProvider.notifier).recruit();
+                              }
+                            : null,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: AppTheme.border),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(isAtCapacity ? '정원 초과' : '골드 모집',
+                                style: const TextStyle(color: AppTheme.textPrimary)),
+                            const Text('100G', style: TextStyle(fontSize: 12, color: AppTheme.textHint)),
+                          ],
+                        ),
+                      ),
                     ),
-                    child: const Column(
-                      children: [
-                        Text('골드 모집', style: TextStyle(color: AppTheme.textPrimary)),
-                        Text('100G', style: TextStyle(fontSize: 12, color: AppTheme.textHint)),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -119,7 +162,8 @@ class RecruitScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
+        );
+      },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
     );
