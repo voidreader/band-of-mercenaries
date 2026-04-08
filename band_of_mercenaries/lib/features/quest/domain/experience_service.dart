@@ -1,7 +1,7 @@
 class ExperienceService {
   static const int baseXp = 20;
   static const int maxLevel = 5;
-  static const List<int> _levelThresholds = [0, 100, 350, 850, 1850];
+  static const List<int> levelThresholds = [0, 100, 350, 850, 1850];
 
   static int calculateXpGain({required int difficulty, required double resultMultiplier, required double facilityBonus}) {
     final base = difficulty * baseXp * resultMultiplier;
@@ -12,7 +12,7 @@ class ExperienceService {
     if (currentLevel >= maxLevel) return maxLevel;
     int newLevel = currentLevel;
     for (int lvl = currentLevel; lvl < maxLevel; lvl++) {
-      if (currentXp >= _levelThresholds[lvl]) {
+      if (currentXp >= levelThresholds[lvl]) {
         newLevel = lvl + 1;
       } else {
         break;

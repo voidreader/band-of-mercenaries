@@ -174,8 +174,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       }).toList();
 
       final totalWage = QuestCalculator.calculateTotalWage(mercTiers, staticData.mercenaryWages);
-      final netReward = (grossReward - totalWage).clamp(0, grossReward);
-      await ref.read(userDataProvider.notifier).addGold(netReward);
+      final netReward = grossReward - totalWage;
+      if (netReward > 0) {
+        await ref.read(userDataProvider.notifier).addGold(netReward);
+      }
     }
 
     // Process damage

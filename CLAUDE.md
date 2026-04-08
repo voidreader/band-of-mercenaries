@@ -51,12 +51,12 @@ band_of_mercenaries/lib/
 │   ├── providers/         # 전역 상태 (game_state, static_data, timer)
 │   └── theme/             # Material 3 테마, 티어별 색상
 ├── features/              # 기능별 모듈
-│   ├── home/              # 홈(야영지) 화면
-│   ├── movement/          # 이동 시스템
-│   ├── quest/             # 퀘스트/파견 시스템
-│   ├── mercenary/         # 용병 모집/관리
-│   └── settings/          # 설정 (MVP 스텁)
-└── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay)
+│   ├── home/              # 홈(야영지) 화면, ReputationService
+│   ├── movement/          # 이동 시스템, TravelEventService
+│   ├── quest/             # 퀘스트/파견 시스템, ExperienceService
+│   ├── mercenary/         # 용병 모집/관리, FacilityService
+│   └── settings/          # 설정, 시설 관리 (FacilityScreen)
+└── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay, StatusBadge)
 ```
 
 ### feature 모듈 구조
@@ -88,9 +88,13 @@ band_of_mercenaries/lib/
 - Region.json: 199개 리전 (5단계 티어)
 - Job.json: 5티어 30+ 직업
 - Trait.json: 4종 특성 (강인함, 노련함, 겁쟁이, 광전사)
-- Difficulty.json: 5단계 난이도 설정
+- Difficulty.json: 5단계 난이도 설정 (파견비용 포함)
 - QuestType.json / QuestPool.json: 퀘스트 유형 및 풀
 - PersonName.json: 한국어 이름 ~500개
+- TravelEvent.json: 이동 중 랜덤 이벤트 (발견, 습격, 날씨, 행운, 조우)
+- Facility.json: 시설 종류 및 레벨별 비용/효과 (훈련소, 의무실, 주둔지, 정보망)
+- Rank.json: 명성 등급 (F~A) 및 티어 잠금 해제 조건
+- MercenaryWage.json: 티어별 용병 인건비
 
 ### 영속성
 
@@ -102,11 +106,15 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 
 ## 게임 핵심 시스템 로직
 
-- **이동**: 거리 = |리전 차이| + |섹터 차이|, 소요시간 = 거리 × 30초
+- **이동**: 거리 = |리전 차이| + |섹터 차이|, 소요시간 = 거리 × 30초. 이동 중 TravelEvent 랜덤 발생 (골드, 부상, 지연, 명성 등)
 - **성공률**: 50% + (아군전투력/적전투력 - 1) × 50% + 특성보너스 + 퀘스트보정 - 거리패널티 + 랜덤편차, 범위 5%~95%
 - **결과**: 대성공(보상 2배) / 성공 / 실패(부상) / 대실패(사망률 증가)
-- **용병 상태**: 정상 → 피곤함(능력치 80%, 5분) → 부상(난이도×10분) → 사망(영구 제거)
-- **모집**: 티어별 확률 가중 (Tier1: 45%, Tier2: 30%, Tier3: 15%, Tier4: 8%, Tier5: 2%)
+- **경제**: 파견비용(난이도별) + 인건비(용병 티어별) 선차감, 순수익 = 보상 - 인건비 - 파견비용
+- **경험치/레벨**: 퀘스트 완료 시 XP 획득 (난이도 × 기본XP × 결과배수 + 시설보너스), 최대 레벨 5
+- **명성/랭크**: 퀘스트 완료 시 명성 획득, 등급 F~A, 랭크에 따라 상위 티어 리전 잠금 해제
+- **시설**: 훈련소(XP보너스), 의무실(회복감소), 주둔지(용병상한), 정보망(퀘스트수). 골드로 업그레이드
+- **용병 상태**: 정상 → 피곤함(능력치 80%, 5분) → 부상(난이도×10분) → 사망(영구 제거). 레벨업 시 능력치 증가
+- **모집**: 티어별 확률 가중 (Tier1: 45%, Tier2: 30%, Tier3: 15%, Tier4: 8%, Tier5: 2%). 주둔지 용량 제한
 
 ## 분석 설정
 

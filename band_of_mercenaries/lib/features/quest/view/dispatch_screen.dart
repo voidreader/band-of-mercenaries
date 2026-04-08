@@ -8,6 +8,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 
@@ -167,13 +168,37 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
   }
 
   Widget _buildDispatchPanel(List<Mercenary> mercs, StaticGameData data) {
+    final userData = ref.read(userDataProvider);
     final quest = ref.read(questListProvider).firstWhere((q) => q.id == _selectedQuestId);
+    final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
     final difficulty = data.difficulties.firstWhere(
       (d) => d.level == quest.difficulty.clamp(1, 5),
       orElse: () => data.difficulties.first,
     );
     final selectedMercs = mercs.where((m) => _selectedMercIds.contains(m.id)).toList();
     final partyPower = selectedMercs.fold<int>(0, (sum, m) => sum + m.effectiveAtk);
+
+    // Cost/profit calculations
+    final grossReward = QuestCalculator.calculateReward(
+      baseReward: questType.baseReward,
+      rewardMultiplier: difficulty.rewardMultiplier,
+    );
+    final mercTiers = selectedMercs.map((merc) {
+      final job = data.jobs.firstWhere(
+        (j) => j.id == merc.jobId,
+        orElse: () => data.jobs.first,
+      );
+      return job.tier;
+    }).toList();
+    final totalWage = QuestCalculator.calculateTotalWage(mercTiers, data.mercenaryWages);
+    final dispatchCost = difficulty.dispatchCost;
+    final netProfit = QuestCalculator.calculateNetProfit(
+      totalReward: grossReward,
+      totalWage: totalWage,
+      dispatchCost: dispatchCost,
+    );
+
+    final hasEnoughGold = userData != null && userData.gold >= dispatchCost;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -229,11 +254,28 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
             '예상 성공률: ${_selectedMercIds.isEmpty ? "-" : "${(partyPower / difficulty.enemyPower * 50 + 50).clamp(5, 95).round()}%"} · 전투력: $partyPower/${difficulty.enemyPower}',
             style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
+          if (_selectedMercIds.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildCostBreakdown(
+              grossReward: grossReward,
+              totalWage: totalWage,
+              dispatchCost: dispatchCost,
+              netProfit: netProfit,
+            ),
+          ],
           const SizedBox(height: 10),
+          if (!hasEnoughGold)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                '골드가 부족합니다 (파견비용: ${dispatchCost}G)',
+                style: const TextStyle(fontSize: 13, color: Colors.red),
+              ),
+            ),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _selectedMercIds.isEmpty
+              onPressed: (_selectedMercIds.isEmpty || !hasEnoughGold)
                   ? null
                   : () {
                       ref.read(questListProvider.notifier)
@@ -248,6 +290,59 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCostBreakdown({
+    required int grossReward,
+    required int totalWage,
+    required int dispatchCost,
+    required int netProfit,
+  }) {
+    final netColor = netProfit >= 0 ? Colors.green : Colors.red;
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Column(
+        children: [
+          _buildBreakdownRow('예상 보상', '${grossReward}G', AppTheme.textSecondary),
+          const SizedBox(height: 4),
+          _buildBreakdownRow('인건비', '-${totalWage}G', AppTheme.textTertiary),
+          const SizedBox(height: 4),
+          _buildBreakdownRow('파견비용', '-${dispatchCost}G', AppTheme.textTertiary),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Divider(height: 1, color: AppTheme.borderLight),
+          ),
+          _buildBreakdownRow(
+            '예상 순수익',
+            '${netProfit}G',
+            netColor,
+            isBold: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBreakdownRow(String label, String value, Color valueColor, {bool isBold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            color: valueColor,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 

@@ -51,7 +51,10 @@
       "Bash(dart run:*)",
       "Bash(flutter devices:*)",
       "Bash(flutter run:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(wc:*)",
+      "Bash(flutter test:*)",
+      "Bash(/Users/0398lhj/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh:*)"
     ]
   }
 }

@@ -18,12 +18,10 @@ class MercenaryCard extends StatelessWidget {
     required this.trait,
   });
 
-  static const List<int> _levelThresholds = [0, 100, 350, 850, 1850];
-
   double _xpProgress(int level, int xp) {
     if (level >= ExperienceService.maxLevel) return 1.0;
-    final current = _levelThresholds[level - 1];
-    final next = _levelThresholds[level];
+    final current = ExperienceService.levelThresholds[level - 1];
+    final next = ExperienceService.levelThresholds[level];
     if (next <= current) return 1.0;
     return ((xp - current) / (next - current)).clamp(0.0, 1.0);
   }
@@ -123,7 +121,7 @@ class MercenaryCard extends StatelessWidget {
           ],
           const SizedBox(height: 6),
           Text(
-            'ATK ${mercenary.atk} · DEF ${mercenary.def} · HP ${mercenary.hp} · ',
+            'ATK ${mercenary.effectiveAtk} · DEF ${mercenary.effectiveDef} · HP ${mercenary.effectiveHp} · ',
             style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary),
           ),
           Text(trait.name, style: TextStyle(fontSize: 13, color: traitColor, fontWeight: FontWeight.w500)),
