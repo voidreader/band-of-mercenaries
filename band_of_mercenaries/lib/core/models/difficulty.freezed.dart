@@ -32,6 +32,8 @@ mixin _$Difficulty {
   double get injuryRate => throw _privateConstructorUsedError;
   @JsonKey(name: 'DeathRate')
   double get deathRate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'DispatchCost')
+  int get dispatchCost => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -51,7 +53,8 @@ abstract class $DifficultyCopyWith<$Res> {
       @JsonKey(name: 'RewardMultiplier') double rewardMultiplier,
       @JsonKey(name: 'SuccessPenalty') double successPenalty,
       @JsonKey(name: 'InjuryRate') double injuryRate,
-      @JsonKey(name: 'DeathRate') double deathRate});
+      @JsonKey(name: 'DeathRate') double deathRate,
+      @JsonKey(name: 'DispatchCost') int dispatchCost});
 }
 
 /// @nodoc
@@ -73,6 +76,7 @@ class _$DifficultyCopyWithImpl<$Res, $Val extends Difficulty>
     Object? successPenalty = null,
     Object? injuryRate = null,
     Object? deathRate = null,
+    Object? dispatchCost = null,
   }) {
     return _then(_value.copyWith(
       level: null == level
@@ -99,6 +103,10 @@ class _$DifficultyCopyWithImpl<$Res, $Val extends Difficulty>
           ? _value.deathRate
           : deathRate // ignore: cast_nullable_to_non_nullable
               as double,
+      dispatchCost: null == dispatchCost
+          ? _value.dispatchCost
+          : dispatchCost // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -117,7 +125,8 @@ abstract class _$$DifficultyImplCopyWith<$Res>
       @JsonKey(name: 'RewardMultiplier') double rewardMultiplier,
       @JsonKey(name: 'SuccessPenalty') double successPenalty,
       @JsonKey(name: 'InjuryRate') double injuryRate,
-      @JsonKey(name: 'DeathRate') double deathRate});
+      @JsonKey(name: 'DeathRate') double deathRate,
+      @JsonKey(name: 'DispatchCost') int dispatchCost});
 }
 
 /// @nodoc
@@ -137,6 +146,7 @@ class __$$DifficultyImplCopyWithImpl<$Res>
     Object? successPenalty = null,
     Object? injuryRate = null,
     Object? deathRate = null,
+    Object? dispatchCost = null,
   }) {
     return _then(_$DifficultyImpl(
       level: null == level
@@ -163,6 +173,10 @@ class __$$DifficultyImplCopyWithImpl<$Res>
           ? _value.deathRate
           : deathRate // ignore: cast_nullable_to_non_nullable
               as double,
+      dispatchCost: null == dispatchCost
+          ? _value.dispatchCost
+          : dispatchCost // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -176,7 +190,8 @@ class _$DifficultyImpl implements _Difficulty {
       @JsonKey(name: 'RewardMultiplier') required this.rewardMultiplier,
       @JsonKey(name: 'SuccessPenalty') required this.successPenalty,
       @JsonKey(name: 'InjuryRate') required this.injuryRate,
-      @JsonKey(name: 'DeathRate') required this.deathRate});
+      @JsonKey(name: 'DeathRate') required this.deathRate,
+      @JsonKey(name: 'DispatchCost') required this.dispatchCost});
 
   factory _$DifficultyImpl.fromJson(Map<String, dynamic> json) =>
       _$$DifficultyImplFromJson(json);
@@ -199,10 +214,13 @@ class _$DifficultyImpl implements _Difficulty {
   @override
   @JsonKey(name: 'DeathRate')
   final double deathRate;
+  @override
+  @JsonKey(name: 'DispatchCost')
+  final int dispatchCost;
 
   @override
   String toString() {
-    return 'Difficulty(level: $level, enemyPower: $enemyPower, rewardMultiplier: $rewardMultiplier, successPenalty: $successPenalty, injuryRate: $injuryRate, deathRate: $deathRate)';
+    return 'Difficulty(level: $level, enemyPower: $enemyPower, rewardMultiplier: $rewardMultiplier, successPenalty: $successPenalty, injuryRate: $injuryRate, deathRate: $deathRate, dispatchCost: $dispatchCost)';
   }
 
   @override
@@ -220,13 +238,15 @@ class _$DifficultyImpl implements _Difficulty {
             (identical(other.injuryRate, injuryRate) ||
                 other.injuryRate == injuryRate) &&
             (identical(other.deathRate, deathRate) ||
-                other.deathRate == deathRate));
+                other.deathRate == deathRate) &&
+            (identical(other.dispatchCost, dispatchCost) ||
+                other.dispatchCost == dispatchCost));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, level, enemyPower,
-      rewardMultiplier, successPenalty, injuryRate, deathRate);
+      rewardMultiplier, successPenalty, injuryRate, deathRate, dispatchCost);
 
   @JsonKey(ignore: true)
   @override
@@ -249,8 +269,9 @@ abstract class _Difficulty implements Difficulty {
       @JsonKey(name: 'RewardMultiplier') required final double rewardMultiplier,
       @JsonKey(name: 'SuccessPenalty') required final double successPenalty,
       @JsonKey(name: 'InjuryRate') required final double injuryRate,
-      @JsonKey(name: 'DeathRate')
-      required final double deathRate}) = _$DifficultyImpl;
+      @JsonKey(name: 'DeathRate') required final double deathRate,
+      @JsonKey(name: 'DispatchCost')
+      required final int dispatchCost}) = _$DifficultyImpl;
 
   factory _Difficulty.fromJson(Map<String, dynamic> json) =
       _$DifficultyImpl.fromJson;
@@ -273,6 +294,9 @@ abstract class _Difficulty implements Difficulty {
   @override
   @JsonKey(name: 'DeathRate')
   double get deathRate;
+  @override
+  @JsonKey(name: 'DispatchCost')
+  int get dispatchCost;
   @override
   @JsonKey(ignore: true)
   _$$DifficultyImplCopyWith<_$DifficultyImpl> get copyWith =>

@@ -12,6 +12,7 @@ class Difficulty with _$Difficulty {
     @JsonKey(name: 'SuccessPenalty') required double successPenalty,
     @JsonKey(name: 'InjuryRate') required double injuryRate,
     @JsonKey(name: 'DeathRate') required double deathRate,
+    @JsonKey(name: 'DispatchCost') required int dispatchCost,
   }) = _Difficulty;
 
   factory Difficulty.fromJson(Map<String, dynamic> json) =>

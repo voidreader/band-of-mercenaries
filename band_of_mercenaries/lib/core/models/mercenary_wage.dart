@@ -1,0 +1,25 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'mercenary_wage.freezed.dart';
+part 'mercenary_wage.g.dart';
+
+@freezed
+class MercenaryWage with _$MercenaryWage {
+  const factory MercenaryWage({
+    @JsonKey(name: 'Tier') required int tier,
+    @JsonKey(name: 'Wage') required int wage,
+  }) = _MercenaryWage;
+
+  factory MercenaryWage.fromJson(Map<String, dynamic> json) =>
+      _$MercenaryWageFromJson(json);
+}
+
+@freezed
+class MercenaryWageList with _$MercenaryWageList {
+  const factory MercenaryWageList({
+    @JsonKey(name: 'MercenaryWages') required List<MercenaryWage> items,
+  }) = _MercenaryWageList;
+
+  factory MercenaryWageList.fromJson(Map<String, dynamic> json) =>
+      _$MercenaryWageListFromJson(json);
+}
