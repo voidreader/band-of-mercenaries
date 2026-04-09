@@ -356,7 +356,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     );
   }
 
-  void _showResult(BuildContext context, ActiveQuest quest, WidgetRef ref) async {
+  Future<void> _showResult(BuildContext context, ActiveQuest quest, WidgetRef ref) async {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
