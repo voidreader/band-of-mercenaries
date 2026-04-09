@@ -48,4 +48,11 @@ class QuestRepository {
       await quest.delete();
     }
   }
+
+  Future<void> removeQuest(String questId) async {
+    final index = _box.values.toList().indexWhere((q) => q.id == questId);
+    if (index >= 0) {
+      await _box.deleteAt(index);
+    }
+  }
 }

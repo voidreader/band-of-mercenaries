@@ -35,6 +35,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
   void refresh() => _load();
 
+  Future<void> clearCompleted(String questId) async {
+    await _repo.removeQuest(questId);
+    _load();
+  }
+
   Future<void> generateQuests() async {
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);

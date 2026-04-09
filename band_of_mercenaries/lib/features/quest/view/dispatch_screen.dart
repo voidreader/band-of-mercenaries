@@ -22,6 +22,8 @@ class DispatchScreen extends ConsumerStatefulWidget {
 class _DispatchScreenState extends ConsumerState<DispatchScreen> {
   String? _selectedQuestId;
   final Set<String> _selectedMercIds = {};
+  bool _isShowingResult = false;
+  final Set<String> _shownResultIds = {};
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +41,21 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
       );
     }
 
-    // Check for completed quests to show results
-    final completed = quests.where((q) => q.status == QuestStatus.completed).toList();
-    if (completed.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showResult(context, completed.first, ref);
-      });
-    }
+    ref.listen<List<ActiveQuest>>(questListProvider, (previous, next) {
+      if (_isShowingResult) return;
+      final completed = next.where(
+        (q) => q.status == QuestStatus.completed && !_shownResultIds.contains(q.id),
+      ).toList();
+      if (completed.isNotEmpty) {
+        _isShowingResult = true;
+        _shownResultIds.add(completed.first.id);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showResult(context, completed.first, ref);
+          }
+        });
+      }
+    });
 
     final pendingQuests = quests.where((q) => q.status == QuestStatus.pending).toList();
     final inProgressQuests = quests.where((q) => q.status == QuestStatus.inProgress).toList();
@@ -346,14 +356,26 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     );
   }
 
-  void _showResult(BuildContext context, ActiveQuest quest, WidgetRef ref) {
-    showDialog(
+  void _showResult(BuildContext context, ActiveQuest quest, WidgetRef ref) async {
+    await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => QuestResultDialog(quest: quest),
-    ).then((_) {
-      ref.read(questRepositoryProvider).clearCompleted();
-      ref.read(questListProvider.notifier).refresh();
-    });
+      builder: (ctx) => QuestResultDialog(quest: quest),
+    );
+    // 다이얼로그 닫힘 후 퀘스트 정리
+    ref.read(questListProvider.notifier).clearCompleted(quest.id);
+    _isShowingResult = false;
+    // 다음 완료된 퀘스트가 있으면 표시
+    if (mounted) {
+      final quests = ref.read(questListProvider);
+      final nextCompleted = quests.where(
+        (q) => q.status == QuestStatus.completed && !_shownResultIds.contains(q.id),
+      ).toList();
+      if (nextCompleted.isNotEmpty) {
+        _isShowingResult = true;
+        _shownResultIds.add(nextCompleted.first.id);
+        _showResult(context, nextCompleted.first, ref);
+      }
+    }
   }
 }
