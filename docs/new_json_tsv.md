@@ -49,13 +49,17 @@ Tier	Wage
 5	200
 ```
 
-# Difficulty (DispatchCost 추가분)
+# Difficulty (비용 구조 변경: MinDispatchCost/MaxDispatchCost로 교체)
 
 ```
-Level	EnemyPower	RewardMultiplier	SuccessPenalty	InjuryRate	DeathRate	DispatchCost
-1	10	1	0	0.1	0.05	20
-2	20	1.5	0.1	0.2	0.1	50
-3	35	2.2	0.2	0.3	0.15	100
-4	55	3.2	0.3	0.45	0.22	200
-5	80	4.5	0.4	0.6	0.3	400
+Level	EnemyPower	RewardMultiplier	SuccessPenalty	InjuryRate	DeathRate	MinDispatchCost	MaxDispatchCost
+1	10	1	0	0.1	0.05	5	30
+2	20	1.5	0.1	0.2	0.1	10	60
+3	35	2.2	0.2	0.3	0.15	20	100
+4	55	3.2	0.3	0.45	0.22	35	150
+5	80	4.5	0.4	0.6	0.3	50	200
 ```
+
+비용 계산: `cost = minCost + (maxCost - minCost) × clamp(duration / 144, 0, 1)`
+- duration = baseDuration × (1 + (difficulty-1) × 0.2)
+- maxDuration = 144초 (baseDuration 80 × 난이도5 보정 1.8)
