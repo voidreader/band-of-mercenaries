@@ -121,7 +121,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                     const SizedBox(height: 8),
 
                     for (final quest in pendingQuests)
-                      _buildQuestCard(quest, data),
+                      _buildQuestCard(quest, data, mercs),
 
                     // Fill quests button
                     Builder(builder: (context) {
@@ -142,11 +142,6 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                       );
                     }),
 
-                    // Dispatch panel
-                    if (_selectedQuestId != null) ...[
-                      const SizedBox(height: 12),
-                      _buildDispatchPanel(mercs, data),
-                    ],
                   ],
                 ),
               ),
@@ -159,15 +154,18 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     );
   }
 
-  Widget _buildQuestCard(ActiveQuest quest, StaticGameData data) {
+  Widget _buildQuestCard(ActiveQuest quest, StaticGameData data, List<Mercenary> mercs) {
     final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
     final isSelected = _selectedQuestId == quest.id;
 
     return GestureDetector(
-      onTap: () => setState(() {
-        _selectedQuestId = isSelected ? null : quest.id;
-        _selectedMercIds.clear();
-      }),
+      onTap: () {
+        setState(() {
+          _selectedQuestId = quest.id;
+          _selectedMercIds.clear();
+        });
+        _showDispatchBottomSheet(context, mercs, data);
+      },
       child: Container(
         padding: const EdgeInsets.all(12),
         margin: const EdgeInsets.only(bottom: 8),
@@ -214,135 +212,170 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     );
   }
 
-  Widget _buildDispatchPanel(List<Mercenary> mercs, StaticGameData data) {
-    final userData = ref.read(userDataProvider);
-    final quest = ref.read(questListProvider).firstWhere((q) => q.id == _selectedQuestId);
-    final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
-    final difficulty = data.difficulties.firstWhere(
-      (d) => d.level == quest.difficulty.clamp(1, 5),
-      orElse: () => data.difficulties.first,
-    );
-    final selectedMercs = mercs.where((m) => _selectedMercIds.contains(m.id)).toList();
-    final partyPower = selectedMercs.fold<int>(0, (sum, m) => sum + m.effectiveAtk);
-
-    // Cost/profit calculations
-    final grossReward = QuestCalculator.calculateReward(
-      baseReward: questType.baseReward,
-      rewardMultiplier: difficulty.rewardMultiplier,
-    );
-    final mercTiers = selectedMercs.map((merc) {
-      final job = data.jobs.firstWhere(
-        (j) => j.id == merc.jobId,
-        orElse: () => data.jobs.first,
-      );
-      return job.tier;
-    }).toList();
-    final totalWage = QuestCalculator.calculateTotalWage(mercTiers, data.mercenaryWages);
-    final dispatchCost = QuestCalculator.calculateDispatchCost(
-      baseDuration: questType.baseDuration,
-      difficulty: quest.difficulty,
-      minCost: difficulty.minDispatchCost,
-      maxCost: difficulty.maxDispatchCost,
-    );
-    final netProfit = QuestCalculator.calculateNetProfit(
-      totalReward: grossReward,
-      totalWage: totalWage,
-      dispatchCost: dispatchCost,
-    );
-
-    final hasEnoughGold = userData != null && userData.gold >= dispatchCost;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceAlt,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderLight),
+  void _showDispatchBottomSheet(BuildContext context, List<Mercenary> mercs, StaticGameData data) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('파견 인원 선택', style: TextStyle(fontSize: 13, color: AppTheme.textHint)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: mercs.map((merc) {
-              final job = data.jobs.firstWhere((j) => j.id == merc.jobId);
-              final isSelected = _selectedMercIds.contains(merc.id);
-              final canSelect = merc.isAvailable;
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final quest = ref.read(questListProvider).firstWhere((q) => q.id == _selectedQuestId);
+            final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
+            final difficulty = data.difficulties.firstWhere(
+              (d) => d.level == quest.difficulty.clamp(1, 5),
+              orElse: () => data.difficulties.first,
+            );
+            final selectedMercs = mercs.where((m) => _selectedMercIds.contains(m.id)).toList();
+            final partyPower = selectedMercs.fold<int>(0, (sum, m) => sum + m.effectiveAtk);
+            final userData = ref.read(userDataProvider);
 
-              return GestureDetector(
-                onTap: canSelect
-                    ? () => setState(() {
-                          if (isSelected) {
-                            _selectedMercIds.remove(merc.id);
-                          } else {
-                            _selectedMercIds.add(merc.id);
-                          }
-                        })
-                    : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.primary : AppTheme.surface,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: canSelect ? AppTheme.border : AppTheme.borderLight),
+            final grossReward = QuestCalculator.calculateReward(
+              baseReward: questType.baseReward,
+              rewardMultiplier: difficulty.rewardMultiplier,
+            );
+            final mercTiers = selectedMercs.map((merc) {
+              final job = data.jobs.firstWhere((j) => j.id == merc.jobId, orElse: () => data.jobs.first);
+              return job.tier;
+            }).toList();
+            final totalWage = QuestCalculator.calculateTotalWage(mercTiers, data.mercenaryWages);
+            final dispatchCost = QuestCalculator.calculateDispatchCost(
+              baseDuration: questType.baseDuration,
+              difficulty: quest.difficulty,
+              minCost: difficulty.minDispatchCost,
+              maxCost: difficulty.maxDispatchCost,
+            );
+            final netProfit = QuestCalculator.calculateNetProfit(
+              totalReward: grossReward, totalWage: totalWage, dispatchCost: dispatchCost,
+            );
+            final hasEnoughGold = userData != null && userData.gold >= dispatchCost;
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.5,
+              minChildSize: 0.4,
+              maxChildSize: 0.8,
+              expand: false,
+              builder: (_, scrollController) {
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Handle bar
+                      Center(
+                        child: Container(
+                          width: 40, height: 4,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.borderLight,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      Text('파견 인원 선택 (${_selectedMercIds.length}명)',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      // Mercenary list
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollController,
+                          itemCount: mercs.length,
+                          itemBuilder: (_, index) {
+                            final merc = mercs[index];
+                            final job = data.jobs.firstWhere((j) => j.id == merc.jobId);
+                            final isSelected = _selectedMercIds.contains(merc.id);
+                            final canSelect = merc.isAvailable;
+
+                            return ListTile(
+                              dense: true,
+                              enabled: canSelect,
+                              leading: Checkbox(
+                                value: isSelected,
+                                onChanged: canSelect
+                                    ? (val) {
+                                        setState(() {
+                                          if (val == true) {
+                                            _selectedMercIds.add(merc.id);
+                                          } else {
+                                            _selectedMercIds.remove(merc.id);
+                                          }
+                                        });
+                                        setSheetState(() {});
+                                      }
+                                    : null,
+                              ),
+                              title: Text(
+                                '${merc.name} (${job.name})',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: canSelect ? AppTheme.textSecondary : const Color(0xFF999999),
+                                  decoration: canSelect ? null : TextDecoration.lineThrough,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '전투력: ${merc.effectiveAtk} · ${_getMercStatusText(merc)}',
+                                style: const TextStyle(fontSize: 11, color: AppTheme.textHint),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      // Cost breakdown
+                      if (_selectedMercIds.isNotEmpty) ...[
+                        const Divider(),
+                        _buildCostBreakdown(
+                          grossReward: grossReward,
+                          totalWage: totalWage,
+                          dispatchCost: dispatchCost,
+                          netProfit: netProfit,
+                        ),
+                      ],
+                      Text(
+                        '예상 성공률: ${_selectedMercIds.isEmpty ? "-" : "${(partyPower / difficulty.enemyPower * 50 + 50).clamp(5, 95).round()}%"} · 전투력: $partyPower/${difficulty.enemyPower}',
+                        style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                      ),
+                      if (!hasEnoughGold)
+                        Text('골드가 부족합니다 (파견비용: ${dispatchCost}G)',
+                          style: const TextStyle(fontSize: 13, color: Colors.red)),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: (_selectedMercIds.isEmpty || !hasEnoughGold)
+                              ? null
+                              : () {
+                                  ref.read(questListProvider.notifier)
+                                      .dispatch(_selectedQuestId!, _selectedMercIds.toList());
+                                  setState(() {
+                                    _selectedQuestId = null;
+                                    _selectedMercIds.clear();
+                                  });
+                                  Navigator.pop(context);
+                                },
+                          child: const Text('파견 출발'),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    '${isSelected ? '✓ ' : ''}${merc.name} (${job.name})',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isSelected ? Colors.white : (canSelect ? AppTheme.textSecondary : const Color(0xFF999999)),
-                      decoration: canSelect ? null : TextDecoration.lineThrough,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            '예상 성공률: ${_selectedMercIds.isEmpty ? "-" : "${(partyPower / difficulty.enemyPower * 50 + 50).clamp(5, 95).round()}%"} · 전투력: $partyPower/${difficulty.enemyPower}',
-            style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
-          ),
-          if (_selectedMercIds.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _buildCostBreakdown(
-              grossReward: grossReward,
-              totalWage: totalWage,
-              dispatchCost: dispatchCost,
-              netProfit: netProfit,
-            ),
-          ],
-          const SizedBox(height: 10),
-          if (!hasEnoughGold)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Text(
-                '골드가 부족합니다 (파견비용: ${dispatchCost}G)',
-                style: const TextStyle(fontSize: 13, color: Colors.red),
-              ),
-            ),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: (_selectedMercIds.isEmpty || !hasEnoughGold)
-                  ? null
-                  : () {
-                      ref.read(questListProvider.notifier)
-                          .dispatch(_selectedQuestId!, _selectedMercIds.toList());
-                      setState(() {
-                        _selectedQuestId = null;
-                        _selectedMercIds.clear();
-                      });
-                    },
-              child: const Text('파견 출발'),
-            ),
-          ),
-        ],
-      ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
+  }
+
+  String _getMercStatusText(Mercenary merc) {
+    switch (merc.status) {
+      case MercenaryStatus.normal: return '정상';
+      case MercenaryStatus.tired: return '피곤함';
+      case MercenaryStatus.injured: return '부상';
+      case MercenaryStatus.dead: return '사망';
+    }
   }
 
   Widget _buildCostBreakdown({
