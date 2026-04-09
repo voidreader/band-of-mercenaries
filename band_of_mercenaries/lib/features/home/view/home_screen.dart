@@ -6,6 +6,11 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/features/home/view/campsite_painter.dart';
 import 'package:band_of_mercenaries/features/home/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
+import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
@@ -22,6 +27,27 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _wasMoving = false;
+  bool _isShowingQuestResult = false;
+  final Set<String> _shownQuestResultIds = {};
+
+  Future<void> _showQuestResult(ActiveQuest quest) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => QuestResultDialog(quest: quest),
+    );
+    ref.read(questListProvider.notifier).clearCompleted(quest.id);
+    _isShowingQuestResult = false;
+    final quests = ref.read(questListProvider);
+    final nextCompleted = quests.where(
+      (q) => q.status == QuestStatus.completed && !_shownQuestResultIds.contains(q.id),
+    ).toList();
+    if (nextCompleted.isNotEmpty && mounted) {
+      _isShowingQuestResult = true;
+      _shownQuestResultIds.add(nextCompleted.first.id);
+      _showQuestResult(nextCompleted.first);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +57,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final movementState = ref.watch(movementProvider);
     ref.watch(gameTickProvider);
     final staticDataAsync = ref.watch(staticDataProvider);
+
+    // Quest completion detection
+    ref.listen<List<ActiveQuest>>(questListProvider, (prev, next) {
+      if (_isShowingQuestResult) return;
+      final completed = next.where(
+        (q) => q.status == QuestStatus.completed && !_shownQuestResultIds.contains(q.id),
+      ).toList();
+      if (completed.isNotEmpty) {
+        _isShowingQuestResult = true;
+        _shownQuestResultIds.add(completed.first.id);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showQuestResult(completed.first);
+        });
+      }
+    });
 
     // Travel event listener: detect when movement completes
     final isMovingNow = movementState?.isMoving ?? false;
@@ -152,6 +193,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           orElse: () => const SizedBox.shrink(),
         ),
 
+        // Dashboard
+        staticDataAsync.maybeWhen(
+          data: (staticData) => _buildDashboard(mercs, staticData, userData),
+          orElse: () => const SizedBox.shrink(),
+        ),
+
         // Campsite
         Expanded(
           child: Container(
@@ -164,6 +211,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ),
+
+        // Activity log
+        _buildActivityLog(),
 
         // Progress panel
         Container(
@@ -199,5 +249,124 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildDashboard(List<Mercenary> mercs, StaticGameData data, UserData userData) {
+    final dispatchedCount = mercs.where((m) => m.isDispatched).length;
+    final injuredCount = mercs.where((m) => m.status == MercenaryStatus.injured).length;
+    final deadCount = mercs.where((m) => m.status == MercenaryStatus.dead).length;
+    final totalPower = mercs.where((m) => m.isAvailable).fold<int>(0, (sum, m) => sum + m.effectiveAtk);
+
+    final barracksData = data.facilities.where((f) => f.id == 'barracks').firstOrNull;
+    final barracksLevel = userData.facilities['barracks'] ?? 0;
+    final maxMercs = barracksData != null
+        ? FacilityService.getMaxMercenaries(barracksData, barracksLevel)
+        : 10;
+    final aliveCount = mercs.where((m) => m.status != MercenaryStatus.dead).length;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceAlt,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('용병단 현황', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _dashItem('보유', '$aliveCount/$maxMercs', AppTheme.textSecondary),
+              _dashItem('파견 중', '$dispatchedCount', AppTheme.primary),
+              _dashItem('부상', '$injuredCount', Colors.orange),
+              _dashItem('사망', '$deadCount', Colors.red),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('총 전투력: $totalPower', style: const TextStyle(fontSize: 12, color: AppTheme.textHint)),
+        ],
+      ),
+    );
+  }
+
+  Widget _dashItem(String label, String value, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+          Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textHint)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityLog() {
+    final logs = ref.watch(activityLogProvider);
+
+    if (logs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(14),
+        child: Text('아직 활동 기록이 없습니다.', style: TextStyle(fontSize: 13, color: AppTheme.textHint)),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceAlt,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('최근 활동', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          ...logs.take(10).map((log) {
+            final icon = _logIcon(log.type);
+            final timeAgo = _formatTimeAgo(log.timestamp);
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Text(icon, style: const TextStyle(fontSize: 12)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(log.message,
+                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(timeAgo, style: const TextStyle(fontSize: 10, color: AppTheme.textHint)),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  String _logIcon(ActivityLogType type) {
+    switch (type) {
+      case ActivityLogType.questResult: return '⚔';
+      case ActivityLogType.mercenaryStatus: return '💊';
+      case ActivityLogType.movementComplete: return '🏕';
+      case ActivityLogType.mercenaryRecruit: return '🛡';
+      case ActivityLogType.mercenaryDismiss: return '👋';
+      case ActivityLogType.levelUp: return '⬆';
+    }
+  }
+
+  String _formatTimeAgo(DateTime time) {
+    final diff = DateTime.now().difference(time);
+    if (diff.inMinutes < 1) return '방금';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}분 전';
+    if (diff.inHours < 24) return '${diff.inHours}시간 전';
+    return '${diff.inDays}일 전';
   }
 }
