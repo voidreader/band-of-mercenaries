@@ -84,13 +84,19 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       (d) => d.level == quest.difficulty.clamp(1, 5),
       orElse: () => staticData.difficulties.first,
     );
+    final dispatchCost = QuestCalculator.calculateDispatchCost(
+      baseDuration: questType.baseDuration,
+      difficulty: quest.difficulty,
+      minCost: difficulty.minDispatchCost,
+      maxCost: difficulty.maxDispatchCost,
+    );
     final userData = ref.read(userDataProvider);
-    if (userData == null || userData.gold < difficulty.dispatchCost) {
+    if (userData == null || userData.gold < dispatchCost) {
       return false;
     }
 
     // Deduct dispatch cost
-    await ref.read(userDataProvider.notifier).spendGold(difficulty.dispatchCost);
+    await ref.read(userDataProvider.notifier).spendGold(dispatchCost);
 
     final duration = QuestCalculator.calculateDispatchDuration(
       baseDuration: questType.baseDuration,

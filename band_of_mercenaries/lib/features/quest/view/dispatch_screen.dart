@@ -201,7 +201,12 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
       return job.tier;
     }).toList();
     final totalWage = QuestCalculator.calculateTotalWage(mercTiers, data.mercenaryWages);
-    final dispatchCost = difficulty.dispatchCost;
+    final dispatchCost = QuestCalculator.calculateDispatchCost(
+      baseDuration: questType.baseDuration,
+      difficulty: quest.difficulty,
+      minCost: difficulty.minDispatchCost,
+      maxCost: difficulty.maxDispatchCost,
+    );
     final netProfit = QuestCalculator.calculateNetProfit(
       totalReward: grossReward,
       totalWage: totalWage,

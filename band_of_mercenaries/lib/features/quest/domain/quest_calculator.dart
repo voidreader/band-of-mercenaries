@@ -69,6 +69,20 @@ class QuestCalculator {
     return total;
   }
 
+  static const double _maxDuration = 144.0; // 80(최대baseDuration) * 1.8(난이도5보정)
+
+  static int calculateDispatchCost({
+    required int baseDuration,
+    required int difficulty,
+    required int minCost,
+    required int maxCost,
+  }) {
+    final multiplier = 1.0 + (difficulty - 1) * 0.2;
+    final duration = baseDuration * multiplier;
+    final ratio = (duration / _maxDuration).clamp(0.0, 1.0);
+    return (minCost + (maxCost - minCost) * ratio).round();
+  }
+
   static int calculateNetProfit({required int totalReward, required int totalWage, required int dispatchCost}) {
     return totalReward - totalWage - dispatchCost;
   }

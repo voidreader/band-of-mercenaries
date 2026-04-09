@@ -14,7 +14,8 @@ _$DifficultyImpl _$$DifficultyImplFromJson(Map<String, dynamic> json) =>
       successPenalty: (json['SuccessPenalty'] as num).toDouble(),
       injuryRate: (json['InjuryRate'] as num).toDouble(),
       deathRate: (json['DeathRate'] as num).toDouble(),
-      dispatchCost: (json['DispatchCost'] as num).toInt(),
+      minDispatchCost: (json['MinDispatchCost'] as num).toInt(),
+      maxDispatchCost: (json['MaxDispatchCost'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$DifficultyImplToJson(_$DifficultyImpl instance) =>
@@ -25,7 +26,8 @@ Map<String, dynamic> _$$DifficultyImplToJson(_$DifficultyImpl instance) =>
       'SuccessPenalty': instance.successPenalty,
       'InjuryRate': instance.injuryRate,
       'DeathRate': instance.deathRate,
-      'DispatchCost': instance.dispatchCost,
+      'MinDispatchCost': instance.minDispatchCost,
+      'MaxDispatchCost': instance.maxDispatchCost,
     };
 
 _$DifficultyListImpl _$$DifficultyListImplFromJson(Map<String, dynamic> json) =>
