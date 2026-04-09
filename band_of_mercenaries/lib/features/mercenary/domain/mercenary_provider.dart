@@ -87,6 +87,25 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     if (changed) _load();
   }
 
+  Future<bool> dismiss(String mercId, int severancePay) async {
+    final userData = ref.read(userDataProvider);
+    if (userData == null || userData.gold < severancePay) return false;
+
+    final merc = state.firstWhere((m) => m.id == mercId);
+    if (merc.isDispatched) return false;
+
+    await ref.read(userDataProvider.notifier).spendGold(severancePay);
+    await _repo.dismiss(mercId);
+    _load();
+
+    ref.read(activityLogProvider.notifier).addLog(
+      '용병 "${merc.name}" 방출 (퇴직금: ${severancePay}G)',
+      ActivityLogType.mercenaryDismiss,
+    );
+
+    return true;
+  }
+
   Future<Mercenary?> recruit() async {
     final staticData = ref.read(staticDataProvider).value;
     if (staticData == null) return null;

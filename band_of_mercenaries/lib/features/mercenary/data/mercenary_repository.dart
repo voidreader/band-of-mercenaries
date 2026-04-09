@@ -56,6 +56,23 @@ class MercenaryRepository {
     if (index >= 0) await _box.deleteAt(index);
   }
 
+  Future<void> dismiss(String mercId) async {
+    final index = _box.values.toList().indexWhere((m) => m.id == mercId);
+    if (index >= 0) {
+      await _box.deleteAt(index);
+    }
+    // Save dismissed ID
+    final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
+    final dismissed = List<String>.from(settingsBox.get('dismissedMercIds', defaultValue: <String>[]));
+    dismissed.add(mercId);
+    await settingsBox.put('dismissedMercIds', dismissed);
+  }
+
+  List<String> getDismissedIds() {
+    final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
+    return List<String>.from(settingsBox.get('dismissedMercIds', defaultValue: <String>[]));
+  }
+
   Future<void> addXpAndCheckLevel(String mercId, int xpGain) async {
     final merc = _box.values.firstWhere((m) => m.id == mercId);
     merc.xp += xpGain;

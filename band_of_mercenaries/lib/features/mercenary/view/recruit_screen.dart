@@ -157,7 +157,54 @@ class RecruitScreen extends ConsumerWidget {
                 final merc = aliveMercs[i];
                 final job = data.jobs.firstWhere((j) => j.id == merc.jobId);
                 final trait = data.traits.firstWhere((t) => t.id == merc.traitId);
-                return MercenaryCard(mercenary: merc, job: job, trait: trait);
+                return Stack(
+                  children: [
+                    MercenaryCard(mercenary: merc, job: job, trait: trait),
+                    if (!merc.isDispatched)
+                      Positioned(
+                        right: 4,
+                        bottom: 4,
+                        child: TextButton(
+                          onPressed: () {
+                            final wage = data.mercenaryWages.firstWhere(
+                              (w) => w.tier == job.tier,
+                              orElse: () => data.mercenaryWages.first,
+                            );
+                            final severancePay = wage.wage * merc.level;
+
+                            showDialog<void>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('용병 방출'),
+                                content: Text(
+                                  '용병 "${merc.name}"을 방출합니다.\n'
+                                  '퇴직금 ${severancePay}G가 차감됩니다.\n\n'
+                                  '방출된 용병은 다시 모집할 수 없습니다.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('취소'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      ref.read(mercenaryListProvider.notifier)
+                                          .dismiss(merc.id, severancePay);
+                                      Navigator.pop(ctx);
+                                    },
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                    child: const Text('방출'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: const Text('방출', style: TextStyle(fontSize: 12)),
+                        ),
+                      ),
+                  ],
+                );
               },
             ),
           ),
