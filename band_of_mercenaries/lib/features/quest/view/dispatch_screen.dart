@@ -123,6 +123,25 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                     for (final quest in pendingQuests)
                       _buildQuestCard(quest, data),
 
+                    // Fill quests button
+                    Builder(builder: (context) {
+                      final maxCount = ref.read(questListProvider.notifier).getMaxQuestCount();
+                      final activeCount = quests.where(
+                        (q) => q.status == QuestStatus.pending || q.status == QuestStatus.inProgress,
+                      ).length;
+                      if (activeCount >= maxCount) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () => ref.read(questListProvider.notifier).fillQuests(),
+                            child: Text('퀘스트 채우기 ($activeCount/$maxCount)'),
+                          ),
+                        ),
+                      );
+                    }),
+
                     // Dispatch panel
                     if (_selectedQuestId != null) ...[
                       const SizedBox(height: 12),

@@ -77,6 +77,49 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     _load();
   }
 
+  int getMaxQuestCount() {
+    final staticData = ref.read(staticDataProvider).value;
+    final userData = ref.read(userDataProvider);
+    if (staticData == null || userData == null) return 5;
+
+    int count = 5;
+    final intelligenceLevel = userData.facilities['intelligence'] ?? 0;
+    if (intelligenceLevel > 0) {
+      final intelligenceFacility = staticData.facilities.firstWhere(
+        (f) => f.id == 'intelligence',
+        orElse: () => staticData.facilities.first,
+      );
+      count += FacilityService.getExtraQuestCount(intelligenceFacility, intelligenceLevel);
+    }
+    return count;
+  }
+
+  Future<void> fillQuests() async {
+    final staticData = ref.read(staticDataProvider).value;
+    final userData = ref.read(userDataProvider);
+    if (staticData == null || userData == null) return;
+
+    final maxCount = getMaxQuestCount();
+    final activeCount = state.where(
+      (q) => q.status == QuestStatus.pending || q.status == QuestStatus.inProgress,
+    ).length;
+    final deficit = maxCount - activeCount;
+    if (deficit <= 0) return;
+
+    final region = staticData.regions.firstWhere((r) => r.region == userData.region);
+
+    final newQuests = QuestGenerator.generateQuests(
+      regionTier: region.regionTier,
+      regionId: userData.region,
+      questPools: staticData.questPools,
+      questTypes: staticData.questTypes,
+      count: deficit,
+      random: Random(),
+    );
+    await _repo.addQuests(newQuests);
+    _load();
+  }
+
   Future<bool> dispatch(String questId, List<String> mercIds) async {
     final staticData = ref.read(staticDataProvider).value;
     final speedMult = ref.read(speedMultiplierProvider);
