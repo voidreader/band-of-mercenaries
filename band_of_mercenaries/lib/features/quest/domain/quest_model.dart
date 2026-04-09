@@ -59,6 +59,9 @@ class ActiveQuest extends HiveObject {
   @HiveField(10)
   final String questName;
 
+  @HiveField(11)
+  DateTime? createdAt;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -71,5 +74,6 @@ class ActiveQuest extends HiveObject {
     this.endTime,
     this.status = QuestStatus.pending,
     this.result,
+    this.createdAt,
   });
 }

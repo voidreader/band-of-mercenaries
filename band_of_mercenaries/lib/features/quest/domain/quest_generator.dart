@@ -31,6 +31,7 @@ class QuestGenerator {
         difficulty: pool.difficulty.round(),
         region: regionId,
         questName: pool.name,
+        createdAt: DateTime.now(),
       );
     }).toList();
   }

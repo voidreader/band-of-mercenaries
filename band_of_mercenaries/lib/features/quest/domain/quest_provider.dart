@@ -26,6 +26,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   QuestListNotifier(this.ref) : super([]) {
     _repo = ref.read(questRepositoryProvider);
     _load();
+    if (state.isEmpty) {
+      generateQuests();
+    }
     ref.listen(gameTickProvider, (prev, next) => _checkCompletions());
   }
 

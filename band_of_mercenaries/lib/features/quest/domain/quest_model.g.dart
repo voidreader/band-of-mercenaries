@@ -28,13 +28,14 @@ class ActiveQuestAdapter extends TypeAdapter<ActiveQuest> {
       endTime: fields[7] as DateTime?,
       status: fields[8] as QuestStatus,
       result: fields[9] as QuestResult?,
+      createdAt: fields[11] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ActiveQuest obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -56,7 +57,9 @@ class ActiveQuestAdapter extends TypeAdapter<ActiveQuest> {
       ..writeByte(9)
       ..write(obj.result)
       ..writeByte(10)
-      ..write(obj.questName);
+      ..write(obj.questName)
+      ..writeByte(11)
+      ..write(obj.createdAt);
   }
 
   @override
