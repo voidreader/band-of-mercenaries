@@ -11,6 +11,8 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/home/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
 
 final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
@@ -127,6 +129,11 @@ class MovementNotifier extends StateNotifier<UserData?> {
     await _repo.completeMovement();
     _load();
     ref.read(userDataProvider.notifier).addGold(0); // trigger rebuild
+
+    ref.read(activityLogProvider.notifier).addLog(
+      '이동 완료',
+      ActivityLogType.movementComplete,
+    );
 
     // Apply travel event effect (non-delay events)
     if (travelEvent != null && travelEvent.effectType != 'delay') {

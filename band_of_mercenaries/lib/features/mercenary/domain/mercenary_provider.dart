@@ -5,6 +5,8 @@ import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.d
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
 
 final mercenaryRepositoryProvider = Provider((ref) => MercenaryRepository());
 
@@ -103,6 +105,10 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
       jobs: staticData.jobs,
       traits: staticData.traits,
       names: staticData.personNames,
+    );
+    ref.read(activityLogProvider.notifier).addLog(
+      '용병 "${merc.name}" 모집 완료',
+      ActivityLogType.mercenaryRecruit,
     );
     _load();
     return merc;

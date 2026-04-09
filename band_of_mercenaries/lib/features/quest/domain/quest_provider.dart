@@ -12,6 +12,8 @@ import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.d
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -276,6 +278,17 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     };
 
     await _repo.completeQuest(quest.id, questResult);
+
+    final resultText = {
+      QuestResultType.greatSuccess: '대성공',
+      QuestResultType.success: '성공',
+      QuestResultType.failure: '실패',
+      QuestResultType.criticalFailure: '대실패',
+    }[resultType] ?? '완료';
+    ref.read(activityLogProvider.notifier).addLog(
+      '퀘스트 "${quest.questName}" $resultText!',
+      ActivityLogType.questResult,
+    );
 
     // Process rewards with wage deduction
     if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {

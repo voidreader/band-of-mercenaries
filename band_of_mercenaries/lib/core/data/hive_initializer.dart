@@ -2,6 +2,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
+import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/features/home/data/activity_log_repository.dart';
 
 class HiveInitializer {
   static const String userBoxName = 'user';
@@ -17,9 +19,12 @@ class HiveInitializer {
     Hive.registerAdapter(QuestResultAdapter());
     Hive.registerAdapter(ActiveQuestAdapter());
     Hive.registerAdapter(UserDataAdapter());
+    Hive.registerAdapter(ActivityLogTypeAdapter());
+    Hive.registerAdapter(ActivityLogAdapter());
 
     await Hive.openBox<UserData>(userBoxName);
     await Hive.openBox<Mercenary>(mercenaryBoxName);
     await Hive.openBox<ActiveQuest>(questBoxName);
+    await Hive.openBox<ActivityLog>(ActivityLogRepository.boxName);
   }
 }
