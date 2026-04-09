@@ -105,6 +105,21 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     return true;
   }
 
+  void recalculateTimers(double oldSpeed, double newSpeed) {
+    bool changed = false;
+    for (final quest in state) {
+      if (quest.status == QuestStatus.inProgress && quest.endTime != null && quest.startTime != null) {
+        final newEndTime = recalculateEndTime(quest.endTime, quest.startTime, oldSpeed, newSpeed);
+        if (newEndTime != quest.endTime) {
+          quest.endTime = newEndTime;
+          quest.save();
+          changed = true;
+        }
+      }
+    }
+    if (changed) _load();
+  }
+
   void _checkCompletions() {
     final now = DateTime.now();
     for (final quest in state) {

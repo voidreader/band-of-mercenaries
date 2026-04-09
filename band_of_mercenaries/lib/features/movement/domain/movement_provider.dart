@@ -98,6 +98,20 @@ class MovementNotifier extends StateNotifier<UserData?> {
     ref.read(userDataProvider.notifier).addGold(0); // trigger rebuild
   }
 
+  void recalculateTimers(double oldSpeed, double newSpeed) {
+    final user = state;
+    if (user == null || !user.isMoving || user.moveEndTime == null) return;
+    final now = DateTime.now();
+    if (now.isAfter(user.moveEndTime!)) return;
+    final remainingMs = user.moveEndTime!.difference(now).inMilliseconds;
+    final baseRemainingMs = (remainingMs * oldSpeed).round();
+    final newRemainingMs = (baseRemainingMs / newSpeed).round();
+    user.moveEndTime = now.add(Duration(milliseconds: newRemainingMs));
+    user.save();
+    _load();
+    ref.read(userDataProvider.notifier).addGold(0); // trigger rebuild
+  }
+
   void _checkArrival() {
     final user = _repo.userData;
     if (user == null || !user.isMoving || user.moveEndTime == null) return;

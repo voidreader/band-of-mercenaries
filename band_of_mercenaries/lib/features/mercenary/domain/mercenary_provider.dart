@@ -56,6 +56,35 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     if (changed) _load();
   }
 
+  void recalculateTimers(double oldSpeed, double newSpeed) {
+    bool changed = false;
+    for (final merc in state) {
+      if (merc.status == MercenaryStatus.tired && merc.tiredEndTime != null) {
+        final now = DateTime.now();
+        if (now.isBefore(merc.tiredEndTime!)) {
+          final remainingMs = merc.tiredEndTime!.difference(now).inMilliseconds;
+          final baseRemainingMs = (remainingMs * oldSpeed).round();
+          final newRemainingMs = (baseRemainingMs / newSpeed).round();
+          merc.tiredEndTime = now.add(Duration(milliseconds: newRemainingMs));
+          merc.save();
+          changed = true;
+        }
+      }
+      if (merc.status == MercenaryStatus.injured && merc.injuryEndTime != null) {
+        final now = DateTime.now();
+        if (now.isBefore(merc.injuryEndTime!)) {
+          final remainingMs = merc.injuryEndTime!.difference(now).inMilliseconds;
+          final baseRemainingMs = (remainingMs * oldSpeed).round();
+          final newRemainingMs = (baseRemainingMs / newSpeed).round();
+          merc.injuryEndTime = now.add(Duration(milliseconds: newRemainingMs));
+          merc.save();
+          changed = true;
+        }
+      }
+    }
+    if (changed) _load();
+  }
+
   Future<Mercenary?> recruit() async {
     final staticData = ref.read(staticDataProvider).value;
     if (staticData == null) return null;

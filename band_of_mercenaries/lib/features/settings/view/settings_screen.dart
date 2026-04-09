@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/features/settings/view/facility_screen.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
+import 'package:band_of_mercenaries/features/movement/domain/movement_provider.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -82,8 +85,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             child: Text('x${speed.toInt()}'),
                           )
                         : OutlinedButton(
-                            onPressed: () =>
-                                ref.read(speedMultiplierProvider.notifier).state = speed,
+                            onPressed: () {
+                              final oldSpeed = ref.read(speedMultiplierProvider);
+                              ref.read(speedMultiplierProvider.notifier).state = speed;
+                              ref.read(questListProvider.notifier).recalculateTimers(oldSpeed, speed);
+                              ref.read(movementProvider.notifier).recalculateTimers(oldSpeed, speed);
+                              ref.read(mercenaryListProvider.notifier).recalculateTimers(oldSpeed, speed);
+                            },
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               side: const BorderSide(color: AppTheme.border),
