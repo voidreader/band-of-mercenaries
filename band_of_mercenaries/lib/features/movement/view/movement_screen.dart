@@ -7,6 +7,8 @@ import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_provider.dart';
 import 'package:band_of_mercenaries/features/home/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
@@ -38,6 +40,8 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
   Widget build(BuildContext context) {
     final userData = ref.watch(userDataProvider);
     final staticData = ref.watch(staticDataProvider);
+    final quests = ref.watch(questListProvider);
+    final hasDispatchedQuests = quests.any((q) => q.status == QuestStatus.inProgress);
     ref.watch(gameTickProvider);
 
     if (userData == null) return const Center(child: CircularProgressIndicator());
@@ -276,13 +280,19 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: userData.isMoving || distance == 0 || !isTargetAccessible
+                        onPressed: (userData.isMoving || distance == 0 || !isTargetAccessible || hasDispatchedQuests)
                             ? null
                             : () {
                                 ref.read(movementProvider.notifier)
                                     .startMovement(_selectedRegion, _selectedSector);
                               },
-                        child: Text(userData.isMoving ? '이동 중...' : '이동 시작'),
+                        child: Text(
+                          userData.isMoving
+                              ? '이동 중...'
+                              : hasDispatchedQuests
+                                  ? '파견된 용병이 있습니다'
+                                  : '이동 시작',
+                        ),
                       ),
                     ),
                   ],
