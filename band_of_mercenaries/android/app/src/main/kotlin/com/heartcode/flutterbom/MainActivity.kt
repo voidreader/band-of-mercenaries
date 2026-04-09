@@ -1,4 +1,4 @@
-package com.bandofmercenaries.band_of_mercenaries
+package com.heartcode.flutterbom
 
 import io.flutter.embedding.android.FlutterActivity
 
