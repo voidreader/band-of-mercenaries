@@ -29,7 +29,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     if (state.isEmpty) {
       generateQuests();
     }
-    ref.listen(gameTickProvider, (prev, next) => _checkCompletions());
+    ref.listen(gameTickProvider, (prev, next) {
+      _checkCompletions();
+      _checkQuestRefresh();
+    });
   }
 
   void _load() {
@@ -132,6 +135,52 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       }
     }
     if (changed) _load();
+  }
+
+  static const _questRefreshDuration = Duration(hours: 1);
+
+  void _checkQuestRefresh() {
+    final now = DateTime.now();
+    final speedMult = ref.read(speedMultiplierProvider);
+
+    final expiredQuests = <ActiveQuest>[];
+    for (final quest in state) {
+      if (quest.status == QuestStatus.pending && quest.createdAt != null) {
+        final realElapsed = now.difference(quest.createdAt!);
+        final gameElapsedMs = (realElapsed.inMilliseconds * speedMult).round();
+        final gameElapsed = Duration(milliseconds: gameElapsedMs);
+        if (gameElapsed >= _questRefreshDuration) {
+          expiredQuests.add(quest);
+        }
+      }
+    }
+
+    if (expiredQuests.isNotEmpty) {
+      _refreshExpiredQuests(expiredQuests);
+    }
+  }
+
+  Future<void> _refreshExpiredQuests(List<ActiveQuest> expired) async {
+    final staticData = ref.read(staticDataProvider).value;
+    final userData = ref.read(userDataProvider);
+    if (staticData == null || userData == null) return;
+
+    final region = staticData.regions.firstWhere((r) => r.region == userData.region);
+
+    for (final quest in expired) {
+      await _repo.removeQuest(quest.id);
+    }
+
+    final newQuests = QuestGenerator.generateQuests(
+      regionTier: region.regionTier,
+      regionId: userData.region,
+      questPools: staticData.questPools,
+      questTypes: staticData.questTypes,
+      count: expired.length,
+      random: Random(),
+    );
+    await _repo.addQuests(newQuests);
+    _load();
   }
 
   void _checkCompletions() {

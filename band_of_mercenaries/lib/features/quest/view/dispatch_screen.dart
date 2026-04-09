@@ -171,6 +171,24 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
             const SizedBox(height: 4),
             Text('난이도 ${quest.difficulty} · 보상 ${questType.baseReward}G · 소요 ${questType.baseDuration}초',
                 style: const TextStyle(fontSize: 13, color: AppTheme.textHint)),
+            if (quest.status == QuestStatus.pending && quest.createdAt != null)
+              Builder(builder: (_) {
+                final speedMult = ref.read(speedMultiplierProvider);
+                final realElapsed = DateTime.now().difference(quest.createdAt!);
+                final gameElapsedMs = (realElapsed.inMilliseconds * speedMult).round();
+                final gameElapsed = Duration(milliseconds: gameElapsedMs);
+                final remaining = const Duration(hours: 1) - gameElapsed;
+                if (remaining.isNegative) return const SizedBox.shrink();
+                final mins = remaining.inMinutes;
+                final secs = remaining.inSeconds % 60;
+                return Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '갱신까지 ${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}',
+                    style: const TextStyle(fontSize: 11, color: AppTheme.textHint),
+                  ),
+                );
+              }),
           ],
         ),
       ),
