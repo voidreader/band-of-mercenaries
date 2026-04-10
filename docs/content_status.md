@@ -1,6 +1,6 @@
 # 컨텐츠 개발 현황
 
-> 마지막 업데이트: 2026-04-09 (feature/game-depth-and-goals 브랜치)
+> 마지막 업데이트: 2026-04-10
 
 ---
 
@@ -24,6 +24,7 @@
 | 거리/시간 계산 | ✅ | 거리 × 30초 |
 | 여행 이벤트 | ✅ | 12종, 거리 비례 확률 (최대 80%) |
 | 리전 티어 잠금 | ✅ | 명성 랭크에 따른 상위 티어 접근 제한 |
+| 이동 제한 | ✅ | 파견 중인 용병이 있으면 이동 불가 |
 
 ### 퀘스트 시스템
 
@@ -33,10 +34,11 @@
 | 퀘스트 유형 | ✅ | 4종 (약탈 100G / 토벌 120G / 호위 90G / 탐험 80G) |
 | 난이도 5단계 | ✅ | 적전투력 10~80, 보상배수 1.0~4.5 |
 | 파견 | ✅ | 다중 용병 선택, 성공률 실시간 표시 |
-| 비용 구조 | ✅ | 파견비용 + 인건비 선차감, 순수익 표시 |
+| 비용 구조 | ✅ | 파견비용(소요시간 비례) + 인건비 선차감, 순수익 표시 |
 | 결과 판정 | ✅ | 대성공(2배) / 성공 / 실패(부상) / 대실패(사망률↑) |
 | XP 분배 | ✅ | 난이도 × 기본XP(20) × 결과배수 + 훈련소 보너스 |
 | 명성 획득 | ✅ | 퀘스트 완료 시 명성 획득 |
+| 퀘스트 자동 갱신 | ✅ | 대기 중 퀘스트 1시간(게임 시간)마다 자동 교체 |
 
 ### 용병 시스템
 
@@ -49,7 +51,8 @@
 | 상태 관리 | ✅ | 정상 → 피곤함(80%, 5분) → 부상(난이도×10분) → 사망 |
 | 레벨/XP | ✅ | 최대 5레벨, 임계값 [0, 100, 350, 850, 1850] |
 | 주둔지 용량 | ✅ | 기본 + 주둔지 레벨별 추가 슬롯 |
-| 이름 | ✅ | 217개 한국어 이름 풀 |
+| 이름 | ✅ | 약 270개 한국어 이름 풀 |
+| 방출 | ✅ | 파견 중이 아닌 용병을 퇴직금(인건비×레벨) 지급 후 영구 방출, 재모집 불가 |
 
 ### 시설 시스템
 
@@ -78,10 +81,19 @@
 | 항목 | 내용 |
 |------|------|
 | 초기 골드 | 500G |
-| 파견비용 | 난이도별 20/50/100/200/400G |
+| 파견비용 | 난이도 및 소요시간 비례 (MinCost~MaxCost 구간 보간) |
 | 인건비 | 티어별 10/25/50/100/200G (퀘스트당) |
 | 수익 공식 | 순수익 = 기본보상 × 난이도배수 - 인건비 - 파견비용 |
 | 여행 이벤트 | 골드 획득(+20~120G) 또는 손실(-30~60G) |
+| 방치형 보상 | 앱 미접속 시 분당 1G, 최대 480G(8시간) 자동 지급 |
+
+### 활동 로그 시스템
+
+| 항목 | 상태 | 내용 |
+|------|------|------|
+| 로그 유형 | ✅ | 퀘스트 결과, 용병 상태 변화, 이동 완료, 모집, 방출, 레벨업 |
+| 저장 | ✅ | Hive `activityLogs` 박스, 최대 50개 유지 |
+| 표시 | ✅ | 타임스탬프 역순 정렬 |
 
 ---
 
@@ -92,10 +104,10 @@
 | Region.json | 199 | 1개 대륙, 5단계 티어 |
 | Job.json | 85 | 5티어 직업군 |
 | Trait.json | 4 | 4종 특성 |
-| Difficulty.json | 5 | 난이도 1~5 |
+| Difficulty.json | 5 | 난이도 1~5 (MinDispatchCost/MaxDispatchCost) |
 | QuestType.json | 4 | 약탈/탐험/토벌/호위 |
 | QuestPool.json | 200 | 퀘스트 템플릿 |
-| PersonName.json | 217 | 한국어 이름 |
+| PersonName.json | 약 270 | 한국어 이름 |
 | TravelEvent.json | 12 | 여행 이벤트 |
 | Facility.json | 4 | 시설 종류 |
 | Rank.json | 6 | 명성 등급 |
@@ -107,11 +119,11 @@
 
 | 탭 | 화면 | 상태 | 주요 기능 |
 |----|------|------|-----------|
-| 홈 | HomeScreen | ✅ | 골드, 위치, 진행중 퀘스트, 용병 수, 야영지 이미지 |
-| 이동 | MovementScreen | ✅ | 리전/섹터 선택, 거리/시간 표시, 티어 잠금 표시 |
+| 홈 | HomeScreen | ✅ | 골드, 위치, 진행중 퀘스트, 용병 수, 야영지 이미지, 활동 로그 |
+| 이동 | MovementScreen | ✅ | 리전/섹터 선택, 거리/시간 표시, 티어 잠금 표시, 이동 제한 안내 |
 | 파견 | DispatchScreen | ✅ | 퀘스트 목록, 용병 선택, 비용 분석, 결과 다이얼로그 |
-| 모집 | RecruitScreen | ✅ | 무료/유료 모집, 용병 카드(레벨/XP/스탯/상태) |
-| 설정 | SettingsScreen | ✅ | 시설 관리 (업그레이드 UI) |
+| 모집 | RecruitScreen | ✅ | 무료/유료 모집, 용병 카드(레벨/XP/스탯/상태), 방출 기능 |
+| 설정 | SettingsScreen | ✅ | 시설 관리 (업그레이드 UI), 시간 가속 (개발용) |
 
 ---
 
@@ -122,6 +134,8 @@
 | `user` | 골드, 위치, 이동상태, 명성, 시설레벨, 무료모집 쿨타임 |
 | `mercenaries` | 용병 목록 (스탯, 상태, XP, 레벨) |
 | `quests` | 퀘스트 목록 (대기/진행/완료) |
+| `activityLogs` | 활동 로그 (최대 50개) |
+| `settings` | 일반 key-value (lastActiveTime, dismissedMercIds 등) |
 
 ---
 
@@ -147,7 +161,7 @@ lib/
 ├── core/providers/     3개 전역 Provider (game_state, static_data, timer)
 ├── core/data/          Hive 초기화, JSON 로더
 ├── features/
-│   ├── home/           ReputationService
+│   ├── home/           ReputationService, ActivityLog 시스템
 │   ├── movement/       TravelEventService, MovementProvider, Repository
 │   ├── quest/          ExperienceService, QuestCalculator, QuestGenerator, QuestProvider, Repository
 │   ├── mercenary/      FacilityService, RecruitmentService, MercenaryProvider, Repository
