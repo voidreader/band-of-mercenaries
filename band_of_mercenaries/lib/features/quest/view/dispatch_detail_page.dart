@@ -10,8 +10,9 @@ import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider
 
 class DispatchDetailPage extends ConsumerStatefulWidget {
   final String questId;
+  final VoidCallback onBack;
 
-  const DispatchDetailPage({super.key, required this.questId});
+  const DispatchDetailPage({super.key, required this.questId, required this.onBack});
 
   @override
   ConsumerState<DispatchDetailPage> createState() => _DispatchDetailPageState();
@@ -29,7 +30,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
 
     final quest = quests.where((q) => q.id == widget.questId).firstOrNull;
     if (quest == null || userData == null) {
-      return const Scaffold(body: Center(child: Text('퀘스트를 찾을 수 없습니다')));
+      return const Center(child: Text('퀘스트를 찾을 수 없습니다'));
     }
 
     return staticData.when(
@@ -68,9 +69,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
         );
         final hasEnoughGold = userData.gold >= dispatchCost;
 
-        return Scaffold(
-          body: SafeArea(
-            child: Column(
+        return Column(
               children: [
                 // Top fixed: Quest info
                 Container(
@@ -85,7 +84,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                       Row(
                         children: [
                           GestureDetector(
-                            onTap: () => Navigator.pop(context),
+                            onTap: widget.onBack,
                             child: const Padding(
                               padding: EdgeInsets.only(right: 12),
                               child: Icon(Icons.arrow_back, size: 22),
@@ -227,11 +226,10 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                           onPressed: (_selectedMercIds.isEmpty || !hasEnoughGold)
                               ? null
                               : () async {
-                                  final navigator = Navigator.of(context);
                                   final success = await ref.read(questListProvider.notifier)
                                       .dispatch(widget.questId, _selectedMercIds.toList());
                                   if (success && mounted) {
-                                    navigator.pop();
+                                    widget.onBack();
                                   }
                                 },
                           child: const Text('파견 출발'),
@@ -241,12 +239,10 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                   ),
                 ),
               ],
-            ),
-          ),
-        );
+            );
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
     );
   }
 }

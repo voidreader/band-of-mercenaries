@@ -19,6 +19,7 @@ class DispatchScreen extends ConsumerStatefulWidget {
 
 class _DispatchScreenState extends ConsumerState<DispatchScreen> {
   String? _selectedQuestId;
+  String? _dispatchQuestId;
   bool _isShowingResult = false;
   final Set<String> _shownResultIds = {};
 
@@ -30,6 +31,13 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     ref.watch(gameTickProvider);
 
     if (userData == null) return const Center(child: CircularProgressIndicator());
+
+    if (_dispatchQuestId != null) {
+      return DispatchDetailPage(
+        questId: _dispatchQuestId!,
+        onBack: () => setState(() => _dispatchQuestId = null),
+      );
+    }
 
     if (userData.isMoving) {
       return const Center(
@@ -158,13 +166,8 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
       onTap: () {
         setState(() {
           _selectedQuestId = quest.id;
+          _dispatchQuestId = quest.id;
         });
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DispatchDetailPage(questId: quest.id),
-          ),
-        );
       },
       child: Container(
         padding: const EdgeInsets.all(12),
