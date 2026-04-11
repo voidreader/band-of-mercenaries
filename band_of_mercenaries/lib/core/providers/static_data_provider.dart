@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
+import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/models/difficulty.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
@@ -43,9 +43,8 @@ class StaticGameData {
 }
 
 final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
-  final appDir = await getApplicationDocumentsDirectory();
-  final cacheDir = Directory('${appDir.path}/cache');
-  final dataLoader = DataLoader(cacheDir: cacheDir);
+  final cacheBox = Hive.box<String>(HiveInitializer.staticDataCacheBoxName);
+  final dataLoader = DataLoader(cacheBox: cacheBox);
 
   return StaticGameData(
     difficulties: dataLoader.loadFromCache('difficulties', Difficulty.fromJson),

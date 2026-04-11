@@ -1,41 +1,40 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/rank.dart';
 
 void main() {
   late Directory tempDir;
+  late Box<String> cacheBox;
   late DataLoader dataLoader;
 
-  setUp(() {
+  setUp(() async {
     tempDir = Directory.systemTemp.createTempSync('data_loader_test_');
-    dataLoader = DataLoader(cacheDir: tempDir);
+    Hive.init(tempDir.path);
+    cacheBox = await Hive.openBox<String>('testCache');
+    dataLoader = DataLoader(cacheBox: cacheBox);
   });
 
-  tearDown(() {
+  tearDown(() async {
+    await cacheBox.close();
+    await Hive.close();
     tempDir.deleteSync(recursive: true);
   });
 
   group('DataLoader', () {
-    test('hasCache returns false when no cache files exist', () {
+    test('hasCache returns false when no cache exists', () {
       expect(dataLoader.hasCache(), false);
     });
 
-    test('saveToCache writes JSON file', () async {
+    test('saveToCache stores data', () async {
       final data = [
         {'id': 'farmer', 'tier': 1, 'name': '농부', 'base_atk': 4, 'base_def': 3, 'base_hp': 24, 'speed': 0.96},
       ];
 
       await dataLoader.saveToCache('jobs', data);
-
-      final file = File('${tempDir.path}/jobs.json');
-      expect(file.existsSync(), true);
-
-      final content = jsonDecode(file.readAsStringSync()) as List;
-      expect(content.length, 1);
-      expect(content[0]['id'], 'farmer');
+      expect(cacheBox.containsKey('jobs'), true);
     });
 
     test('hasCache returns true after saving', () async {

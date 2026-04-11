@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/supabase_initializer.dart';
 import 'package:band_of_mercenaries/core/data/sync_service.dart';
@@ -95,11 +93,10 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
   }
 
   Future<void> _syncOnResume() async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final cacheDir = Directory('${appDir.path}/cache');
+    final cacheBox = Hive.box<String>(HiveInitializer.staticDataCacheBoxName);
     final syncService = SyncService(
       client: SupabaseInitializer.client,
-      dataLoader: DataLoader(cacheDir: cacheDir),
+      dataLoader: DataLoader(cacheBox: cacheBox),
     );
 
     final status = await syncService.sync();
