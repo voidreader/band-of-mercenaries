@@ -3,3 +3,4 @@
 
 # Superpowers brainstorm sessions
 .superpowers/
+.claude/settings.local.json
