@@ -62,6 +62,21 @@ class ActiveQuest extends HiveObject {
   @HiveField(11)
   DateTime? createdAt;
 
+  @HiveField(12)
+  int? rewardGold;
+
+  @HiveField(13)
+  int? totalWage;
+
+  @HiveField(14)
+  int? dispatchCost;
+
+  @HiveField(15)
+  int? earnedXp;
+
+  @HiveField(16)
+  int? earnedReputation;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -75,5 +90,10 @@ class ActiveQuest extends HiveObject {
     this.status = QuestStatus.pending,
     this.result,
     this.createdAt,
+    this.rewardGold,
+    this.totalWage,
+    this.dispatchCost,
+    this.earnedXp,
+    this.earnedReputation,
   });
 }
