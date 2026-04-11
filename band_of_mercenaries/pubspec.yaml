@@ -19,6 +19,9 @@ dependencies:
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
   uuid: ^4.4.2
+  supabase_flutter: ^2.8.4
+  flutter_dotenv: ^5.2.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -33,4 +36,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/json/
+    - .env
