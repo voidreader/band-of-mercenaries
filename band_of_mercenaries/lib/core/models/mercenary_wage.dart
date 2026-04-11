@@ -6,8 +6,8 @@ part 'mercenary_wage.g.dart';
 @freezed
 class MercenaryWage with _$MercenaryWage {
   const factory MercenaryWage({
-    @JsonKey(name: 'Tier') required int tier,
-    @JsonKey(name: 'Wage') required int wage,
+    required int tier,
+    required int wage,
   }) = _MercenaryWage;
 
   factory MercenaryWage.fromJson(Map<String, dynamic> json) =>

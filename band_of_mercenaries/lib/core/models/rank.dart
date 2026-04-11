@@ -6,10 +6,10 @@ part 'rank.g.dart';
 @freezed
 class Rank with _$Rank {
   const factory Rank({
-    @JsonKey(name: 'Grade') required String grade,
-    @JsonKey(name: 'Name') required String name,
-    @JsonKey(name: 'RequiredReputation') required int requiredReputation,
-    @JsonKey(name: 'UnlockTier') required int unlockTier,
+    required String grade,
+    required String name,
+    @JsonKey(name: 'required_reputation') required int requiredReputation,
+    @JsonKey(name: 'unlock_tier') required int unlockTier,
   }) = _Rank;
 
   factory Rank.fromJson(Map<String, dynamic> json) =>

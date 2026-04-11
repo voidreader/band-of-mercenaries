@@ -6,10 +6,10 @@ part 'trait_data.g.dart';
 @freezed
 class TraitData with _$TraitData {
   const factory TraitData({
-    @JsonKey(name: 'ID') required String id,
-    @JsonKey(name: 'Name') required String name,
-    @JsonKey(name: 'EffectType') required String effectType,
-    @JsonKey(name: 'Value') required double value,
+    required String id,
+    required String name,
+    @JsonKey(name: 'effect_type') required String effectType,
+    required double value,
   }) = _TraitData;
 
   factory TraitData.fromJson(Map<String, dynamic> json) =>
