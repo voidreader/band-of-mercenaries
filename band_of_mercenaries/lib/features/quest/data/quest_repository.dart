@@ -19,19 +19,31 @@ class QuestRepository {
     }
   }
 
-  Future<void> startQuest(String questId, List<String> mercIds, DateTime endTime) async {
+  Future<void> startQuest(String questId, List<String> mercIds, DateTime endTime, {int? dispatchCost}) async {
     final quest = _box.values.firstWhere((q) => q.id == questId);
     quest.dispatchedMercIds = mercIds;
     quest.startTime = DateTime.now();
     quest.endTime = endTime;
     quest.status = QuestStatus.inProgress;
+    quest.dispatchCost = dispatchCost;
     await quest.save();
   }
 
-  Future<void> completeQuest(String questId, QuestResult result) async {
+  Future<void> completeQuest(
+    String questId,
+    QuestResult result, {
+    int? rewardGold,
+    int? totalWage,
+    int? earnedXp,
+    int? earnedReputation,
+  }) async {
     final quest = _box.values.firstWhere((q) => q.id == questId);
     quest.status = QuestStatus.completed;
     quest.result = result;
+    quest.rewardGold = rewardGold;
+    quest.totalWage = totalWage;
+    quest.earnedXp = earnedXp;
+    quest.earnedReputation = earnedReputation;
     await quest.save();
   }
 
