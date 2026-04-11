@@ -55,7 +55,12 @@
       "Bash(wc:*)",
       "Bash(flutter test:*)",
       "Bash(/Users/0398lhj/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh:*)",
-      "Bash(head -20 /Users/0398lhj/git/band-of-mercenaries/band_of_mercenaries/lib/core/models/*.dart)"
+      "Bash(head -20 /Users/0398lhj/git/band-of-mercenaries/band_of_mercenaries/lib/core/models/*.dart)",
+      "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/agents)",
+      "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/implement-spec)",
+      "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/implement-agent)",
+      "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/finalize-feature)",
+      "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/finalize-minor-task)"
     ]
   }
 }

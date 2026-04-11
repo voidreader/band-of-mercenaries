@@ -1,6 +1,26 @@
 # CHANGELOG
 
-## [Unreleased] - 2026-04-10
+## 2026-04-11
+
+### Features
+- Supabase 기반 버전별 델타 동기화 시스템 구축 (1217d8b → 50437ee)
+  - `SupabaseInitializer`: dotenv(.env) 기반 Supabase 연결 초기화 (2318607)
+  - `DataLoader`: 캐시 파일 I/O 및 Supabase 응답 파싱 (9b5a9fb)
+  - `SyncService`: `data_versions` 테이블 비교 → 변경 테이블만 다운로드하는 델타 동기화 (15c3270)
+  - 앱 생명주기(시작 + 포그라운드 복귀)에 SyncService 통합 (ed6a6ab)
+
+### Refactors
+- 번들 JSON 파일 및 `JsonLoader` 제거 → Supabase 동기화로 대체 (e735d94)
+- 전체 정적 데이터 모델 `@JsonKey` 어노테이션을 snake_case로 변환 (Supabase 컬럼명 일치) (5a896e5, 321c3b5)
+- 캐시 저장소를 `path_provider` → Hive `staticDataCache` 박스로 교체 (웹 호환성) (3744a76)
+
+### Docs
+- Supabase 데이터 동기화 설계 스펙 및 구현 계획 추가 (6d285db, 3e3a92c)
+- CLAUDE.md Supabase 데이터 동기화 아키텍처 반영 업데이트 (86dd3d6)
+
+---
+
+## 2026-04-10
 
 - `update` (e3d7a6e)
 

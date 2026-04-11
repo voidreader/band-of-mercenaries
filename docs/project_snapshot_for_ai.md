@@ -1,7 +1,7 @@
 # 용병단 이야기 — AI 조언용 프로젝트 스냅샷
 
 > 이 문서는 다른 AI에게 프로젝트를 설명하고 조언을 구하기 위한 스냅샷입니다.  
-> 작성일: 2026-04-10
+> 작성일: 2026-04-11
 
 ---
 
@@ -14,8 +14,8 @@
 - **핵심 감성**: "내 용병단이 성장하고 있다"는 느낌. 레벨업, 명성 상승, 더 어려운 지역 개방.
 - **직접 전투 없음**: 플레이어는 **어떤 용병을 보낼지, 어디로 이동할지, 어떤 의뢰를 받을지**를 결정. 파견 후 실제 시간이 흐르고 결과를 확인하는 방식.
 - **레퍼런스 게임**: OGame, 아크메이지 웹게임, Melvor Idle, Kingdom of Loathing
-- **온라인 지향**: OGame, 아크메이지, Kingdom of Loathing 처럼 온라인 랭킹과 경쟁 요소를 도입할 계획이지만, 초기에는 로컬에서 JSON 파일로 데이터 관리
-- **백엔드 서비스**: Supabase 사용
+- **온라인 지향**: OGame, 아크메이지, Kingdom of Loathing 처럼 온라인 랭킹과 경쟁 요소를 도입할 계획이지만, 초기에는 Supabase에서 정적 데이터를 동기화하는 방식으로 운영
+- **백엔드 서비스**: Supabase 사용 (정적 데이터 관리 및 향후 사용자 인증/랭킹)
 
 ---
 
@@ -131,7 +131,7 @@
 
 ---
 
-## 5. 현재 구현 상태 (2026-04-10 기준)
+## 5. 현재 구현 상태 (2026-04-11 기준)
 
 ### 완성된 기능
 
@@ -144,6 +144,16 @@
 - ✅ 방치형 보상 (미접속 시 분당 1G, 최대 480G)
 - ✅ 활동 로그 (최대 50개, Hive 영속성)
 - ✅ Material 3 다크 테마, 티어별 색상 UI
+- ✅ **Supabase 정적 데이터 동기화** (버전 기반 델타 동기화, 오프라인 캐시 지원)
+
+### Supabase 데이터 동기화 아키텍처
+
+앱 시작 / 포그라운드 복귀 시 Supabase `data_versions` 테이블과 비교해 변경된 테이블만 다운로드한다.
+
+- **첫 실행**: 서버 연결 필수, 전체 11개 테이블 다운로드
+- **이후 실행**: 버전 비교 → 변경 테이블만 다운로드 (델타 동기화)
+- **오프라인**: 로컬 캐시(Hive `staticDataCache` 박스)로 플레이 가능
+- **관리 도구**: `operation-bom` 웹앱에서 정적 데이터 편집 및 버전 발행
 
 ### 화면 구성 (하단 5탭)
 
@@ -161,10 +171,12 @@
 
 - **언어/프레임워크**: Flutter (Dart)
 - **상태 관리**: Flutter Riverpod (riverpod_generator)
-- **영속성**: Hive (NoSQL key-value, 5개 박스)
-- **코드 생성**: freezed + json_serializable + hive_generator
-- **정적 데이터**: JSON 파일 (assets/json/, 총 11종)
+- **영속성**: Hive (NoSQL key-value, 6개 박스: user / mercenaries / quests / activityLogs / settings / staticDataCache)
+- **백엔드**: Supabase (`supabase_flutter` 패키지, `.env`로 URL/ANON_KEY 관리)
+- **코드 생성**: freezed + json_serializable + hive_generator + riverpod_generator
+- **정적 데이터**: Supabase에서 관리, 앱은 Hive 박스에 캐시 (총 11개 테이블)
 - **게임 루프**: 1초 Stream (gameTickProvider)
+- **설정 파일**: `.env` (gitignored), `.env.example` 템플릿 제공
 
 ---
 
@@ -187,7 +199,7 @@
 - 장비/스킬 시스템
 - PvP/레이드
 - 동맹/길드
-- 백엔드 연동 (Supabase)
+- 사용자 인증 및 온라인 랭킹 (Supabase Auth 활용)
 - 국제화 (현재 한국어만 지원)
 
 ---
