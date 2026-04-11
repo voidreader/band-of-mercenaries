@@ -313,6 +313,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    final displayLogs = logs.take(100).toList();
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14),
       padding: const EdgeInsets.all(12),
@@ -326,26 +328,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           const Text('최근 활동', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          ...logs.take(10).map((log) {
-            final icon = _logIcon(log.type);
-            final timeAgo = _formatTimeAgo(log.timestamp);
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                children: [
-                  Text(icon, style: const TextStyle(fontSize: 12)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(log.message,
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+          SizedBox(
+            height: 240,
+            child: ListView.builder(
+              itemCount: displayLogs.length,
+              itemBuilder: (_, index) {
+                final log = displayLogs[index];
+                final icon = _logIcon(log.type);
+                final timeAgo = _formatTimeAgo(log.timestamp);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      Text(icon, style: const TextStyle(fontSize: 12)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(log.message,
+                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(timeAgo, style: const TextStyle(fontSize: 10, color: AppTheme.textHint)),
+                    ],
                   ),
-                  Text(timeAgo, style: const TextStyle(fontSize: 10, color: AppTheme.textHint)),
-                ],
-              ),
-            );
-          }),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
