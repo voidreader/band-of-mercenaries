@@ -20,17 +20,13 @@ Facility _$FacilityFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Facility {
-  @JsonKey(name: 'ID')
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Name')
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   String get effectType => throw _privateConstructorUsedError;
-  @JsonKey(name: 'MaxLevel')
+  @JsonKey(name: 'max_level')
   int get maxLevel => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Costs')
   List<int> get costs => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Values')
   List<double> get values => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,12 +41,12 @@ abstract class $FacilityCopyWith<$Res> {
       _$FacilityCopyWithImpl<$Res, Facility>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'EffectType') String effectType,
-      @JsonKey(name: 'MaxLevel') int maxLevel,
-      @JsonKey(name: 'Costs') List<int> costs,
-      @JsonKey(name: 'Values') List<double> values});
+      {String id,
+      String name,
+      @JsonKey(name: 'effect_type') String effectType,
+      @JsonKey(name: 'max_level') int maxLevel,
+      List<int> costs,
+      List<double> values});
 }
 
 /// @nodoc
@@ -111,12 +107,12 @@ abstract class _$$FacilityImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'EffectType') String effectType,
-      @JsonKey(name: 'MaxLevel') int maxLevel,
-      @JsonKey(name: 'Costs') List<int> costs,
-      @JsonKey(name: 'Values') List<double> values});
+      {String id,
+      String name,
+      @JsonKey(name: 'effect_type') String effectType,
+      @JsonKey(name: 'max_level') int maxLevel,
+      List<int> costs,
+      List<double> values});
 }
 
 /// @nodoc
@@ -170,12 +166,12 @@ class __$$FacilityImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$FacilityImpl implements _Facility {
   const _$FacilityImpl(
-      {@JsonKey(name: 'ID') required this.id,
-      @JsonKey(name: 'Name') required this.name,
-      @JsonKey(name: 'EffectType') required this.effectType,
-      @JsonKey(name: 'MaxLevel') required this.maxLevel,
-      @JsonKey(name: 'Costs') required final List<int> costs,
-      @JsonKey(name: 'Values') required final List<double> values})
+      {required this.id,
+      required this.name,
+      @JsonKey(name: 'effect_type') required this.effectType,
+      @JsonKey(name: 'max_level') required this.maxLevel,
+      required final List<int> costs,
+      required final List<double> values})
       : _costs = costs,
         _values = values;
 
@@ -183,20 +179,17 @@ class _$FacilityImpl implements _Facility {
       _$$FacilityImplFromJson(json);
 
   @override
-  @JsonKey(name: 'ID')
   final String id;
   @override
-  @JsonKey(name: 'Name')
   final String name;
   @override
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   final String effectType;
   @override
-  @JsonKey(name: 'MaxLevel')
+  @JsonKey(name: 'max_level')
   final int maxLevel;
   final List<int> _costs;
   @override
-  @JsonKey(name: 'Costs')
   List<int> get costs {
     if (_costs is EqualUnmodifiableListView) return _costs;
     // ignore: implicit_dynamic_type
@@ -205,7 +198,6 @@ class _$FacilityImpl implements _Facility {
 
   final List<double> _values;
   @override
-  @JsonKey(name: 'Values')
   List<double> get values {
     if (_values is EqualUnmodifiableListView) return _values;
     // ignore: implicit_dynamic_type
@@ -259,34 +251,29 @@ class _$FacilityImpl implements _Facility {
 
 abstract class _Facility implements Facility {
   const factory _Facility(
-          {@JsonKey(name: 'ID') required final String id,
-          @JsonKey(name: 'Name') required final String name,
-          @JsonKey(name: 'EffectType') required final String effectType,
-          @JsonKey(name: 'MaxLevel') required final int maxLevel,
-          @JsonKey(name: 'Costs') required final List<int> costs,
-          @JsonKey(name: 'Values') required final List<double> values}) =
-      _$FacilityImpl;
+      {required final String id,
+      required final String name,
+      @JsonKey(name: 'effect_type') required final String effectType,
+      @JsonKey(name: 'max_level') required final int maxLevel,
+      required final List<int> costs,
+      required final List<double> values}) = _$FacilityImpl;
 
   factory _Facility.fromJson(Map<String, dynamic> json) =
       _$FacilityImpl.fromJson;
 
   @override
-  @JsonKey(name: 'ID')
   String get id;
   @override
-  @JsonKey(name: 'Name')
   String get name;
   @override
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   String get effectType;
   @override
-  @JsonKey(name: 'MaxLevel')
+  @JsonKey(name: 'max_level')
   int get maxLevel;
   @override
-  @JsonKey(name: 'Costs')
   List<int> get costs;
   @override
-  @JsonKey(name: 'Values')
   List<double> get values;
   @override
   @JsonKey(ignore: true)

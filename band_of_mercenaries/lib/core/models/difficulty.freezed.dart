@@ -20,21 +20,20 @@ Difficulty _$DifficultyFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Difficulty {
-  @JsonKey(name: 'Level')
   int get level => throw _privateConstructorUsedError;
-  @JsonKey(name: 'EnemyPower')
+  @JsonKey(name: 'enemy_power')
   int get enemyPower => throw _privateConstructorUsedError;
-  @JsonKey(name: 'RewardMultiplier')
+  @JsonKey(name: 'reward_multiplier')
   double get rewardMultiplier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'SuccessPenalty')
+  @JsonKey(name: 'success_penalty')
   double get successPenalty => throw _privateConstructorUsedError;
-  @JsonKey(name: 'InjuryRate')
+  @JsonKey(name: 'injury_rate')
   double get injuryRate => throw _privateConstructorUsedError;
-  @JsonKey(name: 'DeathRate')
+  @JsonKey(name: 'death_rate')
   double get deathRate => throw _privateConstructorUsedError;
-  @JsonKey(name: 'MinDispatchCost')
+  @JsonKey(name: 'min_dispatch_cost')
   int get minDispatchCost => throw _privateConstructorUsedError;
-  @JsonKey(name: 'MaxDispatchCost')
+  @JsonKey(name: 'max_dispatch_cost')
   int get maxDispatchCost => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -50,14 +49,14 @@ abstract class $DifficultyCopyWith<$Res> {
       _$DifficultyCopyWithImpl<$Res, Difficulty>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'Level') int level,
-      @JsonKey(name: 'EnemyPower') int enemyPower,
-      @JsonKey(name: 'RewardMultiplier') double rewardMultiplier,
-      @JsonKey(name: 'SuccessPenalty') double successPenalty,
-      @JsonKey(name: 'InjuryRate') double injuryRate,
-      @JsonKey(name: 'DeathRate') double deathRate,
-      @JsonKey(name: 'MinDispatchCost') int minDispatchCost,
-      @JsonKey(name: 'MaxDispatchCost') int maxDispatchCost});
+      {int level,
+      @JsonKey(name: 'enemy_power') int enemyPower,
+      @JsonKey(name: 'reward_multiplier') double rewardMultiplier,
+      @JsonKey(name: 'success_penalty') double successPenalty,
+      @JsonKey(name: 'injury_rate') double injuryRate,
+      @JsonKey(name: 'death_rate') double deathRate,
+      @JsonKey(name: 'min_dispatch_cost') int minDispatchCost,
+      @JsonKey(name: 'max_dispatch_cost') int maxDispatchCost});
 }
 
 /// @nodoc
@@ -128,14 +127,14 @@ abstract class _$$DifficultyImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'Level') int level,
-      @JsonKey(name: 'EnemyPower') int enemyPower,
-      @JsonKey(name: 'RewardMultiplier') double rewardMultiplier,
-      @JsonKey(name: 'SuccessPenalty') double successPenalty,
-      @JsonKey(name: 'InjuryRate') double injuryRate,
-      @JsonKey(name: 'DeathRate') double deathRate,
-      @JsonKey(name: 'MinDispatchCost') int minDispatchCost,
-      @JsonKey(name: 'MaxDispatchCost') int maxDispatchCost});
+      {int level,
+      @JsonKey(name: 'enemy_power') int enemyPower,
+      @JsonKey(name: 'reward_multiplier') double rewardMultiplier,
+      @JsonKey(name: 'success_penalty') double successPenalty,
+      @JsonKey(name: 'injury_rate') double injuryRate,
+      @JsonKey(name: 'death_rate') double deathRate,
+      @JsonKey(name: 'min_dispatch_cost') int minDispatchCost,
+      @JsonKey(name: 'max_dispatch_cost') int maxDispatchCost});
 }
 
 /// @nodoc
@@ -199,41 +198,40 @@ class __$$DifficultyImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$DifficultyImpl implements _Difficulty {
   const _$DifficultyImpl(
-      {@JsonKey(name: 'Level') required this.level,
-      @JsonKey(name: 'EnemyPower') required this.enemyPower,
-      @JsonKey(name: 'RewardMultiplier') required this.rewardMultiplier,
-      @JsonKey(name: 'SuccessPenalty') required this.successPenalty,
-      @JsonKey(name: 'InjuryRate') required this.injuryRate,
-      @JsonKey(name: 'DeathRate') required this.deathRate,
-      @JsonKey(name: 'MinDispatchCost') required this.minDispatchCost,
-      @JsonKey(name: 'MaxDispatchCost') required this.maxDispatchCost});
+      {required this.level,
+      @JsonKey(name: 'enemy_power') required this.enemyPower,
+      @JsonKey(name: 'reward_multiplier') required this.rewardMultiplier,
+      @JsonKey(name: 'success_penalty') required this.successPenalty,
+      @JsonKey(name: 'injury_rate') required this.injuryRate,
+      @JsonKey(name: 'death_rate') required this.deathRate,
+      @JsonKey(name: 'min_dispatch_cost') required this.minDispatchCost,
+      @JsonKey(name: 'max_dispatch_cost') required this.maxDispatchCost});
 
   factory _$DifficultyImpl.fromJson(Map<String, dynamic> json) =>
       _$$DifficultyImplFromJson(json);
 
   @override
-  @JsonKey(name: 'Level')
   final int level;
   @override
-  @JsonKey(name: 'EnemyPower')
+  @JsonKey(name: 'enemy_power')
   final int enemyPower;
   @override
-  @JsonKey(name: 'RewardMultiplier')
+  @JsonKey(name: 'reward_multiplier')
   final double rewardMultiplier;
   @override
-  @JsonKey(name: 'SuccessPenalty')
+  @JsonKey(name: 'success_penalty')
   final double successPenalty;
   @override
-  @JsonKey(name: 'InjuryRate')
+  @JsonKey(name: 'injury_rate')
   final double injuryRate;
   @override
-  @JsonKey(name: 'DeathRate')
+  @JsonKey(name: 'death_rate')
   final double deathRate;
   @override
-  @JsonKey(name: 'MinDispatchCost')
+  @JsonKey(name: 'min_dispatch_cost')
   final int minDispatchCost;
   @override
-  @JsonKey(name: 'MaxDispatchCost')
+  @JsonKey(name: 'max_dispatch_cost')
   final int maxDispatchCost;
 
   @override
@@ -292,42 +290,42 @@ class _$DifficultyImpl implements _Difficulty {
 
 abstract class _Difficulty implements Difficulty {
   const factory _Difficulty(
-      {@JsonKey(name: 'Level') required final int level,
-      @JsonKey(name: 'EnemyPower') required final int enemyPower,
-      @JsonKey(name: 'RewardMultiplier') required final double rewardMultiplier,
-      @JsonKey(name: 'SuccessPenalty') required final double successPenalty,
-      @JsonKey(name: 'InjuryRate') required final double injuryRate,
-      @JsonKey(name: 'DeathRate') required final double deathRate,
-      @JsonKey(name: 'MinDispatchCost') required final int minDispatchCost,
-      @JsonKey(name: 'MaxDispatchCost')
+      {required final int level,
+      @JsonKey(name: 'enemy_power') required final int enemyPower,
+      @JsonKey(name: 'reward_multiplier')
+      required final double rewardMultiplier,
+      @JsonKey(name: 'success_penalty') required final double successPenalty,
+      @JsonKey(name: 'injury_rate') required final double injuryRate,
+      @JsonKey(name: 'death_rate') required final double deathRate,
+      @JsonKey(name: 'min_dispatch_cost') required final int minDispatchCost,
+      @JsonKey(name: 'max_dispatch_cost')
       required final int maxDispatchCost}) = _$DifficultyImpl;
 
   factory _Difficulty.fromJson(Map<String, dynamic> json) =
       _$DifficultyImpl.fromJson;
 
   @override
-  @JsonKey(name: 'Level')
   int get level;
   @override
-  @JsonKey(name: 'EnemyPower')
+  @JsonKey(name: 'enemy_power')
   int get enemyPower;
   @override
-  @JsonKey(name: 'RewardMultiplier')
+  @JsonKey(name: 'reward_multiplier')
   double get rewardMultiplier;
   @override
-  @JsonKey(name: 'SuccessPenalty')
+  @JsonKey(name: 'success_penalty')
   double get successPenalty;
   @override
-  @JsonKey(name: 'InjuryRate')
+  @JsonKey(name: 'injury_rate')
   double get injuryRate;
   @override
-  @JsonKey(name: 'DeathRate')
+  @JsonKey(name: 'death_rate')
   double get deathRate;
   @override
-  @JsonKey(name: 'MinDispatchCost')
+  @JsonKey(name: 'min_dispatch_cost')
   int get minDispatchCost;
   @override
-  @JsonKey(name: 'MaxDispatchCost')
+  @JsonKey(name: 'max_dispatch_cost')
   int get maxDispatchCost;
   @override
   @JsonKey(ignore: true)

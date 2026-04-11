@@ -8,26 +8,26 @@ part of 'difficulty.dart';
 
 _$DifficultyImpl _$$DifficultyImplFromJson(Map<String, dynamic> json) =>
     _$DifficultyImpl(
-      level: (json['Level'] as num).toInt(),
-      enemyPower: (json['EnemyPower'] as num).toInt(),
-      rewardMultiplier: (json['RewardMultiplier'] as num).toDouble(),
-      successPenalty: (json['SuccessPenalty'] as num).toDouble(),
-      injuryRate: (json['InjuryRate'] as num).toDouble(),
-      deathRate: (json['DeathRate'] as num).toDouble(),
-      minDispatchCost: (json['MinDispatchCost'] as num).toInt(),
-      maxDispatchCost: (json['MaxDispatchCost'] as num).toInt(),
+      level: (json['level'] as num).toInt(),
+      enemyPower: (json['enemy_power'] as num).toInt(),
+      rewardMultiplier: (json['reward_multiplier'] as num).toDouble(),
+      successPenalty: (json['success_penalty'] as num).toDouble(),
+      injuryRate: (json['injury_rate'] as num).toDouble(),
+      deathRate: (json['death_rate'] as num).toDouble(),
+      minDispatchCost: (json['min_dispatch_cost'] as num).toInt(),
+      maxDispatchCost: (json['max_dispatch_cost'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$DifficultyImplToJson(_$DifficultyImpl instance) =>
     <String, dynamic>{
-      'Level': instance.level,
-      'EnemyPower': instance.enemyPower,
-      'RewardMultiplier': instance.rewardMultiplier,
-      'SuccessPenalty': instance.successPenalty,
-      'InjuryRate': instance.injuryRate,
-      'DeathRate': instance.deathRate,
-      'MinDispatchCost': instance.minDispatchCost,
-      'MaxDispatchCost': instance.maxDispatchCost,
+      'level': instance.level,
+      'enemy_power': instance.enemyPower,
+      'reward_multiplier': instance.rewardMultiplier,
+      'success_penalty': instance.successPenalty,
+      'injury_rate': instance.injuryRate,
+      'death_rate': instance.deathRate,
+      'min_dispatch_cost': instance.minDispatchCost,
+      'max_dispatch_cost': instance.maxDispatchCost,
     };
 
 _$DifficultyListImpl _$$DifficultyListImplFromJson(Map<String, dynamic> json) =>

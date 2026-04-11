@@ -20,17 +20,13 @@ QuestPool _$QuestPoolFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$QuestPool {
-  @JsonKey(name: 'ID')
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Name')
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Type')
   double get type => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Difficulty')
   double get difficulty => throw _privateConstructorUsedError;
-  @JsonKey(name: 'MinRegionDiff')
+  @JsonKey(name: 'min_region_diff')
   double get minRegionDiff => throw _privateConstructorUsedError;
-  @JsonKey(name: 'MaxRegionDiff')
+  @JsonKey(name: 'max_region_diff')
   double get maxRegionDiff => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,12 +41,12 @@ abstract class $QuestPoolCopyWith<$Res> {
       _$QuestPoolCopyWithImpl<$Res, QuestPool>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'Type') double type,
-      @JsonKey(name: 'Difficulty') double difficulty,
-      @JsonKey(name: 'MinRegionDiff') double minRegionDiff,
-      @JsonKey(name: 'MaxRegionDiff') double maxRegionDiff});
+      {String id,
+      String name,
+      double type,
+      double difficulty,
+      @JsonKey(name: 'min_region_diff') double minRegionDiff,
+      @JsonKey(name: 'max_region_diff') double maxRegionDiff});
 }
 
 /// @nodoc
@@ -111,12 +107,12 @@ abstract class _$$QuestPoolImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'Type') double type,
-      @JsonKey(name: 'Difficulty') double difficulty,
-      @JsonKey(name: 'MinRegionDiff') double minRegionDiff,
-      @JsonKey(name: 'MaxRegionDiff') double maxRegionDiff});
+      {String id,
+      String name,
+      double type,
+      double difficulty,
+      @JsonKey(name: 'min_region_diff') double minRegionDiff,
+      @JsonKey(name: 'max_region_diff') double maxRegionDiff});
 }
 
 /// @nodoc
@@ -170,33 +166,29 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$QuestPoolImpl implements _QuestPool {
   const _$QuestPoolImpl(
-      {@JsonKey(name: 'ID') required this.id,
-      @JsonKey(name: 'Name') required this.name,
-      @JsonKey(name: 'Type') required this.type,
-      @JsonKey(name: 'Difficulty') required this.difficulty,
-      @JsonKey(name: 'MinRegionDiff') required this.minRegionDiff,
-      @JsonKey(name: 'MaxRegionDiff') required this.maxRegionDiff});
+      {required this.id,
+      required this.name,
+      required this.type,
+      required this.difficulty,
+      @JsonKey(name: 'min_region_diff') required this.minRegionDiff,
+      @JsonKey(name: 'max_region_diff') required this.maxRegionDiff});
 
   factory _$QuestPoolImpl.fromJson(Map<String, dynamic> json) =>
       _$$QuestPoolImplFromJson(json);
 
   @override
-  @JsonKey(name: 'ID')
   final String id;
   @override
-  @JsonKey(name: 'Name')
   final String name;
   @override
-  @JsonKey(name: 'Type')
   final double type;
   @override
-  @JsonKey(name: 'Difficulty')
   final double difficulty;
   @override
-  @JsonKey(name: 'MinRegionDiff')
+  @JsonKey(name: 'min_region_diff')
   final double minRegionDiff;
   @override
-  @JsonKey(name: 'MaxRegionDiff')
+  @JsonKey(name: 'max_region_diff')
   final double maxRegionDiff;
 
   @override
@@ -241,34 +233,30 @@ class _$QuestPoolImpl implements _QuestPool {
 
 abstract class _QuestPool implements QuestPool {
   const factory _QuestPool(
-      {@JsonKey(name: 'ID') required final String id,
-      @JsonKey(name: 'Name') required final String name,
-      @JsonKey(name: 'Type') required final double type,
-      @JsonKey(name: 'Difficulty') required final double difficulty,
-      @JsonKey(name: 'MinRegionDiff') required final double minRegionDiff,
-      @JsonKey(name: 'MaxRegionDiff')
+      {required final String id,
+      required final String name,
+      required final double type,
+      required final double difficulty,
+      @JsonKey(name: 'min_region_diff') required final double minRegionDiff,
+      @JsonKey(name: 'max_region_diff')
       required final double maxRegionDiff}) = _$QuestPoolImpl;
 
   factory _QuestPool.fromJson(Map<String, dynamic> json) =
       _$QuestPoolImpl.fromJson;
 
   @override
-  @JsonKey(name: 'ID')
   String get id;
   @override
-  @JsonKey(name: 'Name')
   String get name;
   @override
-  @JsonKey(name: 'Type')
   double get type;
   @override
-  @JsonKey(name: 'Difficulty')
   double get difficulty;
   @override
-  @JsonKey(name: 'MinRegionDiff')
+  @JsonKey(name: 'min_region_diff')
   double get minRegionDiff;
   @override
-  @JsonKey(name: 'MaxRegionDiff')
+  @JsonKey(name: 'max_region_diff')
   double get maxRegionDiff;
   @override
   @JsonKey(ignore: true)

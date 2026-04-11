@@ -8,26 +8,26 @@ part of 'travel_event.dart';
 
 _$TravelEventImpl _$$TravelEventImplFromJson(Map<String, dynamic> json) =>
     _$TravelEventImpl(
-      id: json['ID'] as String,
-      name: json['Name'] as String,
-      type: json['Type'] as String,
-      effectType: json['EffectType'] as String,
-      magnitude: (json['Magnitude'] as num).toDouble(),
-      minTier: (json['MinTier'] as num).toInt(),
-      maxTier: (json['MaxTier'] as num).toInt(),
-      description: json['Description'] as String,
+      id: json['id'] as String,
+      name: json['name'] as String,
+      type: json['type'] as String,
+      effectType: json['effect_type'] as String,
+      magnitude: (json['magnitude'] as num).toDouble(),
+      minTier: (json['min_tier'] as num).toInt(),
+      maxTier: (json['max_tier'] as num).toInt(),
+      description: json['description'] as String,
     );
 
 Map<String, dynamic> _$$TravelEventImplToJson(_$TravelEventImpl instance) =>
     <String, dynamic>{
-      'ID': instance.id,
-      'Name': instance.name,
-      'Type': instance.type,
-      'EffectType': instance.effectType,
-      'Magnitude': instance.magnitude,
-      'MinTier': instance.minTier,
-      'MaxTier': instance.maxTier,
-      'Description': instance.description,
+      'id': instance.id,
+      'name': instance.name,
+      'type': instance.type,
+      'effect_type': instance.effectType,
+      'magnitude': instance.magnitude,
+      'min_tier': instance.minTier,
+      'max_tier': instance.maxTier,
+      'description': instance.description,
     };
 
 _$TravelEventListImpl _$$TravelEventListImplFromJson(

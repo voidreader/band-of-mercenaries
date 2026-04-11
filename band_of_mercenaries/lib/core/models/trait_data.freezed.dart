@@ -20,13 +20,10 @@ TraitData _$TraitDataFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$TraitData {
-  @JsonKey(name: 'ID')
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Name')
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   String get effectType => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Value')
   double get value => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -41,10 +38,10 @@ abstract class $TraitDataCopyWith<$Res> {
       _$TraitDataCopyWithImpl<$Res, TraitData>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'EffectType') String effectType,
-      @JsonKey(name: 'Value') double value});
+      {String id,
+      String name,
+      @JsonKey(name: 'effect_type') String effectType,
+      double value});
 }
 
 /// @nodoc
@@ -95,10 +92,10 @@ abstract class _$$TraitDataImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'EffectType') String effectType,
-      @JsonKey(name: 'Value') double value});
+      {String id,
+      String name,
+      @JsonKey(name: 'effect_type') String effectType,
+      double value});
 }
 
 /// @nodoc
@@ -142,25 +139,22 @@ class __$$TraitDataImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$TraitDataImpl implements _TraitData {
   const _$TraitDataImpl(
-      {@JsonKey(name: 'ID') required this.id,
-      @JsonKey(name: 'Name') required this.name,
-      @JsonKey(name: 'EffectType') required this.effectType,
-      @JsonKey(name: 'Value') required this.value});
+      {required this.id,
+      required this.name,
+      @JsonKey(name: 'effect_type') required this.effectType,
+      required this.value});
 
   factory _$TraitDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$TraitDataImplFromJson(json);
 
   @override
-  @JsonKey(name: 'ID')
   final String id;
   @override
-  @JsonKey(name: 'Name')
   final String name;
   @override
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   final String effectType;
   @override
-  @JsonKey(name: 'Value')
   final double value;
 
   @override
@@ -200,25 +194,22 @@ class _$TraitDataImpl implements _TraitData {
 
 abstract class _TraitData implements TraitData {
   const factory _TraitData(
-      {@JsonKey(name: 'ID') required final String id,
-      @JsonKey(name: 'Name') required final String name,
-      @JsonKey(name: 'EffectType') required final String effectType,
-      @JsonKey(name: 'Value') required final double value}) = _$TraitDataImpl;
+      {required final String id,
+      required final String name,
+      @JsonKey(name: 'effect_type') required final String effectType,
+      required final double value}) = _$TraitDataImpl;
 
   factory _TraitData.fromJson(Map<String, dynamic> json) =
       _$TraitDataImpl.fromJson;
 
   @override
-  @JsonKey(name: 'ID')
   String get id;
   @override
-  @JsonKey(name: 'Name')
   String get name;
   @override
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   String get effectType;
   @override
-  @JsonKey(name: 'Value')
   double get value;
   @override
   @JsonKey(ignore: true)

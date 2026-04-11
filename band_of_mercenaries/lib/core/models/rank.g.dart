@@ -7,18 +7,18 @@ part of 'rank.dart';
 // **************************************************************************
 
 _$RankImpl _$$RankImplFromJson(Map<String, dynamic> json) => _$RankImpl(
-      grade: json['Grade'] as String,
-      name: json['Name'] as String,
-      requiredReputation: (json['RequiredReputation'] as num).toInt(),
-      unlockTier: (json['UnlockTier'] as num).toInt(),
+      grade: json['grade'] as String,
+      name: json['name'] as String,
+      requiredReputation: (json['required_reputation'] as num).toInt(),
+      unlockTier: (json['unlock_tier'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$RankImplToJson(_$RankImpl instance) =>
     <String, dynamic>{
-      'Grade': instance.grade,
-      'Name': instance.name,
-      'RequiredReputation': instance.requiredReputation,
-      'UnlockTier': instance.unlockTier,
+      'grade': instance.grade,
+      'name': instance.name,
+      'required_reputation': instance.requiredReputation,
+      'unlock_tier': instance.unlockTier,
     };
 
 _$RankListImpl _$$RankListImplFromJson(Map<String, dynamic> json) =>

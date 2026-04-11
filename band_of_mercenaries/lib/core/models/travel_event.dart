@@ -6,14 +6,14 @@ part 'travel_event.g.dart';
 @freezed
 class TravelEvent with _$TravelEvent {
   const factory TravelEvent({
-    @JsonKey(name: 'ID') required String id,
-    @JsonKey(name: 'Name') required String name,
-    @JsonKey(name: 'Type') required String type,
-    @JsonKey(name: 'EffectType') required String effectType,
-    @JsonKey(name: 'Magnitude') required double magnitude,
-    @JsonKey(name: 'MinTier') required int minTier,
-    @JsonKey(name: 'MaxTier') required int maxTier,
-    @JsonKey(name: 'Description') required String description,
+    required String id,
+    required String name,
+    required String type,
+    @JsonKey(name: 'effect_type') required String effectType,
+    required double magnitude,
+    @JsonKey(name: 'min_tier') required int minTier,
+    @JsonKey(name: 'max_tier') required int maxTier,
+    required String description,
   }) = _TravelEvent;
 
   factory TravelEvent.fromJson(Map<String, dynamic> json) =>

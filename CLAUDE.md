@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-용병단 운영 텍스트 기반 전략 시뮬레이션 모바일 게임. Flutter로 개발되며, 로컬 JSON + Hive를 사용한 오프라인 MVP 단계. 기획 문서는 `Docs/proto_design.md` 참조.
+용병단 운영 텍스트 기반 전략 시뮬레이션 모바일 게임. Flutter로 개발되며, Supabase 서버에서 정적 데이터를 동기화하고 Hive로 유저 데이터를 로컬 저장한다. 운영 웹앱은 `operation-bom` 프로젝트 참조. 기획 문서는 `Docs/proto_design.md` 참조.
 
 핵심 게임 루프: 용병 모집 → 위치 이동 → 퀘스트 생성 → 파견 → 시간 대기 → 결과 획득 → 반복
 
@@ -43,11 +43,11 @@ cd band_of_mercenaries && flutter analyze
 
 ```
 band_of_mercenaries/lib/
-├── main.dart              # 진입점 (Hive 초기화 → ProviderScope → 방치형 보상)
-├── app.dart               # 앱 셸 + 하단 네비게이션 + WidgetsBindingObserver(lastActiveTime 저장)
+├── main.dart              # 진입점 (Hive/Supabase 초기화 → SyncService → ProviderScope → 방치형 보상)
+├── app.dart               # 앱 셸 + 하단 네비게이션 + WidgetsBindingObserver(lastActiveTime 저장, 포그라운드 싱크)
 ├── core/
-│   ├── data/              # HiveInitializer, JsonLoader
-│   ├── models/            # 정적 데이터 모델 (freezed + json_serializable)
+│   ├── data/              # HiveInitializer, SupabaseInitializer, DataLoader, SyncService
+│   ├── models/            # 정적 데이터 모델 (freezed + json_serializable, snake_case @JsonKey)
 │   ├── providers/         # 전역 상태 (game_state, static_data, timer)
 │   └── theme/             # Material 3 테마, 티어별 색상
 ├── features/              # 기능별 모듈
@@ -71,36 +71,55 @@ band_of_mercenaries/lib/
 **Flutter Riverpod** 사용. 주요 Provider:
 - `gameTickProvider`: 1초 간격 Stream으로 게임 루프 구동 (퀘스트 완료, 이동 도착 체크)
 - `userDataProvider`: 전역 게임 상태 (골드, 위치, 이동 상태)
-- `staticDataProvider`: JSON에서 로드된 정적 데이터 (Region, Job, Trait 등)
+- `staticDataProvider`: 로컬 JSON 캐시에서 로드된 정적 데이터 (Region, Job, Trait 등). 앱 시작/포그라운드 복귀 시 Supabase와 버전 비교 후 갱신
 - `mercenaryListProvider` / `questListProvider`: 용병 및 퀘스트 상태
 - `activityLogProvider`: 활동 로그 (Hive `activityLogs` 박스, 최대 50개)
 
 ### 데이터 흐름
 
 ```
-정적 JSON (assets/json/) → JsonLoader → FutureProvider
+앱 시작 → SyncService (Supabase data_versions 비교) → 변경 테이블 다운로드 → 로컬 JSON 캐시 저장
+로컬 JSON 캐시 → DataLoader → StaticGameData → FutureProvider
 사용자 액션 → Repository → Hive 저장 → StateNotifier → UI 갱신
 게임 틱 (1초) → 완료 체크 → 자동 결과 계산
+포그라운드 복귀 → SyncService → 변경 시 staticDataProvider 무효화
 ```
 
-### 정적 데이터
+### 정적 데이터 (Supabase 동기화)
 
-`Json/` 디렉토리에 원본 JSON 파일, `band_of_mercenaries/assets/json/`에 앱 번들용 복사본.
-- Region.json: 199개 리전 (5단계 티어)
-- Job.json: 5티어 30+ 직업
-- Trait.json: 4종 특성 (강인함, 노련함, 겁쟁이, 광전사)
-- Difficulty.json: 5단계 난이도 설정 (MinDispatchCost/MaxDispatchCost로 시간 비례 비용)
-- QuestType.json / QuestPool.json: 퀘스트 유형 및 풀
-- PersonName.json: 한국어 이름 ~500개
-- TravelEvent.json: 이동 중 랜덤 이벤트 (발견, 습격, 날씨, 행운, 조우)
-- Facility.json: 시설 종류 및 레벨별 비용/효과 (훈련소, 의무실, 주둔지, 정보망)
-- Rank.json: 명성 등급 (F~A) 및 티어 잠금 해제 조건
-- MercenaryWage.json: 티어별 용병 인건비
+정적 데이터는 Supabase 서버에서 관리되며, operation-bom 웹앱에서 편집/버전 발행한다. Flutter 앱은 로컬 JSON 캐시(`앱 문서 디렉토리/cache/*.json`)에 저장하여 오프라인에서도 동작한다.
+
+**동기화 방식:**
+- 첫 실행: 서버 연결 필수, 전체 11개 테이블 다운로드
+- 이후 실행: `data_versions` 테이블로 버전 비교, 변경된 테이블만 다운로드
+- 서버 연결 실패 시: 로컬 캐시로 오프라인 플레이 가능 (캐시 있는 경우)
+- 싱크 타이밍: 앱 시작 + 포그라운드 복귀
+
+**정적 데이터 테이블 (11개):**
+- regions: 199개 리전 (5단계 티어)
+- jobs: 5티어 30+ 직업
+- traits: 4종 특성 (강인함, 노련함, 겁쟁이, 광전사)
+- difficulties: 5단계 난이도 설정 (min_dispatch_cost/max_dispatch_cost로 시간 비례 비용)
+- quest_types / quest_pools: 퀘스트 유형 및 풀
+- person_names: 한국어 이름 ~500개
+- travel_events: 이동 중 랜덤 이벤트 (발견, 습격, 날씨, 행운, 조우)
+- facilities: 시설 종류 및 레벨별 비용/효과 (훈련소, 의무실, 주둔지, 정보망)
+- ranks: 명성 등급 (F~A) 및 티어 잠금 해제 조건
+- mercenary_wages: 티어별 용병 인건비
+
+**모델 JSON 키 규칙:** 모든 정적 데이터 모델은 snake_case @JsonKey를 사용 (Supabase 컬럼명과 일치). Dart 필드명과 동일한 경우 @JsonKey 생략.
+
+### Supabase 연결
+
+- `supabase_flutter` 패키지 사용
+- `.env` 파일에 `SUPABASE_URL`, `SUPABASE_ANON_KEY` 설정 (gitignored)
+- `.env.example`에 템플릿 존재
+- 현재 인증 없이 anon key로 읽기 전용 접근 (향후 로그인 추가 예정)
 
 ### 영속성
 
 **Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings` 5개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
-- `settings` 박스: 일반 key-value (lastActiveTime, dismissedMercIds 등)
+- `settings` 박스: 일반 key-value (lastActiveTime, dismissedMercIds, dataVersions 등)
 
 ### 코드 생성
 

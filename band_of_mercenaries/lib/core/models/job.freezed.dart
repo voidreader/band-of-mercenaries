@@ -20,19 +20,15 @@ Job _$JobFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Job {
-  @JsonKey(name: 'ID')
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Tier')
   int get tier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Name')
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'BaseAtk')
+  @JsonKey(name: 'base_atk')
   int get baseAtk => throw _privateConstructorUsedError;
-  @JsonKey(name: 'BaseDef')
+  @JsonKey(name: 'base_def')
   int get baseDef => throw _privateConstructorUsedError;
-  @JsonKey(name: 'BaseHp')
+  @JsonKey(name: 'base_hp')
   int get baseHp => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Speed')
   double get speed => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -46,13 +42,13 @@ abstract class $JobCopyWith<$Res> {
       _$JobCopyWithImpl<$Res, Job>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Tier') int tier,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'BaseAtk') int baseAtk,
-      @JsonKey(name: 'BaseDef') int baseDef,
-      @JsonKey(name: 'BaseHp') int baseHp,
-      @JsonKey(name: 'Speed') double speed});
+      {String id,
+      int tier,
+      String name,
+      @JsonKey(name: 'base_atk') int baseAtk,
+      @JsonKey(name: 'base_def') int baseDef,
+      @JsonKey(name: 'base_hp') int baseHp,
+      double speed});
 }
 
 /// @nodoc
@@ -115,13 +111,13 @@ abstract class _$$JobImplCopyWith<$Res> implements $JobCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Tier') int tier,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'BaseAtk') int baseAtk,
-      @JsonKey(name: 'BaseDef') int baseDef,
-      @JsonKey(name: 'BaseHp') int baseHp,
-      @JsonKey(name: 'Speed') double speed});
+      {String id,
+      int tier,
+      String name,
+      @JsonKey(name: 'base_atk') int baseAtk,
+      @JsonKey(name: 'base_def') int baseDef,
+      @JsonKey(name: 'base_hp') int baseHp,
+      double speed});
 }
 
 /// @nodoc
@@ -178,37 +174,33 @@ class __$$JobImplCopyWithImpl<$Res> extends _$JobCopyWithImpl<$Res, _$JobImpl>
 @JsonSerializable()
 class _$JobImpl implements _Job {
   const _$JobImpl(
-      {@JsonKey(name: 'ID') required this.id,
-      @JsonKey(name: 'Tier') required this.tier,
-      @JsonKey(name: 'Name') required this.name,
-      @JsonKey(name: 'BaseAtk') required this.baseAtk,
-      @JsonKey(name: 'BaseDef') required this.baseDef,
-      @JsonKey(name: 'BaseHp') required this.baseHp,
-      @JsonKey(name: 'Speed') required this.speed});
+      {required this.id,
+      required this.tier,
+      required this.name,
+      @JsonKey(name: 'base_atk') required this.baseAtk,
+      @JsonKey(name: 'base_def') required this.baseDef,
+      @JsonKey(name: 'base_hp') required this.baseHp,
+      required this.speed});
 
   factory _$JobImpl.fromJson(Map<String, dynamic> json) =>
       _$$JobImplFromJson(json);
 
   @override
-  @JsonKey(name: 'ID')
   final String id;
   @override
-  @JsonKey(name: 'Tier')
   final int tier;
   @override
-  @JsonKey(name: 'Name')
   final String name;
   @override
-  @JsonKey(name: 'BaseAtk')
+  @JsonKey(name: 'base_atk')
   final int baseAtk;
   @override
-  @JsonKey(name: 'BaseDef')
+  @JsonKey(name: 'base_def')
   final int baseDef;
   @override
-  @JsonKey(name: 'BaseHp')
+  @JsonKey(name: 'base_hp')
   final int baseHp;
   @override
-  @JsonKey(name: 'Speed')
   final double speed;
 
   @override
@@ -251,36 +243,32 @@ class _$JobImpl implements _Job {
 
 abstract class _Job implements Job {
   const factory _Job(
-      {@JsonKey(name: 'ID') required final String id,
-      @JsonKey(name: 'Tier') required final int tier,
-      @JsonKey(name: 'Name') required final String name,
-      @JsonKey(name: 'BaseAtk') required final int baseAtk,
-      @JsonKey(name: 'BaseDef') required final int baseDef,
-      @JsonKey(name: 'BaseHp') required final int baseHp,
-      @JsonKey(name: 'Speed') required final double speed}) = _$JobImpl;
+      {required final String id,
+      required final int tier,
+      required final String name,
+      @JsonKey(name: 'base_atk') required final int baseAtk,
+      @JsonKey(name: 'base_def') required final int baseDef,
+      @JsonKey(name: 'base_hp') required final int baseHp,
+      required final double speed}) = _$JobImpl;
 
   factory _Job.fromJson(Map<String, dynamic> json) = _$JobImpl.fromJson;
 
   @override
-  @JsonKey(name: 'ID')
   String get id;
   @override
-  @JsonKey(name: 'Tier')
   int get tier;
   @override
-  @JsonKey(name: 'Name')
   String get name;
   @override
-  @JsonKey(name: 'BaseAtk')
+  @JsonKey(name: 'base_atk')
   int get baseAtk;
   @override
-  @JsonKey(name: 'BaseDef')
+  @JsonKey(name: 'base_def')
   int get baseDef;
   @override
-  @JsonKey(name: 'BaseHp')
+  @JsonKey(name: 'base_hp')
   int get baseHp;
   @override
-  @JsonKey(name: 'Speed')
   double get speed;
   @override
   @JsonKey(ignore: true)

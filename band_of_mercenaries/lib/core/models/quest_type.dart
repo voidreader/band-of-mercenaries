@@ -6,11 +6,11 @@ part 'quest_type.g.dart';
 @freezed
 class QuestType with _$QuestType {
   const factory QuestType({
-    @JsonKey(name: 'ID') required String id,
-    @JsonKey(name: 'Name') required String name,
-    @JsonKey(name: 'BaseReward') required int baseReward,
-    @JsonKey(name: 'BaseDuration') required int baseDuration,
-    @JsonKey(name: 'RiskFactor') required double riskFactor,
+    required String id,
+    required String name,
+    @JsonKey(name: 'base_reward') required int baseReward,
+    @JsonKey(name: 'base_duration') required int baseDuration,
+    @JsonKey(name: 'risk_factor') required double riskFactor,
   }) = _QuestType;
 
   factory QuestType.fromJson(Map<String, dynamic> json) =>

@@ -1,6 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:band_of_mercenaries/core/data/json_loader.dart';
+import 'package:hive/hive.dart';
+import 'package:band_of_mercenaries/core/data/data_loader.dart';
+import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/models/difficulty.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
@@ -42,31 +43,20 @@ class StaticGameData {
 }
 
 final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
-  final results = await Future.wait([
-    rootBundle.loadString('assets/json/Difficulty.json'),
-    rootBundle.loadString('assets/json/Job.json'),
-    rootBundle.loadString('assets/json/Trait.json'),
-    rootBundle.loadString('assets/json/Region.json'),
-    rootBundle.loadString('assets/json/QuestType.json'),
-    rootBundle.loadString('assets/json/QuestPool.json'),
-    rootBundle.loadString('assets/json/PersonName.json'),
-    rootBundle.loadString('assets/json/TravelEvent.json'),
-    rootBundle.loadString('assets/json/Facility.json'),
-    rootBundle.loadString('assets/json/Rank.json'),
-    rootBundle.loadString('assets/json/MercenaryWage.json'),
-  ]);
+  final cacheBox = Hive.box<String>(HiveInitializer.staticDataCacheBoxName);
+  final dataLoader = DataLoader(cacheBox: cacheBox);
 
   return StaticGameData(
-    difficulties: JsonLoader.parseDifficulties(results[0]),
-    jobs: JsonLoader.parseJobs(results[1]),
-    traits: JsonLoader.parseTraits(results[2]),
-    regions: JsonLoader.parseRegions(results[3]),
-    questTypes: JsonLoader.parseQuestTypes(results[4]),
-    questPools: JsonLoader.parseQuestPools(results[5]),
-    personNames: JsonLoader.parsePersonNames(results[6]),
-    travelEvents: JsonLoader.parseTravelEvents(results[7]),
-    facilities: JsonLoader.parseFacilities(results[8]),
-    ranks: JsonLoader.parseRanks(results[9]),
-    mercenaryWages: JsonLoader.parseMercenaryWages(results[10]),
+    difficulties: dataLoader.loadFromCache('difficulties', Difficulty.fromJson),
+    jobs: dataLoader.loadFromCache('jobs', Job.fromJson),
+    traits: dataLoader.loadFromCache('traits', TraitData.fromJson),
+    regions: dataLoader.loadFromCache('regions', Region.fromJson),
+    questTypes: dataLoader.loadFromCache('quest_types', QuestType.fromJson),
+    questPools: dataLoader.loadFromCache('quest_pools', QuestPool.fromJson),
+    personNames: dataLoader.loadFromCache('person_names', PersonName.fromJson),
+    travelEvents: dataLoader.loadFromCache('travel_events', TravelEvent.fromJson),
+    facilities: dataLoader.loadFromCache('facilities', Facility.fromJson),
+    ranks: dataLoader.loadFromCache('ranks', Rank.fromJson),
+    mercenaryWages: dataLoader.loadFromCache('mercenary_wages', MercenaryWage.fromJson),
   );
 });

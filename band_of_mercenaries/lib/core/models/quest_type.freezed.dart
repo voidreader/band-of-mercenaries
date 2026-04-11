@@ -20,15 +20,13 @@ QuestType _$QuestTypeFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$QuestType {
-  @JsonKey(name: 'ID')
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Name')
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'BaseReward')
+  @JsonKey(name: 'base_reward')
   int get baseReward => throw _privateConstructorUsedError;
-  @JsonKey(name: 'BaseDuration')
+  @JsonKey(name: 'base_duration')
   int get baseDuration => throw _privateConstructorUsedError;
-  @JsonKey(name: 'RiskFactor')
+  @JsonKey(name: 'risk_factor')
   double get riskFactor => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -43,11 +41,11 @@ abstract class $QuestTypeCopyWith<$Res> {
       _$QuestTypeCopyWithImpl<$Res, QuestType>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'BaseReward') int baseReward,
-      @JsonKey(name: 'BaseDuration') int baseDuration,
-      @JsonKey(name: 'RiskFactor') double riskFactor});
+      {String id,
+      String name,
+      @JsonKey(name: 'base_reward') int baseReward,
+      @JsonKey(name: 'base_duration') int baseDuration,
+      @JsonKey(name: 'risk_factor') double riskFactor});
 }
 
 /// @nodoc
@@ -103,11 +101,11 @@ abstract class _$$QuestTypeImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'BaseReward') int baseReward,
-      @JsonKey(name: 'BaseDuration') int baseDuration,
-      @JsonKey(name: 'RiskFactor') double riskFactor});
+      {String id,
+      String name,
+      @JsonKey(name: 'base_reward') int baseReward,
+      @JsonKey(name: 'base_duration') int baseDuration,
+      @JsonKey(name: 'risk_factor') double riskFactor});
 }
 
 /// @nodoc
@@ -156,29 +154,27 @@ class __$$QuestTypeImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$QuestTypeImpl implements _QuestType {
   const _$QuestTypeImpl(
-      {@JsonKey(name: 'ID') required this.id,
-      @JsonKey(name: 'Name') required this.name,
-      @JsonKey(name: 'BaseReward') required this.baseReward,
-      @JsonKey(name: 'BaseDuration') required this.baseDuration,
-      @JsonKey(name: 'RiskFactor') required this.riskFactor});
+      {required this.id,
+      required this.name,
+      @JsonKey(name: 'base_reward') required this.baseReward,
+      @JsonKey(name: 'base_duration') required this.baseDuration,
+      @JsonKey(name: 'risk_factor') required this.riskFactor});
 
   factory _$QuestTypeImpl.fromJson(Map<String, dynamic> json) =>
       _$$QuestTypeImplFromJson(json);
 
   @override
-  @JsonKey(name: 'ID')
   final String id;
   @override
-  @JsonKey(name: 'Name')
   final String name;
   @override
-  @JsonKey(name: 'BaseReward')
+  @JsonKey(name: 'base_reward')
   final int baseReward;
   @override
-  @JsonKey(name: 'BaseDuration')
+  @JsonKey(name: 'base_duration')
   final int baseDuration;
   @override
-  @JsonKey(name: 'RiskFactor')
+  @JsonKey(name: 'risk_factor')
   final double riskFactor;
 
   @override
@@ -222,30 +218,28 @@ class _$QuestTypeImpl implements _QuestType {
 
 abstract class _QuestType implements QuestType {
   const factory _QuestType(
-          {@JsonKey(name: 'ID') required final String id,
-          @JsonKey(name: 'Name') required final String name,
-          @JsonKey(name: 'BaseReward') required final int baseReward,
-          @JsonKey(name: 'BaseDuration') required final int baseDuration,
-          @JsonKey(name: 'RiskFactor') required final double riskFactor}) =
+          {required final String id,
+          required final String name,
+          @JsonKey(name: 'base_reward') required final int baseReward,
+          @JsonKey(name: 'base_duration') required final int baseDuration,
+          @JsonKey(name: 'risk_factor') required final double riskFactor}) =
       _$QuestTypeImpl;
 
   factory _QuestType.fromJson(Map<String, dynamic> json) =
       _$QuestTypeImpl.fromJson;
 
   @override
-  @JsonKey(name: 'ID')
   String get id;
   @override
-  @JsonKey(name: 'Name')
   String get name;
   @override
-  @JsonKey(name: 'BaseReward')
+  @JsonKey(name: 'base_reward')
   int get baseReward;
   @override
-  @JsonKey(name: 'BaseDuration')
+  @JsonKey(name: 'base_duration')
   int get baseDuration;
   @override
-  @JsonKey(name: 'RiskFactor')
+  @JsonKey(name: 'risk_factor')
   double get riskFactor;
   @override
   @JsonKey(ignore: true)

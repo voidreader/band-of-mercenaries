@@ -8,14 +8,14 @@ part of 'person_name.dart';
 
 _$PersonNameImpl _$$PersonNameImplFromJson(Map<String, dynamic> json) =>
     _$PersonNameImpl(
-      id: (json['ID'] as num).toInt(),
-      korean: json['Korean'] as String,
+      id: (json['id'] as num).toInt(),
+      korean: json['korean'] as String,
     );
 
 Map<String, dynamic> _$$PersonNameImplToJson(_$PersonNameImpl instance) =>
     <String, dynamic>{
-      'ID': instance.id,
-      'Korean': instance.korean,
+      'id': instance.id,
+      'korean': instance.korean,
     };
 
 _$PersonNameListImpl _$$PersonNameListImplFromJson(Map<String, dynamic> json) =>

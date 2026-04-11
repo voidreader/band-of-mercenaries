@@ -20,9 +20,7 @@ PersonName _$PersonNameFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$PersonName {
-  @JsonKey(name: 'ID')
   int get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Korean')
   String get korean => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -37,8 +35,7 @@ abstract class $PersonNameCopyWith<$Res> {
           PersonName value, $Res Function(PersonName) then) =
       _$PersonNameCopyWithImpl<$Res, PersonName>;
   @useResult
-  $Res call(
-      {@JsonKey(name: 'ID') int id, @JsonKey(name: 'Korean') String korean});
+  $Res call({int id, String korean});
 }
 
 /// @nodoc
@@ -78,8 +75,7 @@ abstract class _$$PersonNameImplCopyWith<$Res>
       __$$PersonNameImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {@JsonKey(name: 'ID') int id, @JsonKey(name: 'Korean') String korean});
+  $Res call({int id, String korean});
 }
 
 /// @nodoc
@@ -112,18 +108,14 @@ class __$$PersonNameImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$PersonNameImpl implements _PersonName {
-  const _$PersonNameImpl(
-      {@JsonKey(name: 'ID') required this.id,
-      @JsonKey(name: 'Korean') required this.korean});
+  const _$PersonNameImpl({required this.id, required this.korean});
 
   factory _$PersonNameImpl.fromJson(Map<String, dynamic> json) =>
       _$$PersonNameImplFromJson(json);
 
   @override
-  @JsonKey(name: 'ID')
   final int id;
   @override
-  @JsonKey(name: 'Korean')
   final String korean;
 
   @override
@@ -160,18 +152,14 @@ class _$PersonNameImpl implements _PersonName {
 
 abstract class _PersonName implements PersonName {
   const factory _PersonName(
-          {@JsonKey(name: 'ID') required final int id,
-          @JsonKey(name: 'Korean') required final String korean}) =
-      _$PersonNameImpl;
+      {required final int id, required final String korean}) = _$PersonNameImpl;
 
   factory _PersonName.fromJson(Map<String, dynamic> json) =
       _$PersonNameImpl.fromJson;
 
   @override
-  @JsonKey(name: 'ID')
   int get id;
   @override
-  @JsonKey(name: 'Korean')
   String get korean;
   @override
   @JsonKey(ignore: true)

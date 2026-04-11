@@ -8,26 +8,26 @@ part of 'facility.dart';
 
 _$FacilityImpl _$$FacilityImplFromJson(Map<String, dynamic> json) =>
     _$FacilityImpl(
-      id: json['ID'] as String,
-      name: json['Name'] as String,
-      effectType: json['EffectType'] as String,
-      maxLevel: (json['MaxLevel'] as num).toInt(),
-      costs: (json['Costs'] as List<dynamic>)
+      id: json['id'] as String,
+      name: json['name'] as String,
+      effectType: json['effect_type'] as String,
+      maxLevel: (json['max_level'] as num).toInt(),
+      costs: (json['costs'] as List<dynamic>)
           .map((e) => (e as num).toInt())
           .toList(),
-      values: (json['Values'] as List<dynamic>)
+      values: (json['values'] as List<dynamic>)
           .map((e) => (e as num).toDouble())
           .toList(),
     );
 
 Map<String, dynamic> _$$FacilityImplToJson(_$FacilityImpl instance) =>
     <String, dynamic>{
-      'ID': instance.id,
-      'Name': instance.name,
-      'EffectType': instance.effectType,
-      'MaxLevel': instance.maxLevel,
-      'Costs': instance.costs,
-      'Values': instance.values,
+      'id': instance.id,
+      'name': instance.name,
+      'effect_type': instance.effectType,
+      'max_level': instance.maxLevel,
+      'costs': instance.costs,
+      'values': instance.values,
     };
 
 _$FacilityListImpl _$$FacilityListImplFromJson(Map<String, dynamic> json) =>

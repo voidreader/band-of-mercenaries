@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
+import 'package:band_of_mercenaries/core/data/supabase_initializer.dart';
+import 'package:band_of_mercenaries/core/data/sync_service.dart';
+import 'package:band_of_mercenaries/core/data/data_loader.dart';
+import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/shared/widgets/bottom_nav_bar.dart';
 import 'package:band_of_mercenaries/features/home/view/home_screen.dart';
@@ -82,6 +86,22 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _saveLastActiveTime();
+    }
+    if (state == AppLifecycleState.resumed) {
+      _syncOnResume();
+    }
+  }
+
+  Future<void> _syncOnResume() async {
+    final cacheBox = Hive.box<String>(HiveInitializer.staticDataCacheBoxName);
+    final syncService = SyncService(
+      client: SupabaseInitializer.client,
+      dataLoader: DataLoader(cacheBox: cacheBox),
+    );
+
+    final status = await syncService.sync();
+    if (status == SyncStatus.updated || status == SyncStatus.fullDownload) {
+      ref.invalidate(staticDataProvider);
     }
   }
 

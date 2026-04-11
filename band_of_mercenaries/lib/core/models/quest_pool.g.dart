@@ -8,22 +8,22 @@ part of 'quest_pool.dart';
 
 _$QuestPoolImpl _$$QuestPoolImplFromJson(Map<String, dynamic> json) =>
     _$QuestPoolImpl(
-      id: json['ID'] as String,
-      name: json['Name'] as String,
-      type: (json['Type'] as num).toDouble(),
-      difficulty: (json['Difficulty'] as num).toDouble(),
-      minRegionDiff: (json['MinRegionDiff'] as num).toDouble(),
-      maxRegionDiff: (json['MaxRegionDiff'] as num).toDouble(),
+      id: json['id'] as String,
+      name: json['name'] as String,
+      type: (json['type'] as num).toDouble(),
+      difficulty: (json['difficulty'] as num).toDouble(),
+      minRegionDiff: (json['min_region_diff'] as num).toDouble(),
+      maxRegionDiff: (json['max_region_diff'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
     <String, dynamic>{
-      'ID': instance.id,
-      'Name': instance.name,
-      'Type': instance.type,
-      'Difficulty': instance.difficulty,
-      'MinRegionDiff': instance.minRegionDiff,
-      'MaxRegionDiff': instance.maxRegionDiff,
+      'id': instance.id,
+      'name': instance.name,
+      'type': instance.type,
+      'difficulty': instance.difficulty,
+      'min_region_diff': instance.minRegionDiff,
+      'max_region_diff': instance.maxRegionDiff,
     };
 
 _$QuestPoolListImpl _$$QuestPoolListImplFromJson(Map<String, dynamic> json) =>

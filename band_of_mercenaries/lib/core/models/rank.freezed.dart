@@ -20,13 +20,11 @@ Rank _$RankFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Rank {
-  @JsonKey(name: 'Grade')
   String get grade => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Name')
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'RequiredReputation')
+  @JsonKey(name: 'required_reputation')
   int get requiredReputation => throw _privateConstructorUsedError;
-  @JsonKey(name: 'UnlockTier')
+  @JsonKey(name: 'unlock_tier')
   int get unlockTier => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -40,10 +38,10 @@ abstract class $RankCopyWith<$Res> {
       _$RankCopyWithImpl<$Res, Rank>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'Grade') String grade,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'RequiredReputation') int requiredReputation,
-      @JsonKey(name: 'UnlockTier') int unlockTier});
+      {String grade,
+      String name,
+      @JsonKey(name: 'required_reputation') int requiredReputation,
+      @JsonKey(name: 'unlock_tier') int unlockTier});
 }
 
 /// @nodoc
@@ -93,10 +91,10 @@ abstract class _$$RankImplCopyWith<$Res> implements $RankCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'Grade') String grade,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'RequiredReputation') int requiredReputation,
-      @JsonKey(name: 'UnlockTier') int unlockTier});
+      {String grade,
+      String name,
+      @JsonKey(name: 'required_reputation') int requiredReputation,
+      @JsonKey(name: 'unlock_tier') int unlockTier});
 }
 
 /// @nodoc
@@ -139,25 +137,23 @@ class __$$RankImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$RankImpl implements _Rank {
   const _$RankImpl(
-      {@JsonKey(name: 'Grade') required this.grade,
-      @JsonKey(name: 'Name') required this.name,
-      @JsonKey(name: 'RequiredReputation') required this.requiredReputation,
-      @JsonKey(name: 'UnlockTier') required this.unlockTier});
+      {required this.grade,
+      required this.name,
+      @JsonKey(name: 'required_reputation') required this.requiredReputation,
+      @JsonKey(name: 'unlock_tier') required this.unlockTier});
 
   factory _$RankImpl.fromJson(Map<String, dynamic> json) =>
       _$$RankImplFromJson(json);
 
   @override
-  @JsonKey(name: 'Grade')
   final String grade;
   @override
-  @JsonKey(name: 'Name')
   final String name;
   @override
-  @JsonKey(name: 'RequiredReputation')
+  @JsonKey(name: 'required_reputation')
   final int requiredReputation;
   @override
-  @JsonKey(name: 'UnlockTier')
+  @JsonKey(name: 'unlock_tier')
   final int unlockTier;
 
   @override
@@ -199,25 +195,24 @@ class _$RankImpl implements _Rank {
 
 abstract class _Rank implements Rank {
   const factory _Rank(
-      {@JsonKey(name: 'Grade') required final String grade,
-      @JsonKey(name: 'Name') required final String name,
-      @JsonKey(name: 'RequiredReputation')
-      required final int requiredReputation,
-      @JsonKey(name: 'UnlockTier') required final int unlockTier}) = _$RankImpl;
+          {required final String grade,
+          required final String name,
+          @JsonKey(name: 'required_reputation')
+          required final int requiredReputation,
+          @JsonKey(name: 'unlock_tier') required final int unlockTier}) =
+      _$RankImpl;
 
   factory _Rank.fromJson(Map<String, dynamic> json) = _$RankImpl.fromJson;
 
   @override
-  @JsonKey(name: 'Grade')
   String get grade;
   @override
-  @JsonKey(name: 'Name')
   String get name;
   @override
-  @JsonKey(name: 'RequiredReputation')
+  @JsonKey(name: 'required_reputation')
   int get requiredReputation;
   @override
-  @JsonKey(name: 'UnlockTier')
+  @JsonKey(name: 'unlock_tier')
   int get unlockTier;
   @override
   @JsonKey(ignore: true)

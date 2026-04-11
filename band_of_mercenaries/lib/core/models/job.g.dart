@@ -7,23 +7,23 @@ part of 'job.dart';
 // **************************************************************************
 
 _$JobImpl _$$JobImplFromJson(Map<String, dynamic> json) => _$JobImpl(
-      id: json['ID'] as String,
-      tier: (json['Tier'] as num).toInt(),
-      name: json['Name'] as String,
-      baseAtk: (json['BaseAtk'] as num).toInt(),
-      baseDef: (json['BaseDef'] as num).toInt(),
-      baseHp: (json['BaseHp'] as num).toInt(),
-      speed: (json['Speed'] as num).toDouble(),
+      id: json['id'] as String,
+      tier: (json['tier'] as num).toInt(),
+      name: json['name'] as String,
+      baseAtk: (json['base_atk'] as num).toInt(),
+      baseDef: (json['base_def'] as num).toInt(),
+      baseHp: (json['base_hp'] as num).toInt(),
+      speed: (json['speed'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$$JobImplToJson(_$JobImpl instance) => <String, dynamic>{
-      'ID': instance.id,
-      'Tier': instance.tier,
-      'Name': instance.name,
-      'BaseAtk': instance.baseAtk,
-      'BaseDef': instance.baseDef,
-      'BaseHp': instance.baseHp,
-      'Speed': instance.speed,
+      'id': instance.id,
+      'tier': instance.tier,
+      'name': instance.name,
+      'base_atk': instance.baseAtk,
+      'base_def': instance.baseDef,
+      'base_hp': instance.baseHp,
+      'speed': instance.speed,
     };
 
 _$JobListImpl _$$JobListImplFromJson(Map<String, dynamic> json) =>

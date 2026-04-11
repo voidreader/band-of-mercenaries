@@ -10,6 +10,7 @@ class HiveInitializer {
   static const String mercenaryBoxName = 'mercenaries';
   static const String questBoxName = 'quests';
   static const String settingsBoxName = 'settings';
+  static const String staticDataCacheBoxName = 'staticDataCache';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -28,5 +29,6 @@ class HiveInitializer {
     await Hive.openBox<ActiveQuest>(questBoxName);
     await Hive.openBox<ActivityLog>(ActivityLogRepository.boxName);
     await Hive.openBox(settingsBoxName);
+    await Hive.openBox<String>(staticDataCacheBoxName);
   }
 }

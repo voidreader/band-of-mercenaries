@@ -20,18 +20,15 @@ Region _$RegionFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Region {
-  @JsonKey(name: 'Continent')
   int get continent => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Region')
   int get region => throw _privateConstructorUsedError;
-  @JsonKey(name: 'RegionName')
+  @JsonKey(name: 'region_name')
   String get regionName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'RegionTier')
+  @JsonKey(name: 'region_tier')
   int get regionTier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'RecommendPower')
+  @JsonKey(name: 'recommend_power')
   int get recommendPower => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Desc')
-  String get desc => throw _privateConstructorUsedError;
+  String get description => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -44,12 +41,12 @@ abstract class $RegionCopyWith<$Res> {
       _$RegionCopyWithImpl<$Res, Region>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'Continent') int continent,
-      @JsonKey(name: 'Region') int region,
-      @JsonKey(name: 'RegionName') String regionName,
-      @JsonKey(name: 'RegionTier') int regionTier,
-      @JsonKey(name: 'RecommendPower') int recommendPower,
-      @JsonKey(name: 'Desc') String desc});
+      {int continent,
+      int region,
+      @JsonKey(name: 'region_name') String regionName,
+      @JsonKey(name: 'region_tier') int regionTier,
+      @JsonKey(name: 'recommend_power') int recommendPower,
+      String description});
 }
 
 /// @nodoc
@@ -70,7 +67,7 @@ class _$RegionCopyWithImpl<$Res, $Val extends Region>
     Object? regionName = null,
     Object? regionTier = null,
     Object? recommendPower = null,
-    Object? desc = null,
+    Object? description = null,
   }) {
     return _then(_value.copyWith(
       continent: null == continent
@@ -93,9 +90,9 @@ class _$RegionCopyWithImpl<$Res, $Val extends Region>
           ? _value.recommendPower
           : recommendPower // ignore: cast_nullable_to_non_nullable
               as int,
-      desc: null == desc
-          ? _value.desc
-          : desc // ignore: cast_nullable_to_non_nullable
+      description: null == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -109,12 +106,12 @@ abstract class _$$RegionImplCopyWith<$Res> implements $RegionCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'Continent') int continent,
-      @JsonKey(name: 'Region') int region,
-      @JsonKey(name: 'RegionName') String regionName,
-      @JsonKey(name: 'RegionTier') int regionTier,
-      @JsonKey(name: 'RecommendPower') int recommendPower,
-      @JsonKey(name: 'Desc') String desc});
+      {int continent,
+      int region,
+      @JsonKey(name: 'region_name') String regionName,
+      @JsonKey(name: 'region_tier') int regionTier,
+      @JsonKey(name: 'recommend_power') int recommendPower,
+      String description});
 }
 
 /// @nodoc
@@ -133,7 +130,7 @@ class __$$RegionImplCopyWithImpl<$Res>
     Object? regionName = null,
     Object? regionTier = null,
     Object? recommendPower = null,
-    Object? desc = null,
+    Object? description = null,
   }) {
     return _then(_$RegionImpl(
       continent: null == continent
@@ -156,9 +153,9 @@ class __$$RegionImplCopyWithImpl<$Res>
           ? _value.recommendPower
           : recommendPower // ignore: cast_nullable_to_non_nullable
               as int,
-      desc: null == desc
-          ? _value.desc
-          : desc // ignore: cast_nullable_to_non_nullable
+      description: null == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -168,38 +165,35 @@ class __$$RegionImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$RegionImpl implements _Region {
   const _$RegionImpl(
-      {@JsonKey(name: 'Continent') required this.continent,
-      @JsonKey(name: 'Region') required this.region,
-      @JsonKey(name: 'RegionName') required this.regionName,
-      @JsonKey(name: 'RegionTier') required this.regionTier,
-      @JsonKey(name: 'RecommendPower') required this.recommendPower,
-      @JsonKey(name: 'Desc') required this.desc});
+      {required this.continent,
+      required this.region,
+      @JsonKey(name: 'region_name') required this.regionName,
+      @JsonKey(name: 'region_tier') required this.regionTier,
+      @JsonKey(name: 'recommend_power') required this.recommendPower,
+      required this.description});
 
   factory _$RegionImpl.fromJson(Map<String, dynamic> json) =>
       _$$RegionImplFromJson(json);
 
   @override
-  @JsonKey(name: 'Continent')
   final int continent;
   @override
-  @JsonKey(name: 'Region')
   final int region;
   @override
-  @JsonKey(name: 'RegionName')
+  @JsonKey(name: 'region_name')
   final String regionName;
   @override
-  @JsonKey(name: 'RegionTier')
+  @JsonKey(name: 'region_tier')
   final int regionTier;
   @override
-  @JsonKey(name: 'RecommendPower')
+  @JsonKey(name: 'recommend_power')
   final int recommendPower;
   @override
-  @JsonKey(name: 'Desc')
-  final String desc;
+  final String description;
 
   @override
   String toString() {
-    return 'Region(continent: $continent, region: $region, regionName: $regionName, regionTier: $regionTier, recommendPower: $recommendPower, desc: $desc)';
+    return 'Region(continent: $continent, region: $region, regionName: $regionName, regionTier: $regionTier, recommendPower: $recommendPower, description: $description)';
   }
 
   @override
@@ -216,13 +210,14 @@ class _$RegionImpl implements _Region {
                 other.regionTier == regionTier) &&
             (identical(other.recommendPower, recommendPower) ||
                 other.recommendPower == recommendPower) &&
-            (identical(other.desc, desc) || other.desc == desc));
+            (identical(other.description, description) ||
+                other.description == description));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, continent, region, regionName,
-      regionTier, recommendPower, desc);
+      regionTier, recommendPower, description);
 
   @JsonKey(ignore: true)
   @override
@@ -240,33 +235,30 @@ class _$RegionImpl implements _Region {
 
 abstract class _Region implements Region {
   const factory _Region(
-      {@JsonKey(name: 'Continent') required final int continent,
-      @JsonKey(name: 'Region') required final int region,
-      @JsonKey(name: 'RegionName') required final String regionName,
-      @JsonKey(name: 'RegionTier') required final int regionTier,
-      @JsonKey(name: 'RecommendPower') required final int recommendPower,
-      @JsonKey(name: 'Desc') required final String desc}) = _$RegionImpl;
+      {required final int continent,
+      required final int region,
+      @JsonKey(name: 'region_name') required final String regionName,
+      @JsonKey(name: 'region_tier') required final int regionTier,
+      @JsonKey(name: 'recommend_power') required final int recommendPower,
+      required final String description}) = _$RegionImpl;
 
   factory _Region.fromJson(Map<String, dynamic> json) = _$RegionImpl.fromJson;
 
   @override
-  @JsonKey(name: 'Continent')
   int get continent;
   @override
-  @JsonKey(name: 'Region')
   int get region;
   @override
-  @JsonKey(name: 'RegionName')
+  @JsonKey(name: 'region_name')
   String get regionName;
   @override
-  @JsonKey(name: 'RegionTier')
+  @JsonKey(name: 'region_tier')
   int get regionTier;
   @override
-  @JsonKey(name: 'RecommendPower')
+  @JsonKey(name: 'recommend_power')
   int get recommendPower;
   @override
-  @JsonKey(name: 'Desc')
-  String get desc;
+  String get description;
   @override
   @JsonKey(ignore: true)
   _$$RegionImplCopyWith<_$RegionImpl> get copyWith =>
