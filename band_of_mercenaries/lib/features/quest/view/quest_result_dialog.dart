@@ -27,6 +27,14 @@ class QuestResultDialog extends ConsumerWidget {
           null => ('완료', AppTheme.textSecondary, AppTheme.tier1Bg),
         };
 
+        final isSuccess = quest.result == QuestResult.greatSuccess || quest.result == QuestResult.success;
+        final rewardGold = quest.rewardGold ?? 0;
+        final totalWage = quest.totalWage ?? 0;
+        final dispatchCost = quest.dispatchCost ?? 0;
+        final netProfit = rewardGold - totalWage - dispatchCost;
+        final earnedXp = quest.earnedXp ?? 0;
+        final earnedReputation = quest.earnedReputation ?? 0;
+
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
@@ -65,11 +73,50 @@ class QuestResultDialog extends ConsumerWidget {
                   _buildMercStatus(mercId, mercs, data),
 
                 const SizedBox(height: 16),
+
+                // Reward details section
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceAlt,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.borderLight),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('보상 내역', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      _buildRewardRow('기본 보상', '${rewardGold}G', AppTheme.textSecondary),
+                      const SizedBox(height: 4),
+                      _buildRewardRow('파견 비용', '-${dispatchCost}G', AppTheme.textTertiary),
+                      const SizedBox(height: 4),
+                      _buildRewardRow('인건비', '-${totalWage}G', AppTheme.textTertiary),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 6),
+                        child: Divider(height: 1, color: AppTheme.borderLight),
+                      ),
+                      _buildRewardRow(
+                        '순수익',
+                        '${netProfit >= 0 ? '+' : ''}${netProfit}G',
+                        netProfit >= 0 ? Colors.green : Colors.red,
+                        isBold: true,
+                      ),
+                      const SizedBox(height: 4),
+                      _buildRewardRow('획득 경험치', '+$earnedXp XP', AppTheme.timerBlue),
+                      const SizedBox(height: 4),
+                      _buildRewardRow('획득 명성', '+$earnedReputation', AppTheme.tier4),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('확인'),
+                    child: Text(isSuccess ? '🪙 ${netProfit}G 보상 수령' : '확인'),
                   ),
                 ),
               ],
@@ -79,6 +126,23 @@ class QuestResultDialog extends ConsumerWidget {
       },
       loading: () => const SizedBox.shrink(),
       error: (e, st) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildRewardRow(String label, String value, Color valueColor, {bool isBold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            color: valueColor,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 
