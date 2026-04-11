@@ -73,7 +73,7 @@ band_of_mercenaries/lib/
 - `userDataProvider`: 전역 게임 상태 (골드, 위치, 이동 상태)
 - `staticDataProvider`: 로컬 JSON 캐시에서 로드된 정적 데이터 (Region, Job, Trait 등). 앱 시작/포그라운드 복귀 시 Supabase와 버전 비교 후 갱신
 - `mercenaryListProvider` / `questListProvider`: 용병 및 퀘스트 상태
-- `activityLogProvider`: 활동 로그 (Hive `activityLogs` 박스, 최대 50개)
+- `activityLogProvider`: 활동 로그 (Hive `activityLogs` 박스, 최대 100개)
 
 ### 데이터 흐름
 
@@ -152,3 +152,6 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - Material 3 다크 프라이머리 테마
 - 티어별 색상: 회색(1) → 초록(2) → 파랑(3) → 보라(4) → 빨강(5)
 - 하단 5탭: 이동 / 파견 / 홈 / 모집 / 설정
+- 웹: `_MobileFrame`에서 `ConstrainedBox(maxWidth: 430)`으로 모바일 해상도 제한. 새 화면 전환 시 `Navigator.push` 대신 상태 기반 렌더링 사용 (Navigator가 ConstrainedBox 바깥으로 빠져나가는 문제 방지)
+- 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼)
+- 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장

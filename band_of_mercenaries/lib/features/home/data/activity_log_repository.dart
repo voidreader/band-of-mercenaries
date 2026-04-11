@@ -3,7 +3,7 @@ import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart
 
 class ActivityLogRepository {
   static const String boxName = 'activityLogs';
-  static const int maxLogs = 50;
+  static const int maxLogs = 100;
 
   Box<ActivityLog> get _box => Hive.box<ActivityLog>(boxName);
 

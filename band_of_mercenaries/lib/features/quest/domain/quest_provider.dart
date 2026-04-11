@@ -156,7 +156,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     );
 
     final endTime = DateTime.now().add(duration);
-    await _repo.startQuest(questId, mercIds, endTime);
+    await _repo.startQuest(questId, mercIds, endTime, dispatchCost: dispatchCost);
 
     final mercNotifier = ref.read(mercenaryListProvider.notifier);
     for (final mercId in mercIds) {
@@ -277,7 +277,73 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       QuestResultType.criticalFailure => QuestResult.criticalFailure,
     };
 
-    await _repo.completeQuest(quest.id, questResult);
+    // Calculate reward values before saving
+    int rewardGold = 0;
+    int totalWage = 0;
+
+    if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {
+      rewardGold = QuestCalculator.calculateReward(
+        baseReward: questType.baseReward,
+        rewardMultiplier: difficulty.rewardMultiplier,
+        isGreatSuccess: resultType == QuestResultType.greatSuccess,
+      );
+
+      final mercTiers = mercs.map((merc) {
+        final job = staticData.jobs.firstWhere(
+          (j) => j.id == merc.jobId,
+          orElse: () => staticData.jobs.first,
+        );
+        return job.tier;
+      }).toList();
+
+      totalWage = QuestCalculator.calculateTotalWage(mercTiers, staticData.mercenaryWages);
+    }
+
+    // Calculate XP
+    final resultName = switch (resultType) {
+      QuestResultType.greatSuccess => 'greatSuccess',
+      QuestResultType.success => 'success',
+      QuestResultType.failure => 'failure',
+      QuestResultType.criticalFailure => 'criticalFailure',
+    };
+    final xpMultiplier = ExperienceService.resultMultiplier(resultName);
+
+    double trainingBonus = 0.0;
+    if (userData != null) {
+      final trainingLevel = userData.facilities['training'] ?? 0;
+      if (trainingLevel > 0) {
+        final trainingFacility = staticData.facilities.firstWhere(
+          (f) => f.id == 'training',
+          orElse: () => staticData.facilities.first,
+        );
+        trainingBonus = FacilityService.getEffectValue(trainingFacility, trainingLevel);
+      }
+    }
+
+    final xpGain = ExperienceService.calculateXpGain(
+      difficulty: quest.difficulty.clamp(1, 5),
+      resultMultiplier: xpMultiplier,
+      facilityBonus: trainingBonus,
+    );
+
+    // Calculate reputation
+    int repGain = 0;
+    if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {
+      repGain = ReputationService.calculateQuestReputation(
+        difficulty: quest.difficulty.clamp(1, 5),
+        isGreatSuccess: resultType == QuestResultType.greatSuccess,
+      );
+    }
+
+    // Save quest result with reward data
+    await _repo.completeQuest(
+      quest.id,
+      questResult,
+      rewardGold: rewardGold,
+      totalWage: totalWage,
+      earnedXp: xpGain,
+      earnedReputation: repGain,
+    );
 
     final resultText = {
       QuestResultType.greatSuccess: '대성공',
@@ -292,23 +358,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     // Process rewards with wage deduction
     if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {
-      final grossReward = QuestCalculator.calculateReward(
-        baseReward: questType.baseReward,
-        rewardMultiplier: difficulty.rewardMultiplier,
-        isGreatSuccess: resultType == QuestResultType.greatSuccess,
-      );
-
-      // Get merc tiers for wage calculation
-      final mercTiers = mercs.map((merc) {
-        final job = staticData.jobs.firstWhere(
-          (j) => j.id == merc.jobId,
-          orElse: () => staticData.jobs.first,
-        );
-        return job.tier;
-      }).toList();
-
-      final totalWage = QuestCalculator.calculateTotalWage(mercTiers, staticData.mercenaryWages);
-      final netReward = grossReward - totalWage;
+      final netReward = rewardGold - totalWage;
       if (netReward > 0) {
         await ref.read(userDataProvider.notifier).addGold(netReward);
       }
@@ -359,45 +409,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       }
     }
 
-    // Task 13: XP distribution
-    final resultName = switch (resultType) {
-      QuestResultType.greatSuccess => 'greatSuccess',
-      QuestResultType.success => 'success',
-      QuestResultType.failure => 'failure',
-      QuestResultType.criticalFailure => 'criticalFailure',
-    };
-    final xpMultiplier = ExperienceService.resultMultiplier(resultName);
-
-    double trainingBonus = 0.0;
-    if (userData != null) {
-      final trainingLevel = userData.facilities['training'] ?? 0;
-      if (trainingLevel > 0) {
-        final trainingFacility = staticData.facilities.firstWhere(
-          (f) => f.id == 'training',
-          orElse: () => staticData.facilities.first,
-        );
-        trainingBonus = FacilityService.getEffectValue(trainingFacility, trainingLevel);
-      }
-    }
-
-    final xpGain = ExperienceService.calculateXpGain(
-      difficulty: quest.difficulty.clamp(1, 5),
-      resultMultiplier: xpMultiplier,
-      facilityBonus: trainingBonus,
-    );
-
+    // XP distribution
     for (final merc in mercs) {
       if (merc.status != MercenaryStatus.dead) {
         await mercRepo.addXpAndCheckLevel(merc.id, xpGain);
       }
     }
 
-    // Task 13: Reputation gain on success/great success
-    if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {
-      final repGain = ReputationService.calculateQuestReputation(
-        difficulty: quest.difficulty.clamp(1, 5),
-        isGreatSuccess: resultType == QuestResultType.greatSuccess,
-      );
+    // Reputation gain on success/great success
+    if (repGain > 0) {
       await ref.read(userDataProvider.notifier).addReputation(repGain);
     }
 
