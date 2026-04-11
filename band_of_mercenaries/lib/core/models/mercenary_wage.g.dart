@@ -8,14 +8,14 @@ part of 'mercenary_wage.dart';
 
 _$MercenaryWageImpl _$$MercenaryWageImplFromJson(Map<String, dynamic> json) =>
     _$MercenaryWageImpl(
-      tier: (json['Tier'] as num).toInt(),
-      wage: (json['Wage'] as num).toInt(),
+      tier: (json['tier'] as num).toInt(),
+      wage: (json['wage'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$MercenaryWageImplToJson(_$MercenaryWageImpl instance) =>
     <String, dynamic>{
-      'Tier': instance.tier,
-      'Wage': instance.wage,
+      'tier': instance.tier,
+      'wage': instance.wage,
     };
 
 _$MercenaryWageListImpl _$$MercenaryWageListImplFromJson(

@@ -8,18 +8,18 @@ part of 'trait_data.dart';
 
 _$TraitDataImpl _$$TraitDataImplFromJson(Map<String, dynamic> json) =>
     _$TraitDataImpl(
-      id: json['ID'] as String,
-      name: json['Name'] as String,
-      effectType: json['EffectType'] as String,
-      value: (json['Value'] as num).toDouble(),
+      id: json['id'] as String,
+      name: json['name'] as String,
+      effectType: json['effect_type'] as String,
+      value: (json['value'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$$TraitDataImplToJson(_$TraitDataImpl instance) =>
     <String, dynamic>{
-      'ID': instance.id,
-      'Name': instance.name,
-      'EffectType': instance.effectType,
-      'Value': instance.value,
+      'id': instance.id,
+      'name': instance.name,
+      'effect_type': instance.effectType,
+      'value': instance.value,
     };
 
 _$TraitDataListImpl _$$TraitDataListImplFromJson(Map<String, dynamic> json) =>

@@ -20,21 +20,16 @@ TravelEvent _$TravelEventFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$TravelEvent {
-  @JsonKey(name: 'ID')
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Name')
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Type')
   String get type => throw _privateConstructorUsedError;
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   String get effectType => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Magnitude')
   double get magnitude => throw _privateConstructorUsedError;
-  @JsonKey(name: 'MinTier')
+  @JsonKey(name: 'min_tier')
   int get minTier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'MaxTier')
+  @JsonKey(name: 'max_tier')
   int get maxTier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Description')
   String get description => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -50,14 +45,14 @@ abstract class $TravelEventCopyWith<$Res> {
       _$TravelEventCopyWithImpl<$Res, TravelEvent>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'Type') String type,
-      @JsonKey(name: 'EffectType') String effectType,
-      @JsonKey(name: 'Magnitude') double magnitude,
-      @JsonKey(name: 'MinTier') int minTier,
-      @JsonKey(name: 'MaxTier') int maxTier,
-      @JsonKey(name: 'Description') String description});
+      {String id,
+      String name,
+      String type,
+      @JsonKey(name: 'effect_type') String effectType,
+      double magnitude,
+      @JsonKey(name: 'min_tier') int minTier,
+      @JsonKey(name: 'max_tier') int maxTier,
+      String description});
 }
 
 /// @nodoc
@@ -128,14 +123,14 @@ abstract class _$$TravelEventImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'ID') String id,
-      @JsonKey(name: 'Name') String name,
-      @JsonKey(name: 'Type') String type,
-      @JsonKey(name: 'EffectType') String effectType,
-      @JsonKey(name: 'Magnitude') double magnitude,
-      @JsonKey(name: 'MinTier') int minTier,
-      @JsonKey(name: 'MaxTier') int maxTier,
-      @JsonKey(name: 'Description') String description});
+      {String id,
+      String name,
+      String type,
+      @JsonKey(name: 'effect_type') String effectType,
+      double magnitude,
+      @JsonKey(name: 'min_tier') int minTier,
+      @JsonKey(name: 'max_tier') int maxTier,
+      String description});
 }
 
 /// @nodoc
@@ -199,41 +194,36 @@ class __$$TravelEventImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$TravelEventImpl implements _TravelEvent {
   const _$TravelEventImpl(
-      {@JsonKey(name: 'ID') required this.id,
-      @JsonKey(name: 'Name') required this.name,
-      @JsonKey(name: 'Type') required this.type,
-      @JsonKey(name: 'EffectType') required this.effectType,
-      @JsonKey(name: 'Magnitude') required this.magnitude,
-      @JsonKey(name: 'MinTier') required this.minTier,
-      @JsonKey(name: 'MaxTier') required this.maxTier,
-      @JsonKey(name: 'Description') required this.description});
+      {required this.id,
+      required this.name,
+      required this.type,
+      @JsonKey(name: 'effect_type') required this.effectType,
+      required this.magnitude,
+      @JsonKey(name: 'min_tier') required this.minTier,
+      @JsonKey(name: 'max_tier') required this.maxTier,
+      required this.description});
 
   factory _$TravelEventImpl.fromJson(Map<String, dynamic> json) =>
       _$$TravelEventImplFromJson(json);
 
   @override
-  @JsonKey(name: 'ID')
   final String id;
   @override
-  @JsonKey(name: 'Name')
   final String name;
   @override
-  @JsonKey(name: 'Type')
   final String type;
   @override
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   final String effectType;
   @override
-  @JsonKey(name: 'Magnitude')
   final double magnitude;
   @override
-  @JsonKey(name: 'MinTier')
+  @JsonKey(name: 'min_tier')
   final int minTier;
   @override
-  @JsonKey(name: 'MaxTier')
+  @JsonKey(name: 'max_tier')
   final int maxTier;
   @override
-  @JsonKey(name: 'Description')
   final String description;
 
   @override
@@ -280,42 +270,36 @@ class _$TravelEventImpl implements _TravelEvent {
 
 abstract class _TravelEvent implements TravelEvent {
   const factory _TravelEvent(
-          {@JsonKey(name: 'ID') required final String id,
-          @JsonKey(name: 'Name') required final String name,
-          @JsonKey(name: 'Type') required final String type,
-          @JsonKey(name: 'EffectType') required final String effectType,
-          @JsonKey(name: 'Magnitude') required final double magnitude,
-          @JsonKey(name: 'MinTier') required final int minTier,
-          @JsonKey(name: 'MaxTier') required final int maxTier,
-          @JsonKey(name: 'Description') required final String description}) =
-      _$TravelEventImpl;
+      {required final String id,
+      required final String name,
+      required final String type,
+      @JsonKey(name: 'effect_type') required final String effectType,
+      required final double magnitude,
+      @JsonKey(name: 'min_tier') required final int minTier,
+      @JsonKey(name: 'max_tier') required final int maxTier,
+      required final String description}) = _$TravelEventImpl;
 
   factory _TravelEvent.fromJson(Map<String, dynamic> json) =
       _$TravelEventImpl.fromJson;
 
   @override
-  @JsonKey(name: 'ID')
   String get id;
   @override
-  @JsonKey(name: 'Name')
   String get name;
   @override
-  @JsonKey(name: 'Type')
   String get type;
   @override
-  @JsonKey(name: 'EffectType')
+  @JsonKey(name: 'effect_type')
   String get effectType;
   @override
-  @JsonKey(name: 'Magnitude')
   double get magnitude;
   @override
-  @JsonKey(name: 'MinTier')
+  @JsonKey(name: 'min_tier')
   int get minTier;
   @override
-  @JsonKey(name: 'MaxTier')
+  @JsonKey(name: 'max_tier')
   int get maxTier;
   @override
-  @JsonKey(name: 'Description')
   String get description;
   @override
   @JsonKey(ignore: true)

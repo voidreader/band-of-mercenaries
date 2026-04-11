@@ -7,22 +7,22 @@ part of 'region.dart';
 // **************************************************************************
 
 _$RegionImpl _$$RegionImplFromJson(Map<String, dynamic> json) => _$RegionImpl(
-      continent: (json['Continent'] as num).toInt(),
-      region: (json['Region'] as num).toInt(),
-      regionName: json['RegionName'] as String,
-      regionTier: (json['RegionTier'] as num).toInt(),
-      recommendPower: (json['RecommendPower'] as num).toInt(),
-      desc: json['Desc'] as String,
+      continent: (json['continent'] as num).toInt(),
+      region: (json['region'] as num).toInt(),
+      regionName: json['region_name'] as String,
+      regionTier: (json['region_tier'] as num).toInt(),
+      recommendPower: (json['recommend_power'] as num).toInt(),
+      description: json['description'] as String,
     );
 
 Map<String, dynamic> _$$RegionImplToJson(_$RegionImpl instance) =>
     <String, dynamic>{
-      'Continent': instance.continent,
-      'Region': instance.region,
-      'RegionName': instance.regionName,
-      'RegionTier': instance.regionTier,
-      'RecommendPower': instance.recommendPower,
-      'Desc': instance.desc,
+      'continent': instance.continent,
+      'region': instance.region,
+      'region_name': instance.regionName,
+      'region_tier': instance.regionTier,
+      'recommend_power': instance.recommendPower,
+      'description': instance.description,
     };
 
 _$RegionListImpl _$$RegionListImplFromJson(Map<String, dynamic> json) =>

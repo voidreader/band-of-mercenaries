@@ -20,9 +20,7 @@ MercenaryWage _$MercenaryWageFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$MercenaryWage {
-  @JsonKey(name: 'Tier')
   int get tier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'Wage')
   int get wage => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -37,7 +35,7 @@ abstract class $MercenaryWageCopyWith<$Res> {
           MercenaryWage value, $Res Function(MercenaryWage) then) =
       _$MercenaryWageCopyWithImpl<$Res, MercenaryWage>;
   @useResult
-  $Res call({@JsonKey(name: 'Tier') int tier, @JsonKey(name: 'Wage') int wage});
+  $Res call({int tier, int wage});
 }
 
 /// @nodoc
@@ -77,7 +75,7 @@ abstract class _$$MercenaryWageImplCopyWith<$Res>
       __$$MercenaryWageImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({@JsonKey(name: 'Tier') int tier, @JsonKey(name: 'Wage') int wage});
+  $Res call({int tier, int wage});
 }
 
 /// @nodoc
@@ -110,18 +108,14 @@ class __$$MercenaryWageImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$MercenaryWageImpl implements _MercenaryWage {
-  const _$MercenaryWageImpl(
-      {@JsonKey(name: 'Tier') required this.tier,
-      @JsonKey(name: 'Wage') required this.wage});
+  const _$MercenaryWageImpl({required this.tier, required this.wage});
 
   factory _$MercenaryWageImpl.fromJson(Map<String, dynamic> json) =>
       _$$MercenaryWageImplFromJson(json);
 
   @override
-  @JsonKey(name: 'Tier')
   final int tier;
   @override
-  @JsonKey(name: 'Wage')
   final int wage;
 
   @override
@@ -158,17 +152,14 @@ class _$MercenaryWageImpl implements _MercenaryWage {
 
 abstract class _MercenaryWage implements MercenaryWage {
   const factory _MercenaryWage(
-      {@JsonKey(name: 'Tier') required final int tier,
-      @JsonKey(name: 'Wage') required final int wage}) = _$MercenaryWageImpl;
+      {required final int tier, required final int wage}) = _$MercenaryWageImpl;
 
   factory _MercenaryWage.fromJson(Map<String, dynamic> json) =
       _$MercenaryWageImpl.fromJson;
 
   @override
-  @JsonKey(name: 'Tier')
   int get tier;
   @override
-  @JsonKey(name: 'Wage')
   int get wage;
   @override
   @JsonKey(ignore: true)

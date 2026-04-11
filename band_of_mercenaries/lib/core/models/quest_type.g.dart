@@ -8,20 +8,20 @@ part of 'quest_type.dart';
 
 _$QuestTypeImpl _$$QuestTypeImplFromJson(Map<String, dynamic> json) =>
     _$QuestTypeImpl(
-      id: json['ID'] as String,
-      name: json['Name'] as String,
-      baseReward: (json['BaseReward'] as num).toInt(),
-      baseDuration: (json['BaseDuration'] as num).toInt(),
-      riskFactor: (json['RiskFactor'] as num).toDouble(),
+      id: json['id'] as String,
+      name: json['name'] as String,
+      baseReward: (json['base_reward'] as num).toInt(),
+      baseDuration: (json['base_duration'] as num).toInt(),
+      riskFactor: (json['risk_factor'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$$QuestTypeImplToJson(_$QuestTypeImpl instance) =>
     <String, dynamic>{
-      'ID': instance.id,
-      'Name': instance.name,
-      'BaseReward': instance.baseReward,
-      'BaseDuration': instance.baseDuration,
-      'RiskFactor': instance.riskFactor,
+      'id': instance.id,
+      'name': instance.name,
+      'base_reward': instance.baseReward,
+      'base_duration': instance.baseDuration,
+      'risk_factor': instance.riskFactor,
     };
 
 _$QuestTypeListImpl _$$QuestTypeListImplFromJson(Map<String, dynamic> json) =>
