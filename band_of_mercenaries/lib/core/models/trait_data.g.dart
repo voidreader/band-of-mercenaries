@@ -21,15 +21,3 @@ Map<String, dynamic> _$$TraitDataImplToJson(_$TraitDataImpl instance) =>
       'effect_type': instance.effectType,
       'value': instance.value,
     };
-
-_$TraitDataListImpl _$$TraitDataListImplFromJson(Map<String, dynamic> json) =>
-    _$TraitDataListImpl(
-      items: (json['Traits'] as List<dynamic>)
-          .map((e) => TraitData.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$TraitDataListImplToJson(_$TraitDataListImpl instance) =>
-    <String, dynamic>{
-      'Traits': instance.items,
-    };

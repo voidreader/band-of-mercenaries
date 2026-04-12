@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 
 class ActivityLogRepository {
   static const String boxName = 'activityLogs';

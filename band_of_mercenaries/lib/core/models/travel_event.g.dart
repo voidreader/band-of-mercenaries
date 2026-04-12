@@ -29,17 +29,3 @@ Map<String, dynamic> _$$TravelEventImplToJson(_$TravelEventImpl instance) =>
       'max_tier': instance.maxTier,
       'description': instance.description,
     };
-
-_$TravelEventListImpl _$$TravelEventListImplFromJson(
-        Map<String, dynamic> json) =>
-    _$TravelEventListImpl(
-      items: (json['TravelEvents'] as List<dynamic>)
-          .map((e) => TravelEvent.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$TravelEventListImplToJson(
-        _$TravelEventListImpl instance) =>
-    <String, dynamic>{
-      'TravelEvents': instance.items,
-    };

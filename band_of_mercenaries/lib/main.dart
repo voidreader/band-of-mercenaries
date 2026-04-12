@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/supabase_initializer.dart';
 import 'package:band_of_mercenaries/core/data/sync_service.dart';
+import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
@@ -147,7 +148,7 @@ class _IdleRewardWrapperState extends ConsumerState<_IdleRewardWrapper> {
 
   void _checkIdleReward() {
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
-    final lastActiveMs = settingsBox.get('lastActiveTime') as int?;
+    final lastActiveMs = settingsBox.get(SettingsKeys.lastActiveTime) as int?;
     if (lastActiveMs == null) return;
 
     final lastActive = DateTime.fromMillisecondsSinceEpoch(lastActiveMs);
@@ -182,6 +183,6 @@ class _IdleRewardWrapperState extends ConsumerState<_IdleRewardWrapper> {
       );
     }
 
-    settingsBox.put('lastActiveTime', now.millisecondsSinceEpoch);
+    settingsBox.put(SettingsKeys.lastActiveTime, now.millisecondsSinceEpoch);
   }
 }

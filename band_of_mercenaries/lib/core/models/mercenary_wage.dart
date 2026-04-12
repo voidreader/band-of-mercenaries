@@ -13,13 +13,3 @@ class MercenaryWage with _$MercenaryWage {
   factory MercenaryWage.fromJson(Map<String, dynamic> json) =>
       _$MercenaryWageFromJson(json);
 }
-
-@freezed
-class MercenaryWageList with _$MercenaryWageList {
-  const factory MercenaryWageList({
-    @JsonKey(name: 'MercenaryWages') required List<MercenaryWage> items,
-  }) = _MercenaryWageList;
-
-  factory MercenaryWageList.fromJson(Map<String, dynamic> json) =>
-      _$MercenaryWageListFromJson(json);
-}

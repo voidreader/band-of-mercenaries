@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart';
-import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
@@ -116,7 +115,7 @@ void main() {
 
       // 성공 또는 대성공이어야 함 (높은 파워비)
       expect(
-        result.resultType == QuestResultType.greatSuccess || result.resultType == QuestResultType.success,
+        result.resultType == QuestResult.greatSuccess || result.resultType == QuestResult.success,
         isTrue,
       );
       expect(result.rewardGold, greaterThan(0));
@@ -144,7 +143,7 @@ void main() {
           speedMultiplier: 1.0,
           random: _SeededRandom(seed),
         );
-        if (result.resultType == QuestResultType.greatSuccess) {
+        if (result.resultType == QuestResult.greatSuccess) {
           greatSuccessResult = result;
           break;
         }
@@ -169,7 +168,7 @@ void main() {
           speedMultiplier: 1.0,
           random: _SeededRandom(seed),
         );
-        if (result.resultType == QuestResultType.failure) {
+        if (result.resultType == QuestResult.failure) {
           failResult = result;
           break;
         }
@@ -197,7 +196,7 @@ void main() {
           speedMultiplier: 1.0,
           random: _SeededRandom(seed),
         );
-        if (result.resultType == QuestResultType.criticalFailure) {
+        if (result.resultType == QuestResult.criticalFailure) {
           critResult = result;
           break;
         }
@@ -290,8 +289,8 @@ void main() {
           playerRegion: 10, facilities: {},
           speedMultiplier: 1.0, random: _SeededRandom(seed),
         );
-        if (nearResult.resultType == QuestResultType.greatSuccess ||
-            nearResult.resultType == QuestResultType.success) {
+        if (nearResult.resultType == QuestResult.greatSuccess ||
+            nearResult.resultType == QuestResult.success) {
           nearSuccesses++;
         }
 
@@ -300,8 +299,8 @@ void main() {
           playerRegion: 1, facilities: {},
           speedMultiplier: 1.0, random: _SeededRandom(seed),
         );
-        if (farResult.resultType == QuestResultType.greatSuccess ||
-            farResult.resultType == QuestResultType.success) {
+        if (farResult.resultType == QuestResult.greatSuccess ||
+            farResult.resultType == QuestResult.success) {
           farSuccesses++;
         }
       }

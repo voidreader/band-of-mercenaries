@@ -1,7 +1,8 @@
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/features/movement/data/movement_repository.dart';
-import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
+import 'package:band_of_mercenaries/core/models/user_data.dart';
+import 'package:band_of_mercenaries/features/movement/domain/movement_state.dart';
 import 'package:band_of_mercenaries/features/movement/domain/travel_event_service.dart';
 import 'package:band_of_mercenaries/core/models/travel_event.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
@@ -10,9 +11,9 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
-import 'package:band_of_mercenaries/features/home/domain/reputation_service.dart';
-import 'package:band_of_mercenaries/features/home/domain/activity_log_provider.dart';
-import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 
 final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
@@ -26,11 +27,11 @@ final canAccessRegionTierProvider = Provider.family<bool, int>((ref, regionTier)
   return ReputationService.isRegionAccessible(regionTier, userData.reputation, staticData.ranks);
 });
 
-final movementProvider = StateNotifierProvider<MovementNotifier, UserData?>((ref) {
+final movementProvider = StateNotifierProvider<MovementNotifier, MovementState?>((ref) {
   return MovementNotifier(ref);
 });
 
-class MovementNotifier extends StateNotifier<UserData?> {
+class MovementNotifier extends StateNotifier<MovementState?> {
   final Ref ref;
   late final MovementRepository _repo;
   bool _isCompletingMovement = false;
@@ -42,36 +43,46 @@ class MovementNotifier extends StateNotifier<UserData?> {
   }
 
   void _load() {
-    state = _repo.userData;
+    final user = _repo.userData;
+    if (user == null) {
+      state = null;
+      return;
+    }
+    state = MovementState(
+      isMoving: user.isMoving,
+      moveTargetRegion: user.moveTargetRegion,
+      moveTargetSector: user.moveTargetSector,
+      moveEndTime: user.moveEndTime,
+      currentRegion: user.region,
+      currentSector: user.sector,
+    );
   }
 
   Future<void> startMovement(int targetRegion, int targetSector) async {
-    final user = state;
-    if (user == null || user.isMoving) return;
+    final userData = ref.read(userDataProvider);
+    if (userData == null || userData.isMoving) return;
 
     final staticData = ref.read(staticDataProvider).value;
     if (staticData == null) return;
 
-    // Task 14: Region tier lock based on reputation
     final targetRegionData = staticData.regions.firstWhere(
       (r) => r.region == targetRegion,
       orElse: () => staticData.regions.first,
     );
     if (!ReputationService.isRegionAccessible(
-      targetRegionData.regionTier, user.reputation, staticData.ranks,
+      targetRegionData.regionTier, userData.reputation, staticData.ranks,
     )) {
       return;
     }
 
     final distance = UserData.calculateDistance(
-      user.region, user.sector, targetRegion, targetSector,
+      userData.region, userData.sector, targetRegion, targetSector,
     );
     final speedMult = ref.read(speedMultiplierProvider);
 
-    // Task 7: Roll for travel event
     final random = Random();
     final currentRegionData = staticData.regions.firstWhere(
-      (r) => r.region == user.region,
+      (r) => r.region == userData.region,
       orElse: () => staticData.regions.first,
     );
     final travelEvent = TravelEventService.rollEvent(
@@ -81,13 +92,11 @@ class MovementNotifier extends StateNotifier<UserData?> {
       random: random,
     );
 
-    // Apply delay multiplier for weather events
     double durationMultiplier = 1.0;
     if (travelEvent != null) {
       durationMultiplier = TravelEventService.delayMultiplier(travelEvent);
     }
 
-    // Store event in provider
     ref.read(lastTravelEventProvider.notifier).state = travelEvent;
 
     final baseDuration = UserData.calculateMoveTime(distance, speedMultiplier: speedMult);
@@ -97,12 +106,11 @@ class MovementNotifier extends StateNotifier<UserData?> {
 
     await _repo.startMovement(targetRegion, targetSector, endTime);
     _load();
-    // Also update the main user data provider
-    ref.read(userDataProvider.notifier).addGold(0); // trigger rebuild
+    ref.read(userDataProvider.notifier).refresh();
   }
 
   void recalculateTimers(double oldSpeed, double newSpeed) {
-    final user = state;
+    final user = _repo.userData;
     if (user == null || !user.isMoving || user.moveEndTime == null) return;
     final now = DateTime.now();
     if (now.isAfter(user.moveEndTime!)) return;
@@ -112,7 +120,7 @@ class MovementNotifier extends StateNotifier<UserData?> {
     user.moveEndTime = now.add(Duration(milliseconds: newRemainingMs));
     user.save();
     _load();
-    ref.read(userDataProvider.notifier).addGold(0); // trigger rebuild
+    ref.read(userDataProvider.notifier).refresh();
   }
 
   void _checkArrival() {
@@ -131,22 +139,19 @@ class MovementNotifier extends StateNotifier<UserData?> {
 
     await _repo.completeMovement();
     _load();
-    ref.read(userDataProvider.notifier).addGold(0); // trigger rebuild
+    ref.read(userDataProvider.notifier).refresh();
 
     ref.read(activityLogProvider.notifier).addLog(
       '이동 완료',
       ActivityLogType.movementComplete,
     );
 
-    // Apply travel event effect (non-delay events)
     if (travelEvent != null && travelEvent.effectType != 'delay') {
       await _applyEventEffect(travelEvent);
     }
 
-    // Clear the event
     ref.read(lastTravelEventProvider.notifier).state = null;
 
-    // Generate new quests for the new region
     await ref.read(questListProvider.notifier).generateQuests();
   }
 

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 
 void main() {
   group('QuestCalculator', () {
@@ -46,22 +47,22 @@ void main() {
     group('determineResult', () {
       test('roll in great success range returns greatSuccess', () {
         final result = QuestCalculator.determineResult(successRate: 80, roll: 10);
-        expect(result, QuestResultType.greatSuccess);
+        expect(result, QuestResult.greatSuccess);
       });
 
       test('roll in success range returns success', () {
         final result = QuestCalculator.determineResult(successRate: 80, roll: 50);
-        expect(result, QuestResultType.success);
+        expect(result, QuestResult.success);
       });
 
       test('roll in failure range returns failure', () {
         final result = QuestCalculator.determineResult(successRate: 80, roll: 85);
-        expect(result, QuestResultType.failure);
+        expect(result, QuestResult.failure);
       });
 
       test('roll in critical failure range returns criticalFailure', () {
         final result = QuestCalculator.determineResult(successRate: 80, roll: 98);
-        expect(result, QuestResultType.criticalFailure);
+        expect(result, QuestResult.criticalFailure);
       });
     });
 

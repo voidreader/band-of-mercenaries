@@ -1,9 +1,9 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
-import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
-import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
-import 'package:band_of_mercenaries/features/home/data/activity_log_repository.dart';
+import 'package:band_of_mercenaries/core/models/user_data.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_repository.dart';
 
 class HiveInitializer {
   static const String userBoxName = 'user';

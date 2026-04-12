@@ -19,13 +19,3 @@ class TravelEvent with _$TravelEvent {
   factory TravelEvent.fromJson(Map<String, dynamic> json) =>
       _$TravelEventFromJson(json);
 }
-
-@freezed
-class TravelEventList with _$TravelEventList {
-  const factory TravelEventList({
-    @JsonKey(name: 'TravelEvents') required List<TravelEvent> items,
-  }) = _TravelEventList;
-
-  factory TravelEventList.fromJson(Map<String, dynamic> json) =>
-      _$TravelEventListFromJson(json);
-}

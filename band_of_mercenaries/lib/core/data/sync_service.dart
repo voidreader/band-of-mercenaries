@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
+import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 
 enum SyncStatus {
   fullDownload,  // 첫 실행: 전체 다운로드
@@ -13,8 +14,6 @@ enum SyncStatus {
 class SyncService {
   final SupabaseClient _client;
   final DataLoader _dataLoader;
-
-  static const String _versionsKey = 'dataVersions';
 
   static const List<String> allTables = [
     'jobs',
@@ -82,14 +81,14 @@ class SyncService {
 
   /// 로컬 저장된 버전 정보
   Map<String, int> _getLocalVersions() {
-    final raw = _settingsBox.get(_versionsKey);
+    final raw = _settingsBox.get(SettingsKeys.dataVersions);
     if (raw == null) return {};
     return Map<String, int>.from(raw as Map);
   }
 
   /// 로컬 버전 저장
   void _saveLocalVersions(Map<String, int> versions) {
-    _settingsBox.put(_versionsKey, versions);
+    _settingsBox.put(SettingsKeys.dataVersions, versions);
   }
 
   /// 서버와 로컬 버전 비교 → 변경된 테이블 목록

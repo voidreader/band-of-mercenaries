@@ -3,7 +3,7 @@ import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
-import 'package:band_of_mercenaries/features/quest/domain/experience_service.dart';
+import 'package:band_of_mercenaries/core/domain/experience_service.dart';
 import 'package:band_of_mercenaries/shared/widgets/status_badge.dart';
 
 class MercenaryCard extends StatelessWidget {

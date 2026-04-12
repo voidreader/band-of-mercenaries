@@ -16,13 +16,3 @@ class QuestType with _$QuestType {
   factory QuestType.fromJson(Map<String, dynamic> json) =>
       _$QuestTypeFromJson(json);
 }
-
-@freezed
-class QuestTypeList with _$QuestTypeList {
-  const factory QuestTypeList({
-    @JsonKey(name: 'QuestTypes') required List<QuestType> items,
-  }) = _QuestTypeList;
-
-  factory QuestTypeList.fromJson(Map<String, dynamic> json) =>
-      _$QuestTypeListFromJson(json);
-}

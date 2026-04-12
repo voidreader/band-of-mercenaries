@@ -25,15 +25,3 @@ Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
       'min_region_diff': instance.minRegionDiff,
       'max_region_diff': instance.maxRegionDiff,
     };
-
-_$QuestPoolListImpl _$$QuestPoolListImplFromJson(Map<String, dynamic> json) =>
-    _$QuestPoolListImpl(
-      items: (json['QuestPools'] as List<dynamic>)
-          .map((e) => QuestPool.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$QuestPoolListImplToJson(_$QuestPoolListImpl instance) =>
-    <String, dynamic>{
-      'QuestPools': instance.items,
-    };

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
+import 'package:band_of_mercenaries/core/models/user_data.dart';
 
 void main() {
   group('UserData', () {

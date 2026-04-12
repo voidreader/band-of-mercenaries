@@ -1,9 +1,10 @@
 import 'dart:math';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
+import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
-import 'package:band_of_mercenaries/features/quest/domain/experience_service.dart';
+import 'package:band_of_mercenaries/core/domain/experience_service.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
@@ -63,14 +64,14 @@ class MercenaryRepository {
     }
     // Save dismissed ID
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
-    final dismissed = List<String>.from(settingsBox.get('dismissedMercIds', defaultValue: <String>[]));
+    final dismissed = List<String>.from(settingsBox.get(SettingsKeys.dismissedMercIds, defaultValue: <String>[]));
     dismissed.add(mercId);
-    await settingsBox.put('dismissedMercIds', dismissed);
+    await settingsBox.put(SettingsKeys.dismissedMercIds, dismissed);
   }
 
   List<String> getDismissedIds() {
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
-    return List<String>.from(settingsBox.get('dismissedMercIds', defaultValue: <String>[]));
+    return List<String>.from(settingsBox.get(SettingsKeys.dismissedMercIds, defaultValue: <String>[]));
   }
 
   Future<void> addXpAndCheckLevel(String mercId, int xpGain) async {

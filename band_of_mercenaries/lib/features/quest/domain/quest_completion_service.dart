@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
-import 'package:band_of_mercenaries/features/quest/domain/experience_service.dart';
+import 'package:band_of_mercenaries/core/domain/experience_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
-import 'package:band_of_mercenaries/features/home/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 
 class MercDamageResult {
@@ -20,8 +20,7 @@ class MercDamageResult {
 }
 
 class QuestCompletionResult {
-  final QuestResultType resultType;
-  final QuestResult questResult;
+  final QuestResult resultType;
   final int rewardGold;
   final int totalWage;
   final int netReward;
@@ -31,7 +30,6 @@ class QuestCompletionResult {
 
   const QuestCompletionResult({
     required this.resultType,
-    required this.questResult,
     required this.rewardGold,
     required this.totalWage,
     required this.netReward,
@@ -72,21 +70,14 @@ class QuestCompletionService {
     final roll = random.nextDouble() * 100;
     final resultType = QuestCalculator.determineResult(successRate: successRate, roll: roll);
 
-    final questResult = switch (resultType) {
-      QuestResultType.greatSuccess => QuestResult.greatSuccess,
-      QuestResultType.success => QuestResult.success,
-      QuestResultType.failure => QuestResult.failure,
-      QuestResultType.criticalFailure => QuestResult.criticalFailure,
-    };
-
     // 보상 계산
     int rewardGold = 0;
     int totalWage = 0;
-    if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {
+    if (resultType == QuestResult.greatSuccess || resultType == QuestResult.success) {
       rewardGold = QuestCalculator.calculateReward(
         baseReward: questType.baseReward,
         rewardMultiplier: difficulty.rewardMultiplier,
-        isGreatSuccess: resultType == QuestResultType.greatSuccess,
+        isGreatSuccess: resultType == QuestResult.greatSuccess,
       );
       final mercTiers = mercs.map((merc) {
         final job = staticData.jobs.firstWhere(
@@ -119,10 +110,10 @@ class QuestCompletionService {
 
     // 명성 계산
     int repGain = 0;
-    if (resultType == QuestResultType.greatSuccess || resultType == QuestResultType.success) {
+    if (resultType == QuestResult.greatSuccess || resultType == QuestResult.success) {
       repGain = ReputationService.calculateQuestReputation(
         difficulty: quest.difficulty.clamp(1, 5),
-        isGreatSuccess: resultType == QuestResultType.greatSuccess,
+        isGreatSuccess: resultType == QuestResult.greatSuccess,
       );
     }
 
@@ -140,7 +131,7 @@ class QuestCompletionService {
     final now = DateTime.now();
     final mercDamages = <MercDamageResult>[];
     for (final merc in mercs) {
-      if (resultType == QuestResultType.failure || resultType == QuestResultType.criticalFailure) {
+      if (resultType == QuestResult.failure || resultType == QuestResult.criticalFailure) {
         final damageRoll = random.nextDouble();
         final damageResult = QuestCalculator.calculateDamage(
           roll: damageRoll,
@@ -173,7 +164,6 @@ class QuestCompletionService {
 
     return QuestCompletionResult(
       resultType: resultType,
-      questResult: questResult,
       rewardGold: rewardGold,
       totalWage: totalWage,
       netReward: netReward,

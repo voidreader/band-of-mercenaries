@@ -15,13 +15,3 @@ class Rank with _$Rank {
   factory Rank.fromJson(Map<String, dynamic> json) =>
       _$RankFromJson(json);
 }
-
-@freezed
-class RankList with _$RankList {
-  const factory RankList({
-    @JsonKey(name: 'Ranks') required List<Rank> items,
-  }) = _RankList;
-
-  factory RankList.fromJson(Map<String, dynamic> json) =>
-      _$RankListFromJson(json);
-}

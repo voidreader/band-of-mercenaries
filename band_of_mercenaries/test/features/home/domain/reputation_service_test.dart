@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:band_of_mercenaries/core/models/rank.dart';
-import 'package:band_of_mercenaries/features/home/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
 
 void main() {
   final ranks = [

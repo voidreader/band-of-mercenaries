@@ -15,13 +15,3 @@ class TraitData with _$TraitData {
   factory TraitData.fromJson(Map<String, dynamic> json) =>
       _$TraitDataFromJson(json);
 }
-
-@freezed
-class TraitDataList with _$TraitDataList {
-  const factory TraitDataList({
-    @JsonKey(name: 'Traits') required List<TraitData> items,
-  }) = _TraitDataList;
-
-  factory TraitDataList.fromJson(Map<String, dynamic> json) =>
-      _$TraitDataListFromJson(json);
-}

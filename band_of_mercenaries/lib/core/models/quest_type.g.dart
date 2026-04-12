@@ -23,15 +23,3 @@ Map<String, dynamic> _$$QuestTypeImplToJson(_$QuestTypeImpl instance) =>
       'base_duration': instance.baseDuration,
       'risk_factor': instance.riskFactor,
     };
-
-_$QuestTypeListImpl _$$QuestTypeListImplFromJson(Map<String, dynamic> json) =>
-    _$QuestTypeListImpl(
-      items: (json['QuestTypes'] as List<dynamic>)
-          .map((e) => QuestType.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$QuestTypeListImplToJson(_$QuestTypeListImpl instance) =>
-    <String, dynamic>{
-      'QuestTypes': instance.items,
-    };

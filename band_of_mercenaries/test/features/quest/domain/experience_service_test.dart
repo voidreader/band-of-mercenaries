@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:band_of_mercenaries/features/quest/domain/experience_service.dart';
-import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
+import 'package:band_of_mercenaries/core/domain/experience_service.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 
 void main() {
   group('calculateXpGain', () {
@@ -29,11 +29,11 @@ void main() {
   });
 
   group('resultMultiplier', () {
-    test('maps QuestResultType correctly', () {
-      expect(ExperienceService.resultMultiplier(QuestResultType.greatSuccess), 2.0);
-      expect(ExperienceService.resultMultiplier(QuestResultType.success), 1.0);
-      expect(ExperienceService.resultMultiplier(QuestResultType.failure), 0.5);
-      expect(ExperienceService.resultMultiplier(QuestResultType.criticalFailure), 0.0);
+    test('maps QuestResult correctly', () {
+      expect(ExperienceService.resultMultiplier(QuestResult.greatSuccess), 2.0);
+      expect(ExperienceService.resultMultiplier(QuestResult.success), 1.0);
+      expect(ExperienceService.resultMultiplier(QuestResult.failure), 0.5);
+      expect(ExperienceService.resultMultiplier(QuestResult.criticalFailure), 0.0);
     });
   });
 }

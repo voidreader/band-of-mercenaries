@@ -29,15 +29,3 @@ Map<String, dynamic> _$$FacilityImplToJson(_$FacilityImpl instance) =>
       'costs': instance.costs,
       'values': instance.values,
     };
-
-_$FacilityListImpl _$$FacilityListImplFromJson(Map<String, dynamic> json) =>
-    _$FacilityListImpl(
-      items: (json['Facilities'] as List<dynamic>)
-          .map((e) => Facility.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$FacilityListImplToJson(_$FacilityListImpl instance) =>
-    <String, dynamic>{
-      'Facilities': instance.items,
-    };

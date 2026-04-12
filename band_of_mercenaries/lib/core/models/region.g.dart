@@ -24,15 +24,3 @@ Map<String, dynamic> _$$RegionImplToJson(_$RegionImpl instance) =>
       'recommend_power': instance.recommendPower,
       'description': instance.description,
     };
-
-_$RegionListImpl _$$RegionListImplFromJson(Map<String, dynamic> json) =>
-    _$RegionListImpl(
-      items: (json['Regions'] as List<dynamic>)
-          .map((e) => Region.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$RegionListImplToJson(_$RegionListImpl instance) =>
-    <String, dynamic>{
-      'Regions': instance.items,
-    };

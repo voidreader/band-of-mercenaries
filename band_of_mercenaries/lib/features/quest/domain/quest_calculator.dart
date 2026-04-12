@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
-
-enum QuestResultType { greatSuccess, success, failure, criticalFailure }
+import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 
 enum DamageResult { dead, injured, survived }
 
@@ -28,15 +27,15 @@ class QuestCalculator {
     return rate.clamp(5.0, 95.0);
   }
 
-  static QuestResultType determineResult({required double successRate, required double roll}) {
+  static QuestResult determineResult({required double successRate, required double roll}) {
     final greatSuccessThreshold = successRate * 0.3;
     final successThreshold = successRate;
     final failureThreshold = successRate + (100 - successRate) * 0.7;
 
-    if (roll <= greatSuccessThreshold) return QuestResultType.greatSuccess;
-    if (roll <= successThreshold) return QuestResultType.success;
-    if (roll <= failureThreshold) return QuestResultType.failure;
-    return QuestResultType.criticalFailure;
+    if (roll <= greatSuccessThreshold) return QuestResult.greatSuccess;
+    if (roll <= successThreshold) return QuestResult.success;
+    if (roll <= failureThreshold) return QuestResult.failure;
+    return QuestResult.criticalFailure;
   }
 
   static int calculateReward({required int baseReward, required double rewardMultiplier, bool isGreatSuccess = false}) {

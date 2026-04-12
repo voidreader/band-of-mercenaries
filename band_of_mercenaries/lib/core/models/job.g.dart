@@ -25,15 +25,3 @@ Map<String, dynamic> _$$JobImplToJson(_$JobImpl instance) => <String, dynamic>{
       'base_hp': instance.baseHp,
       'speed': instance.speed,
     };
-
-_$JobListImpl _$$JobListImplFromJson(Map<String, dynamic> json) =>
-    _$JobListImpl(
-      items: (json['Jobs'] as List<dynamic>)
-          .map((e) => Job.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$JobListImplToJson(_$JobListImpl instance) =>
-    <String, dynamic>{
-      'Jobs': instance.items,
-    };

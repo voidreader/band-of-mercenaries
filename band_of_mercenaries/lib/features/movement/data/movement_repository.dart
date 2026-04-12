@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
-import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
+import 'package:band_of_mercenaries/core/models/user_data.dart';
 
 class MovementRepository {
   Box<UserData> get _box => Hive.box<UserData>(HiveInitializer.userBoxName);

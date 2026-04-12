@@ -29,16 +29,3 @@ Map<String, dynamic> _$$DifficultyImplToJson(_$DifficultyImpl instance) =>
       'min_dispatch_cost': instance.minDispatchCost,
       'max_dispatch_cost': instance.maxDispatchCost,
     };
-
-_$DifficultyListImpl _$$DifficultyListImplFromJson(Map<String, dynamic> json) =>
-    _$DifficultyListImpl(
-      items: (json['Difficultys'] as List<dynamic>)
-          .map((e) => Difficulty.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$DifficultyListImplToJson(
-        _$DifficultyListImpl instance) =>
-    <String, dynamic>{
-      'Difficultys': instance.items,
-    };

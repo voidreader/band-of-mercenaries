@@ -17,13 +17,3 @@ class Region with _$Region {
   factory Region.fromJson(Map<String, dynamic> json) =>
       _$RegionFromJson(json);
 }
-
-@freezed
-class RegionList with _$RegionList {
-  const factory RegionList({
-    @JsonKey(name: 'Regions') required List<Region> items,
-  }) = _RegionList;
-
-  factory RegionList.fromJson(Map<String, dynamic> json) =>
-      _$RegionListFromJson(json);
-}

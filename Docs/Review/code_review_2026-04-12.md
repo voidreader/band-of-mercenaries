@@ -102,7 +102,7 @@
 
 ---
 
-### C4. UserData 모델이 movement feature에 위치하면서 전역 사용
+### C4. ~~UserData 모델이 movement feature에 위치하면서 전역 사용~~ [FIXED in Phase 2]
 
 **파일:** `features/movement/domain/movement_model.dart`
 
@@ -114,7 +114,7 @@
 
 ## MAJOR — 프로젝트 성장 전에 수정 권장
 
-### M1. Feature 간 의존성이 그물망 구조
+### M1. ~~Feature 간 의존성이 그물망 구조~~ [FIXED in Phase 2]
 
 현재 import 관계:
 ```
@@ -178,7 +178,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M5. 퀘스트 결과 enum 이중 정의
+### M5. ~~퀘스트 결과 enum 이중 정의~~ [FIXED in Phase 2]
 
 **파일:** `quest_model.dart:16-25` vs `quest_calculator.dart:4`
 
@@ -201,7 +201,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M7. Settings 박스 키가 매직 스트링으로 분산
+### M7. ~~Settings 박스 키가 매직 스트링으로 분산~~ [FIXED in Phase 2]
 
 | 파일 | 키 |
 |------|-----|
@@ -216,7 +216,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M8. addGold(0) 해킹으로 UI 리빌드 트리거
+### M8. ~~addGold(0) 해킹으로 UI 리빌드 트리거~~ [FIXED in Phase 2]
 
 **파일:** `movement_provider.dart:100, 114, 131`
 
@@ -236,7 +236,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M10. UserData 이중 상태 관리
+### M10. ~~UserData 이중 상태 관리~~ [FIXED in Phase 2]
 
 **파일:** `game_state_provider.dart` + `movement_provider.dart`
 
@@ -246,7 +246,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M11. 미사용 XxxList 래퍼 클래스 11개
+### M11. ~~미사용 XxxList 래퍼 클래스 11개~~ [FIXED in Phase 2]
 
 **파일:** `core/models/` 내 모든 모델 파일
 
@@ -418,17 +418,17 @@ CLAUDE.md에 "Material 3 다크 프라이머리 테마"라고 되어 있지만, 
 | 3 | ~~`enemyPower` 0 방어 코드~~ | m4 | DONE |
 | 4 | ~~`mocktail` 추가, 핵심 로직 테스트~~ | 테스트 갭 | DONE |
 
-### Phase 2 — 아키텍처 정리 (1~2주)
+### Phase 2 — 아키텍처 정리 (1~2주) [COMPLETED 2026-04-12]
 
-| # | 작업 | 관련 이슈 |
-|---|------|----------|
-| 5 | `UserData`를 `core/models/`로 이동 | C4 |
-| 6 | ActivityLog, ExperienceService, ReputationService → core 승격 | M1 |
-| 7 | Hive 뮤터블 객체 래핑 — 이뮤터블 상태 관리 도입 | C2 |
-| 8 | `MovementNotifier` state를 `MovementState`로 분리 | M10 |
-| 9 | Settings 키 상수화 | M7 |
-| 10 | 미사용 `XxxList` 래퍼 클래스 제거 | M11 |
-| 11 | 퀘스트 결과 enum 통일 | M5 |
+| # | 작업 | 관련 이슈 | 상태 |
+|---|------|----------|------|
+| 5 | ~~`UserData`를 `core/models/`로 이동~~ | C4 | DONE |
+| 6 | ~~ActivityLog, ExperienceService, ReputationService → core 승격~~ | M1 | DONE |
+| 7 | ~~addGold(0) → refresh() 교체~~ (최소 수정) | C2 | DONE |
+| 8 | ~~`MovementNotifier` state를 `MovementState`로 분리~~ | M10 | DONE |
+| 9 | ~~Settings 키 상수화~~ | M7 | DONE |
+| 10 | ~~미사용 `XxxList` 래퍼 클래스 제거~~ | M11 | DONE |
+| 11 | ~~퀘스트 결과 enum 통일~~ | M5 | DONE |
 
 ### Phase 3 — 품질 강화 (2~4주)
 

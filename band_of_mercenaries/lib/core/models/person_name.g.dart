@@ -17,16 +17,3 @@ Map<String, dynamic> _$$PersonNameImplToJson(_$PersonNameImpl instance) =>
       'id': instance.id,
       'korean': instance.korean,
     };
-
-_$PersonNameListImpl _$$PersonNameListImplFromJson(Map<String, dynamic> json) =>
-    _$PersonNameListImpl(
-      items: (json['PersonNames'] as List<dynamic>)
-          .map((e) => PersonName.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$PersonNameListImplToJson(
-        _$PersonNameListImpl instance) =>
-    <String, dynamic>{
-      'PersonNames': instance.items,
-    };

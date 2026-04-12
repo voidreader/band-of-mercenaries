@@ -5,8 +5,8 @@ import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.d
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
-import 'package:band_of_mercenaries/features/home/domain/activity_log_provider.dart';
-import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 
 final mercenaryRepositoryProvider = Provider((ref) => MercenaryRepository());
 

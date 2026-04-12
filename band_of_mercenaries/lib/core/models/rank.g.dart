@@ -20,15 +20,3 @@ Map<String, dynamic> _$$RankImplToJson(_$RankImpl instance) =>
       'required_reputation': instance.requiredReputation,
       'unlock_tier': instance.unlockTier,
     };
-
-_$RankListImpl _$$RankListImplFromJson(Map<String, dynamic> json) =>
-    _$RankListImpl(
-      items: (json['Ranks'] as List<dynamic>)
-          .map((e) => Rank.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$$RankListImplToJson(_$RankListImpl instance) =>
-    <String, dynamic>{
-      'Ranks': instance.items,
-    };

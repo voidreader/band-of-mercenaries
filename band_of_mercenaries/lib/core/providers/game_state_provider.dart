@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
-import 'package:band_of_mercenaries/features/movement/domain/movement_model.dart';
+import 'package:band_of_mercenaries/core/models/user_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
 
@@ -24,6 +24,8 @@ class UserDataNotifier extends StateNotifier<UserData?> {
       state = box.getAt(0);
     }
   }
+
+  void refresh() => _load();
 
   Future<void> initializeNewGame() async {
     final staticData = ref.read(staticDataProvider).value;

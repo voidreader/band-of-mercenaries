@@ -17,13 +17,3 @@ class QuestPool with _$QuestPool {
   factory QuestPool.fromJson(Map<String, dynamic> json) =>
       _$QuestPoolFromJson(json);
 }
-
-@freezed
-class QuestPoolList with _$QuestPoolList {
-  const factory QuestPoolList({
-    @JsonKey(name: 'QuestPools') required List<QuestPool> items,
-  }) = _QuestPoolList;
-
-  factory QuestPoolList.fromJson(Map<String, dynamic> json) =>
-      _$QuestPoolListFromJson(json);
-}

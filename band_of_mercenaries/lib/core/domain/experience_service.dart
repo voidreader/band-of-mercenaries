@@ -1,4 +1,4 @@
-import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 
 class ExperienceService {
   static const int baseXp = 20;
@@ -23,12 +23,12 @@ class ExperienceService {
     return newLevel;
   }
 
-  static double resultMultiplier(QuestResultType resultType) {
+  static double resultMultiplier(QuestResult resultType) {
     return switch (resultType) {
-      QuestResultType.greatSuccess => 2.0,
-      QuestResultType.success => 1.0,
-      QuestResultType.failure => 0.5,
-      QuestResultType.criticalFailure => 0.0,
+      QuestResult.greatSuccess => 2.0,
+      QuestResult.success => 1.0,
+      QuestResult.failure => 0.5,
+      QuestResult.criticalFailure => 0.0,
     };
   }
 }

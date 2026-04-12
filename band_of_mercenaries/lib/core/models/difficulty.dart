@@ -19,13 +19,3 @@ class Difficulty with _$Difficulty {
   factory Difficulty.fromJson(Map<String, dynamic> json) =>
       _$DifficultyFromJson(json);
 }
-
-@freezed
-class DifficultyList with _$DifficultyList {
-  const factory DifficultyList({
-    @JsonKey(name: 'Difficultys') required List<Difficulty> items,
-  }) = _DifficultyList;
-
-  factory DifficultyList.fromJson(Map<String, dynamic> json) =>
-      _$DifficultyListFromJson(json);
-}

@@ -17,13 +17,3 @@ class Job with _$Job {
 
   factory Job.fromJson(Map<String, dynamic> json) => _$JobFromJson(json);
 }
-
-@freezed
-class JobList with _$JobList {
-  const factory JobList({
-    @JsonKey(name: 'Jobs') required List<Job> items,
-  }) = _JobList;
-
-  factory JobList.fromJson(Map<String, dynamic> json) =>
-      _$JobListFromJson(json);
-}

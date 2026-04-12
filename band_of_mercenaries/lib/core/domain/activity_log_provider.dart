@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:band_of_mercenaries/features/home/domain/activity_log_model.dart';
-import 'package:band_of_mercenaries/features/home/data/activity_log_repository.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_repository.dart';
 
 final activityLogRepositoryProvider = Provider((ref) => ActivityLogRepository());
 

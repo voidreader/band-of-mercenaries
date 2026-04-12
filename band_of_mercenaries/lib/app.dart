@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/supabase_initializer.dart';
 import 'package:band_of_mercenaries/core/data/sync_service.dart';
+import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
@@ -107,7 +108,7 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
 
   void _saveLastActiveTime() {
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
-    settingsBox.put('lastActiveTime', DateTime.now().millisecondsSinceEpoch);
+    settingsBox.put(SettingsKeys.lastActiveTime, DateTime.now().millisecondsSinceEpoch);
   }
 
   @override
