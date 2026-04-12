@@ -60,7 +60,15 @@
       "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/implement-spec)",
       "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/implement-agent)",
       "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/finalize-feature)",
-      "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/finalize-minor-task)"
+      "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/.claude/skills/finalize-minor-task)",
+      "Bash(find /Users/radiogaga/git/band-of-mercenaries/band_of_mercenaries/lib -type f -name \"*.dart\" ! -name \"*.g.dart\" ! -name \"*.freezed.dart\" -exec wc -l {} +)",
+      "Bash(grep -E '\\\\.dart$')",
+      "Bash(mv features/home/domain/activity_log_model.dart core/domain/activity_log_model.dart)",
+      "Bash(mv features/home/domain/activity_log_model.g.dart core/domain/activity_log_model.g.dart)",
+      "Bash(mv features/home/domain/activity_log_provider.dart core/domain/activity_log_provider.dart)",
+      "Bash(mv features/home/data/activity_log_repository.dart core/domain/activity_log_repository.dart)",
+      "Bash(mv features/quest/domain/experience_service.dart core/domain/experience_service.dart)",
+      "Bash(find lib:*)"
     ]
   }
 }

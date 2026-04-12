@@ -1,0 +1,4 @@
+from_trait,to_trait,condition_type,condition_value
+fearful,survivor,near_death_count,3
+fearful,trauma,failure_count,5
+survivor,unyielding,near_death_count,10
