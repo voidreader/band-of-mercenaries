@@ -20,11 +20,14 @@ TraitData _$TraitDataFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$TraitData {
-  String get id => throw _privateConstructorUsedError;
+  String get key => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
-  @JsonKey(name: 'effect_type')
-  String get effectType => throw _privateConstructorUsedError;
-  double get value => throw _privateConstructorUsedError;
+  @JsonKey(name: 'category_key')
+  String get categoryKey => throw _privateConstructorUsedError;
+  String get type => throw _privateConstructorUsedError;
+  String get description => throw _privateConstructorUsedError;
+  @JsonKey(name: 'effect_text')
+  String get effectText => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -38,10 +41,12 @@ abstract class $TraitDataCopyWith<$Res> {
       _$TraitDataCopyWithImpl<$Res, TraitData>;
   @useResult
   $Res call(
-      {String id,
+      {String key,
       String name,
-      @JsonKey(name: 'effect_type') String effectType,
-      double value});
+      @JsonKey(name: 'category_key') String categoryKey,
+      String type,
+      String description,
+      @JsonKey(name: 'effect_text') String effectText});
 }
 
 /// @nodoc
@@ -57,28 +62,38 @@ class _$TraitDataCopyWithImpl<$Res, $Val extends TraitData>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? key = null,
     Object? name = null,
-    Object? effectType = null,
-    Object? value = null,
+    Object? categoryKey = null,
+    Object? type = null,
+    Object? description = null,
+    Object? effectText = null,
   }) {
     return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
+      key: null == key
+          ? _value.key
+          : key // ignore: cast_nullable_to_non_nullable
               as String,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      effectType: null == effectType
-          ? _value.effectType
-          : effectType // ignore: cast_nullable_to_non_nullable
+      categoryKey: null == categoryKey
+          ? _value.categoryKey
+          : categoryKey // ignore: cast_nullable_to_non_nullable
               as String,
-      value: null == value
-          ? _value.value
-          : value // ignore: cast_nullable_to_non_nullable
-              as double,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      description: null == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String,
+      effectText: null == effectText
+          ? _value.effectText
+          : effectText // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 }
@@ -92,10 +107,12 @@ abstract class _$$TraitDataImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
+      {String key,
       String name,
-      @JsonKey(name: 'effect_type') String effectType,
-      double value});
+      @JsonKey(name: 'category_key') String categoryKey,
+      String type,
+      String description,
+      @JsonKey(name: 'effect_text') String effectText});
 }
 
 /// @nodoc
@@ -109,28 +126,38 @@ class __$$TraitDataImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? key = null,
     Object? name = null,
-    Object? effectType = null,
-    Object? value = null,
+    Object? categoryKey = null,
+    Object? type = null,
+    Object? description = null,
+    Object? effectText = null,
   }) {
     return _then(_$TraitDataImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
+      key: null == key
+          ? _value.key
+          : key // ignore: cast_nullable_to_non_nullable
               as String,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      effectType: null == effectType
-          ? _value.effectType
-          : effectType // ignore: cast_nullable_to_non_nullable
+      categoryKey: null == categoryKey
+          ? _value.categoryKey
+          : categoryKey // ignore: cast_nullable_to_non_nullable
               as String,
-      value: null == value
-          ? _value.value
-          : value // ignore: cast_nullable_to_non_nullable
-              as double,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      description: null == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String,
+      effectText: null == effectText
+          ? _value.effectText
+          : effectText // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -139,27 +166,35 @@ class __$$TraitDataImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$TraitDataImpl implements _TraitData {
   const _$TraitDataImpl(
-      {required this.id,
+      {required this.key,
       required this.name,
-      @JsonKey(name: 'effect_type') required this.effectType,
-      required this.value});
+      @JsonKey(name: 'category_key') required this.categoryKey,
+      required this.type,
+      this.description = '',
+      @JsonKey(name: 'effect_text') this.effectText = ''});
 
   factory _$TraitDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$TraitDataImplFromJson(json);
 
   @override
-  final String id;
+  final String key;
   @override
   final String name;
   @override
-  @JsonKey(name: 'effect_type')
-  final String effectType;
+  @JsonKey(name: 'category_key')
+  final String categoryKey;
   @override
-  final double value;
+  final String type;
+  @override
+  @JsonKey()
+  final String description;
+  @override
+  @JsonKey(name: 'effect_text')
+  final String effectText;
 
   @override
   String toString() {
-    return 'TraitData(id: $id, name: $name, effectType: $effectType, value: $value)';
+    return 'TraitData(key: $key, name: $name, categoryKey: $categoryKey, type: $type, description: $description, effectText: $effectText)';
   }
 
   @override
@@ -167,16 +202,21 @@ class _$TraitDataImpl implements _TraitData {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$TraitDataImpl &&
-            (identical(other.id, id) || other.id == id) &&
+            (identical(other.key, key) || other.key == key) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.effectType, effectType) ||
-                other.effectType == effectType) &&
-            (identical(other.value, value) || other.value == value));
+            (identical(other.categoryKey, categoryKey) ||
+                other.categoryKey == categoryKey) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.effectText, effectText) ||
+                other.effectText == effectText));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, effectType, value);
+  int get hashCode => Object.hash(
+      runtimeType, key, name, categoryKey, type, description, effectText);
 
   @JsonKey(ignore: true)
   @override
@@ -194,23 +234,30 @@ class _$TraitDataImpl implements _TraitData {
 
 abstract class _TraitData implements TraitData {
   const factory _TraitData(
-      {required final String id,
+      {required final String key,
       required final String name,
-      @JsonKey(name: 'effect_type') required final String effectType,
-      required final double value}) = _$TraitDataImpl;
+      @JsonKey(name: 'category_key') required final String categoryKey,
+      required final String type,
+      final String description,
+      @JsonKey(name: 'effect_text') final String effectText}) = _$TraitDataImpl;
 
   factory _TraitData.fromJson(Map<String, dynamic> json) =
       _$TraitDataImpl.fromJson;
 
   @override
-  String get id;
+  String get key;
   @override
   String get name;
   @override
-  @JsonKey(name: 'effect_type')
-  String get effectType;
+  @JsonKey(name: 'category_key')
+  String get categoryKey;
   @override
-  double get value;
+  String get type;
+  @override
+  String get description;
+  @override
+  @JsonKey(name: 'effect_text')
+  String get effectText;
   @override
   @JsonKey(ignore: true)
   _$$TraitDataImplCopyWith<_$TraitDataImpl> get copyWith =>

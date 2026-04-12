@@ -9,13 +9,13 @@ import 'package:band_of_mercenaries/shared/widgets/status_badge.dart';
 class MercenaryCard extends StatelessWidget {
   final Mercenary mercenary;
   final Job job;
-  final TraitData trait;
+  final TraitData? trait;
 
   const MercenaryCard({
     super.key,
     required this.mercenary,
     required this.job,
-    required this.trait,
+    this.trait,
   });
 
   double _xpProgress(int level, int xp) {
@@ -30,7 +30,9 @@ class MercenaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tierColor = AppTheme.tierColor(job.tier);
     final tierBg = AppTheme.tierBgColor(job.tier);
-    final traitColor = AppTheme.traitColors[trait.id] ?? AppTheme.textHint;
+    final traitColor = trait != null
+        ? (AppTheme.traitCategoryColors[trait!.categoryKey] ?? AppTheme.textHint)
+        : AppTheme.textHint;
     final isMaxLevel = mercenary.level >= ExperienceService.maxLevel;
 
     String? timerText;
@@ -124,7 +126,7 @@ class MercenaryCard extends StatelessWidget {
             'ATK ${mercenary.effectiveAtk} · DEF ${mercenary.effectiveDef} · HP ${mercenary.effectiveHp} · ',
             style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary),
           ),
-          Text(trait.name, style: TextStyle(fontSize: 13, color: traitColor, fontWeight: FontWeight.w500)),
+          Text(trait?.name ?? '알 수 없는 특성', style: TextStyle(fontSize: 13, color: traitColor, fontWeight: FontWeight.w500)),
         ],
       ),
     );

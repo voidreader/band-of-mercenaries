@@ -92,15 +92,20 @@ band_of_mercenaries/lib/
 정적 데이터는 Supabase 서버에서 관리되며, operation-bom 웹앱에서 편집/버전 발행한다. Flutter 앱은 로컬 JSON 캐시(`앱 문서 디렉토리/cache/*.json`)에 저장하여 오프라인에서도 동작한다.
 
 **동기화 방식:**
-- 첫 실행: 서버 연결 필수, 전체 11개 테이블 다운로드
+- 첫 실행: 서버 연결 필수, 전체 16개 테이블 다운로드
 - 이후 실행: `data_versions` 테이블로 버전 비교, 변경된 테이블만 다운로드
 - 서버 연결 실패 시: 로컬 캐시로 오프라인 플레이 가능 (캐시 있는 경우)
 - 싱크 타이밍: 앱 시작 + 포그라운드 복귀
 
-**정적 데이터 테이블 (11개):**
+**정적 데이터 테이블 (16개):**
 - regions: 199개 리전 (5단계 티어)
 - jobs: 5티어 30+ 직업
-- traits: 4종 특성 (강인함, 노련함, 겁쟁이, 광전사)
+- trait_categories: 8개 트레잇 카테고리 (Physical, Background, Talent, CombatStyle, Survival, Behavior, Mental, Experience)
+- traits: 106개 트레잇 (선천 35 + 후천 acquired 40 + 후천 evolved 31). key/name/categoryKey/type/description/effectText
+- trait_conflicts: 충돌 관계 (16쌍, 양방향 32행)
+- trait_transitions: 단일 진화 경로 (16개, condition_json으로 복합 조건)
+- trait_combo_evolutions: 조합 진화 레시피 (15개)
+- trait_synergies: 선천-후천 시너지 (39개, 획득 조건 완화 비율)
 - difficulties: 5단계 난이도 설정 (min_dispatch_cost/max_dispatch_cost로 시간 비례 비용)
 - quest_types / quest_pools: 퀘스트 유형 및 풀
 - person_names: 한국어 이름 ~500개

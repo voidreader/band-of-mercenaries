@@ -34,6 +34,11 @@ StaticGameData _makeStaticData({
       const Job(id: 'warrior', tier: 1, name: '전사', baseAtk: 10, baseDef: 8, baseHp: 100, speed: 1.0),
     ],
     traits: [],
+    traitCategories: [],
+    traitConflicts: [],
+    traitTransitions: [],
+    traitComboEvolutions: [],
+    traitSynergies: [],
     regions: [],
     questTypes: [
       QuestType(id: 'loot', name: '약탈', baseReward: baseReward, baseDuration: baseDuration, riskFactor: 1.0),

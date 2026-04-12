@@ -46,27 +46,16 @@ class RecruitmentService {
     final trait = traits[random.nextInt(traits.length)];
     final name = names[random.nextInt(names.length)];
 
-    int atk = job.baseAtk;
-    int def = job.baseDef;
-    int hp = job.baseHp;
-
-    switch (trait.effectType) {
-      case 'hp_bonus':
-        hp = (hp * (1 + trait.value)).round();
-        break;
-      case 'atk_bonus':
-        atk = (atk * (1 + trait.value)).round();
-        break;
-      case 'success_rate':
-      case 'survival_rate':
-        break;
-    }
+    // Phase 3에서 선천 트레잇 기반 스탯 수정 구현 예정
+    final int atk = job.baseAtk;
+    final int def = job.baseDef;
+    final int hp = job.baseHp;
 
     return Mercenary(
       id: _uuid.v4(),
       name: name.korean,
       jobId: job.id,
-      traitId: trait.id,
+      traitId: trait.key,
       atk: atk, def: def, hp: hp, speed: job.speed,
     );
   }

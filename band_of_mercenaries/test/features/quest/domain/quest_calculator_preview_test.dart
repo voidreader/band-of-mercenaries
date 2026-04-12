@@ -19,8 +19,9 @@ void main() {
       expect(rate, 95.0); // 50 + 50 = 100, clamped to 95
     });
 
-    test('includes trait bonus', () {
-      final withVeteran = QuestCalculator.calculateSuccessRatePreview(
+    // Phase 3에서 데이터 드리븐 트레잇 보너스 구현 후 테스트 재작성 예정
+    test('trait bonus is 0 pending Phase 3 data-driven implementation', () {
+      final withTrait = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 10, enemyPower: 10, traitBonuses: ['veteran'],
         questTypeId: 'loot', distancePenalty: 0,
       );
@@ -28,7 +29,7 @@ void main() {
         partyPower: 10, enemyPower: 10, traitBonuses: [],
         questTypeId: 'loot', distancePenalty: 0,
       );
-      expect(withVeteran - without, 10.0);
+      expect(withTrait - without, 0.0);
     });
 
     test('includes quest type modifier', () {

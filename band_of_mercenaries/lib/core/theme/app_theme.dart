@@ -28,12 +28,16 @@ class AppTheme {
   static const Color tier4Bg = Color(0xFFF3E5F5);
   static const Color tier5Bg = Color(0xFFFFEBEE);
 
-  // Trait colors
-  static const Map<String, Color> traitColors = {
-    'strong': Color(0xFF2E7D32),
-    'veteran': Color(0xFF1565C0),
-    'coward': Color(0xFF6A1B9A),
-    'berserker': Color(0xFFC62828),
+  // Trait category colors
+  static const Map<String, Color> traitCategoryColors = {
+    'Physical': Color(0xFF2E7D32),     // 초록
+    'Background': Color(0xFF795548),   // 갈색
+    'Talent': Color(0xFFFF8F00),       // 금색
+    'CombatStyle': Color(0xFFC62828),  // 빨강
+    'Survival': Color(0xFF1565C0),     // 파랑
+    'Behavior': Color(0xFF6A1B9A),     // 보라
+    'Mental': Color(0xFF00838F),       // 청록
+    'Experience': Color(0xFFEF6C00),   // 주황
   };
 
   // Quest result colors

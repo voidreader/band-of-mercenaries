@@ -155,7 +155,7 @@ class RecruitScreen extends ConsumerWidget {
               itemBuilder: (_, i) {
                 final merc = aliveMercs[i];
                 final job = data.jobs.firstWhere((j) => j.id == merc.jobId);
-                final trait = data.traits.firstWhere((t) => t.id == merc.traitId);
+                final trait = data.traits.where((t) => t.key == merc.traitId).firstOrNull;
                 return Stack(
                   children: [
                     MercenaryCard(mercenary: merc, job: job, trait: trait),

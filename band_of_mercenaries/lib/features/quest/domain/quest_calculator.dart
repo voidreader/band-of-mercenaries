@@ -20,7 +20,8 @@ class QuestCalculator {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
     final questMod = _questModifiers[questTypeId] ?? 0.0;
-    final traitBonus = traitBonuses.contains('veteran') ? 10.0 : 0.0;
+    // Phase 3에서 데이터 드리븐 트레잇 보너스 구현 예정
+    const traitBonus = 0.0;
     final randomVariance = (random.nextDouble() * 10.0) - 5.0;
 
     final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble() + randomVariance;
@@ -37,7 +38,8 @@ class QuestCalculator {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
     final questMod = _questModifiers[questTypeId] ?? 0.0;
-    final traitBonus = traitBonuses.contains('veteran') ? 10.0 : 0.0;
+    // Phase 3에서 데이터 드리븐 트레잇 보너스 구현 예정
+    const traitBonus = 0.0;
     final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble();
     return rate.clamp(5.0, 95.0);
   }
@@ -59,10 +61,9 @@ class QuestCalculator {
   }
 
   static DamageResult calculateDamage({required double roll, required double deathRate, required double injuryRate, required String traitId}) {
-    double effectiveDeathRate = deathRate;
-    double effectiveInjuryRate = injuryRate;
-    if (traitId == 'coward') effectiveDeathRate *= 0.7;
-    if (traitId == 'strong') effectiveInjuryRate *= 0.8;
+    // Phase 3에서 데이터 드리븐 트레잇 효과 구현 예정
+    final double effectiveDeathRate = deathRate;
+    final double effectiveInjuryRate = injuryRate;
 
     if (roll < effectiveDeathRate) return DamageResult.dead;
     if (roll < effectiveInjuryRate) return DamageResult.injured;

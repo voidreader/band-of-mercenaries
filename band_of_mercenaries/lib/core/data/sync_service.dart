@@ -18,7 +18,12 @@ class SyncService {
   static const List<String> allTables = [
     'jobs',
     'regions',
+    'trait_categories',
     'traits',
+    'trait_conflicts',
+    'trait_transitions',
+    'trait_combo_evolutions',
+    'trait_synergies',
     'difficulties',
     'quest_types',
     'quest_pools',

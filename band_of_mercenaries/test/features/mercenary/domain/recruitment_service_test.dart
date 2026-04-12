@@ -12,8 +12,8 @@ void main() {
     const Job(id: 'knight', tier: 3, name: '기사', baseAtk: 20, baseDef: 21, baseHp: 97, speed: 0.81),
   ];
   final traits = [
-    const TraitData(id: 'strong', name: '강인함', effectType: 'hp_bonus', value: 0.2),
-    const TraitData(id: 'veteran', name: '노련함', effectType: 'success_rate', value: 0.1),
+    const TraitData(key: 'strong_build', name: '강인한 체격', categoryKey: 'Physical', type: 'innate'),
+    const TraitData(key: 'veteran', name: '베테랑', categoryKey: 'Experience', type: 'acquired'),
   ];
   final names = [
     const PersonName(id: 0, korean: '알라릭'),
@@ -48,15 +48,15 @@ void main() {
       expect(merc.id, isNotEmpty);
     });
 
-    test('generateMercenary applies hp_bonus trait correctly', () {
+    test('generateMercenary assigns trait key', () {
       final merc = RecruitmentService.generateMercenary(
         jobs: jobs,
-        traits: [const TraitData(id: 'strong', name: '강인함', effectType: 'hp_bonus', value: 0.2)],
+        traits: [const TraitData(key: 'strong_build', name: '강인한 체격', categoryKey: 'Physical', type: 'innate')],
         names: names, random: Random(42),
       );
-      expect(merc.traitId, 'strong');
+      expect(merc.traitId, 'strong_build');
       final job = jobs.firstWhere((j) => j.id == merc.jobId);
-      expect(merc.hp, (job.baseHp * 1.2).round());
+      expect(merc.hp, job.baseHp);
     });
 
     test('generateStartingMercenaries creates 4 mercs from tier 1-2', () {

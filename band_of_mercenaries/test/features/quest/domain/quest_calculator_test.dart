@@ -94,14 +94,10 @@ void main() {
         expect(result, DamageResult.survived);
       });
 
-      test('coward trait reduces deathRate by 30%', () {
+      // Phase 3에서 데이터 드리븐 트레잇 효과 구현 후 테스트 재작성 예정
+      test('trait effects are disabled pending Phase 3 data-driven implementation', () {
         final result = QuestCalculator.calculateDamage(roll: 0.08, deathRate: 0.1, injuryRate: 0.2, traitId: 'coward');
-        expect(result, DamageResult.injured);
-      });
-
-      test('strong trait reduces injuryRate by 20%', () {
-        final result = QuestCalculator.calculateDamage(roll: 0.17, deathRate: 0.05, injuryRate: 0.2, traitId: 'strong');
-        expect(result, DamageResult.survived);
+        expect(result, DamageResult.dead);
       });
     });
 
