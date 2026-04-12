@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
+import 'package:band_of_mercenaries/core/models/trait_category.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
 
 void main() {
@@ -13,7 +14,14 @@ void main() {
   ];
   final traits = [
     const TraitData(key: 'strong_build', name: '강인한 체격', categoryKey: 'Physical', type: 'innate'),
+    const TraitData(key: 'noble_birth', name: '귀족 출신', categoryKey: 'Background', type: 'innate'),
+    const TraitData(key: 'berserker_talent', name: '광전사의 피', categoryKey: 'Talent', type: 'innate'),
     const TraitData(key: 'veteran', name: '베테랑', categoryKey: 'Experience', type: 'acquired'),
+  ];
+  final categories = [
+    const TraitCategory(key: 'Physical', name: '육체적 특성', slotType: 'innate'),
+    const TraitCategory(key: 'Background', name: '배경', slotType: 'innate'),
+    const TraitCategory(key: 'Talent', name: '재능', slotType: 'innate'),
   ];
   final names = [
     const PersonName(id: 0, korean: '알라릭'),
@@ -39,32 +47,49 @@ void main() {
       expect(counts[4]!, greaterThan(counts[5]!));
     });
 
-    test('generateMercenary creates a valid mercenary', () {
-      final merc = RecruitmentService.generateMercenary(jobs: jobs, traits: traits, names: names, random: Random(42));
+    test('generateMercenary creates merc with 1-3 innate traits', () {
+      final merc = RecruitmentService.generateMercenary(
+        jobs: jobs, traits: traits, categories: categories, names: names, random: Random(42),
+      );
       expect(merc.name, isNotEmpty);
       expect(merc.jobId, isNotEmpty);
-      expect(merc.traitId, isNotEmpty);
-      expect(merc.atk, greaterThan(0));
-      expect(merc.id, isNotEmpty);
+      expect(merc.traitIds, isNotEmpty);
+      expect(merc.traitIds.length, greaterThanOrEqualTo(1));
+      expect(merc.traitIds.length, lessThanOrEqualTo(3));
+      expect(merc.traitId, merc.traitIds.first);
     });
 
-    test('generateMercenary assigns trait key', () {
-      final merc = RecruitmentService.generateMercenary(
-        jobs: jobs,
-        traits: [const TraitData(key: 'strong_build', name: '강인한 체격', categoryKey: 'Physical', type: 'innate')],
-        names: names, random: Random(42),
-      );
-      expect(merc.traitId, 'strong_build');
-      final job = jobs.firstWhere((j) => j.id == merc.jobId);
-      expect(merc.hp, job.baseHp);
+    test('generateMercenary only assigns innate traits', () {
+      for (int seed = 0; seed < 100; seed++) {
+        final merc = RecruitmentService.generateMercenary(
+          jobs: jobs, traits: traits, categories: categories, names: names, random: Random(seed), forceTier: 1,
+        );
+        for (final traitKey in merc.traitIds) {
+          final trait = traits.firstWhere((t) => t.key == traitKey);
+          expect(trait.type, 'innate');
+        }
+      }
+    });
+
+    test('generateMercenary assigns no duplicate categories', () {
+      for (int seed = 0; seed < 100; seed++) {
+        final merc = RecruitmentService.generateMercenary(
+          jobs: jobs, traits: traits, categories: categories, names: names, random: Random(seed), forceTier: 1,
+        );
+        final cats = merc.traitIds.map((key) => traits.firstWhere((t) => t.key == key).categoryKey).toSet();
+        expect(cats.length, merc.traitIds.length);
+      }
     });
 
     test('generateStartingMercenaries creates 4 mercs from tier 1-2', () {
-      final mercs = RecruitmentService.generateStartingMercenaries(jobs: jobs, traits: traits, names: names, count: 4, random: Random(42));
+      final mercs = RecruitmentService.generateStartingMercenaries(
+        jobs: jobs, traits: traits, categories: categories, names: names, count: 4, random: Random(42),
+      );
       expect(mercs.length, 4);
       for (final merc in mercs) {
         final job = jobs.firstWhere((j) => j.id == merc.jobId);
         expect(job.tier, lessThanOrEqualTo(2));
+        expect(merc.traitIds, isNotEmpty);
       }
     });
   });

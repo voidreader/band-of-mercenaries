@@ -11,11 +11,13 @@ class MercDamageResult {
   final String mercId;
   final MercenaryStatus newStatus;
   final DateTime? recoveryEndTime;
+  final double damageRoll;
 
   const MercDamageResult({
     required this.mercId,
     required this.newStatus,
     this.recoveryEndTime,
+    this.damageRoll = 0.0,
   });
 }
 
@@ -58,13 +60,16 @@ class QuestCompletionService {
     final distancePenalty = (quest.region - playerRegion).abs();
 
     // 성공률 판정
+    final allTraitIds = mercs.expand((m) => m.allTraitIds).toSet().toList();
     final successRate = QuestCalculator.calculateSuccessRate(
       partyPower: partyPower,
       enemyPower: difficulty.enemyPower,
-      traitBonuses: mercs.map((m) => m.traitId).toList(),
+      traitBonuses: allTraitIds,
       questTypeId: quest.questTypeId,
       distancePenalty: distancePenalty,
       random: random,
+      allTraits: staticData.traits,
+      partySize: mercs.length,
     );
 
     final roll = random.nextDouble() * 100;
@@ -138,9 +143,11 @@ class QuestCompletionService {
           deathRate: difficulty.deathRate,
           injuryRate: difficulty.injuryRate,
           traitId: merc.traitId,
+          traitIds: merc.allTraitIds,
+          allTraits: staticData.traits,
         );
         if (damageResult == DamageResult.dead) {
-          mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.dead));
+          mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.dead, damageRoll: damageRoll));
         } else if (damageResult == DamageResult.injured) {
           final baseRecoverySeconds = (difficulty.level * 10 * 60 / speedMultiplier).round();
           final adjustedRecoverySeconds = (baseRecoverySeconds * (1.0 - recoveryReduction)).round();
@@ -148,9 +155,10 @@ class QuestCompletionService {
             mercId: merc.id,
             newStatus: MercenaryStatus.injured,
             recoveryEndTime: now.add(Duration(seconds: adjustedRecoverySeconds)),
+            damageRoll: damageRoll,
           ));
         } else {
-          mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.normal));
+          mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.normal, damageRoll: damageRoll));
         }
       } else {
         final tiredSeconds = (5 * 60 / speedMultiplier).round();

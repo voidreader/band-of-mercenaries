@@ -6,7 +6,7 @@ void main() {
     test('returns ~50% when power ratio is 1.0 with no modifiers', () {
       final rate = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 10, enemyPower: 10, traitBonuses: [],
-        questTypeId: 'loot', distancePenalty: 0,
+        questTypeId: 'raid', distancePenalty: 0,
       );
       expect(rate, 50.0);
     });
@@ -14,7 +14,7 @@ void main() {
     test('higher power increases rate', () {
       final rate = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 20, enemyPower: 10, traitBonuses: [],
-        questTypeId: 'loot', distancePenalty: 0,
+        questTypeId: 'raid', distancePenalty: 0,
       );
       expect(rate, 95.0); // 50 + 50 = 100, clamped to 95
     });
@@ -23,11 +23,11 @@ void main() {
     test('trait bonus is 0 pending Phase 3 data-driven implementation', () {
       final withTrait = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 10, enemyPower: 10, traitBonuses: ['veteran'],
-        questTypeId: 'loot', distancePenalty: 0,
+        questTypeId: 'raid', distancePenalty: 0,
       );
       final without = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 10, enemyPower: 10, traitBonuses: [],
-        questTypeId: 'loot', distancePenalty: 0,
+        questTypeId: 'raid', distancePenalty: 0,
       );
       expect(withTrait - without, 0.0);
     });
@@ -47,11 +47,11 @@ void main() {
     test('distance penalty reduces rate', () {
       final near = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 10, enemyPower: 10, traitBonuses: [],
-        questTypeId: 'loot', distancePenalty: 0,
+        questTypeId: 'raid', distancePenalty: 0,
       );
       final far = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 10, enemyPower: 10, traitBonuses: [],
-        questTypeId: 'loot', distancePenalty: 10,
+        questTypeId: 'raid', distancePenalty: 10,
       );
       expect(near - far, 10.0);
     });
@@ -59,7 +59,7 @@ void main() {
     test('returns 95.0 when enemyPower is 0', () {
       final rate = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 10, enemyPower: 0, traitBonuses: [],
-        questTypeId: 'loot', distancePenalty: 0,
+        questTypeId: 'raid', distancePenalty: 0,
       );
       expect(rate, 95.0);
     });
@@ -81,11 +81,11 @@ void main() {
     test('is deterministic (no random variance)', () {
       final rate1 = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 15, enemyPower: 10, traitBonuses: [],
-        questTypeId: 'loot', distancePenalty: 3,
+        questTypeId: 'raid', distancePenalty: 3,
       );
       final rate2 = QuestCalculator.calculateSuccessRatePreview(
         partyPower: 15, enemyPower: 10, traitBonuses: [],
-        questTypeId: 'loot', distancePenalty: 3,
+        questTypeId: 'raid', distancePenalty: 3,
       );
       expect(rate1, rate2);
     });

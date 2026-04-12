@@ -41,7 +41,7 @@ StaticGameData _makeStaticData({
     traitSynergies: [],
     regions: [],
     questTypes: [
-      QuestType(id: 'loot', name: '약탈', baseReward: baseReward, baseDuration: baseDuration, riskFactor: 1.0),
+      QuestType(id: 'raid', name: '약탈', baseReward: baseReward, baseDuration: baseDuration, riskFactor: 1.0),
     ],
     questPools: [],
     personNames: [],
@@ -63,7 +63,7 @@ ActiveQuest _makeQuest({int difficulty = 1, int region = 1}) {
   return ActiveQuest(
     id: 'q1',
     questPoolId: 'pool1',
-    questTypeId: 'loot',
+    questTypeId: 'raid',
     difficulty: difficulty,
     region: region,
     questName: '테스트 퀘스트',

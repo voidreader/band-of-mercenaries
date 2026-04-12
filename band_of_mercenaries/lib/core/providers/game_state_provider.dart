@@ -56,6 +56,7 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     final startingMercs = RecruitmentService.generateStartingMercenaries(
       jobs: staticData.jobs,
       traits: staticData.traits,
+      categories: staticData.traitCategories,
       names: staticData.personNames,
       count: 4,
       random: random,

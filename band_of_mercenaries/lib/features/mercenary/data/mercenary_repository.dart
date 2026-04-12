@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_servic
 import 'package:band_of_mercenaries/core/domain/experience_service.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
+import 'package:band_of_mercenaries/core/models/trait_category.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
 
 class MercenaryRepository {
@@ -23,11 +24,13 @@ class MercenaryRepository {
   Future<Mercenary> recruit({
     required List<Job> jobs,
     required List<TraitData> traits,
+    required List<TraitCategory> categories,
     required List<PersonName> names,
   }) async {
     final merc = RecruitmentService.generateMercenary(
       jobs: jobs,
       traits: traits,
+      categories: categories,
       names: names,
       random: Random(),
     );
@@ -72,6 +75,20 @@ class MercenaryRepository {
   List<String> getDismissedIds() {
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
     return List<String>.from(settingsBox.get(SettingsKeys.dismissedMercIds, defaultValue: <String>[]));
+  }
+
+  Future<void> updateStats(String mercId, Map<String, int> newStats) async {
+    final merc = _box.values.firstWhere((m) => m.id == mercId);
+    merc.stats = newStats;
+    await merc.save();
+  }
+
+  Future<void> addTrait(String mercId, String traitKey) async {
+    final merc = _box.values.firstWhere((m) => m.id == mercId);
+    if (!merc.traitIds.contains(traitKey)) {
+      merc.traitIds = [...merc.traitIds, traitKey];
+      await merc.save();
+    }
   }
 
   Future<void> addXpAndCheckLevel(String mercId, int xpGain) async {

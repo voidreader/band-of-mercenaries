@@ -14,6 +14,9 @@ _$TraitDataImpl _$$TraitDataImplFromJson(Map<String, dynamic> json) =>
       type: json['type'] as String,
       description: json['description'] as String? ?? '',
       effectText: json['effect_text'] as String? ?? '',
+      acquisitionCondition:
+          json['acquisition_condition'] as Map<String, dynamic>?,
+      effectJson: json['effect_json'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$$TraitDataImplToJson(_$TraitDataImpl instance) =>
@@ -24,4 +27,6 @@ Map<String, dynamic> _$$TraitDataImplToJson(_$TraitDataImpl instance) =>
       'type': instance.type,
       'description': instance.description,
       'effect_text': instance.effectText,
+      'acquisition_condition': instance.acquisitionCondition,
+      'effect_json': instance.effectJson,
     };

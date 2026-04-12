@@ -16,6 +16,8 @@ enum ActivityLogType {
   mercenaryDismiss,
   @HiveField(5)
   levelUp,
+  @HiveField(6)
+  traitAcquired,
 }
 
 @HiveType(typeId: 7)

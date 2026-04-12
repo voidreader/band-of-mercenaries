@@ -9,4 +9,10 @@ class GameConstants {
   static const int tiredDurationMinutes = 5;
   static const double levelBonusPerLevel = 0.1;
   static const double tiredDebuffMultiplier = 0.8;
+
+  static const int maxInnateTraits = 3;
+  static const int maxAcquiredTraits = 4;
+  static const int maxTotalTraits = 7;
+  static const Set<String> innateCategories = {'Physical', 'Background', 'Talent'};
+  static const Set<String> acquiredCategories = {'CombatStyle', 'Survival', 'Behavior', 'Mental', 'Experience'};
 }

@@ -65,6 +65,8 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.mercenaryDismiss;
       case 5:
         return ActivityLogType.levelUp;
+      case 6:
+        return ActivityLogType.traitAcquired;
       default:
         return ActivityLogType.questResult;
     }
@@ -90,6 +92,9 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.levelUp:
         writer.writeByte(5);
+        break;
+      case ActivityLogType.traitAcquired:
+        writer.writeByte(6);
         break;
     }
   }

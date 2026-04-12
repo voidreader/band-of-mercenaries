@@ -1,12 +1,14 @@
 import 'dart:math';
 import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
+import 'package:band_of_mercenaries/core/models/trait_data.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/trait_effect_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 
 enum DamageResult { dead, injured, survived }
 
 class QuestCalculator {
   static const Map<String, double> _questModifiers = {
-    'explore': 5.0, 'escort': 3.0, 'loot': 0.0, 'hunt': -5.0,
+    'explore': 5.0, 'escort': 3.0, 'raid': 0.0, 'hunt': -5.0,
   };
 
   static double calculateSuccessRate({
@@ -16,12 +18,16 @@ class QuestCalculator {
     required String questTypeId,
     required int distancePenalty,
     required Random random,
+    List<TraitData> allTraits = const [],
+    int partySize = 1,
   }) {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
     final questMod = _questModifiers[questTypeId] ?? 0.0;
-    // Phase 3에서 데이터 드리븐 트레잇 보너스 구현 예정
-    const traitBonus = 0.0;
+    final traitBonus = TraitEffectService.calculateSuccessRateBonus(
+      traitIds: traitBonuses, allTraits: allTraits,
+      questTypeId: questTypeId, partySize: partySize,
+    );
     final randomVariance = (random.nextDouble() * 10.0) - 5.0;
 
     final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble() + randomVariance;
@@ -34,12 +40,16 @@ class QuestCalculator {
     required List<String> traitBonuses,
     required String questTypeId,
     required int distancePenalty,
+    List<TraitData> allTraits = const [],
+    int partySize = 1,
   }) {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
     final questMod = _questModifiers[questTypeId] ?? 0.0;
-    // Phase 3에서 데이터 드리븐 트레잇 보너스 구현 예정
-    const traitBonus = 0.0;
+    final traitBonus = TraitEffectService.calculateSuccessRateBonus(
+      traitIds: traitBonuses, allTraits: allTraits,
+      questTypeId: questTypeId, partySize: partySize,
+    );
     final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble();
     return rate.clamp(5.0, 95.0);
   }
@@ -60,10 +70,19 @@ class QuestCalculator {
     return isGreatSuccess ? reward * 2 : reward;
   }
 
-  static DamageResult calculateDamage({required double roll, required double deathRate, required double injuryRate, required String traitId}) {
-    // Phase 3에서 데이터 드리븐 트레잇 효과 구현 예정
-    final double effectiveDeathRate = deathRate;
-    final double effectiveInjuryRate = injuryRate;
+  static DamageResult calculateDamage({
+    required double roll,
+    required double deathRate,
+    required double injuryRate,
+    required String traitId,
+    List<String> traitIds = const [],
+    List<TraitData> allTraits = const [],
+  }) {
+    final ids = traitIds.isNotEmpty ? traitIds : (traitId.isNotEmpty ? [traitId] : <String>[]);
+    final deathMod = TraitEffectService.calculateDeathRateModifier(traitIds: ids, allTraits: allTraits);
+    final injuryMod = TraitEffectService.calculateInjuryRateModifier(traitIds: ids, allTraits: allTraits);
+    final effectiveDeathRate = (deathRate + deathMod).clamp(0.0, 1.0);
+    final effectiveInjuryRate = (injuryRate + injuryMod).clamp(0.0, 1.0);
 
     if (roll < effectiveDeathRate) return DamageResult.dead;
     if (roll < effectiveInjuryRate) return DamageResult.injured;

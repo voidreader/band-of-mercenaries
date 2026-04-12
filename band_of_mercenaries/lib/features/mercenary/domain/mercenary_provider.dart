@@ -117,6 +117,7 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     final merc = await _repo.recruit(
       jobs: staticData.jobs,
       traits: staticData.traits,
+      categories: staticData.traitCategories,
       names: staticData.personNames,
     );
     ref.read(activityLogProvider.notifier).addLog(

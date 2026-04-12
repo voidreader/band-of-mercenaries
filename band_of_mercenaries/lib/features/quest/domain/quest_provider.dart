@@ -14,6 +14,8 @@ import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_stat_service.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/trait_acquisition_service.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -260,14 +262,19 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       random: Random(),
     );
 
-    await _applyCompletionResult(quest, result, mercs);
+    final difficulty = staticData.difficulties.firstWhere(
+      (d) => d.level == quest.difficulty.clamp(1, 5),
+      orElse: () => staticData.difficulties.first,
+    );
+    await _applyCompletionResult(quest, result, mercs, deathRate: difficulty.deathRate);
   }
 
   Future<void> _applyCompletionResult(
     ActiveQuest quest,
     QuestCompletionResult result,
-    List<Mercenary> mercs,
-  ) async {
+    List<Mercenary> mercs, {
+    double deathRate = 0.05,
+  }) async {
     await _repo.completeQuest(
       quest.id,
       result.resultType,
@@ -304,6 +311,42 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       final damage = result.mercDamages.firstWhere((d) => d.mercId == merc.id);
       if (damage.newStatus != MercenaryStatus.dead) {
         await mercRepo.addXpAndCheckLevel(merc.id, result.xpGain);
+        final newStats = MercenaryStatService.updateStatsAfterQuest(
+          merc.stats,
+          resultType: result.resultType,
+          questTypeId: quest.questTypeId,
+          difficulty: quest.difficulty,
+          partySize: mercs.length,
+          damageStatus: damage.newStatus,
+          damageRoll: damage.damageRoll,
+          deathRate: deathRate,
+          rewardGold: result.rewardGold,
+          mercLevel: merc.level,
+        );
+        await mercRepo.updateStats(merc.id, newStats);
+
+        final staticData = ref.read(staticDataProvider).value;
+        if (staticData != null) {
+          final candidates = TraitAcquisitionService.checkAcquisitionCandidates(
+            stats: newStats,
+            currentTraitIds: merc.allTraitIds,
+            traitHistory: const [],
+            allTraits: staticData.traits,
+            categories: staticData.traitCategories,
+            conflicts: staticData.traitConflicts,
+            synergies: staticData.traitSynergies,
+          );
+          if (candidates.isNotEmpty) {
+            await mercRepo.addTrait(merc.id, candidates.first);
+            final traitData = staticData.traits.where((t) => t.key == candidates.first).firstOrNull;
+            if (traitData != null) {
+              ref.read(activityLogProvider.notifier).addLog(
+                '${merc.name}이(가) "${traitData.name}" 트레잇을 획득!',
+                ActivityLogType.traitAcquired,
+              );
+            }
+          }
+        }
       }
     }
 

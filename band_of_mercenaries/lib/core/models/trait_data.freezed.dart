@@ -28,6 +28,11 @@ mixin _$TraitData {
   String get description => throw _privateConstructorUsedError;
   @JsonKey(name: 'effect_text')
   String get effectText => throw _privateConstructorUsedError;
+  @JsonKey(name: 'acquisition_condition')
+  Map<String, dynamic>? get acquisitionCondition =>
+      throw _privateConstructorUsedError;
+  @JsonKey(name: 'effect_json')
+  Map<String, dynamic>? get effectJson => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -46,7 +51,10 @@ abstract class $TraitDataCopyWith<$Res> {
       @JsonKey(name: 'category_key') String categoryKey,
       String type,
       String description,
-      @JsonKey(name: 'effect_text') String effectText});
+      @JsonKey(name: 'effect_text') String effectText,
+      @JsonKey(name: 'acquisition_condition')
+      Map<String, dynamic>? acquisitionCondition,
+      @JsonKey(name: 'effect_json') Map<String, dynamic>? effectJson});
 }
 
 /// @nodoc
@@ -68,6 +76,8 @@ class _$TraitDataCopyWithImpl<$Res, $Val extends TraitData>
     Object? type = null,
     Object? description = null,
     Object? effectText = null,
+    Object? acquisitionCondition = freezed,
+    Object? effectJson = freezed,
   }) {
     return _then(_value.copyWith(
       key: null == key
@@ -94,6 +104,14 @@ class _$TraitDataCopyWithImpl<$Res, $Val extends TraitData>
           ? _value.effectText
           : effectText // ignore: cast_nullable_to_non_nullable
               as String,
+      acquisitionCondition: freezed == acquisitionCondition
+          ? _value.acquisitionCondition
+          : acquisitionCondition // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      effectJson: freezed == effectJson
+          ? _value.effectJson
+          : effectJson // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ) as $Val);
   }
 }
@@ -112,7 +130,10 @@ abstract class _$$TraitDataImplCopyWith<$Res>
       @JsonKey(name: 'category_key') String categoryKey,
       String type,
       String description,
-      @JsonKey(name: 'effect_text') String effectText});
+      @JsonKey(name: 'effect_text') String effectText,
+      @JsonKey(name: 'acquisition_condition')
+      Map<String, dynamic>? acquisitionCondition,
+      @JsonKey(name: 'effect_json') Map<String, dynamic>? effectJson});
 }
 
 /// @nodoc
@@ -132,6 +153,8 @@ class __$$TraitDataImplCopyWithImpl<$Res>
     Object? type = null,
     Object? description = null,
     Object? effectText = null,
+    Object? acquisitionCondition = freezed,
+    Object? effectJson = freezed,
   }) {
     return _then(_$TraitDataImpl(
       key: null == key
@@ -158,6 +181,14 @@ class __$$TraitDataImplCopyWithImpl<$Res>
           ? _value.effectText
           : effectText // ignore: cast_nullable_to_non_nullable
               as String,
+      acquisitionCondition: freezed == acquisitionCondition
+          ? _value._acquisitionCondition
+          : acquisitionCondition // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      effectJson: freezed == effectJson
+          ? _value._effectJson
+          : effectJson // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ));
   }
 }
@@ -171,7 +202,12 @@ class _$TraitDataImpl implements _TraitData {
       @JsonKey(name: 'category_key') required this.categoryKey,
       required this.type,
       this.description = '',
-      @JsonKey(name: 'effect_text') this.effectText = ''});
+      @JsonKey(name: 'effect_text') this.effectText = '',
+      @JsonKey(name: 'acquisition_condition')
+      final Map<String, dynamic>? acquisitionCondition,
+      @JsonKey(name: 'effect_json') final Map<String, dynamic>? effectJson})
+      : _acquisitionCondition = acquisitionCondition,
+        _effectJson = effectJson;
 
   factory _$TraitDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$TraitDataImplFromJson(json);
@@ -191,10 +227,32 @@ class _$TraitDataImpl implements _TraitData {
   @override
   @JsonKey(name: 'effect_text')
   final String effectText;
+  final Map<String, dynamic>? _acquisitionCondition;
+  @override
+  @JsonKey(name: 'acquisition_condition')
+  Map<String, dynamic>? get acquisitionCondition {
+    final value = _acquisitionCondition;
+    if (value == null) return null;
+    if (_acquisitionCondition is EqualUnmodifiableMapView)
+      return _acquisitionCondition;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _effectJson;
+  @override
+  @JsonKey(name: 'effect_json')
+  Map<String, dynamic>? get effectJson {
+    final value = _effectJson;
+    if (value == null) return null;
+    if (_effectJson is EqualUnmodifiableMapView) return _effectJson;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
 
   @override
   String toString() {
-    return 'TraitData(key: $key, name: $name, categoryKey: $categoryKey, type: $type, description: $description, effectText: $effectText)';
+    return 'TraitData(key: $key, name: $name, categoryKey: $categoryKey, type: $type, description: $description, effectText: $effectText, acquisitionCondition: $acquisitionCondition, effectJson: $effectJson)';
   }
 
   @override
@@ -210,13 +268,25 @@ class _$TraitDataImpl implements _TraitData {
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.effectText, effectText) ||
-                other.effectText == effectText));
+                other.effectText == effectText) &&
+            const DeepCollectionEquality()
+                .equals(other._acquisitionCondition, _acquisitionCondition) &&
+            const DeepCollectionEquality()
+                .equals(other._effectJson, _effectJson));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-      runtimeType, key, name, categoryKey, type, description, effectText);
+      runtimeType,
+      key,
+      name,
+      categoryKey,
+      type,
+      description,
+      effectText,
+      const DeepCollectionEquality().hash(_acquisitionCondition),
+      const DeepCollectionEquality().hash(_effectJson));
 
   @JsonKey(ignore: true)
   @override
@@ -239,7 +309,11 @@ abstract class _TraitData implements TraitData {
       @JsonKey(name: 'category_key') required final String categoryKey,
       required final String type,
       final String description,
-      @JsonKey(name: 'effect_text') final String effectText}) = _$TraitDataImpl;
+      @JsonKey(name: 'effect_text') final String effectText,
+      @JsonKey(name: 'acquisition_condition')
+      final Map<String, dynamic>? acquisitionCondition,
+      @JsonKey(name: 'effect_json')
+      final Map<String, dynamic>? effectJson}) = _$TraitDataImpl;
 
   factory _TraitData.fromJson(Map<String, dynamic> json) =
       _$TraitDataImpl.fromJson;
@@ -258,6 +332,12 @@ abstract class _TraitData implements TraitData {
   @override
   @JsonKey(name: 'effect_text')
   String get effectText;
+  @override
+  @JsonKey(name: 'acquisition_condition')
+  Map<String, dynamic>? get acquisitionCondition;
+  @override
+  @JsonKey(name: 'effect_json')
+  Map<String, dynamic>? get effectJson;
   @override
   @JsonKey(ignore: true)
   _$$TraitDataImplCopyWith<_$TraitDataImpl> get copyWith =>

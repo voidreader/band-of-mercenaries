@@ -59,6 +59,12 @@ class Mercenary extends HiveObject {
   @HiveField(13)
   int level;
 
+  @HiveField(14)
+  Map<String, int> stats;
+
+  @HiveField(15)
+  List<String> traitIds;
+
   Mercenary({
     required this.id,
     required this.name,
@@ -74,7 +80,16 @@ class Mercenary extends HiveObject {
     this.isDispatched = false,
     this.xp = 0,
     this.level = 1,
-  });
+    Map<String, int>? stats,
+    List<String>? traitIds,
+  })  : stats = stats ?? {},
+        traitIds = traitIds ?? [];
+
+  List<String> get allTraitIds {
+    if (traitIds.isNotEmpty) return traitIds;
+    if (traitId.isNotEmpty) return [traitId];
+    return [];
+  }
 
   double get _levelBonus => (level - 1) * GameConstants.levelBonusPerLevel;
 

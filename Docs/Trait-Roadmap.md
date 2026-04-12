@@ -43,22 +43,30 @@
 
 ---
 
-## Phase 3: 핵심 엔진
+## Phase 3: 핵심 엔진 ✅ 완료
 
 | # | 작업 | 상태 | 영향 파일 |
 |---|------|------|----------|
-| ⑦ | 행동 지표 추적 시스템 (23개 지표) | ⬜ | `mercenary_model.dart` 확장, `quest_completion_service.dart`, `movement_provider.dart` |
-| ⑧ | 용병 모집 변경 (선천 1~3개 랜덤) | ⬜ | `recruitment_service.dart` |
-| ⑨ | 트레잇 획득 엔진 (지표 → 조건 체크 → 후보 생성) | ⬜ | 신규 서비스 `trait_acquisition_service.dart` |
-| ⑩ | 파견 효과 처리 변경 (하드코딩 → 데이터 드리븐) | ⬜ | `quest_calculator.dart`, `quest_completion_service.dart` |
-| ⑪ | 충돌 관계 검증 | ⬜ | 트레잇 획득 엔진에 통합 |
+| ⑦ | 행동 지표 추적 시스템 (23개 지표) | ✅ | `mercenary_model.dart` 확장, `mercenary_stat_service.dart` 신규, `quest_provider.dart` |
+| ⑧ | 용병 모집 변경 (선천 1~3개 랜덤) | ✅ | `recruitment_service.dart`, `mercenary_repository.dart`, `mercenary_provider.dart` |
+| ⑨ | 트레잇 획득 엔진 (지표 → 조건 체크 → 후보 생성) | ✅ | `trait_acquisition_service.dart` 신규, `quest_provider.dart` |
+| ⑩ | 파견 효과 처리 변경 (하드코딩 → 데이터 드리븐) | ✅ | `trait_effect_service.dart` 신규, `quest_calculator.dart`, `quest_completion_service.dart` |
+| ⑪ | 충돌 관계 검증 | ✅ | `trait_acquisition_service.dart`에 통합 |
 
 **핵심 변경:**
-- 용병 모델에 `MercenaryStat` (23개 지표) 추가, Hive 저장
-- 퀘스트 완료 시 지표 갱신 로직
+- 용병 모델에 `stats` (Map<String, int>, 23개 지표) + `traitIds` (List<String>) 추가, Hive HiveField(14), (15)
+- 퀘스트 완료 시 `MercenaryStatService`로 지표 자동 갱신
 - 모집 시 `Physical/Background/Talent` 카테고리에서 랜덤 1~3개 선천 트레잇 부여
-- `QuestCalculator`에서 trait ID 하드코딩 제거 → `effect_text` 기반 데이터 드리븐 처리
-- 트레잇 획득 후보 생성 → 플레이어에게 알림
+- `QuestCalculator`에서 `TraitEffectService` 기반 데이터 드리븐 효과 처리 (`effect_json` 컬럼)
+- `TraitAcquisitionService`: 지표 → `acquisition_condition` 비교 → 시너지 감소 → 충돌 검증 → 자동 획득
+- quest type ID: `loot` → `raid` 변경
+- traits 테이블에 `acquisition_condition`, `effect_json` JSONB 컬럼 추가
+
+**추가 생성 파일:**
+- `lib/features/mercenary/domain/mercenary_stat_service.dart`
+- `lib/features/mercenary/domain/trait_effect_service.dart`
+- `lib/features/mercenary/domain/trait_acquisition_service.dart`
+- `operation-bom/supabase/migrations/004_trait_phase3.sql`
 
 **행동 지표 23개:**
 ```

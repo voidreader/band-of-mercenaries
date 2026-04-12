@@ -12,6 +12,8 @@ class TraitData with _$TraitData {
     required String type,
     @Default('') String description,
     @JsonKey(name: 'effect_text') @Default('') String effectText,
+    @JsonKey(name: 'acquisition_condition') Map<String, dynamic>? acquisitionCondition,
+    @JsonKey(name: 'effect_json') Map<String, dynamic>? effectJson,
   }) = _TraitData;
 
   factory TraitData.fromJson(Map<String, dynamic> json) =>

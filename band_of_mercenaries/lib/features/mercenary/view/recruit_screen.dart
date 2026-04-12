@@ -8,6 +8,7 @@ import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.d
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_card.dart';
 
@@ -155,10 +156,13 @@ class RecruitScreen extends ConsumerWidget {
               itemBuilder: (_, i) {
                 final merc = aliveMercs[i];
                 final job = data.jobs.firstWhere((j) => j.id == merc.jobId);
-                final trait = data.traits.where((t) => t.key == merc.traitId).firstOrNull;
+                final mercTraits = merc.allTraitIds
+                    .map((id) => data.traits.where((t) => t.key == id).firstOrNull)
+                    .whereType<TraitData>()
+                    .toList();
                 return Stack(
                   children: [
-                    MercenaryCard(mercenary: merc, job: job, trait: trait),
+                    MercenaryCard(mercenary: merc, job: job, traits: mercTraits),
                     if (!merc.isDispatched)
                       Positioned(
                         right: 4,
