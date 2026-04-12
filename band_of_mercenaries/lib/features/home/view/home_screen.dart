@@ -369,6 +369,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case ActivityLogType.mercenaryDismiss: return '👋';
       case ActivityLogType.levelUp: return '⬆';
       case ActivityLogType.traitAcquired: return '✦';
+      case ActivityLogType.traitEvolved: return '⭐';
     }
   }
 

@@ -67,6 +67,8 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.levelUp;
       case 6:
         return ActivityLogType.traitAcquired;
+      case 7:
+        return ActivityLogType.traitEvolved;
       default:
         return ActivityLogType.questResult;
     }
@@ -95,6 +97,9 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.traitAcquired:
         writer.writeByte(6);
+        break;
+      case ActivityLogType.traitEvolved:
+        writer.writeByte(7);
         break;
     }
   }

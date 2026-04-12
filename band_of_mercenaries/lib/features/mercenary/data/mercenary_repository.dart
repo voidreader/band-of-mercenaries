@@ -91,6 +91,20 @@ class MercenaryRepository {
     }
   }
 
+  Future<void> evolveTrait(String mercId, String fromKey, String toKey) async {
+    final merc = _box.values.firstWhere((m) => m.id == mercId);
+    merc.traitIds = merc.traitIds.map((k) => k == fromKey ? toKey : k).toList();
+    merc.traitHistory = [...merc.traitHistory, fromKey];
+    await merc.save();
+  }
+
+  Future<void> comboEvolveTrait(String mercId, String key1, String key2, String resultKey) async {
+    final merc = _box.values.firstWhere((m) => m.id == mercId);
+    merc.traitIds = merc.traitIds.where((k) => k != key1 && k != key2).toList()..add(resultKey);
+    merc.traitHistory = [...merc.traitHistory, key1, key2];
+    await merc.save();
+  }
+
   Future<void> addXpAndCheckLevel(String mercId, int xpGain) async {
     final merc = _box.values.firstWhere((m) => m.id == mercId);
     merc.xp += xpGain;

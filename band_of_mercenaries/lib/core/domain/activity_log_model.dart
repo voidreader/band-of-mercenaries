@@ -18,6 +18,8 @@ enum ActivityLogType {
   levelUp,
   @HiveField(6)
   traitAcquired,
+  @HiveField(7)
+  traitEvolved,
 }
 
 @HiveType(typeId: 7)

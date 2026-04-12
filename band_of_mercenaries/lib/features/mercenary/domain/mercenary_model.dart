@@ -65,6 +65,9 @@ class Mercenary extends HiveObject {
   @HiveField(15)
   List<String> traitIds;
 
+  @HiveField(16)
+  List<String> traitHistory;
+
   Mercenary({
     required this.id,
     required this.name,
@@ -82,8 +85,10 @@ class Mercenary extends HiveObject {
     this.level = 1,
     Map<String, int>? stats,
     List<String>? traitIds,
+    List<String>? traitHistory,
   })  : stats = stats ?? {},
-        traitIds = traitIds ?? [];
+        traitIds = traitIds ?? [],
+        traitHistory = traitHistory ?? [];
 
   List<String> get allTraitIds {
     if (traitIds.isNotEmpty) return traitIds;

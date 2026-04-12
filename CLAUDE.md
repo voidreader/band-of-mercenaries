@@ -126,7 +126,7 @@ band_of_mercenaries/lib/
 ### 영속성
 
 **Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings` 5개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
-- `mercenaries` 박스: Mercenary 모델 — HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇). `allTraitIds` getter로 구 traitId 호환
+- `mercenaries` 박스: Mercenary 모델 — HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸 트레잇 기록 → 재획득 방지). `allTraitIds` getter로 구 traitId 호환
 - `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
 
 ### 코드 생성
@@ -144,7 +144,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **시설**: 훈련소(XP보너스), 의무실(회복감소), 주둔지(용병상한), 정보망(퀘스트수). 골드로 업그레이드
 - **용병 상태**: 정상 → 피곤함(능력치 80%, 5분) → 부상(난이도×10분) → 사망(영구 제거). 레벨업 시 능력치 증가
 - **모집**: 티어별 확률 가중 (Tier1: 45%, Tier2: 30%, Tier3: 15%, Tier4: 8%, Tier5: 2%). 선천 트레잇 1~3개 랜덤 부여 (Physical/Background/Talent 각 60% 확률, 최소 1개). 주둔지 용량 제한
-- **트레잇 시스템**: 선천(최대 3, 영구) + 후천(최대 4, 획득/진화). `MercenaryStatService`로 23개 행동 지표 추적 → 퀘스트 완료 시 `TraitAcquisitionService`가 조건 체크 → 자동 획득. `TraitEffectService`로 effect_json 기반 성공률/데미지 보정. 충돌 관계 검증 포함
+- **트레잇 시스템**: 선천(최대 3, 영구) + 후천(최대 4, 획득/진화). `MercenaryStatService`로 23개 행동 지표 추적 → 퀘스트 완료 시 `TraitAcquisitionService`가 조건 체크 → 자동 획득. `TraitEffectService`로 effect_json 기반 성공률/데미지 보정. 충돌 관계 검증 포함. `TraitEvolutionService`로 단일 진화(acquired → evolved, conditionJson 충족 시 교체) + 조합 진화(2개 acquired → evolved, 원본 소멸 + 슬롯 해방). 소멸 트레잇은 `traitHistory`에 기록되어 재획득 방지
 - **방출**: 파견 중이 아닌 용병을 퇴직금(인건비×레벨) 지급 후 영구 방출. 재모집 불가
 - **퀘스트 갱신**: 대기 중 퀘스트는 1시간(게임 시간)마다 자동 교체. 5개 미만이면 채우기 가능
 - **방치형 보상**: 앱 미접속 시간 기준 분당 1G, 최대 480G(8시간). 실제 시간 기준

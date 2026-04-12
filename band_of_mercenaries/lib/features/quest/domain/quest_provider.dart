@@ -16,6 +16,7 @@ import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_stat_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_acquisition_service.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -330,7 +331,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           final candidates = TraitAcquisitionService.checkAcquisitionCandidates(
             stats: newStats,
             currentTraitIds: merc.allTraitIds,
-            traitHistory: const [],
+            traitHistory: merc.traitHistory,
             allTraits: staticData.traits,
             categories: staticData.traitCategories,
             conflicts: staticData.traitConflicts,
@@ -344,6 +345,50 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
                 '${merc.name}이(가) "${traitData.name}" 트레잇을 획득!',
                 ActivityLogType.traitAcquired,
               );
+            }
+          }
+
+          // Refresh traitIds after potential acquisition
+          final updatedMerc = mercRepo.getAll().firstWhere((m) => m.id == merc.id);
+          final currentTraitIds = updatedMerc.allTraitIds;
+
+          // Single evolution check
+          final singleCandidates = TraitEvolutionService.checkSingleEvolutions(
+            stats: newStats,
+            currentTraitIds: currentTraitIds,
+            transitions: staticData.traitTransitions,
+            allTraits: staticData.traits,
+          );
+          if (singleCandidates.isNotEmpty) {
+            final evo = singleCandidates.first;
+            await mercRepo.evolveTrait(merc.id, evo.fromKey, evo.toKey);
+            final fromTrait = staticData.traits.where((t) => t.key == evo.fromKey).firstOrNull;
+            final toTrait = staticData.traits.where((t) => t.key == evo.toKey).firstOrNull;
+            if (fromTrait != null && toTrait != null) {
+              ref.read(activityLogProvider.notifier).addLog(
+                '${merc.name}의 "${fromTrait.name}"이(가) "${toTrait.name}"(으)로 진화!',
+                ActivityLogType.traitEvolved,
+              );
+            }
+          } else {
+            // Combo evolution check (only if no single evolution occurred)
+            final comboCandidates = TraitEvolutionService.checkComboEvolutions(
+              currentTraitIds: currentTraitIds,
+              comboEvolutions: staticData.traitComboEvolutions,
+              allTraits: staticData.traits,
+            );
+            if (comboCandidates.isNotEmpty) {
+              final combo = comboCandidates.first;
+              await mercRepo.comboEvolveTrait(merc.id, combo.trait1Key, combo.trait2Key, combo.resultKey);
+              final t1 = staticData.traits.where((t) => t.key == combo.trait1Key).firstOrNull;
+              final t2 = staticData.traits.where((t) => t.key == combo.trait2Key).firstOrNull;
+              final result = staticData.traits.where((t) => t.key == combo.resultKey).firstOrNull;
+              if (t1 != null && t2 != null && result != null) {
+                ref.read(activityLogProvider.notifier).addLog(
+                  '${merc.name}의 "${t1.name}" + "${t2.name}" → "${result.name}"(으)로 조합 진화!',
+                  ActivityLogType.traitEvolved,
+                );
+              }
             }
           }
         }

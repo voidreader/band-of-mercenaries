@@ -83,19 +83,24 @@ consecutive_success, consecutive_failure
 
 ---
 
-## Phase 4: 진화 시스템
+## Phase 4: 진화 시스템 ✅ 완료
 
 | # | 작업 | 상태 | 영향 파일 |
 |---|------|------|----------|
-| ⑫ | 단일 진화 엔진 | ⬜ | 신규 서비스 `trait_evolution_service.dart` |
-| ⑬ | 조합 진화 엔진 | ⬜ | 동일 서비스 |
-| ⑭ | 트레잇 히스토리 (재획득 방지) | ⬜ | 용병 모델 확장, Hive 저장 |
+| ⑫ | 단일 진화 엔진 | ✅ | `trait_evolution_service.dart` 신규 |
+| ⑬ | 조합 진화 엔진 | ✅ | 동일 서비스 |
+| ⑭ | 트레잇 히스토리 (재획득 방지) | ✅ | `mercenary_model.dart` HiveField(16) |
 
 **핵심 변경:**
-- 단일 진화: 보유 중인 acquired 트레잇 + 추가 지표 조건 충족 → 같은 카테고리 evolved로 교체
-- 조합 진화: 보유 중인 2개 트레잇 (서로 다른 카테고리) → 두 원본 소멸 + 결과 트레잇 획득
-- 트레잇 히스토리: 소멸된 트레잇 key 목록 저장 → 재획득 방지
+- 단일 진화: 보유 중인 acquired 트레잇 + conditionJson 지표 조건 충족 → 같은 카테고리 evolved로 교체
+- 조합 진화: 보유 중인 2개 트레잇 (서로 다른 카테고리) → 두 원본 소멸 + 결과 트레잇 획득 + 슬롯 해방
+- 트레잇 히스토리: HiveField(16) `List<String> traitHistory` → 소멸 트레잇 기록, 재획득 방지
+- `quest_provider._applyCompletionResult()`에서 지표 갱신 → 트레잇 획득 → 단일 진화 → 조합 진화 순서 체크
+- 한 퀘스트 완료당 최대 1회 진화 (단일 우선, 조합 후순위)
 - 진화 선택지 UI (Phase 5에서 구현)
+
+**추가 생성 파일:**
+- `lib/features/mercenary/domain/trait_evolution_service.dart`
 
 ---
 
