@@ -33,6 +33,7 @@ final movementProvider = StateNotifierProvider<MovementNotifier, UserData?>((ref
 class MovementNotifier extends StateNotifier<UserData?> {
   final Ref ref;
   late final MovementRepository _repo;
+  bool _isCompletingMovement = false;
 
   MovementNotifier(this.ref) : super(null) {
     _repo = ref.read(movementRepositoryProvider);
@@ -117,9 +118,11 @@ class MovementNotifier extends StateNotifier<UserData?> {
   void _checkArrival() {
     final user = _repo.userData;
     if (user == null || !user.isMoving || user.moveEndTime == null) return;
+    if (_isCompletingMovement) return;
 
     if (DateTime.now().isAfter(user.moveEndTime!)) {
-      _completeMovement();
+      _isCompletingMovement = true;
+      _completeMovement().whenComplete(() => _isCompletingMovement = false);
     }
   }
 

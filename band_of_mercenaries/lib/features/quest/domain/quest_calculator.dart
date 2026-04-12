@@ -18,6 +18,7 @@ class QuestCalculator {
     required int distancePenalty,
     required Random random,
   }) {
+    if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
     final questMod = _questModifiers[questTypeId] ?? 0.0;
     final traitBonus = traitBonuses.contains('veteran') ? 10.0 : 0.0;

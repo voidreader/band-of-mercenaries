@@ -31,6 +31,16 @@ void main() {
         final highRate = QuestCalculator.calculateSuccessRate(partyPower: 1000, enemyPower: 1, traitBonuses: [], questTypeId: 'explore', distancePenalty: 0, random: Random(42));
         expect(highRate, lessThanOrEqualTo(95));
       });
+
+      test('returns 95.0 when enemyPower is 0', () {
+        final rate = QuestCalculator.calculateSuccessRate(partyPower: 10, enemyPower: 0, traitBonuses: [], questTypeId: 'loot', distancePenalty: 0, random: Random(42));
+        expect(rate, 95.0);
+      });
+
+      test('returns 95.0 when enemyPower is negative', () {
+        final rate = QuestCalculator.calculateSuccessRate(partyPower: 10, enemyPower: -5, traitBonuses: [], questTypeId: 'loot', distancePenalty: 0, random: Random(42));
+        expect(rate, 95.0);
+      });
     });
 
     group('determineResult', () {
