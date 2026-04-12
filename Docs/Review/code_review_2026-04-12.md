@@ -4,6 +4,8 @@
 > **대상:** band_of_mercenaries/lib/ 전체
 > **규모:** 소스 파일 53개 · ~4,900줄 · 테스트 12개(104 assertions) · 정적 분석 경고 1건
 > **Phase 1 완료 후:** 소스 54개 · 테스트 13개(115 assertions) · QuestCompletionService 신규 추가
+> **Phase 2 완료 후:** core/domain/ 신설, UserData/서비스 재배치, enum 통일, 데드코드 -2,000줄
+> **Phase 3 완료 후:** 테스트 17개(138 assertions) · GameConstants, IdleRewardService 신규 · 린트 강화
 
 ---
 
@@ -134,7 +136,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M2. 성공률 미리보기와 실제 계산 불일치
+### M2. ~~성공률 미리보기와 실제 계산 불일치~~ [FIXED in Phase 3]
 
 **파일:** `dispatch_detail_page.dart:201` vs `quest_provider.dart:261`
 
@@ -150,7 +152,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M3. SyncService 부분 실패 시 불완전 캐시
+### M3. ~~SyncService 부분 실패 시 불완전 캐시~~ [FIXED in Phase 3]
 
 **파일:** `sync_service.dart:111-115`
 
@@ -166,7 +168,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M4. View 레이어에 비즈니스 로직 침투
+### M4. ~~View 레이어에 비즈니스 로직 침투~~ [FIXED in Phase 3]
 
 | 위치 | 내용 |
 |------|------|
@@ -226,7 +228,7 @@ settings  → quest, movement, mercenary
 
 ---
 
-### M9. timer 재계산 유틸리티 미사용
+### M9. ~~timer 재계산 유틸리티 미사용~~ [FIXED in Phase 3]
 
 **파일:** `timer_provider.dart:14-22`
 
@@ -258,7 +260,7 @@ settings  → quest, movement, mercenary
 
 ## MINOR — 여유 있을 때 개선
 
-### m1. 매직 넘버 산재
+### m1. ~~매직 넘버 산재~~ [FIXED in Phase 3]
 
 | 위치 | 값 | 의미 |
 |------|-----|------|
@@ -430,17 +432,17 @@ CLAUDE.md에 "Material 3 다크 프라이머리 테마"라고 되어 있지만, 
 | 10 | ~~미사용 `XxxList` 래퍼 클래스 제거~~ | M11 | DONE |
 | 11 | ~~퀘스트 결과 enum 통일~~ | M5 | DONE |
 
-### Phase 3 — 품질 강화 (2~4주)
+### Phase 3 — 품질 강화 (2~4주) [COMPLETED 2026-04-12]
 
-| # | 작업 | 관련 이슈 |
-|---|------|----------|
-| 12 | 성공률 미리보기 수식 통일 | M2 |
-| 13 | View 레이어 비즈니스 로직 → 도메인 이동 | M4 |
-| 14 | SyncService 부분 실패 처리 | M3 |
-| 15 | timer 재계산 유틸리티 통일 | M9 |
-| 16 | 매직 넘버 → GameConstants 추출 | m1 |
-| 17 | Provider/Repository 테스트 확충 | 테스트 갭 |
-| 18 | 커스텀 린트 룰 적용 | 설정 건강성 |
+| # | 작업 | 관련 이슈 | 상태 |
+|---|------|----------|------|
+| 12 | ~~성공률 미리보기 수식 통일~~ | M2 | DONE |
+| 13 | ~~View 레이어 비즈니스 로직 → 도메인 이동~~ | M4 | DONE |
+| 14 | ~~SyncService 부분 실패 처리~~ | M3 | DONE |
+| 15 | ~~timer 재계산 유틸리티 통일~~ | M9 | DONE |
+| 16 | ~~매직 넘버 → GameConstants 추출~~ | m1 | DONE |
+| 17 | ~~테스트 확충 (23개 신규)~~ | 테스트 갭 | DONE |
+| 18 | ~~커스텀 린트 룰 (avoid_print)~~ | 설정 건강성 | DONE |
 
 ---
 

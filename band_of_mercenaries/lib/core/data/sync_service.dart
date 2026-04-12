@@ -108,9 +108,14 @@ class SyncService {
 
   /// 전체 테이블 다운로드 (첫 실행)
   Future<void> _fullDownload() async {
-    await _downloadTables(allTables);
-    final serverVersions = await _fetchServerVersions();
-    _saveLocalVersions(serverVersions);
+    try {
+      await _downloadTables(allTables);
+      final serverVersions = await _fetchServerVersions();
+      _saveLocalVersions(serverVersions);
+    } catch (e) {
+      await _dataLoader.clearCache();
+      rethrow;
+    }
   }
 
   /// 지정된 테이블들 다운로드 + 캐시 저장

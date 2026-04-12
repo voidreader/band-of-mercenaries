@@ -5,6 +5,8 @@ import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/supabase_initializer.dart';
 import 'package:band_of_mercenaries/core/data/sync_service.dart';
 import 'package:band_of_mercenaries/core/data/settings_keys.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/core/domain/idle_reward_service.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
@@ -152,25 +154,20 @@ class _IdleRewardWrapperState extends ConsumerState<_IdleRewardWrapper> {
     if (lastActiveMs == null) return;
 
     final lastActive = DateTime.fromMillisecondsSinceEpoch(lastActiveMs);
-    final now = DateTime.now();
-    final absentMinutes = now.difference(lastActive).inMinutes;
-
-    if (absentMinutes < 1) return;
-
-    final rewardMinutes = absentMinutes.clamp(0, 480);
-    final reward = rewardMinutes;
+    final reward = IdleRewardService.calculateReward(lastActive);
 
     if (reward <= 0) return;
 
     ref.read(userDataProvider.notifier).addGold(reward);
 
+    final absentMinutes = DateTime.now().difference(lastActive).inMinutes;
     if (mounted) {
       showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('부재 보상'),
           content: Text(
-            '${absentMinutes > 480 ? "8시간 이상" : "$absentMinutes분"} 동안 부재하셨습니다.\n'
+            '${absentMinutes > GameConstants.maxIdleRewardMinutes ? "8시간 이상" : "$absentMinutes분"} 동안 부재하셨습니다.\n'
             '${reward}G를 획득했습니다!',
           ),
           actions: [
@@ -183,6 +180,6 @@ class _IdleRewardWrapperState extends ConsumerState<_IdleRewardWrapper> {
       );
     }
 
-    settingsBox.put(SettingsKeys.lastActiveTime, now.millisecondsSinceEpoch);
+    settingsBox.put(SettingsKeys.lastActiveTime, DateTime.now().millisecondsSinceEpoch);
   }
 }

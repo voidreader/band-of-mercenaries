@@ -4,8 +4,22 @@ import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 
 class RecruitmentService {
+  static bool canFreeRecruit(DateTime lastFreeRecruit, double speedMultiplier) {
+    final cooldownSeconds = (GameConstants.freeRecruitCooldown.inSeconds / speedMultiplier).round();
+    final nextFreeRecruit = lastFreeRecruit.add(Duration(seconds: cooldownSeconds));
+    return DateTime.now().isAfter(nextFreeRecruit);
+  }
+
+  static Duration freeRecruitRemaining(DateTime lastFreeRecruit, double speedMultiplier) {
+    final cooldownSeconds = (GameConstants.freeRecruitCooldown.inSeconds / speedMultiplier).round();
+    final nextFreeRecruit = lastFreeRecruit.add(Duration(seconds: cooldownSeconds));
+    final remaining = nextFreeRecruit.difference(DateTime.now());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
   static const _tierProbabilities = <int, double>{1: 0.45, 2: 0.30, 3: 0.15, 4: 0.08, 5: 0.02};
   static const _uuid = Uuid();
 

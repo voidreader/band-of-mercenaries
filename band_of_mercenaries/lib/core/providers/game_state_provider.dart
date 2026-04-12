@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/models/user_data.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
 
@@ -34,13 +35,13 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     final random = Random();
     final tier1Regions = staticData.regions.where((r) => r.regionTier == 1).toList();
     final startRegion = tier1Regions[random.nextInt(tier1Regions.length)];
-    final startSector = random.nextInt(10) + 1;
+    final startSector = random.nextInt(GameConstants.sectorCount) + 1;
 
     final userData = UserData(
-      gold: 500,
+      gold: GameConstants.startingGold,
       region: startRegion.region,
       sector: startSector,
-      lastFreeRecruit: DateTime.now().subtract(const Duration(hours: 3)),
+      lastFreeRecruit: DateTime.now().subtract(GameConstants.freeRecruitCooldown),
       createdAt: DateTime.now(),
     );
 
@@ -92,5 +93,12 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     await state!.save();
     state = state;
     return true;
+  }
+
+  Future<void> recordFreeRecruit() async {
+    if (state == null) return;
+    state!.lastFreeRecruit = DateTime.now();
+    await state!.save();
+    state = state;
   }
 }

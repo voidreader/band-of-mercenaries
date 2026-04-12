@@ -27,6 +27,21 @@ class QuestCalculator {
     return rate.clamp(5.0, 95.0);
   }
 
+  static double calculateSuccessRatePreview({
+    required int partyPower,
+    required int enemyPower,
+    required List<String> traitBonuses,
+    required String questTypeId,
+    required int distancePenalty,
+  }) {
+    if (enemyPower <= 0) return 95.0;
+    final powerRatio = partyPower / enemyPower;
+    final questMod = _questModifiers[questTypeId] ?? 0.0;
+    final traitBonus = traitBonuses.contains('veteran') ? 10.0 : 0.0;
+    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble();
+    return rate.clamp(5.0, 95.0);
+  }
+
   static QuestResult determineResult({required double successRate, required double roll}) {
     final greatSuccessThreshold = successRate * 0.3;
     final successThreshold = successRate;

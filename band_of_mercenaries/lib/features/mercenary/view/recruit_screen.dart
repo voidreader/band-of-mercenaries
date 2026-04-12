@@ -5,6 +5,8 @@ import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_card.dart';
@@ -23,10 +25,8 @@ class RecruitScreen extends ConsumerWidget {
     if (userData == null) return const Center(child: CircularProgressIndicator());
 
     final aliveMercs = mercs.where((m) => m.status != MercenaryStatus.dead).toList();
-    final freeRecruitCooldown = Duration(seconds: (2 * 3600 / speedMult).round());
-    final nextFreeRecruit = userData.lastFreeRecruit.add(freeRecruitCooldown);
-    final canFreeRecruit = DateTime.now().isAfter(nextFreeRecruit);
-    final remaining = nextFreeRecruit.difference(DateTime.now());
+    final canFreeRecruit = RecruitmentService.canFreeRecruit(userData.lastFreeRecruit, speedMult);
+    final remaining = RecruitmentService.freeRecruitRemaining(userData.lastFreeRecruit, speedMult);
 
     return staticData.when(
       data: (data) {
@@ -92,8 +92,7 @@ class RecruitScreen extends ConsumerWidget {
                         onPressed: canFreeRecruit && !isAtCapacity
                             ? () async {
                                 await ref.read(mercenaryListProvider.notifier).recruit();
-                                userData.lastFreeRecruit = DateTime.now();
-                                await userData.save();
+                                await ref.read(userDataProvider.notifier).recordFreeRecruit();
                               }
                             : null,
                         child: Column(
@@ -114,9 +113,9 @@ class RecruitScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: userData.gold >= 100 && !isAtCapacity
+                        onPressed: userData.gold >= GameConstants.paidRecruitCost && !isAtCapacity
                             ? () async {
-                                await ref.read(userDataProvider.notifier).spendGold(100);
+                                await ref.read(userDataProvider.notifier).spendGold(GameConstants.paidRecruitCost);
                                 await ref.read(mercenaryListProvider.notifier).recruit();
                               }
                             : null,
@@ -128,7 +127,7 @@ class RecruitScreen extends ConsumerWidget {
                           children: [
                             Text(isAtCapacity ? '정원 초과' : '골드 모집',
                                 style: const TextStyle(color: AppTheme.textPrimary)),
-                            const Text('100G', style: TextStyle(fontSize: 12, color: AppTheme.textHint)),
+                            Text('${GameConstants.paidRecruitCost}G', style: const TextStyle(fontSize: 12, color: AppTheme.textHint)),
                           ],
                         ),
                       ),

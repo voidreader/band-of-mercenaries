@@ -46,15 +46,17 @@ band_of_mercenaries/lib/
 ├── main.dart              # 진입점 (Hive/Supabase 초기화 → SyncService → ProviderScope → 방치형 보상)
 ├── app.dart               # 앱 셸 + 하단 네비게이션 + WidgetsBindingObserver(lastActiveTime 저장, 포그라운드 싱크)
 ├── core/
-│   ├── data/              # HiveInitializer, SupabaseInitializer, DataLoader, SyncService
-│   ├── models/            # 정적 데이터 모델 (freezed + json_serializable, snake_case @JsonKey)
+│   ├── constants/         # GameConstants (게임 밸런스 상수)
+│   ├── data/              # HiveInitializer, SupabaseInitializer, DataLoader, SyncService, SettingsKeys
+│   ├── domain/            # 전역 도메인 서비스 (ActivityLog, ExperienceService, ReputationService, IdleRewardService)
+│   ├── models/            # 정적 데이터 모델 (freezed + json_serializable) + UserData (Hive)
 │   ├── providers/         # 전역 상태 (game_state, static_data, timer)
 │   └── theme/             # Material 3 테마, 티어별 색상
 ├── features/              # 기능별 모듈
-│   ├── home/              # 홈(야영지) 화면, ReputationService, ActivityLog 시스템
-│   ├── movement/          # 이동 시스템, TravelEventService
-│   ├── quest/             # 퀘스트/파견 시스템, ExperienceService
-│   ├── mercenary/         # 용병 모집/관리, FacilityService
+│   ├── home/              # 홈(야영지) 화면
+│   ├── movement/          # 이동 시스템, TravelEventService, MovementState
+│   ├── quest/             # 퀘스트/파견 시스템, QuestCompletionService
+│   ├── mercenary/         # 용병 모집/관리, FacilityService, RecruitmentService
 │   └── settings/          # 설정, 시설 관리 (FacilityScreen)
 └── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay, StatusBadge)
 ```
@@ -119,7 +121,7 @@ band_of_mercenaries/lib/
 ### 영속성
 
 **Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings` 5개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
-- `settings` 박스: 일반 key-value (lastActiveTime, dismissedMercIds, dataVersions 등)
+- `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
 
 ### 코드 생성
 
@@ -144,7 +146,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 
 ## 분석 설정
 
-`analysis_options.yaml`에서 `invalid_annotation_target: ignore` 설정됨 (freezed/json_serializable 호환용).
+`analysis_options.yaml`에서 `invalid_annotation_target: ignore` 설정됨 (freezed/json_serializable 호환용). `avoid_print: true` 린트 룰 활성화.
 
 ## UI
 

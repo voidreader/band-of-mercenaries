@@ -28,6 +28,10 @@ class DataLoader {
         .toList();
   }
 
+  Future<void> clearCache() async {
+    await _cacheBox.clear();
+  }
+
   /// Supabase 응답(List<Map>)을 모델 리스트로 변환
   static List<T> parseList<T>(
     List<Map<String, dynamic>> data,

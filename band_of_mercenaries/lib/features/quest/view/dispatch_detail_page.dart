@@ -198,7 +198,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '성공률: ${_selectedMercIds.isEmpty ? "-" : "${(partyPower / difficulty.enemyPower * 50 + 50).clamp(5, 95).round()}%"}',
+                            '성공률: ${_selectedMercIds.isEmpty ? "-" : "${QuestCalculator.calculateSuccessRatePreview(partyPower: partyPower, enemyPower: difficulty.enemyPower, traitBonuses: selectedMercs.map((m) => m.traitId).toList(), questTypeId: quest.questTypeId, distancePenalty: (quest.region - userData.region).abs()).round()}%"}',
                             style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                           ),
                           Text(

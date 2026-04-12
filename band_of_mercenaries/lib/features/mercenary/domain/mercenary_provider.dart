@@ -62,23 +62,17 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     bool changed = false;
     for (final merc in state) {
       if (merc.status == MercenaryStatus.tired && merc.tiredEndTime != null) {
-        final now = DateTime.now();
-        if (now.isBefore(merc.tiredEndTime!)) {
-          final remainingMs = merc.tiredEndTime!.difference(now).inMilliseconds;
-          final baseRemainingMs = (remainingMs * oldSpeed).round();
-          final newRemainingMs = (baseRemainingMs / newSpeed).round();
-          merc.tiredEndTime = now.add(Duration(milliseconds: newRemainingMs));
+        final newEnd = recalculateEndTime(merc.tiredEndTime, merc.tiredEndTime, oldSpeed, newSpeed);
+        if (newEnd != merc.tiredEndTime) {
+          merc.tiredEndTime = newEnd;
           merc.save();
           changed = true;
         }
       }
       if (merc.status == MercenaryStatus.injured && merc.injuryEndTime != null) {
-        final now = DateTime.now();
-        if (now.isBefore(merc.injuryEndTime!)) {
-          final remainingMs = merc.injuryEndTime!.difference(now).inMilliseconds;
-          final baseRemainingMs = (remainingMs * oldSpeed).round();
-          final newRemainingMs = (baseRemainingMs / newSpeed).round();
-          merc.injuryEndTime = now.add(Duration(milliseconds: newRemainingMs));
+        final newEnd = recalculateEndTime(merc.injuryEndTime, merc.injuryEndTime, oldSpeed, newSpeed);
+        if (newEnd != merc.injuryEndTime) {
+          merc.injuryEndTime = newEnd;
           merc.save();
           changed = true;
         }

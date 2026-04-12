@@ -8,6 +8,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_completion_servi
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
@@ -56,7 +57,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final region = staticData.regions.firstWhere((r) => r.region == userData.region);
 
     // Use intelligence facility bonus for quest count
-    int questCount = 5;
+    int questCount = GameConstants.baseQuestCount;
     final intelligenceLevel = userData.facilities['intelligence'] ?? 0;
     if (intelligenceLevel > 0) {
       final intelligenceFacility = staticData.facilities.firstWhere(
@@ -82,9 +83,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   int getMaxQuestCount() {
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
-    if (staticData == null || userData == null) return 5;
+    if (staticData == null || userData == null) return GameConstants.baseQuestCount;
 
-    int count = 5;
+    int count = GameConstants.baseQuestCount;
     final intelligenceLevel = userData.facilities['intelligence'] ?? 0;
     if (intelligenceLevel > 0) {
       final intelligenceFacility = staticData.facilities.firstWhere(

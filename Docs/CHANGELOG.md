@@ -1,5 +1,43 @@
 # CHANGELOG
 
+## 2026-04-12
+
+### Refactors (코드 리뷰 Phase 1~3)
+
+**Phase 1 — 안정성 확보**
+- 퀘스트/이동 틱 레이스 컨디션 수정 (중복 처리 방지 가드 추가)
+- `_completeQuest()` 185줄 God 메서드를 `QuestCompletionService`로 분리 (순수 계산 + 부수효과 분리)
+- `ExperienceService.resultMultiplier` String → `QuestResult` enum 타입으로 변경
+- `QuestCalculator.calculateSuccessRate` enemyPower <= 0 방어 코드 추가
+- `mocktail` dev dependency 추가, `QuestCompletionService` 테스트 9개 신규
+
+**Phase 2 — 아키텍처 정리**
+- `UserData` 모델을 `features/movement/domain/` → `core/models/`로 이동
+- `ActivityLog`, `ExperienceService`, `ReputationService`를 `core/domain/`으로 승격 (feature 간 그물망 의존성 해소)
+- `QuestResultType` 삭제, `QuestResult`로 enum 통일 (이중 정의 + 수동 매핑 제거)
+- `SettingsKeys` 상수 클래스 도입 (매직 스트링 중앙화)
+- `addGold(0)` 해킹을 `UserDataNotifier.refresh()`로 교체
+- `MovementNotifier` state를 `UserData?` → `MovementState?`로 분리 (SSOT 복원)
+- 미사용 `XxxList` 래퍼 클래스 11개 삭제 (-2,000줄)
+
+**Phase 3 — 품질 강화**
+- `GameConstants` 상수 클래스 신규 (매직 넘버 10개 중앙화)
+- timer 재계산 로직을 `recalculateEndTime()` 유틸리티로 통일 (3개 Notifier)
+- `QuestCalculator.calculateSuccessRatePreview()` 추가 (랜덤 편차 없는 결정적 미리보기)
+- View 레이어 비즈니스 로직 도메인으로 이동 (RecruitmentService 쿨다운, IdleRewardService, UserDataNotifier.recordFreeRecruit)
+- `SyncService._fullDownload()` 부분 실패 시 캐시 롤백 처리
+- `avoid_print` 린트 룰 추가
+- 테스트 23개 신규 (총 138개)
+
+### Bug Fixes
+- Android 릴리스 빌드 시 네트워크 연결 실패 수정 (`AndroidManifest.xml`에 INTERNET 퍼미션 추가)
+
+### Docs
+- 코드베이스 종합 리뷰 리포트 및 Phase 1~3 구현 결과 문서 추가
+- CLAUDE.md 아키텍처 섹션 업데이트 (core/domain, core/constants, SettingsKeys 반영)
+
+---
+
 ## 2026-04-11
 
 ### Features

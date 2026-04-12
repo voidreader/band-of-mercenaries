@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 
 part 'mercenary_model.g.dart';
 
@@ -75,21 +76,21 @@ class Mercenary extends HiveObject {
     this.level = 1,
   });
 
-  double get _levelBonus => (level - 1) * 0.1;
+  double get _levelBonus => (level - 1) * GameConstants.levelBonusPerLevel;
 
   int get effectiveAtk {
     final withLevel = (atk * (1.0 + _levelBonus)).round();
-    return status == MercenaryStatus.tired ? (withLevel * 0.8).round() : withLevel;
+    return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 
   int get effectiveDef {
     final withLevel = (def * (1.0 + _levelBonus)).round();
-    return status == MercenaryStatus.tired ? (withLevel * 0.8).round() : withLevel;
+    return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 
   int get effectiveHp {
     final withLevel = (hp * (1.0 + _levelBonus)).round();
-    return status == MercenaryStatus.tired ? (withLevel * 0.8).round() : withLevel;
+    return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 
   bool get isAvailable =>
