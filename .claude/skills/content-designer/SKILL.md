@@ -30,8 +30,7 @@ Recommended Model : Claude Opus
 1. `Docs/content_status.md` — 현재 구현 현황
 2. `Docs/game_overview.md` — 게임 소개 및 구조
 3. `Docs/future_ideas.md` — 기존 아이디어 목록 (중복 방지)
-4. `Docs/idea_note.md` — 아이디어 메모 (중복 방지)
-5. `CLAUDE.md` — 게임 시스템 로직 섹션
+4. `CLAUDE.md` — 게임 시스템 로직 섹션
 
 필요 시 `band_of_mercenaries/lib/` 하위의 실제 코드를 탐색하여 현재 구현 상태를 확인한다.
 
