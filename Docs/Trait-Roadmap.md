@@ -104,20 +104,32 @@ consecutive_success, consecutive_failure
 
 ---
 
-## Phase 5: UI
+## Phase 5: UI ✅ 완료
 
 | # | 작업 | 상태 | 영향 파일 |
 |---|------|------|----------|
-| ⑮ | 트레잇 관리 UI (상세 정보, 슬롯 시각화) | ⬜ | `mercenary_card.dart`, 신규 위젯 |
-| ⑯ | 획득/진화 알림 팝업 | ⬜ | 신규 다이얼로그 |
-| ⑰ | 용병 상세 화면 개선 | ⬜ | `recruit_screen.dart` 또는 신규 화면 |
+| ⑮ | 트레잇 관리 UI (상세 정보, 슬롯 시각화) | ✅ | `mercenary_detail_overlay.dart`, `trait_slot_grid.dart`, `trait_detail_dialog.dart` |
+| ⑯ | 획득/진화 알림 팝업 | ✅ | `trait_acquisition_dialog.dart`, `trait_evolution_dialog.dart` |
+| ⑰ | 용병 상세 화면 개선 | ✅ | `mercenary_detail_overlay.dart`, `behavior_stats_section.dart`, `trait_history_section.dart` |
 
 **핵심 변경:**
-- 용병 카드에 선천(고정)/후천(획득) 슬롯 구분 표시
-- 빈 슬롯 시각화 (잠재적 성장 여지)
-- 트레잇 탭 시 상세 팝업 (설명, 효과, 진화 경로)
-- 조건 충족 시 "새 트레잇 획득 가능" 알림
-- 진화 선택 다이얼로그 (단일 진화 분기, 조합 진화 확인)
+- 앱 레벨 `selectedMercenaryIdProvider`로 전체화면 용병 상세 오버레이 (어디서든 용병 카드 탭 → 진입)
+- `app.dart`의 `MainShell`에 `Stack` 오버레이 추가, 상세 화면 표시 시 하단 네비 숨김
+- 단일 스크롤 상세 화면: 프로필 헤더 → TraitSlotGrid(선천 3열 + 후천 2×2) → BehaviorStatsSection(접기/펼치기) → TraitHistorySection
+- 채워진 슬롯 탭 → TraitDetailDialog (설명, 효과, 진화 경로 진행도 바, 시너지, 충돌 관계)
+- 퀘스트 완료 후 팝업 체이닝: QuestResultDialog → TraitAcquisitionDialog(획득 알림) → TraitEvolutionDialog(카드 비교형 진화 경로 선택)
+- `quest_provider`의 진화 자동적용 → 후보 반환으로 변경, `pendingTraitEventsProvider`로 UI에 전달
+- 진화 선택: 카드 비교형 UI, 결과 트레잇 효과/소멸/슬롯해방 비교, 보류 가능
+
+**추가 생성 파일:**
+- `lib/core/providers/mercenary_detail_provider.dart`
+- `lib/features/mercenary/view/mercenary_detail_overlay.dart`
+- `lib/features/mercenary/view/trait_slot_grid.dart`
+- `lib/features/mercenary/view/behavior_stats_section.dart`
+- `lib/features/mercenary/view/trait_history_section.dart`
+- `lib/features/mercenary/view/trait_detail_dialog.dart`
+- `lib/features/mercenary/view/trait_acquisition_dialog.dart`
+- `lib/features/mercenary/view/trait_evolution_dialog.dart`
 
 ---
 
