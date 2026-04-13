@@ -6,6 +6,24 @@ import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.da
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
 import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
+
+class TraitEventResult {
+  final String? acquiredTraitKey;
+  final List<SingleEvolutionCandidate> singleEvoCandidates;
+  final List<ComboEvolutionCandidate> comboEvoCandidates;
+
+  const TraitEventResult({
+    this.acquiredTraitKey,
+    this.singleEvoCandidates = const [],
+    this.comboEvoCandidates = const [],
+  });
+
+  bool get hasEvents =>
+      acquiredTraitKey != null ||
+      singleEvoCandidates.isNotEmpty ||
+      comboEvoCandidates.isNotEmpty;
+}
 
 class MercDamageResult {
   final String mercId;

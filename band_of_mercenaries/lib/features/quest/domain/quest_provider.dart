@@ -4,7 +4,7 @@ import 'package:band_of_mercenaries/features/quest/data/quest_repository.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
-import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart' show QuestCompletionService, QuestCompletionResult, TraitEventResult;
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
@@ -19,6 +19,9 @@ import 'package:band_of_mercenaries/features/mercenary/domain/trait_acquisition_
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
+
+// key: questId, value: { mercId: TraitEventResult }
+final pendingTraitEventsProvider = StateProvider<Map<String, Map<String, TraitEventResult>>>((ref) => {});
 
 final questListProvider = StateNotifierProvider<QuestListNotifier, List<ActiveQuest>>((ref) {
   return QuestListNotifier(ref);
@@ -276,6 +279,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     List<Mercenary> mercs, {
     double deathRate = 0.05,
   }) async {
+    final traitEvents = <String, TraitEventResult>{};
     await _repo.completeQuest(
       quest.id,
       result.resultType,
@@ -352,51 +356,45 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           final updatedMerc = mercRepo.getAll().firstWhere((m) => m.id == merc.id);
           final currentTraitIds = updatedMerc.allTraitIds;
 
-          // Single evolution check
+          // Single evolution: collect candidates only (no auto-apply)
           final singleCandidates = TraitEvolutionService.checkSingleEvolutions(
             stats: newStats,
             currentTraitIds: currentTraitIds,
             transitions: staticData.traitTransitions,
             allTraits: staticData.traits,
           );
-          if (singleCandidates.isNotEmpty) {
-            final evo = singleCandidates.first;
-            await mercRepo.evolveTrait(merc.id, evo.fromKey, evo.toKey);
-            final fromTrait = staticData.traits.where((t) => t.key == evo.fromKey).firstOrNull;
-            final toTrait = staticData.traits.where((t) => t.key == evo.toKey).firstOrNull;
-            if (fromTrait != null && toTrait != null) {
-              ref.read(activityLogProvider.notifier).addLog(
-                '${merc.name}의 "${fromTrait.name}"이(가) "${toTrait.name}"(으)로 진화!',
-                ActivityLogType.traitEvolved,
-              );
-            }
-          } else {
-            // Combo evolution check (only if no single evolution occurred)
-            final comboCandidates = TraitEvolutionService.checkComboEvolutions(
+
+          // Combo evolution: collect candidates only if no single evolution
+          List<ComboEvolutionCandidate> comboCandidates = [];
+          if (singleCandidates.isEmpty) {
+            comboCandidates = TraitEvolutionService.checkComboEvolutions(
               currentTraitIds: currentTraitIds,
               comboEvolutions: staticData.traitComboEvolutions,
               allTraits: staticData.traits,
             );
-            if (comboCandidates.isNotEmpty) {
-              final combo = comboCandidates.first;
-              await mercRepo.comboEvolveTrait(merc.id, combo.trait1Key, combo.trait2Key, combo.resultKey);
-              final t1 = staticData.traits.where((t) => t.key == combo.trait1Key).firstOrNull;
-              final t2 = staticData.traits.where((t) => t.key == combo.trait2Key).firstOrNull;
-              final result = staticData.traits.where((t) => t.key == combo.resultKey).firstOrNull;
-              if (t1 != null && t2 != null && result != null) {
-                ref.read(activityLogProvider.notifier).addLog(
-                  '${merc.name}의 "${t1.name}" + "${t2.name}" → "${result.name}"(으)로 조합 진화!',
-                  ActivityLogType.traitEvolved,
-                );
-              }
-            }
           }
+
+          // Store trait event results
+          final acquiredKey = candidates.isNotEmpty ? candidates.first : null;
+          traitEvents[merc.id] = TraitEventResult(
+            acquiredTraitKey: acquiredKey,
+            singleEvoCandidates: singleCandidates,
+            comboEvoCandidates: comboCandidates,
+          );
         }
       }
     }
 
     if (result.repGain > 0) {
       await ref.read(userDataProvider.notifier).addReputation(result.repGain);
+    }
+
+    if (traitEvents.values.any((e) => e.hasEvents)) {
+      final current = ref.read(pendingTraitEventsProvider);
+      ref.read(pendingTraitEventsProvider.notifier).state = {
+        ...current,
+        quest.id: traitEvents,
+      };
     }
 
     ref.read(mercenaryListProvider.notifier).refresh();
