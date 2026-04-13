@@ -1,6 +1,6 @@
 # 컨텐츠 개발 현황
 
-> 마지막 업데이트: 2026-04-10
+> 마지막 업데이트: 2026-04-13
 
 ---
 
@@ -47,12 +47,15 @@
 | 모집 | ✅ | 무료(2시간 쿨타임) + 골드 모집 |
 | 티어 확률 | ✅ | T1:45% / T2:30% / T3:15% / T4:8% / T5:2% |
 | 직업 | ✅ | 85개 (5티어), 기본 ATK/DEF/HP/Speed |
-| 특성 | ✅ | 4종 (강인함HP+20%, 노련함성공+10%, 겁쟁이생존+30%, 광전사ATK+25%) |
+| 선천 트레잇 | ✅ | 모집 시 Physical/Background/Talent 카테고리에서 랜덤 1~3개 부여 (각 60% 확률, 최소 1개) |
+| 트레잇 시스템 | ✅ | 106개 트레잇 (8개 카테고리), 선천 최대 3개 + 후천 최대 4개 슬롯 |
 | 상태 관리 | ✅ | 정상 → 피곤함(80%, 5분) → 부상(난이도×10분) → 사망 |
 | 레벨/XP | ✅ | 최대 5레벨, 임계값 [0, 100, 350, 850, 1850] |
 | 주둔지 용량 | ✅ | 기본 + 주둔지 레벨별 추가 슬롯 |
 | 이름 | ✅ | 약 270개 한국어 이름 풀 |
 | 방출 | ✅ | 파견 중이 아닌 용병을 퇴직금(인건비×레벨) 지급 후 영구 방출, 재모집 불가 |
+| 행동 지표 | ✅ | 23개 지표 자동 추적 (total_dispatch_count, success_count, raid_count 등) |
+| 용병 상세 화면 | ✅ | 어디서든 용병 카드 탭 → 전체화면 오버레이 (트레잇 슬롯, 행동 지표, 트레잇 히스토리) |
 
 ### 시설 시스템
 
@@ -92,26 +95,33 @@
 | 항목 | 상태 | 내용 |
 |------|------|------|
 | 로그 유형 | ✅ | 퀘스트 결과, 용병 상태 변화, 이동 완료, 모집, 방출, 레벨업 |
-| 저장 | ✅ | Hive `activityLogs` 박스, 최대 50개 유지 |
+| 저장 | ✅ | Hive `activityLogs` 박스, 최대 100개 유지 |
 | 표시 | ✅ | 타임스탬프 역순 정렬 |
 
 ---
 
 ## 3. 정적 데이터 현황
 
-| 파일 | 건수 | 비고 |
-|------|------|------|
-| Region.json | 199 | 1개 대륙, 5단계 티어 |
-| Job.json | 85 | 5티어 직업군 |
-| Trait.json | 4 | 4종 특성 |
-| Difficulty.json | 5 | 난이도 1~5 (MinDispatchCost/MaxDispatchCost) |
-| QuestType.json | 4 | 약탈/탐험/토벌/호위 |
-| QuestPool.json | 200 | 퀘스트 템플릿 |
-| PersonName.json | 약 270 | 한국어 이름 |
-| TravelEvent.json | 12 | 여행 이벤트 |
-| Facility.json | 4 | 시설 종류 |
-| Rank.json | 6 | 명성 등급 |
-| MercenaryWage.json | 5 | 티어별 인건비 |
+Supabase에서 관리되며, `data_versions` 기반으로 Flutter 앱에 동기화 (16개 테이블).
+
+| 테이블 | 건수 | 비고 |
+|--------|------|------|
+| regions | 199 | 1개 대륙, 5단계 티어 |
+| jobs | 85 | 5티어 직업군 |
+| trait_categories | 8 | Physical / Background / Talent / CombatStyle / Survival / Behavior / Mental / Experience |
+| traits | 106 | 선천 35개 + 후천 acquired 40개 + 후천 evolved 31개. acquisition_condition / effect_json JSONB 컬럼 포함 |
+| trait_conflicts | 32 | 충돌 관계 16쌍 × 양방향 |
+| trait_transitions | 16 | 단일 진화 경로 (condition_json으로 복합 조건) |
+| trait_combo_evolutions | 15 | 조합 진화 레시피 |
+| trait_synergies | 39 | 선천-후천 시너지 (획득 조건 완화 비율) |
+| difficulties | 5 | 난이도 1~5 (min_dispatch_cost / max_dispatch_cost) |
+| quest_types | 4 | 약탈(raid) / 탐험 / 토벌 / 호위 |
+| quest_pools | 200 | 퀘스트 템플릿 |
+| person_names | 약 500 | 한국어 이름 풀 |
+| travel_events | 12 | 여행 이벤트 |
+| facilities | 4 | 시설 종류 |
+| ranks | 6 | 명성 등급 |
+| mercenary_wages | 5 | 티어별 인건비 |
 
 ---
 
@@ -121,9 +131,13 @@
 |----|------|------|-----------|
 | 홈 | HomeScreen | ✅ | 골드, 위치, 진행중 퀘스트, 용병 수, 야영지 이미지, 활동 로그 |
 | 이동 | MovementScreen | ✅ | 리전/섹터 선택, 거리/시간 표시, 티어 잠금 표시, 이동 제한 안내 |
-| 파견 | DispatchScreen | ✅ | 퀘스트 목록, 용병 선택, 비용 분석, 결과 다이얼로그 |
-| 모집 | RecruitScreen | ✅ | 무료/유료 모집, 용병 카드(레벨/XP/스탯/상태), 방출 기능 |
+| 파견 | DispatchScreen | ✅ | 퀘스트 목록, 용병 선택, 비용 분석, 결과 다이얼로그, 트레잇 획득/진화 팝업 체이닝 |
+| 모집 | RecruitScreen | ✅ | 무료/유료 모집, 용병 카드(레벨/XP/스탯/트레잇/상태), 방출 기능 |
 | 설정 | SettingsScreen | ✅ | 시설 관리 (업그레이드 UI), 시간 가속 (개발용) |
+| (오버레이) | MercenaryDetailOverlay | ✅ | 어디서든 용병 카드 탭 → 전체화면 상세. 선천/후천 트레잇 슬롯 그리드, 행동 지표(접기/펼치기), 트레잇 히스토리 |
+| (다이얼로그) | TraitDetailDialog | ✅ | 트레잇 설명, 효과, 진화 경로 진행도 바, 시너지, 충돌 관계 |
+| (다이얼로그) | TraitAcquisitionDialog | ✅ | 퀘스트 완료 후 획득 트레잇 알림 |
+| (다이얼로그) | TraitEvolutionDialog | ✅ | 카드 비교형 진화 선택 UI (단일/조합 진화 후보 선택, 보류 가능) |
 
 ---
 
@@ -132,9 +146,9 @@
 | 박스 | 내용 |
 |------|------|
 | `user` | 골드, 위치, 이동상태, 명성, 시설레벨, 무료모집 쿨타임 |
-| `mercenaries` | 용병 목록 (스탯, 상태, XP, 레벨) |
-| `quests` | 퀘스트 목록 (대기/진행/완료) |
-| `activityLogs` | 활동 로그 (최대 50개) |
+| `mercenaries` | 용병 목록 (스탯, 상태, XP, 레벨, stats 행동 지표 Map, traitIds 트레잇 목록, traitHistory 소멸 트레잇 기록) |
+| `quests` | 퀘스트 목록 (대기/진행/완료), 보상 데이터 포함 |
+| `activityLogs` | 활동 로그 (최대 100개) |
 | `settings` | 일반 key-value (lastActiveTime, dismissedMercIds 등) |
 
 ---
@@ -143,13 +157,15 @@
 
 | 항목 | 우선순위 | 비고 |
 |------|----------|------|
+| 트레잇 삭제 | 중 | 후천 트레잇 삭제 (선천 불가), 비용/조건 필요 |
+| 여행 이벤트 ↔ 선천 트레잇 연계 | 중 | 이동 이벤트에서 빈 선천 슬롯에 트레잇 부여 |
+| 밸런스 튜닝 | 높음 | 트레잇 획득 임계값, 진화 조건, 경제 수치 조정 필요 |
+| operation-bom 트레잇 관리 UI | 중 | Phase 6: table-config.ts에 6개 트레잇 테이블 추가 |
 | 장비 시스템 | - | 기획 문서에 언급 없음 |
 | 스킬 시스템 | - | 기획 문서에 언급 없음 |
 | PVP / 레이드 | - | 기획 문서에 향후 범위로 명시 |
 | 동맹/길드 | - | 기획 문서에 향후 범위로 명시 |
-| 백엔드 연동 | - | Supabase 확장 계획 |
 | 국제화 (i18n) | - | 현재 한국어 하드코딩 |
-| 밸런스 튜닝 | 높음 | 경제 수치, 난이도 곡선 조정 필요 |
 
 ---
 
@@ -157,16 +173,22 @@
 
 ```
 lib/
-├── core/models/        11개 정적 데이터 모델 (Freezed)
-├── core/providers/     3개 전역 Provider (game_state, static_data, timer)
-├── core/data/          Hive 초기화, JSON 로더
+├── core/models/        16개 정적 데이터 모델 (Freezed) — TraitData, TraitCategory, TraitConflict, TraitTransition, TraitComboEvolution, TraitSynergy 포함
+├── core/providers/     4개 전역 Provider (game_state, static_data, timer, mercenary_detail)
+├── core/data/          Hive 초기화, JSON 로더, SyncService (16개 테이블)
 ├── features/
 │   ├── home/           ReputationService, ActivityLog 시스템
 │   ├── movement/       TravelEventService, MovementProvider, Repository
-│   ├── quest/          ExperienceService, QuestCalculator, QuestGenerator, QuestProvider, Repository
-│   ├── mercenary/      FacilityService, RecruitmentService, MercenaryProvider, Repository
+│   ├── quest/          ExperienceService, QuestCalculator, QuestGenerator, QuestProvider, QuestCompletionService, Repository
+│   ├── mercenary/
+│   │   ├── domain/     FacilityService, RecruitmentService, MercenaryStatService,
+│   │   │               TraitEffectService, TraitAcquisitionService, TraitEvolutionService,
+│   │   │               MercenaryProvider, Repository
+│   │   └── view/       MercenaryCard, MercenaryDetailOverlay, TraitSlotGrid,
+│   │                   BehaviorStatsSection, TraitHistorySection,
+│   │                   TraitDetailDialog, TraitAcquisitionDialog, TraitEvolutionDialog
 │   └── settings/       FacilityScreen (UI only)
 └── shared/widgets/     BottomNavBar, TimerDisplay, StatusBadge
 ```
 
-서비스 6개: ReputationService, TravelEventService, ExperienceService, QuestCalculator, RecruitmentService, FacilityService
+서비스 10개: ReputationService, TravelEventService, ExperienceService, QuestCalculator, RecruitmentService, FacilityService, **MercenaryStatService, TraitEffectService, TraitAcquisitionService, TraitEvolutionService**
