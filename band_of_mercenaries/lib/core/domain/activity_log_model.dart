@@ -20,6 +20,8 @@ enum ActivityLogType {
   traitAcquired,
   @HiveField(7)
   traitEvolved,
+  @HiveField(8)
+  traitDeleted,
 }
 
 @HiveType(typeId: 7)

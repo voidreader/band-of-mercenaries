@@ -14,6 +14,7 @@ class TravelEvent with _$TravelEvent {
     @JsonKey(name: 'min_tier') required int minTier,
     @JsonKey(name: 'max_tier') required int maxTier,
     required String description,
+    @JsonKey(name: 'target_category') String? targetCategory,
   }) = _TravelEvent;
 
   factory TravelEvent.fromJson(Map<String, dynamic> json) =>

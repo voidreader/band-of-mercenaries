@@ -14,10 +14,21 @@ import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.da
 import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/trait_acquisition_service.dart';
+import 'package:band_of_mercenaries/core/models/trait_data.dart';
+import 'package:band_of_mercenaries/core/models/trait_conflict.dart';
 
 final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
 final lastTravelEventProvider = StateProvider<TravelEvent?>((ref) => null);
+
+class TravelEventTraitResult {
+  final String mercenaryId;
+  final String traitKey;
+  const TravelEventTraitResult({required this.mercenaryId, required this.traitKey});
+}
+
+final lastTravelEventTraitResultProvider = StateProvider<TravelEventTraitResult?>((ref) => null);
 
 /// Returns true if the given region tier is accessible at the current reputation rank.
 final canAccessRegionTierProvider = Provider.family<bool, int>((ref, regionTier) {
@@ -85,12 +96,36 @@ class MovementNotifier extends StateNotifier<MovementState?> {
       (r) => r.region == userData.region,
       orElse: () => staticData.regions.first,
     );
-    final travelEvent = TravelEventService.rollEvent(
+    TravelEvent? travelEvent = TravelEventService.rollEvent(
       distance: distance,
       regionTier: currentRegionData.regionTier,
       events: staticData.travelEvents,
       random: random,
     );
+
+    if (travelEvent != null && travelEvent.effectType == 'trait_innate') {
+      final mercs = ref.read(mercenaryListProvider);
+      var valid = _isTraitInnateEventValid(travelEvent, mercs, staticData.traits, staticData.traitConflicts);
+      if (!valid) {
+        final filtered = TravelEventService.filterByTier(staticData.travelEvents, currentRegionData.regionTier)
+            .where((e) => e.id != travelEvent!.id).toList();
+        travelEvent = null;
+        for (var i = 0; i < 3 && filtered.isNotEmpty; i++) {
+          final rerolled = filtered[random.nextInt(filtered.length)];
+          if (rerolled.effectType == 'trait_innate') {
+            if (_isTraitInnateEventValid(rerolled, mercs, staticData.traits, staticData.traitConflicts)) {
+              travelEvent = rerolled;
+              break;
+            } else {
+              filtered.remove(rerolled);
+            }
+          } else {
+            travelEvent = rerolled;
+            break;
+          }
+        }
+      }
+    }
 
     double durationMultiplier = 1.0;
     if (travelEvent != null) {
@@ -144,6 +179,8 @@ class MovementNotifier extends StateNotifier<MovementState?> {
       ActivityLogType.movementComplete,
     );
 
+    ref.read(lastTravelEventTraitResultProvider.notifier).state = null;
+
     if (travelEvent != null && travelEvent.effectType != 'delay') {
       await _applyEventEffect(travelEvent);
     }
@@ -190,6 +227,70 @@ class MovementNotifier extends StateNotifier<MovementState?> {
       case 'reputation':
         final amount = event.magnitude.abs().round();
         await ref.read(userDataProvider.notifier).addReputation(amount);
+      case 'trait_innate':
+        final staticData = ref.read(staticDataProvider).value;
+        if (staticData == null) return;
+        final category = event.targetCategory;
+        if (category == null) return;
+        final mercs = ref.read(mercenaryListProvider);
+        final allTraits = staticData.traits;
+        final conflicts = staticData.traitConflicts;
+        final candidates = mercs.where((m) {
+          if (m.status == MercenaryStatus.dead) return false;
+          final hasCategory = m.allTraitIds.any((tid) {
+            final t = allTraits.where((t) => t.key == tid).firstOrNull;
+            return t != null && t.categoryKey == category && t.type == 'innate';
+          });
+          return !hasCategory;
+        }).toList();
+        if (candidates.isEmpty) return;
+        final random = Random();
+        final targetMerc = candidates[random.nextInt(candidates.length)];
+        final innateTraits = allTraits.where((t) =>
+          t.type == 'innate' && t.categoryKey == category &&
+          !targetMerc.allTraitIds.contains(t.key) &&
+          !TraitAcquisitionService.hasConflict(t.key, targetMerc.allTraitIds, conflicts)
+        ).toList();
+        if (innateTraits.isEmpty) return;
+        final selectedTrait = innateTraits[random.nextInt(innateTraits.length)];
+        await ref.read(mercenaryRepositoryProvider).addTrait(targetMerc.id, selectedTrait.key);
+        ref.read(mercenaryListProvider.notifier).refresh();
+        ref.read(activityLogProvider.notifier).addLog(
+          '${targetMerc.name}가 여행 중 [${selectedTrait.name}] 선천 트레잇을 획득했다',
+          ActivityLogType.traitAcquired,
+        );
+        ref.read(lastTravelEventTraitResultProvider.notifier).state = TravelEventTraitResult(
+          mercenaryId: targetMerc.id,
+          traitKey: selectedTrait.key,
+        );
     }
+  }
+
+  bool _isTraitInnateEventValid(
+    TravelEvent event,
+    List<Mercenary> mercs,
+    List<TraitData> allTraits,
+    List<TraitConflict> conflicts,
+  ) {
+    final category = event.targetCategory;
+    if (category == null) return false;
+    final candidates = mercs.where((m) {
+      if (m.status == MercenaryStatus.dead) return false;
+      final hasCategory = m.allTraitIds.any((tid) {
+        final t = allTraits.where((t) => t.key == tid).firstOrNull;
+        return t != null && t.categoryKey == category && t.type == 'innate';
+      });
+      return !hasCategory;
+    }).toList();
+    if (candidates.isEmpty) return false;
+    final innateTraits = allTraits.where((t) => t.type == 'innate' && t.categoryKey == category).toList();
+    for (final merc in candidates) {
+      final available = innateTraits.where((t) =>
+        !merc.allTraitIds.contains(t.key) &&
+        !TraitAcquisitionService.hasConflict(t.key, merc.allTraitIds, conflicts)
+      );
+      if (available.isNotEmpty) return true;
+    }
+    return false;
   }
 }

@@ -34,13 +34,14 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       stats: (fields[14] as Map?)?.cast<String, int>(),
       traitIds: (fields[15] as List?)?.cast<String>(),
       traitHistory: (fields[16] as List?)?.cast<String>(),
+      deletedTraitIds: (fields[17] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Mercenary obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       ..writeByte(15)
       ..write(obj.traitIds)
       ..writeByte(16)
-      ..write(obj.traitHistory);
+      ..write(obj.traitHistory)
+      ..writeByte(17)
+      ..write(obj.deletedTraitIds);
   }
 
   @override

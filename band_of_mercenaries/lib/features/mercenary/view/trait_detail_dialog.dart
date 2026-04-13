@@ -6,6 +6,7 @@ import 'package:band_of_mercenaries/core/models/trait_combo_evolution.dart';
 import 'package:band_of_mercenaries/core/models/trait_conflict.dart';
 import 'package:band_of_mercenaries/core/models/trait_synergy.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/trait_deletion_service.dart';
 
 class TraitDetailDialog extends StatelessWidget {
   final TraitData trait;
@@ -15,6 +16,10 @@ class TraitDetailDialog extends StatelessWidget {
   final List<TraitComboEvolution> comboEvolutions;
   final List<TraitConflict> conflicts;
   final List<TraitSynergy> synergies;
+  final VoidCallback? onDelete;
+  final int infirmaryLevel;
+  final int currentGold;
+  final bool isDispatched;
 
   const TraitDetailDialog({
     super.key,
@@ -25,6 +30,10 @@ class TraitDetailDialog extends StatelessWidget {
     required this.comboEvolutions,
     required this.conflicts,
     required this.synergies,
+    this.onDelete,
+    required this.infirmaryLevel,
+    required this.currentGold,
+    required this.isDispatched,
   });
 
   String _typeLabel(String type) {
@@ -118,12 +127,116 @@ class TraitDetailDialog extends StatelessWidget {
                       const SizedBox(height: 12),
                       _buildConflictSection(myConflicts),
                     ],
+                    _buildDeleteSection(context),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDeleteSection(BuildContext context) {
+    if (trait.type == 'innate') return const SizedBox.shrink();
+
+    final result = TraitDeletionService.canDelete(
+      trait: trait,
+      mercenary: mercenary,
+      infirmaryLevel: infirmaryLevel,
+      currentGold: currentGold,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        children: [
+          const Divider(color: AppTheme.borderLight),
+          const SizedBox(height: 8),
+          if (result.canDelete)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC62828),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => _showDeleteConfirmDialog(context, result.cost),
+                child: Text('삭제 — ${result.cost}G'),
+              ),
+            )
+          else
+            Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[800],
+                      foregroundColor: Colors.grey[500],
+                    ),
+                    onPressed: null,
+                    child: Text('삭제 — ${result.cost}G'),
+                  ),
+                ),
+                if (result.reason != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      result.reason!,
+                      style: const TextStyle(fontSize: 11, color: AppTheme.textHint),
+                    ),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmDialog(BuildContext context, int cost) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        title: const Text('트레잇 삭제'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(trait.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+            if (trait.effectText.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(trait.effectText, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+            ],
+            const SizedBox(height: 12),
+            Text('비용: ${cost}G', style: const TextStyle(color: Color(0xFFC62828))),
+            const SizedBox(height: 8),
+            const Text(
+              '삭제된 트레잇은 다시 획득할 수 없습니다.',
+              style: TextStyle(fontSize: 12, color: AppTheme.textHint),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+              onDelete?.call();
+            },
+            child: const Text('삭제'),
+          ),
+        ],
       ),
     );
   }

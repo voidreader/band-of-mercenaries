@@ -31,6 +31,8 @@ mixin _$TravelEvent {
   @JsonKey(name: 'max_tier')
   int get maxTier => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
+  @JsonKey(name: 'target_category')
+  String? get targetCategory => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -52,7 +54,8 @@ abstract class $TravelEventCopyWith<$Res> {
       double magnitude,
       @JsonKey(name: 'min_tier') int minTier,
       @JsonKey(name: 'max_tier') int maxTier,
-      String description});
+      String description,
+      @JsonKey(name: 'target_category') String? targetCategory});
 }
 
 /// @nodoc
@@ -76,6 +79,7 @@ class _$TravelEventCopyWithImpl<$Res, $Val extends TravelEvent>
     Object? minTier = null,
     Object? maxTier = null,
     Object? description = null,
+    Object? targetCategory = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -110,6 +114,10 @@ class _$TravelEventCopyWithImpl<$Res, $Val extends TravelEvent>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
+      targetCategory: freezed == targetCategory
+          ? _value.targetCategory
+          : targetCategory // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -130,7 +138,8 @@ abstract class _$$TravelEventImplCopyWith<$Res>
       double magnitude,
       @JsonKey(name: 'min_tier') int minTier,
       @JsonKey(name: 'max_tier') int maxTier,
-      String description});
+      String description,
+      @JsonKey(name: 'target_category') String? targetCategory});
 }
 
 /// @nodoc
@@ -152,6 +161,7 @@ class __$$TravelEventImplCopyWithImpl<$Res>
     Object? minTier = null,
     Object? maxTier = null,
     Object? description = null,
+    Object? targetCategory = freezed,
   }) {
     return _then(_$TravelEventImpl(
       id: null == id
@@ -186,6 +196,10 @@ class __$$TravelEventImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String,
+      targetCategory: freezed == targetCategory
+          ? _value.targetCategory
+          : targetCategory // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -201,7 +215,8 @@ class _$TravelEventImpl implements _TravelEvent {
       required this.magnitude,
       @JsonKey(name: 'min_tier') required this.minTier,
       @JsonKey(name: 'max_tier') required this.maxTier,
-      required this.description});
+      required this.description,
+      @JsonKey(name: 'target_category') this.targetCategory});
 
   factory _$TravelEventImpl.fromJson(Map<String, dynamic> json) =>
       _$$TravelEventImplFromJson(json);
@@ -225,10 +240,13 @@ class _$TravelEventImpl implements _TravelEvent {
   final int maxTier;
   @override
   final String description;
+  @override
+  @JsonKey(name: 'target_category')
+  final String? targetCategory;
 
   @override
   String toString() {
-    return 'TravelEvent(id: $id, name: $name, type: $type, effectType: $effectType, magnitude: $magnitude, minTier: $minTier, maxTier: $maxTier, description: $description)';
+    return 'TravelEvent(id: $id, name: $name, type: $type, effectType: $effectType, magnitude: $magnitude, minTier: $minTier, maxTier: $maxTier, description: $description, targetCategory: $targetCategory)';
   }
 
   @override
@@ -246,13 +264,15 @@ class _$TravelEventImpl implements _TravelEvent {
             (identical(other.minTier, minTier) || other.minTier == minTier) &&
             (identical(other.maxTier, maxTier) || other.maxTier == maxTier) &&
             (identical(other.description, description) ||
-                other.description == description));
+                other.description == description) &&
+            (identical(other.targetCategory, targetCategory) ||
+                other.targetCategory == targetCategory));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, type, effectType,
-      magnitude, minTier, maxTier, description);
+      magnitude, minTier, maxTier, description, targetCategory);
 
   @JsonKey(ignore: true)
   @override
@@ -270,14 +290,16 @@ class _$TravelEventImpl implements _TravelEvent {
 
 abstract class _TravelEvent implements TravelEvent {
   const factory _TravelEvent(
-      {required final String id,
-      required final String name,
-      required final String type,
-      @JsonKey(name: 'effect_type') required final String effectType,
-      required final double magnitude,
-      @JsonKey(name: 'min_tier') required final int minTier,
-      @JsonKey(name: 'max_tier') required final int maxTier,
-      required final String description}) = _$TravelEventImpl;
+          {required final String id,
+          required final String name,
+          required final String type,
+          @JsonKey(name: 'effect_type') required final String effectType,
+          required final double magnitude,
+          @JsonKey(name: 'min_tier') required final int minTier,
+          @JsonKey(name: 'max_tier') required final int maxTier,
+          required final String description,
+          @JsonKey(name: 'target_category') final String? targetCategory}) =
+      _$TravelEventImpl;
 
   factory _TravelEvent.fromJson(Map<String, dynamic> json) =
       _$TravelEventImpl.fromJson;
@@ -301,6 +323,9 @@ abstract class _TravelEvent implements TravelEvent {
   int get maxTier;
   @override
   String get description;
+  @override
+  @JsonKey(name: 'target_category')
+  String? get targetCategory;
   @override
   @JsonKey(ignore: true)
   _$$TravelEventImplCopyWith<_$TravelEventImpl> get copyWith =>

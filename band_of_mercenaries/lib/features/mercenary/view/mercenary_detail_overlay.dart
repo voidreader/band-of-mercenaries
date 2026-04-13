@@ -5,12 +5,17 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/mercenary_detail_provider.dart';
 import 'package:band_of_mercenaries/core/domain/experience_service.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/trait_deletion_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_slot_grid.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/behavior_stats_section.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_history_section.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/trait_detail_dialog.dart';
 import 'package:band_of_mercenaries/shared/widgets/status_badge.dart';
 
 class MercenaryDetailOverlay extends ConsumerWidget {
@@ -71,6 +76,38 @@ class MercenaryDetailOverlay extends ConsumerWidget {
             ...comboCandidates.expand((c) => [c.trait1Key, c.trait2Key]),
           };
 
+          void onTraitTap(TraitData trait) {
+            final userData = ref.read(userDataProvider);
+            final infirmaryLevel = userData?.facilities['infirmary'] ?? 0;
+            final currentGold = userData?.gold ?? 0;
+
+            showDialog<void>(
+              context: context,
+              builder: (_) => TraitDetailDialog(
+                trait: trait,
+                mercenary: merc,
+                allTraits: staticData.traits,
+                transitions: staticData.traitTransitions,
+                comboEvolutions: staticData.traitComboEvolutions,
+                conflicts: staticData.traitConflicts,
+                synergies: staticData.traitSynergies,
+                infirmaryLevel: infirmaryLevel,
+                currentGold: currentGold,
+                isDispatched: merc.isDispatched,
+                onDelete: () {
+                  final cost = TraitDeletionService.deletionCost(trait);
+                  ref.read(userDataProvider.notifier).spendGold(cost);
+                  ref.read(mercenaryRepositoryProvider).deleteTrait(merc.id, trait.key);
+                  ref.read(activityLogProvider.notifier).addLog(
+                    '${merc.name}의 [${trait.name}] 트레잇이 제거되었다',
+                    ActivityLogType.traitDeleted,
+                  );
+                  ref.read(mercenaryListProvider.notifier).refresh();
+                },
+              ),
+            );
+          }
+
           return Column(
             children: [
               _buildHeaderBar(context, ref),
@@ -86,13 +123,14 @@ class MercenaryDetailOverlay extends ConsumerWidget {
                         innateTraits: innateTraits,
                         acquiredTraits: acquiredTraits,
                         evolvableTraitKeys: evolvableKeys,
-                        onTraitTap: (trait) => _onTraitTap(context, trait),
+                        onTraitTap: onTraitTap,
                       ),
                       const SizedBox(height: 16),
                       BehaviorStatsSection(stats: merc.stats),
                       const SizedBox(height: 16),
                       TraitHistorySection(
                         traitHistory: merc.traitHistory,
+                        deletedTraitIds: merc.deletedTraitIds,
                         allTraits: allTraits,
                         transitions: staticData.traitTransitions,
                         comboEvolutions: staticData.traitComboEvolutions,
@@ -343,12 +381,4 @@ class MercenaryDetailOverlay extends ConsumerWidget {
     );
   }
 
-  void _onTraitTap(BuildContext context, TraitData trait) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(trait.name),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
 }

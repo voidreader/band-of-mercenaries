@@ -33,7 +33,7 @@ class TraitAcquisitionService {
       if (traitHistory.contains(trait.key)) continue;
       if (currentCategories.contains(trait.categoryKey)) continue;
       if (acquiredCount >= GameConstants.maxAcquiredTraits) continue;
-      if (_hasConflict(trait.key, currentTraitIds, conflicts)) continue;
+      if (hasConflict(trait.key, currentTraitIds, conflicts)) continue;
       if (trait.acquisitionCondition == null || trait.acquisitionCondition!.isEmpty) continue;
       if (_meetsCondition(stats, trait.acquisitionCondition!, trait.key, currentTraitIds, synergies, allTraits)) {
         candidates.add(trait.key);
@@ -42,7 +42,7 @@ class TraitAcquisitionService {
     return candidates;
   }
 
-  static bool _hasConflict(
+  static bool hasConflict(
     String candidateKey,
     List<String> currentTraitIds,
     List<TraitConflict> conflicts,

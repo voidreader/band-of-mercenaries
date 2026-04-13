@@ -126,7 +126,7 @@ band_of_mercenaries/lib/
 ### 영속성
 
 **Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings` 5개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
-- `mercenaries` 박스: Mercenary 모델 — HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸 트레잇 기록 → 재획득 방지). `allTraitIds` getter로 구 traitId 호환
+- `mercenaries` 박스: Mercenary 모델 — HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸/삭제 트레잇 기록 → 재획득 방지), HiveField(17) `deletedTraitIds` (List<String>, 삭제된 트레잇 기록 → 히스토리 UI에서 (삭제) 구분 표시). `allTraitIds` getter로 구 traitId 호환
 - `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
 
 ### 코드 생성
@@ -135,16 +135,16 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 
 ## 게임 핵심 시스템 로직
 
-- **이동**: 거리 = |리전 차이| + |섹터 차이|, 소요시간 = 거리 × 30초. 이동 중 TravelEvent 랜덤 발생 (골드, 부상, 지연, 명성 등)
+- **이동**: 거리 = |리전 차이| + |섹터 차이|, 소요시간 = 거리 × 30초. 이동 중 TravelEvent 랜덤 발생 (골드, 부상, 지연, 명성, 선천 트레잇 부여 등). `trait_innate` 이벤트는 빈 선천 슬롯 보유 용병에게 선천 트레잇 부여 (조건 미충족 시 최대 3회 재롤링)
 - **성공률**: 50% + (아군전투력/적전투력 - 1) × 50% + 특성보너스 + 퀘스트보정 - 거리패널티 + 랜덤편차, 범위 5%~95%
 - **결과**: 대성공(보상 2배) / 성공 / 실패(부상) / 대실패(사망률 증가)
 - **경제**: 파견비용(난이도별 min~max, 소요시간 비례 보간) + 인건비(용병 티어별) 선차감, 순수익 = 보상 - 인건비 - 파견비용
 - **경험치/레벨**: 퀘스트 완료 시 XP 획득 (난이도 × 기본XP × 결과배수 + 시설보너스), 최대 레벨 5
 - **명성/랭크**: 퀘스트 완료 시 명성 획득, 등급 F~A, 랭크에 따라 상위 티어 리전 잠금 해제
-- **시설**: 훈련소(XP보너스), 의무실(회복감소), 주둔지(용병상한), 정보망(퀘스트수). 골드로 업그레이드
+- **시설**: 훈련소(XP보너스), 의무실(회복감소 + 트레잇 삭제 해금: Lv2 acquired, Lv4 evolved), 주둔지(용병상한), 정보망(퀘스트수). 골드로 업그레이드
 - **용병 상태**: 정상 → 피곤함(능력치 80%, 5분) → 부상(난이도×10분) → 사망(영구 제거). 레벨업 시 능력치 증가
 - **모집**: 티어별 확률 가중 (Tier1: 45%, Tier2: 30%, Tier3: 15%, Tier4: 8%, Tier5: 2%). 선천 트레잇 1~3개 랜덤 부여 (Physical/Background/Talent 각 60% 확률, 최소 1개). 주둔지 용량 제한
-- **트레잇 시스템**: 선천(최대 3, 영구) + 후천(최대 4, 획득/진화). `MercenaryStatService`로 23개 행동 지표 추적 → 퀘스트 완료 시 `TraitAcquisitionService`가 조건 체크 → 자동 획득. `TraitEffectService`로 effect_json 기반 성공률/데미지 보정. 충돌 관계 검증 포함. `TraitEvolutionService`로 단일 진화(acquired → evolved, conditionJson 충족 시 교체) + 조합 진화(2개 acquired → evolved, 원본 소멸 + 슬롯 해방). 소멸 트레잇은 `traitHistory`에 기록되어 재획득 방지. 퀘스트 완료 시 획득은 자동 적용 후 알림 팝업, 진화는 `pendingTraitEventsProvider`를 통해 UI에서 카드 비교형 선택 팝업으로 플레이어가 경로 결정 (보류 가능)
+- **트레잇 시스템**: 선천(최대 3, 영구) + 후천(최대 4, 획득/진화/삭제). `MercenaryStatService`로 23개 행동 지표 추적 → 퀘스트 완료 시 `TraitAcquisitionService`가 조건 체크 → 자동 획득. `TraitEffectService`로 effect_json 기반 성공률/데미지 보정. 충돌 관계 검증 포함(`hasConflict` public static). `TraitEvolutionService`로 단일 진화(acquired → evolved, conditionJson 충족 시 교체) + 조합 진화(2개 acquired → evolved, 원본 소멸 + 슬롯 해방). `TraitDeletionService`로 후천 트레잇 삭제(acquired 200G/evolved 500G, 의무실 레벨 해금). 소멸/삭제 트레잇은 `traitHistory`에 기록되어 재획득 방지. 퀘스트 완료 시 획득은 자동 적용 후 알림 팝업, 진화는 `pendingTraitEventsProvider`를 통해 UI에서 카드 비교형 선택 팝업으로 플레이어가 경로 결정 (보류 가능). 여행 이벤트로 빈 선천 슬롯에 트레잇 부여 가능 (`lastTravelEventTraitResultProvider`로 결과 전달)
 - **방출**: 파견 중이 아닌 용병을 퇴직금(인건비×레벨) 지급 후 영구 방출. 재모집 불가
 - **퀘스트 갱신**: 대기 중 퀘스트는 1시간(게임 시간)마다 자동 교체. 5개 미만이면 채우기 가능
 - **방치형 보상**: 앱 미접속 시간 기준 분당 1G, 최대 480G(8시간). 실제 시간 기준

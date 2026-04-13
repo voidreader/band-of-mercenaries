@@ -105,6 +105,14 @@ class MercenaryRepository {
     await merc.save();
   }
 
+  Future<void> deleteTrait(String mercId, String traitKey) async {
+    final merc = _box.values.firstWhere((m) => m.id == mercId);
+    merc.traitIds = merc.traitIds.where((k) => k != traitKey).toList();
+    merc.traitHistory = [...merc.traitHistory, traitKey];
+    merc.deletedTraitIds = [...merc.deletedTraitIds, traitKey];
+    await merc.save();
+  }
+
   Future<void> addXpAndCheckLevel(String mercId, int xpGain) async {
     final merc = _box.values.firstWhere((m) => m.id == mercId);
     merc.xp += xpGain;

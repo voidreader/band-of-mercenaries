@@ -6,6 +6,7 @@ import 'package:band_of_mercenaries/core/models/trait_combo_evolution.dart';
 
 class TraitHistorySection extends StatelessWidget {
   final List<String> traitHistory;
+  final List<String> deletedTraitIds;
   final List<TraitData> allTraits;
   final List<TraitTransition> transitions;
   final List<TraitComboEvolution> comboEvolutions;
@@ -16,6 +17,7 @@ class TraitHistorySection extends StatelessWidget {
     required this.allTraits,
     required this.transitions,
     required this.comboEvolutions,
+    required this.deletedTraitIds,
   });
 
   String _traitName(String key) {
@@ -60,6 +62,30 @@ class TraitHistorySection extends StatelessWidget {
   }
 
   Widget _buildHistoryEntry(String key) {
+    if (deletedTraitIds.contains(key)) {
+      final originName = _traitName(key);
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          children: [
+            Text(
+              originName,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppTheme.textHint,
+                decoration: TextDecoration.lineThrough,
+                decorationColor: AppTheme.textHint,
+              ),
+            ),
+            const Text(
+              ' (삭제)',
+              style: TextStyle(fontSize: 11, color: Color(0xFFC62828)),
+            ),
+          ],
+        ),
+      );
+    }
+
     // Check single evolution
     TraitTransition? transition;
     try {

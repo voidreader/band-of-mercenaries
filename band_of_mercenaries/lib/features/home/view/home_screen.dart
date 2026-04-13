@@ -79,11 +79,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final event = ref.read(lastTravelEventProvider);
         if (event != null && mounted) {
+          Widget dialogContent;
+          if (event.effectType == 'trait_innate') {
+            final traitResult = ref.read(lastTravelEventTraitResultProvider);
+            if (traitResult != null) {
+              final staticData = ref.read(staticDataProvider).value;
+              final mercs = ref.read(mercenaryListProvider);
+              final targetMerc = mercs.where((m) => m.id == traitResult.mercenaryId).firstOrNull;
+              final traitData = staticData?.traits.where((t) => t.key == traitResult.traitKey).firstOrNull;
+              dialogContent = Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(event.description),
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  if (targetMerc != null)
+                    Text(
+                      '${targetMerc.name}가 새로운 선천 트레잇을 획득했습니다!',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  if (traitData != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            traitData.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                          ),
+                          Text(
+                            traitData.categoryKey,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          if (traitData.description.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              traitData.description,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            } else {
+              dialogContent = Text(event.description);
+            }
+          } else {
+            dialogContent = Text(event.description);
+          }
           showDialog<void>(
             context: context,
             builder: (ctx) => AlertDialog(
               title: const Text('여행 중 사건 발생!'),
-              content: Text(event.description),
+              content: dialogContent,
               actions: [
                 ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
@@ -93,6 +152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           );
           ref.read(lastTravelEventProvider.notifier).state = null;
+          ref.read(lastTravelEventTraitResultProvider.notifier).state = null;
         }
       });
     }
@@ -370,6 +430,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case ActivityLogType.levelUp: return '⬆';
       case ActivityLogType.traitAcquired: return '✦';
       case ActivityLogType.traitEvolved: return '⭐';
+      case ActivityLogType.traitDeleted: return '🗑';
     }
   }
 

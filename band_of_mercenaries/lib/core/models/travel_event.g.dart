@@ -16,6 +16,7 @@ _$TravelEventImpl _$$TravelEventImplFromJson(Map<String, dynamic> json) =>
       minTier: (json['min_tier'] as num).toInt(),
       maxTier: (json['max_tier'] as num).toInt(),
       description: json['description'] as String,
+      targetCategory: json['target_category'] as String?,
     );
 
 Map<String, dynamic> _$$TravelEventImplToJson(_$TravelEventImpl instance) =>
@@ -28,4 +29,5 @@ Map<String, dynamic> _$$TravelEventImplToJson(_$TravelEventImpl instance) =>
       'min_tier': instance.minTier,
       'max_tier': instance.maxTier,
       'description': instance.description,
+      'target_category': instance.targetCategory,
     };
