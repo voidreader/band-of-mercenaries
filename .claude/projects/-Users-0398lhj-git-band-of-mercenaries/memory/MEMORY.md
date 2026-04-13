@@ -1,0 +1,1 @@
+- [World Expansion System](project_world_expansion.md) — 6-Phase 세계 확장 로드맵 확정 (2026-04-13), 지역조사/아이템/엘리트/연계퀘스트/변형/세력
