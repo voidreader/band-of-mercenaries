@@ -11,6 +11,7 @@ import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.da
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_card.dart';
+import 'package:band_of_mercenaries/core/providers/mercenary_detail_provider.dart';
 
 class RecruitScreen extends ConsumerWidget {
   const RecruitScreen({super.key});
@@ -162,7 +163,12 @@ class RecruitScreen extends ConsumerWidget {
                     .toList();
                 return Stack(
                   children: [
-                    MercenaryCard(mercenary: merc, job: job, traits: mercTraits),
+                    MercenaryCard(
+                      mercenary: merc,
+                      job: job,
+                      traits: mercTraits,
+                      onTap: () => ref.read(selectedMercenaryIdProvider.notifier).state = merc.id,
+                    ),
                     if (!merc.isDispatched)
                       Positioned(
                         right: 4,

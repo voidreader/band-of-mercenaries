@@ -10,12 +10,14 @@ class MercenaryCard extends StatelessWidget {
   final Mercenary mercenary;
   final Job job;
   final List<TraitData> traits;
+  final VoidCallback? onTap;
 
   const MercenaryCard({
     super.key,
     required this.mercenary,
     required this.job,
     this.traits = const [],
+    this.onTap,
   });
 
   double _xpProgress(int level, int xp) {
@@ -44,7 +46,9 @@ class MercenaryCard extends StatelessWidget {
       }
     }
 
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -143,6 +147,7 @@ class MercenaryCard extends StatelessWidget {
               }).toList(),
             ),
         ],
+      ),
       ),
     );
   }
