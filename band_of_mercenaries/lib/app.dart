@@ -14,6 +14,8 @@ import 'package:band_of_mercenaries/features/movement/view/movement_screen.dart'
 import 'package:band_of_mercenaries/features/quest/view/dispatch_screen.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/recruit_screen.dart';
 import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart';
+import 'package:band_of_mercenaries/core/providers/mercenary_detail_provider.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/mercenary_detail_overlay.dart';
 
 final currentTabProvider = StateProvider<int>((ref) => 2); // Home is default
 
@@ -114,13 +116,24 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     final currentTab = ref.watch(currentTabProvider);
+    final selectedMercId = ref.watch(selectedMercenaryIdProvider);
 
     return Scaffold(
-      body: SafeArea(child: _screens[currentTab]),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: currentTab,
-        onTap: (index) => ref.read(currentTabProvider.notifier).state = index,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            _screens[currentTab],
+            if (selectedMercId != null)
+              MercenaryDetailOverlay(mercenaryId: selectedMercId),
+          ],
+        ),
       ),
+      bottomNavigationBar: selectedMercId == null
+          ? BottomNavBar(
+              currentIndex: currentTab,
+              onTap: (index) => ref.read(currentTabProvider.notifier).state = index,
+            )
+          : null,
     );
   }
 }
