@@ -296,13 +296,13 @@ class MercenaryDetailOverlay extends ConsumerWidget {
   Widget _buildStatRow(Mercenary merc) {
     return Row(
       children: [
-        _buildStatChip('ATK', '${merc.effectiveAtk}', const Color(0xFFC62828)),
+        _buildStatChip('STR', '${merc.effectiveStr}', const Color(0xFFC62828)),
         const SizedBox(width: 8),
-        _buildStatChip('DEF', '${merc.effectiveDef}', const Color(0xFF1565C0)),
+        _buildStatChip('INT', '${merc.effectiveIntelligence}', const Color(0xFF1565C0)),
         const SizedBox(width: 8),
-        _buildStatChip('HP', '${merc.effectiveHp}', const Color(0xFF2E7D32)),
+        _buildStatChip('VIT', '${merc.effectiveVit}', const Color(0xFF2E7D32)),
         const SizedBox(width: 8),
-        _buildStatChip('SPD', merc.speed.toStringAsFixed(1), const Color(0xFF6A1B9A)),
+        _buildStatChip('AGI', merc.effectiveAgi.toString(), const Color(0xFF6A1B9A)),
       ],
     );
   }

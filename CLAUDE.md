@@ -129,7 +129,7 @@ band_of_mercenaries/lib/
 ### 영속성
 
 **Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings` 5개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
-- `mercenaries` 박스: Mercenary 모델 — HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸/삭제 트레잇 기록 → 재획득 방지), HiveField(17) `deletedTraitIds` (List<String>, 삭제된 트레잇 기록 → 히스토리 UI에서 (삭제) 구분 표시). `allTraitIds` getter로 구 traitId 호환
+- `mercenaries` 박스: Mercenary 모델 — HiveField(4) `str` (int), HiveField(5) `intelligence` (int), HiveField(6) `vit` (int), HiveField(7) `agi` (int, 기존 double speed에서 변환). HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸/삭제 트레잇 기록 → 재획득 방지), HiveField(17) `deletedTraitIds` (List<String>, 삭제된 트레잇 기록 → 히스토리 UI에서 (삭제) 구분 표시). `allTraitIds` getter로 구 traitId 호환. 앱 첫 실행 시 `stat_migration_v2` 플래그(settings 박스)로 일회성 데이터 초기화 수행
 - `user` 박스 건설 큐: HiveField(12) `constructionFacilityId` (String?, 건설 중 시설 ID), HiveField(13) `constructionStartTime` (DateTime?), HiveField(14) `constructionEndTime` (DateTime?)
 - `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
 
@@ -140,7 +140,9 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 ## 게임 핵심 시스템 로직
 
 - **이동**: 거리 = |리전 차이| + |섹터 차이|, 소요시간 = 거리 × 30초. 이동 중 TravelEvent 랜덤 발생 (골드, 부상, 지연, 명성, 선천 트레잇 부여 등). `trait_innate` 이벤트는 빈 선천 슬롯 보유 용병에게 선천 트레잇 부여 (조건 미충족 시 최대 3회 재롤링)
-- **성공률**: 50% + (아군전투력/적전투력 - 1) × 50% + 특성보너스 + 퀘스트보정 - 거리패널티 + 랜덤편차, 범위 5%~95%
+- **용병 스탯**: STR(기본 공격력) / INTELLIGENCE(스킬 공격력, 추후 스킬 시스템 연동) / VIT(체력+방어력 통합) / AGI(이동속도+회피, 기존 speed 대체). `effectiveStr/Intelligence/Vit/Agi` getter로 레벨 보너스 + 피로 디버프 반영
+- **partyPower**: `Σ(str×w_str + intelligence×w_int + vit×w_vit + agi×w_agi)`. 퀘스트 유형별 가중치 (`QuestCalculator._statWeights`): raid(STR 0.70), hunt(STR 0.50/AGI 0.30), escort(VIT 0.60), explore(INT 0.45/AGI 0.30). 파견 시간은 파티 평균 AGI 기반 보정(`partyAverageAgi / 50.0`)
+- **성공률**: 50% + (partyPower/enemyPower - 1) × 50% + 특성보너스 + 퀘스트보정 - 거리패널티 + 랜덤편차, 범위 5%~95%
 - **결과**: 대성공(보상 2배) / 성공 / 실패(부상) / 대실패(사망률 증가)
 - **경제**: 파견비용(난이도별 min~max, 소요시간 비례 보간) + 인건비(용병 티어별) 선차감, 순수익 = 보상 - 인건비 - 파견비용
 - **경험치/레벨**: 퀘스트 완료 시 XP 획득 (난이도 × 기본XP × 결과배수 + 시설보너스), 최대 레벨 5

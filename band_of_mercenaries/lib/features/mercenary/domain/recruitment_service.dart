@@ -100,16 +100,15 @@ class RecruitmentService {
     final name = names[random.nextInt(names.length)];
     final innateTraitKeys = selectInnateTraits(traits: traits, categories: categories, random: random);
 
-    final int atk = job.baseAtk;
-    final int def = job.baseDef;
-    final int hp = job.baseHp;
-
     return Mercenary(
       id: _uuid.v4(),
       name: name.korean,
       jobId: job.id,
       traitId: innateTraitKeys.first,
-      atk: atk, def: def, hp: hp, speed: job.speed,
+      str: job.baseStr,
+      intelligence: job.baseIntelligence,
+      vit: job.baseVit,
+      agi: job.baseAgi,
       traitIds: innateTraitKeys,
     );
   }

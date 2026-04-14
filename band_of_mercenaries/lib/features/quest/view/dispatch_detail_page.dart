@@ -47,7 +47,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
         ).toList();
 
         final selectedMercs = mercs.where((m) => _selectedMercIds.contains(m.id)).toList();
-        final partyPower = selectedMercs.fold<int>(0, (sum, m) => sum + m.effectiveAtk);
+        final partyPower = QuestCalculator.calculatePartyPower(selectedMercs, quest.questTypeId);
 
         final grossReward = QuestCalculator.calculateReward(
           baseReward: questType.baseReward,
@@ -158,7 +158,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                                     style: const TextStyle(fontSize: 14),
                                   ),
                                   subtitle: Text(
-                                    '전투력: ${merc.effectiveAtk}',
+                                    '전투력: ${merc.effectiveStr}',
                                     style: const TextStyle(fontSize: 12, color: AppTheme.textHint),
                                   ),
                                   trailing: merc.status == MercenaryStatus.injured

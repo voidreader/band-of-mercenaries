@@ -69,7 +69,7 @@ class QuestCompletionService {
     required double speedMultiplier,
     required Random random,
   }) {
-    final partyPower = mercs.fold<int>(0, (sum, m) => sum + m.effectiveAtk);
+    final partyPower = QuestCalculator.calculatePartyPower(mercs, quest.questTypeId);
     final difficulty = staticData.difficulties.firstWhere(
       (d) => d.level == quest.difficulty.clamp(1, 5),
       orElse: () => staticData.difficulties.first,

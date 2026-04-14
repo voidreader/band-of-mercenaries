@@ -9,10 +9,10 @@ class Job with _$Job {
     required String id,
     required int tier,
     required String name,
-    @JsonKey(name: 'base_atk') required int baseAtk,
-    @JsonKey(name: 'base_def') required int baseDef,
-    @JsonKey(name: 'base_hp') required int baseHp,
-    required double speed,
+    @JsonKey(name: 'base_str') required int baseStr,
+    @JsonKey(name: 'base_intelligence') required int baseIntelligence,
+    @JsonKey(name: 'base_vit') required int baseVit,
+    @JsonKey(name: 'base_agi') required int baseAgi,
   }) = _Job;
 
   factory Job.fromJson(Map<String, dynamic> json) => _$JobFromJson(json);

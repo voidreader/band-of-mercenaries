@@ -390,7 +390,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final dispatchedCount = mercs.where((m) => m.isDispatched).length;
     final injuredCount = mercs.where((m) => m.status == MercenaryStatus.injured).length;
     final deadCount = mercs.where((m) => m.status == MercenaryStatus.dead).length;
-    final totalPower = mercs.where((m) => m.isAvailable).fold<int>(0, (sum, m) => sum + m.effectiveAtk);
+    final totalPower = mercs.where((m) => m.isAvailable).fold<int>(0, (sum, m) => sum + m.effectiveStr);
 
     final barracksData = data.facilities.where((f) => f.id == 'barracks').firstOrNull;
     final barracksLevel = userData.facilities['barracks'] ?? 0;

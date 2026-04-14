@@ -21,10 +21,10 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       name: fields[1] as String,
       jobId: fields[2] as String,
       traitId: fields[3] as String,
-      atk: fields[4] as int,
-      def: fields[5] as int,
-      hp: fields[6] as int,
-      speed: fields[7] as double,
+      str: fields[4] as int,
+      intelligence: fields[5] as int,
+      vit: fields[6] as int,
+      agi: fields[7] as int,
       status: fields[8] as MercenaryStatus,
       tiredEndTime: fields[9] as DateTime?,
       injuryEndTime: fields[10] as DateTime?,
@@ -51,13 +51,13 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       ..writeByte(3)
       ..write(obj.traitId)
       ..writeByte(4)
-      ..write(obj.atk)
+      ..write(obj.str)
       ..writeByte(5)
-      ..write(obj.def)
+      ..write(obj.intelligence)
       ..writeByte(6)
-      ..write(obj.hp)
+      ..write(obj.vit)
       ..writeByte(7)
-      ..write(obj.speed)
+      ..write(obj.agi)
       ..writeByte(8)
       ..write(obj.status)
       ..writeByte(9)

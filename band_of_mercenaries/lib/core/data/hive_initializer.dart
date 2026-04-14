@@ -24,11 +24,18 @@ class HiveInitializer {
     Hive.registerAdapter(ActivityLogTypeAdapter());
     Hive.registerAdapter(ActivityLogAdapter());
 
+    await Hive.openBox(settingsBoxName);
+    final settingsBox = Hive.box(settingsBoxName);
+    if (settingsBox.get('stat_migration_v2') == null) {
+      await Hive.deleteBoxFromDisk(mercenaryBoxName);
+      await Hive.deleteBoxFromDisk(questBoxName);
+      await settingsBox.put('stat_migration_v2', true);
+    }
+
     await Hive.openBox<UserData>(userBoxName);
     await Hive.openBox<Mercenary>(mercenaryBoxName);
     await Hive.openBox<ActiveQuest>(questBoxName);
     await Hive.openBox<ActivityLog>(ActivityLogRepository.boxName);
-    await Hive.openBox(settingsBoxName);
     await Hive.openBox<String>(staticDataCacheBoxName);
   }
 }

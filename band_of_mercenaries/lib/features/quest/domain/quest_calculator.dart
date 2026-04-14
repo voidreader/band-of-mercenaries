@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_effect_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 
@@ -10,6 +11,23 @@ class QuestCalculator {
   static const Map<String, double> _questModifiers = {
     'explore': 5.0, 'escort': 3.0, 'raid': 0.0, 'hunt': -5.0,
   };
+
+  static const Map<String, Map<String, double>> _statWeights = {
+    'raid':    {'str': 0.70, 'intelligence': 0.10, 'vit': 0.10, 'agi': 0.10},
+    'hunt':    {'str': 0.50, 'intelligence': 0.10, 'vit': 0.10, 'agi': 0.30},
+    'escort':  {'str': 0.20, 'intelligence': 0.10, 'vit': 0.60, 'agi': 0.10},
+    'explore': {'str': 0.10, 'intelligence': 0.45, 'vit': 0.15, 'agi': 0.30},
+  };
+
+  static int calculatePartyPower(List<Mercenary> mercs, String questTypeId) {
+    if (mercs.isEmpty) return 0;
+    final w = _statWeights[questTypeId] ?? _statWeights['raid']!;
+    return mercs.fold<int>(0, (sum, m) =>
+      sum + (m.effectiveStr * w['str']! +
+             m.effectiveIntelligence * w['intelligence']! +
+             m.effectiveVit * w['vit']! +
+             m.effectiveAgi * w['agi']!).round());
+  }
 
   static double calculateSuccessRate({
     required int partyPower,
@@ -89,9 +107,15 @@ class QuestCalculator {
     return DamageResult.survived;
   }
 
-  static Duration calculateDispatchDuration({required int baseDuration, required int difficulty, required double speedMultiplier}) {
+  static Duration calculateDispatchDuration({
+    required int baseDuration,
+    required int difficulty,
+    required double speedMultiplier,
+    int partyAverageAgi = 50,
+  }) {
     final multiplier = 1.0 + (difficulty - 1) * 0.2;
-    final seconds = (baseDuration * multiplier / speedMultiplier).round();
+    final agiMultiplier = partyAverageAgi.clamp(1, 999) / 50.0;
+    final seconds = (baseDuration * multiplier / (speedMultiplier * agiMultiplier)).round();
     return Duration(seconds: seconds);
   }
 

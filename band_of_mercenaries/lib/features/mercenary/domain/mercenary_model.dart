@@ -30,16 +30,16 @@ class Mercenary extends HiveObject {
   final String traitId;
 
   @HiveField(4)
-  int atk;
+  int str;
 
   @HiveField(5)
-  int def;
+  int intelligence;
 
   @HiveField(6)
-  int hp;
+  int vit;
 
   @HiveField(7)
-  double speed;
+  int agi;
 
   @HiveField(8)
   MercenaryStatus status;
@@ -76,10 +76,10 @@ class Mercenary extends HiveObject {
     required this.name,
     required this.jobId,
     required this.traitId,
-    required this.atk,
-    required this.def,
-    required this.hp,
-    required this.speed,
+    required this.str,
+    required this.intelligence,
+    required this.vit,
+    required this.agi,
     this.status = MercenaryStatus.normal,
     this.tiredEndTime,
     this.injuryEndTime,
@@ -103,18 +103,23 @@ class Mercenary extends HiveObject {
 
   double get _levelBonus => (level - 1) * GameConstants.levelBonusPerLevel;
 
-  int get effectiveAtk {
-    final withLevel = (atk * (1.0 + _levelBonus)).round();
+  int get effectiveStr {
+    final withLevel = (str * (1.0 + _levelBonus)).round();
     return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 
-  int get effectiveDef {
-    final withLevel = (def * (1.0 + _levelBonus)).round();
+  int get effectiveIntelligence {
+    final withLevel = (intelligence * (1.0 + _levelBonus)).round();
     return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 
-  int get effectiveHp {
-    final withLevel = (hp * (1.0 + _levelBonus)).round();
+  int get effectiveVit {
+    final withLevel = (vit * (1.0 + _levelBonus)).round();
+    return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
+  }
+
+  int get effectiveAgi {
+    final withLevel = (agi * (1.0 + _levelBonus)).round();
     return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 

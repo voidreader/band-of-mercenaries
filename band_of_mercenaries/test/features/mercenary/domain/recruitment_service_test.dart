@@ -8,9 +8,9 @@ import 'package:band_of_mercenaries/core/models/person_name.dart';
 
 void main() {
   final jobs = [
-    const Job(id: 'farmer', tier: 1, name: '농부', baseAtk: 4, baseDef: 3, baseHp: 24, speed: 0.96),
-    const Job(id: 'militia', tier: 2, name: '민병대', baseAtk: 15, baseDef: 15, baseHp: 75, speed: 0.83),
-    const Job(id: 'knight', tier: 3, name: '기사', baseAtk: 20, baseDef: 21, baseHp: 97, speed: 0.81),
+    const Job(id: 'farmer', tier: 1, name: '농부', baseStr: 4, baseIntelligence: 3, baseVit: 24, baseAgi: 48),
+    const Job(id: 'militia', tier: 2, name: '민병대', baseStr: 15, baseIntelligence: 15, baseVit: 75, baseAgi: 42),
+    const Job(id: 'knight', tier: 3, name: '기사', baseStr: 20, baseIntelligence: 21, baseVit: 97, baseAgi: 41),
   ];
   final traits = [
     const TraitData(key: 'strong_build', name: '강인한 체격', categoryKey: 'Physical', type: 'innate'),

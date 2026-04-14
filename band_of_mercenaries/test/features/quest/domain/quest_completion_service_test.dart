@@ -31,7 +31,7 @@ StaticGameData _makeStaticData({
       ),
     ],
     jobs: [
-      const Job(id: 'warrior', tier: 1, name: '전사', baseAtk: 10, baseDef: 8, baseHp: 100, speed: 1.0),
+      const Job(id: 'warrior', tier: 1, name: '전사', baseStr: 10, baseIntelligence: 8, baseVit: 100, baseAgi: 50),
     ],
     traits: [],
     traitCategories: [],
@@ -73,16 +73,16 @@ ActiveQuest _makeQuest({int difficulty = 1, int region = 1}) {
   );
 }
 
-Mercenary _makeMerc({String id = 'm1', int atk = 20, String traitId = '', String jobId = 'warrior'}) {
+Mercenary _makeMerc({String id = 'm1', int str = 20, String traitId = '', String jobId = 'warrior'}) {
   return Mercenary(
     id: id,
     name: '용병1',
     jobId: jobId,
     traitId: traitId,
-    atk: atk,
-    def: 10,
-    hp: 100,
-    speed: 1.0,
+    str: str,
+    intelligence: 10,
+    vit: 100,
+    agi: 50,
   );
 }
 
@@ -105,7 +105,7 @@ void main() {
       // seed 100: successRate ~51, roll이 낮아서 success 보장을 위해 높은 파워 사용
       final staticData = _makeStaticData(enemyPower: 5);
       final quest = _makeQuest();
-      final mercs = [_makeMerc(atk: 50)];
+      final mercs = [_makeMerc(str: 50)];
 
       // 높은 파티 파워로 성공 보장
       final result = QuestCompletionService.calculate(
@@ -134,7 +134,7 @@ void main() {
     test('대성공 시 보상이 2배이다', () {
       final staticData = _makeStaticData(enemyPower: 1, baseReward: 100);
       final quest = _makeQuest();
-      final mercs = [_makeMerc(atk: 1000)];
+      final mercs = [_makeMerc(str: 1000)];
 
       // 여러 시드를 시도하여 대성공을 찾음
       QuestCompletionResult? greatSuccessResult;
@@ -160,7 +160,7 @@ void main() {
     test('실패 시 보상 0, XP 절반, 명성 0', () {
       final staticData = _makeStaticData(enemyPower: 1000);
       final quest = _makeQuest();
-      final mercs = [_makeMerc(atk: 1)];
+      final mercs = [_makeMerc(str: 1)];
 
       QuestCompletionResult? failResult;
       for (int seed = 0; seed < 200; seed++) {
@@ -188,7 +188,7 @@ void main() {
     test('대실패 시 XP 0', () {
       final staticData = _makeStaticData(enemyPower: 1000);
       final quest = _makeQuest();
-      final mercs = [_makeMerc(atk: 1)];
+      final mercs = [_makeMerc(str: 1)];
 
       QuestCompletionResult? critResult;
       for (int seed = 0; seed < 200; seed++) {
@@ -215,7 +215,7 @@ void main() {
     test('훈련소 시설 보너스가 XP에 반영된다', () {
       final staticData = _makeStaticData(enemyPower: 5);
       final quest = _makeQuest();
-      final mercs = [_makeMerc(atk: 50)];
+      final mercs = [_makeMerc(str: 50)];
 
       final withoutTraining = QuestCompletionService.calculate(
         quest: quest, mercs: mercs, staticData: staticData,
@@ -237,7 +237,7 @@ void main() {
     test('의무실 시설 보너스로 부상 회복시간이 감소한다', () {
       final staticData = _makeStaticData(enemyPower: 1000);
       final quest = _makeQuest();
-      final mercs = [_makeMerc(atk: 1)];
+      final mercs = [_makeMerc(str: 1)];
 
       // 실패+부상이 발생하는 시드 탐색
       int? injurySeed;
@@ -280,9 +280,9 @@ void main() {
     });
 
     test('거리 패널티가 성공률에 반영된다', () {
-      final staticData = _makeStaticData(enemyPower: 10);
+      final staticData = _makeStaticData(enemyPower: 30);
       final quest = _makeQuest(region: 10);
-      final mercs = [_makeMerc(atk: 10)];
+      final mercs = [_makeMerc(str: 10)];
 
       int nearSuccesses = 0;
       int farSuccesses = 0;
@@ -317,9 +317,9 @@ void main() {
       final staticData = _makeStaticData(enemyPower: 1000);
       final quest = _makeQuest();
       final mercs = [
-        _makeMerc(id: 'm1', atk: 1),
-        _makeMerc(id: 'm2', atk: 1),
-        _makeMerc(id: 'm3', atk: 1),
+        _makeMerc(id: 'm1', str: 1),
+        _makeMerc(id: 'm2', str: 1),
+        _makeMerc(id: 'm3', str: 1),
       ];
 
       final result = QuestCompletionService.calculate(
@@ -335,7 +335,7 @@ void main() {
     test('속도 배율이 회복시간에 반영된다', () {
       final staticData = _makeStaticData(enemyPower: 5);
       final quest = _makeQuest();
-      final mercs = [_makeMerc(atk: 50)];
+      final mercs = [_makeMerc(str: 50)];
 
       final speed1x = QuestCompletionService.calculate(
         quest: quest, mercs: mercs, staticData: staticData,

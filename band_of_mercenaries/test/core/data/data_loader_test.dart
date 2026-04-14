@@ -30,7 +30,7 @@ void main() {
 
     test('saveToCache stores data', () async {
       final data = [
-        {'id': 'farmer', 'tier': 1, 'name': '농부', 'base_atk': 4, 'base_def': 3, 'base_hp': 24, 'speed': 0.96},
+        {'id': 'farmer', 'tier': 1, 'name': '농부', 'base_str': 4, 'base_intelligence': 3, 'base_vit': 24, 'base_agi': 96},
       ];
 
       await dataLoader.saveToCache('jobs', data);
@@ -44,7 +44,7 @@ void main() {
 
     test('loadFromCache parses saved data correctly', () async {
       final data = [
-        {'id': 'farmer', 'tier': 1, 'name': '농부', 'base_atk': 4, 'base_def': 3, 'base_hp': 24, 'speed': 0.96},
+        {'id': 'farmer', 'tier': 1, 'name': '농부', 'base_str': 4, 'base_intelligence': 3, 'base_vit': 24, 'base_agi': 96},
       ];
 
       await dataLoader.saveToCache('jobs', data);
@@ -53,7 +53,7 @@ void main() {
       expect(jobs.length, 1);
       expect(jobs[0].id, 'farmer');
       expect(jobs[0].tier, 1);
-      expect(jobs[0].baseAtk, 4);
+      expect(jobs[0].baseStr, 4);
     });
 
     test('loadFromCache returns empty list when no cache', () {

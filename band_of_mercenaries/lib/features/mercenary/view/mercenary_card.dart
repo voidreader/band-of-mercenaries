@@ -124,7 +124,7 @@ class MercenaryCard extends StatelessWidget {
           ],
           const SizedBox(height: 6),
           Text(
-            'ATK ${mercenary.effectiveAtk} · DEF ${mercenary.effectiveDef} · HP ${mercenary.effectiveHp}',
+            'STR ${mercenary.effectiveStr} · INT ${mercenary.effectiveIntelligence} · VIT ${mercenary.effectiveVit} · AGI ${mercenary.effectiveAgi}',
             style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary),
           ),
           const SizedBox(height: 4),

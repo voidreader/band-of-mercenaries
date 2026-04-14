@@ -156,10 +156,17 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     // Deduct dispatch cost
     await ref.read(userDataProvider.notifier).spendGold(dispatchCost);
 
+    final dispatchedMercs = ref.read(mercenaryListProvider)
+        .where((m) => mercIds.contains(m.id))
+        .toList();
+    final avgAgi = dispatchedMercs.isEmpty
+        ? 50
+        : (dispatchedMercs.fold<int>(0, (s, m) => s + m.effectiveAgi) / dispatchedMercs.length).round();
     final duration = QuestCalculator.calculateDispatchDuration(
       baseDuration: questType.baseDuration,
       difficulty: quest.difficulty,
       speedMultiplier: speedMult,
+      partyAverageAgi: avgAgi,
     );
 
     final endTime = DateTime.now().add(duration);
