@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/features/mercenary/data/mercenary_repository.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
+import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
@@ -114,11 +115,19 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
       if (aliveCount >= maxMercs) return null;
     }
 
+    double recruitBonus = 0.0;
+    final tavernFacility = staticData.facilities.where((f) => f.id == 'tavern').firstOrNull;
+    if (userData != null && tavernFacility != null) {
+      final tavernLevel = userData.facilities['tavern'] ?? 0;
+      recruitBonus = ConstructionService.getEffectValue(tavernFacility, tavernLevel);
+    }
+
     final merc = await _repo.recruit(
       jobs: staticData.jobs,
       traits: staticData.traits,
       categories: staticData.traitCategories,
       names: staticData.personNames,
+      recruitBonus: recruitBonus,
     );
     ref.read(activityLogProvider.notifier).addLog(
       '용병 "${merc.name}" 모집 완료',

@@ -3,9 +3,9 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/core/domain/experience_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
-import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
 import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
+import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
 
 class TraitEventResult {
@@ -123,7 +123,7 @@ class QuestCompletionService {
         (f) => f.id == 'training',
         orElse: () => staticData.facilities.first,
       );
-      trainingBonus = FacilityService.getEffectValue(trainingFacility, trainingLevel);
+      trainingBonus = ConstructionService.getEffectValue(trainingFacility, trainingLevel);
     }
     final xpGain = ExperienceService.calculateXpGain(
       difficulty: quest.difficulty.clamp(1, 5),
@@ -148,7 +148,14 @@ class QuestCompletionService {
         (f) => f.id == 'infirmary',
         orElse: () => staticData.facilities.first,
       );
-      recoveryReduction = FacilityService.getEffectValue(infirmaryFacility, infirmaryLevel);
+      recoveryReduction = ConstructionService.getEffectValue(infirmaryFacility, infirmaryLevel);
+    }
+
+    double injuryReduction = 0.0;
+    final fieldHospitalFacility = staticData.facilities.where((f) => f.id == 'field_hospital').firstOrNull;
+    if (fieldHospitalFacility != null) {
+      final fieldHospitalLevel = facilities['field_hospital'] ?? 0;
+      injuryReduction = ConstructionService.getEffectValue(fieldHospitalFacility, fieldHospitalLevel);
     }
 
     final now = DateTime.now();
@@ -159,7 +166,7 @@ class QuestCompletionService {
         final damageResult = QuestCalculator.calculateDamage(
           roll: damageRoll,
           deathRate: difficulty.deathRate,
-          injuryRate: difficulty.injuryRate,
+          injuryRate: difficulty.injuryRate * (1.0 - injuryReduction),
           traitId: merc.traitId,
           traitIds: merc.allTraitIds,
           allTraits: staticData.traits,

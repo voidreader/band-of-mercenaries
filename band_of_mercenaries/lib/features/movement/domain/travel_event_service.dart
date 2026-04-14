@@ -28,4 +28,8 @@ class TravelEventService {
     if (event.effectType == 'delay') return 1.0 + event.magnitude;
     return 1.0;
   }
+
+  static double applyDamageReduction(double magnitude, double damageReduction) {
+    return magnitude * (1.0 - damageReduction);
+  }
 }

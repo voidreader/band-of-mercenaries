@@ -28,6 +28,29 @@ mixin _$Facility {
   int get maxLevel => throw _privateConstructorUsedError;
   List<int> get costs => throw _privateConstructorUsedError;
   List<double> get values => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
+  String? get category => throw _privateConstructorUsedError;
+  @JsonKey(name: 'base_cost')
+  int? get baseCost => throw _privateConstructorUsedError;
+  @JsonKey(name: 'cost_multiplier')
+  double? get costMultiplier => throw _privateConstructorUsedError;
+  @JsonKey(name: 'lv1_cost')
+  int? get lv1Cost => throw _privateConstructorUsedError;
+  @JsonKey(name: 'lv2_cost')
+  int? get lv2Cost => throw _privateConstructorUsedError;
+  @JsonKey(name: 'base_time')
+  int? get baseTime => throw _privateConstructorUsedError;
+  @JsonKey(name: 'time_multiplier')
+  double? get timeMultiplier => throw _privateConstructorUsedError;
+  @JsonKey(name: 'lv1_time')
+  int? get lv1Time => throw _privateConstructorUsedError;
+  @JsonKey(name: 'lv2_time')
+  int? get lv2Time => throw _privateConstructorUsedError;
+  @JsonKey(name: 'max_effect')
+  double? get maxEffect => throw _privateConstructorUsedError;
+  double? get alpha => throw _privateConstructorUsedError;
+  List<Map<String, dynamic>>? get milestones =>
+      throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -46,7 +69,20 @@ abstract class $FacilityCopyWith<$Res> {
       @JsonKey(name: 'effect_type') String effectType,
       @JsonKey(name: 'max_level') int maxLevel,
       List<int> costs,
-      List<double> values});
+      List<double> values,
+      String? description,
+      String? category,
+      @JsonKey(name: 'base_cost') int? baseCost,
+      @JsonKey(name: 'cost_multiplier') double? costMultiplier,
+      @JsonKey(name: 'lv1_cost') int? lv1Cost,
+      @JsonKey(name: 'lv2_cost') int? lv2Cost,
+      @JsonKey(name: 'base_time') int? baseTime,
+      @JsonKey(name: 'time_multiplier') double? timeMultiplier,
+      @JsonKey(name: 'lv1_time') int? lv1Time,
+      @JsonKey(name: 'lv2_time') int? lv2Time,
+      @JsonKey(name: 'max_effect') double? maxEffect,
+      double? alpha,
+      List<Map<String, dynamic>>? milestones});
 }
 
 /// @nodoc
@@ -68,6 +104,19 @@ class _$FacilityCopyWithImpl<$Res, $Val extends Facility>
     Object? maxLevel = null,
     Object? costs = null,
     Object? values = null,
+    Object? description = freezed,
+    Object? category = freezed,
+    Object? baseCost = freezed,
+    Object? costMultiplier = freezed,
+    Object? lv1Cost = freezed,
+    Object? lv2Cost = freezed,
+    Object? baseTime = freezed,
+    Object? timeMultiplier = freezed,
+    Object? lv1Time = freezed,
+    Object? lv2Time = freezed,
+    Object? maxEffect = freezed,
+    Object? alpha = freezed,
+    Object? milestones = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -94,6 +143,58 @@ class _$FacilityCopyWithImpl<$Res, $Val extends Facility>
           ? _value.values
           : values // ignore: cast_nullable_to_non_nullable
               as List<double>,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      category: freezed == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String?,
+      baseCost: freezed == baseCost
+          ? _value.baseCost
+          : baseCost // ignore: cast_nullable_to_non_nullable
+              as int?,
+      costMultiplier: freezed == costMultiplier
+          ? _value.costMultiplier
+          : costMultiplier // ignore: cast_nullable_to_non_nullable
+              as double?,
+      lv1Cost: freezed == lv1Cost
+          ? _value.lv1Cost
+          : lv1Cost // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lv2Cost: freezed == lv2Cost
+          ? _value.lv2Cost
+          : lv2Cost // ignore: cast_nullable_to_non_nullable
+              as int?,
+      baseTime: freezed == baseTime
+          ? _value.baseTime
+          : baseTime // ignore: cast_nullable_to_non_nullable
+              as int?,
+      timeMultiplier: freezed == timeMultiplier
+          ? _value.timeMultiplier
+          : timeMultiplier // ignore: cast_nullable_to_non_nullable
+              as double?,
+      lv1Time: freezed == lv1Time
+          ? _value.lv1Time
+          : lv1Time // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lv2Time: freezed == lv2Time
+          ? _value.lv2Time
+          : lv2Time // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxEffect: freezed == maxEffect
+          ? _value.maxEffect
+          : maxEffect // ignore: cast_nullable_to_non_nullable
+              as double?,
+      alpha: freezed == alpha
+          ? _value.alpha
+          : alpha // ignore: cast_nullable_to_non_nullable
+              as double?,
+      milestones: freezed == milestones
+          ? _value.milestones
+          : milestones // ignore: cast_nullable_to_non_nullable
+              as List<Map<String, dynamic>>?,
     ) as $Val);
   }
 }
@@ -112,7 +213,20 @@ abstract class _$$FacilityImplCopyWith<$Res>
       @JsonKey(name: 'effect_type') String effectType,
       @JsonKey(name: 'max_level') int maxLevel,
       List<int> costs,
-      List<double> values});
+      List<double> values,
+      String? description,
+      String? category,
+      @JsonKey(name: 'base_cost') int? baseCost,
+      @JsonKey(name: 'cost_multiplier') double? costMultiplier,
+      @JsonKey(name: 'lv1_cost') int? lv1Cost,
+      @JsonKey(name: 'lv2_cost') int? lv2Cost,
+      @JsonKey(name: 'base_time') int? baseTime,
+      @JsonKey(name: 'time_multiplier') double? timeMultiplier,
+      @JsonKey(name: 'lv1_time') int? lv1Time,
+      @JsonKey(name: 'lv2_time') int? lv2Time,
+      @JsonKey(name: 'max_effect') double? maxEffect,
+      double? alpha,
+      List<Map<String, dynamic>>? milestones});
 }
 
 /// @nodoc
@@ -132,6 +246,19 @@ class __$$FacilityImplCopyWithImpl<$Res>
     Object? maxLevel = null,
     Object? costs = null,
     Object? values = null,
+    Object? description = freezed,
+    Object? category = freezed,
+    Object? baseCost = freezed,
+    Object? costMultiplier = freezed,
+    Object? lv1Cost = freezed,
+    Object? lv2Cost = freezed,
+    Object? baseTime = freezed,
+    Object? timeMultiplier = freezed,
+    Object? lv1Time = freezed,
+    Object? lv2Time = freezed,
+    Object? maxEffect = freezed,
+    Object? alpha = freezed,
+    Object? milestones = freezed,
   }) {
     return _then(_$FacilityImpl(
       id: null == id
@@ -158,6 +285,58 @@ class __$$FacilityImplCopyWithImpl<$Res>
           ? _value._values
           : values // ignore: cast_nullable_to_non_nullable
               as List<double>,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      category: freezed == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String?,
+      baseCost: freezed == baseCost
+          ? _value.baseCost
+          : baseCost // ignore: cast_nullable_to_non_nullable
+              as int?,
+      costMultiplier: freezed == costMultiplier
+          ? _value.costMultiplier
+          : costMultiplier // ignore: cast_nullable_to_non_nullable
+              as double?,
+      lv1Cost: freezed == lv1Cost
+          ? _value.lv1Cost
+          : lv1Cost // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lv2Cost: freezed == lv2Cost
+          ? _value.lv2Cost
+          : lv2Cost // ignore: cast_nullable_to_non_nullable
+              as int?,
+      baseTime: freezed == baseTime
+          ? _value.baseTime
+          : baseTime // ignore: cast_nullable_to_non_nullable
+              as int?,
+      timeMultiplier: freezed == timeMultiplier
+          ? _value.timeMultiplier
+          : timeMultiplier // ignore: cast_nullable_to_non_nullable
+              as double?,
+      lv1Time: freezed == lv1Time
+          ? _value.lv1Time
+          : lv1Time // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lv2Time: freezed == lv2Time
+          ? _value.lv2Time
+          : lv2Time // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxEffect: freezed == maxEffect
+          ? _value.maxEffect
+          : maxEffect // ignore: cast_nullable_to_non_nullable
+              as double?,
+      alpha: freezed == alpha
+          ? _value.alpha
+          : alpha // ignore: cast_nullable_to_non_nullable
+              as double?,
+      milestones: freezed == milestones
+          ? _value._milestones
+          : milestones // ignore: cast_nullable_to_non_nullable
+              as List<Map<String, dynamic>>?,
     ));
   }
 }
@@ -171,9 +350,23 @@ class _$FacilityImpl implements _Facility {
       @JsonKey(name: 'effect_type') required this.effectType,
       @JsonKey(name: 'max_level') required this.maxLevel,
       required final List<int> costs,
-      required final List<double> values})
+      required final List<double> values,
+      this.description,
+      this.category,
+      @JsonKey(name: 'base_cost') this.baseCost,
+      @JsonKey(name: 'cost_multiplier') this.costMultiplier,
+      @JsonKey(name: 'lv1_cost') this.lv1Cost,
+      @JsonKey(name: 'lv2_cost') this.lv2Cost,
+      @JsonKey(name: 'base_time') this.baseTime,
+      @JsonKey(name: 'time_multiplier') this.timeMultiplier,
+      @JsonKey(name: 'lv1_time') this.lv1Time,
+      @JsonKey(name: 'lv2_time') this.lv2Time,
+      @JsonKey(name: 'max_effect') this.maxEffect,
+      this.alpha,
+      final List<Map<String, dynamic>>? milestones})
       : _costs = costs,
-        _values = values;
+        _values = values,
+        _milestones = milestones;
 
   factory _$FacilityImpl.fromJson(Map<String, dynamic> json) =>
       _$$FacilityImplFromJson(json);
@@ -205,8 +398,51 @@ class _$FacilityImpl implements _Facility {
   }
 
   @override
+  final String? description;
+  @override
+  final String? category;
+  @override
+  @JsonKey(name: 'base_cost')
+  final int? baseCost;
+  @override
+  @JsonKey(name: 'cost_multiplier')
+  final double? costMultiplier;
+  @override
+  @JsonKey(name: 'lv1_cost')
+  final int? lv1Cost;
+  @override
+  @JsonKey(name: 'lv2_cost')
+  final int? lv2Cost;
+  @override
+  @JsonKey(name: 'base_time')
+  final int? baseTime;
+  @override
+  @JsonKey(name: 'time_multiplier')
+  final double? timeMultiplier;
+  @override
+  @JsonKey(name: 'lv1_time')
+  final int? lv1Time;
+  @override
+  @JsonKey(name: 'lv2_time')
+  final int? lv2Time;
+  @override
+  @JsonKey(name: 'max_effect')
+  final double? maxEffect;
+  @override
+  final double? alpha;
+  final List<Map<String, dynamic>>? _milestones;
+  @override
+  List<Map<String, dynamic>>? get milestones {
+    final value = _milestones;
+    if (value == null) return null;
+    if (_milestones is EqualUnmodifiableListView) return _milestones;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  @override
   String toString() {
-    return 'Facility(id: $id, name: $name, effectType: $effectType, maxLevel: $maxLevel, costs: $costs, values: $values)';
+    return 'Facility(id: $id, name: $name, effectType: $effectType, maxLevel: $maxLevel, costs: $costs, values: $values, description: $description, category: $category, baseCost: $baseCost, costMultiplier: $costMultiplier, lv1Cost: $lv1Cost, lv2Cost: $lv2Cost, baseTime: $baseTime, timeMultiplier: $timeMultiplier, lv1Time: $lv1Time, lv2Time: $lv2Time, maxEffect: $maxEffect, alpha: $alpha, milestones: $milestones)';
   }
 
   @override
@@ -221,19 +457,54 @@ class _$FacilityImpl implements _Facility {
             (identical(other.maxLevel, maxLevel) ||
                 other.maxLevel == maxLevel) &&
             const DeepCollectionEquality().equals(other._costs, _costs) &&
-            const DeepCollectionEquality().equals(other._values, _values));
+            const DeepCollectionEquality().equals(other._values, _values) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.category, category) ||
+                other.category == category) &&
+            (identical(other.baseCost, baseCost) ||
+                other.baseCost == baseCost) &&
+            (identical(other.costMultiplier, costMultiplier) ||
+                other.costMultiplier == costMultiplier) &&
+            (identical(other.lv1Cost, lv1Cost) || other.lv1Cost == lv1Cost) &&
+            (identical(other.lv2Cost, lv2Cost) || other.lv2Cost == lv2Cost) &&
+            (identical(other.baseTime, baseTime) ||
+                other.baseTime == baseTime) &&
+            (identical(other.timeMultiplier, timeMultiplier) ||
+                other.timeMultiplier == timeMultiplier) &&
+            (identical(other.lv1Time, lv1Time) || other.lv1Time == lv1Time) &&
+            (identical(other.lv2Time, lv2Time) || other.lv2Time == lv2Time) &&
+            (identical(other.maxEffect, maxEffect) ||
+                other.maxEffect == maxEffect) &&
+            (identical(other.alpha, alpha) || other.alpha == alpha) &&
+            const DeepCollectionEquality()
+                .equals(other._milestones, _milestones));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      name,
-      effectType,
-      maxLevel,
-      const DeepCollectionEquality().hash(_costs),
-      const DeepCollectionEquality().hash(_values));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        name,
+        effectType,
+        maxLevel,
+        const DeepCollectionEquality().hash(_costs),
+        const DeepCollectionEquality().hash(_values),
+        description,
+        category,
+        baseCost,
+        costMultiplier,
+        lv1Cost,
+        lv2Cost,
+        baseTime,
+        timeMultiplier,
+        lv1Time,
+        lv2Time,
+        maxEffect,
+        alpha,
+        const DeepCollectionEquality().hash(_milestones)
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -256,7 +527,20 @@ abstract class _Facility implements Facility {
       @JsonKey(name: 'effect_type') required final String effectType,
       @JsonKey(name: 'max_level') required final int maxLevel,
       required final List<int> costs,
-      required final List<double> values}) = _$FacilityImpl;
+      required final List<double> values,
+      final String? description,
+      final String? category,
+      @JsonKey(name: 'base_cost') final int? baseCost,
+      @JsonKey(name: 'cost_multiplier') final double? costMultiplier,
+      @JsonKey(name: 'lv1_cost') final int? lv1Cost,
+      @JsonKey(name: 'lv2_cost') final int? lv2Cost,
+      @JsonKey(name: 'base_time') final int? baseTime,
+      @JsonKey(name: 'time_multiplier') final double? timeMultiplier,
+      @JsonKey(name: 'lv1_time') final int? lv1Time,
+      @JsonKey(name: 'lv2_time') final int? lv2Time,
+      @JsonKey(name: 'max_effect') final double? maxEffect,
+      final double? alpha,
+      final List<Map<String, dynamic>>? milestones}) = _$FacilityImpl;
 
   factory _Facility.fromJson(Map<String, dynamic> json) =
       _$FacilityImpl.fromJson;
@@ -275,6 +559,41 @@ abstract class _Facility implements Facility {
   List<int> get costs;
   @override
   List<double> get values;
+  @override
+  String? get description;
+  @override
+  String? get category;
+  @override
+  @JsonKey(name: 'base_cost')
+  int? get baseCost;
+  @override
+  @JsonKey(name: 'cost_multiplier')
+  double? get costMultiplier;
+  @override
+  @JsonKey(name: 'lv1_cost')
+  int? get lv1Cost;
+  @override
+  @JsonKey(name: 'lv2_cost')
+  int? get lv2Cost;
+  @override
+  @JsonKey(name: 'base_time')
+  int? get baseTime;
+  @override
+  @JsonKey(name: 'time_multiplier')
+  double? get timeMultiplier;
+  @override
+  @JsonKey(name: 'lv1_time')
+  int? get lv1Time;
+  @override
+  @JsonKey(name: 'lv2_time')
+  int? get lv2Time;
+  @override
+  @JsonKey(name: 'max_effect')
+  double? get maxEffect;
+  @override
+  double? get alpha;
+  @override
+  List<Map<String, dynamic>>? get milestones;
   @override
   @JsonKey(ignore: true)
   _$$FacilityImplCopyWith<_$FacilityImpl> get copyWith =>

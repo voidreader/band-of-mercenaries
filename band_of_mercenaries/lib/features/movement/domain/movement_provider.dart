@@ -17,6 +17,7 @@ import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_acquisition_service.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/trait_conflict.dart';
+import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 
 final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
@@ -134,8 +135,15 @@ class MovementNotifier extends StateNotifier<MovementState?> {
 
     ref.read(lastTravelEventProvider.notifier).state = travelEvent;
 
+    double travelReduction = 0.0;
+    final transportFacility = staticData.facilities.where((f) => f.id == 'transport').firstOrNull;
+    if (transportFacility != null) {
+      final transportLevel = userData.facilities['transport'] ?? 0;
+      travelReduction = ConstructionService.getEffectValue(transportFacility, transportLevel);
+    }
+
     final baseDuration = UserData.calculateMoveTime(distance, speedMultiplier: speedMult);
-    final adjustedSeconds = (baseDuration.inSeconds * durationMultiplier).round();
+    final adjustedSeconds = (baseDuration.inSeconds * durationMultiplier * (1.0 - travelReduction)).round();
     final duration = Duration(seconds: adjustedSeconds);
     final endTime = DateTime.now().add(duration);
 
@@ -192,13 +200,25 @@ class MovementNotifier extends StateNotifier<MovementState?> {
 
   Future<void> _applyEventEffect(TravelEvent event) async {
     final speedMult = ref.read(speedMultiplierProvider);
+    final userData = ref.read(userDataProvider);
+    final staticData = ref.read(staticDataProvider).value;
+
+    double damageReduction = 0.0;
+    if (userData != null && staticData != null) {
+      final defenseFacility = staticData.facilities.where((f) => f.id == 'defense').firstOrNull;
+      if (defenseFacility != null) {
+        final defenseLevel = userData.facilities['defense'] ?? 0;
+        damageReduction = ConstructionService.getEffectValue(defenseFacility, defenseLevel);
+      }
+    }
+
     switch (event.effectType) {
       case 'gold':
-        final amount = event.magnitude.abs().round();
         if (event.magnitude > 0) {
-          await ref.read(userDataProvider.notifier).addGold(amount);
+          await ref.read(userDataProvider.notifier).addGold(event.magnitude.abs().round());
         } else {
-          await ref.read(userDataProvider.notifier).spendGold(amount);
+          final reducedMagnitude = TravelEventService.applyDamageReduction(event.magnitude.abs(), damageReduction);
+          await ref.read(userDataProvider.notifier).spendGold(reducedMagnitude.round());
         }
       case 'injury':
         final mercs = ref.read(mercenaryListProvider)
@@ -206,13 +226,15 @@ class MovementNotifier extends StateNotifier<MovementState?> {
             .toList();
         if (mercs.isNotEmpty) {
           final random = Random();
-          final target = mercs[random.nextInt(mercs.length)];
-          final recoverySeconds = (10 * 60 / speedMult).round();
-          final recoveryTime = DateTime.now().add(Duration(seconds: recoverySeconds));
-          await ref.read(mercenaryRepositoryProvider).updateStatus(
-            target.id, MercenaryStatus.injured, endTime: recoveryTime,
-          );
-          ref.read(mercenaryListProvider.notifier).refresh();
+          if (random.nextDouble() >= damageReduction) {
+            final target = mercs[random.nextInt(mercs.length)];
+            final recoverySeconds = (10 * 60 / speedMult).round();
+            final recoveryTime = DateTime.now().add(Duration(seconds: recoverySeconds));
+            await ref.read(mercenaryRepositoryProvider).updateStatus(
+              target.id, MercenaryStatus.injured, endTime: recoveryTime,
+            );
+            ref.read(mercenaryListProvider.notifier).refresh();
+          }
         }
       case 'heal_tired':
         final mercs = ref.read(mercenaryListProvider)

@@ -26,6 +26,7 @@ class MercenaryRepository {
     required List<TraitData> traits,
     required List<TraitCategory> categories,
     required List<PersonName> names,
+    double recruitBonus = 0.0,
   }) async {
     final merc = RecruitmentService.generateMercenary(
       jobs: jobs,
@@ -33,6 +34,7 @@ class MercenaryRepository {
       categories: categories,
       names: names,
       random: Random(),
+      recruitBonus: recruitBonus,
     );
     await _box.add(merc);
     return merc;

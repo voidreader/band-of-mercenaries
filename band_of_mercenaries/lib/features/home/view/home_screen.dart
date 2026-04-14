@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
+import 'package:band_of_mercenaries/core/providers/navigation_provider.dart';
 import 'package:band_of_mercenaries/core/models/user_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
@@ -253,6 +254,80 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           orElse: () => const SizedBox.shrink(),
         ),
 
+        // Construction mini widget
+        if (userData.constructionFacilityId != null)
+          staticDataAsync.maybeWhen(
+            data: (staticData) {
+              final facility = staticData.facilities
+                  .where((f) => f.id == userData.constructionFacilityId)
+                  .firstOrNull;
+              if (facility == null) return const SizedBox.shrink();
+              final endTime = userData.constructionEndTime;
+              final startTime = userData.constructionStartTime;
+              final now = DateTime.now();
+              final remaining = endTime != null ? endTime.difference(now) : Duration.zero;
+              final total = (endTime != null && startTime != null)
+                  ? endTime.difference(startTime)
+                  : Duration.zero;
+              final progress = (total.inSeconds > 0)
+                  ? (1.0 - remaining.inSeconds / total.inSeconds).clamp(0.0, 1.0)
+                  : 1.0;
+              final remainStr = remaining.isNegative
+                  ? '완료'
+                  : remaining.inMinutes > 0
+                      ? '${remaining.inMinutes}분 ${remaining.inSeconds.remainder(60)}초'
+                      : '${remaining.inSeconds}초';
+              final currentLevel = userData.facilities[facility.id] ?? 0;
+              return GestureDetector(
+                onTap: () => ref.read(currentTabProvider.notifier).state = 4,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.tier3Bg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.tier3.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('🏗 ', style: TextStyle(fontSize: 12)),
+                          Expanded(
+                            child: Text(
+                              '${facility.name} Lv.${currentLevel + 1} 건설 중',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.tier3,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            remainStr,
+                            style: const TextStyle(fontSize: 11, color: AppTheme.tier3),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 3,
+                          backgroundColor: AppTheme.borderLight,
+                          valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.tier3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+            orElse: () => const SizedBox.shrink(),
+          ),
+
         // Dashboard
         staticDataAsync.maybeWhen(
           data: (staticData) => _buildDashboard(mercs, staticData, userData),
@@ -431,6 +506,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case ActivityLogType.traitAcquired: return '✦';
       case ActivityLogType.traitEvolved: return '⭐';
       case ActivityLogType.traitDeleted: return '🗑';
+      case ActivityLogType.facilityUpgrade: return '🏗';
     }
   }
 

@@ -71,6 +71,8 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.traitEvolved;
       case 8:
         return ActivityLogType.traitDeleted;
+      case 9:
+        return ActivityLogType.facilityUpgrade;
       default:
         return ActivityLogType.questResult;
     }
@@ -105,6 +107,9 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.traitDeleted:
         writer.writeByte(8);
+        break;
+      case ActivityLogType.facilityUpgrade:
+        writer.writeByte(9);
         break;
     }
   }

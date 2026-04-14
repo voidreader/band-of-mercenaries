@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/core/domain/idle_reward_service.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
+import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 import 'package:band_of_mercenaries/app.dart';
 
 void main() async {
@@ -154,7 +155,19 @@ class _IdleRewardWrapperState extends ConsumerState<_IdleRewardWrapper> {
     if (lastActiveMs == null) return;
 
     final lastActive = DateTime.fromMillisecondsSinceEpoch(lastActiveMs);
-    final reward = IdleRewardService.calculateReward(lastActive);
+
+    double idleBonusAmount = 0.0;
+    final staticData = ref.read(staticDataProvider).value;
+    final userData = ref.read(userDataProvider);
+    if (staticData != null && userData != null) {
+      final vaultFacility = staticData.facilities.where((f) => f.id == 'vault').firstOrNull;
+      if (vaultFacility != null) {
+        final vaultLevel = userData.facilities['vault'] ?? 0;
+        idleBonusAmount = ConstructionService.getEffectValue(vaultFacility, vaultLevel);
+      }
+    }
+
+    final reward = IdleRewardService.calculateReward(lastActive, idleBonusAmount: idleBonusAmount);
 
     if (reward <= 0) return;
 

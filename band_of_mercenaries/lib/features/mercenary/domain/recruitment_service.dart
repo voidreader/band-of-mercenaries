@@ -24,10 +24,35 @@ class RecruitmentService {
   static const _tierProbabilities = <int, double>{1: 0.45, 2: 0.30, 3: 0.15, 4: 0.08, 5: 0.02};
   static const _uuid = Uuid();
 
-  static int selectTier(Random random) {
+  static int selectTier(Random random, {double recruitBonus = 0.0}) {
+    if (recruitBonus <= 0.0) {
+      final roll = random.nextDouble();
+      double cumulative = 0;
+      for (final entry in _tierProbabilities.entries) {
+        cumulative += entry.value;
+        if (roll < cumulative) return entry.key;
+      }
+      return 1;
+    }
+
+    final tier1Prob = 0.45 * (1.0 - recruitBonus);
+    final reduction = 0.45 - tier1Prob;
+    final tier2Prob = _tierProbabilities[2]! + reduction / 4;
+    final tier3Prob = _tierProbabilities[3]! + reduction / 4;
+    final tier4Prob = _tierProbabilities[4]! + reduction / 4;
+    final tier5Prob = _tierProbabilities[5]! + reduction / 4;
+
+    final adjusted = <int, double>{
+      1: tier1Prob,
+      2: tier2Prob,
+      3: tier3Prob,
+      4: tier4Prob,
+      5: tier5Prob,
+    };
+
     final roll = random.nextDouble();
     double cumulative = 0;
-    for (final entry in _tierProbabilities.entries) {
+    for (final entry in adjusted.entries) {
       cumulative += entry.value;
       if (roll < cumulative) return entry.key;
     }
@@ -67,8 +92,9 @@ class RecruitmentService {
     required List<PersonName> names,
     required Random random,
     int? forceTier,
+    double recruitBonus = 0.0,
   }) {
-    final tier = forceTier ?? selectTier(random);
+    final tier = forceTier ?? selectTier(random, recruitBonus: recruitBonus);
     final tierJobs = jobs.where((j) => j.tier == tier).toList();
     final job = tierJobs[random.nextInt(tierJobs.length)];
     final name = names[random.nextInt(names.length)];

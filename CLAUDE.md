@@ -50,14 +50,15 @@ band_of_mercenaries/lib/
 │   ├── data/              # HiveInitializer, SupabaseInitializer, DataLoader, SyncService, SettingsKeys
 │   ├── domain/            # 전역 도메인 서비스 (ActivityLog, ExperienceService, ReputationService, IdleRewardService)
 │   ├── models/            # 정적 데이터 모델 (freezed + json_serializable) + UserData (Hive)
-│   ├── providers/         # 전역 상태 (game_state, static_data, timer)
+│   ├── providers/         # 전역 상태 (game_state, static_data, timer, navigation)
 │   └── theme/             # Material 3 테마, 티어별 색상
 ├── features/              # 기능별 모듈
 │   ├── home/              # 홈(야영지) 화면
 │   ├── movement/          # 이동 시스템, TravelEventService, MovementState
 │   ├── quest/             # 퀘스트/파견 시스템, QuestCompletionService
+│   ├── facility/          # 시설 시스템 (건설 큐, ConstructionService, 시설 탭 UI)
 │   ├── mercenary/         # 용병 모집/관리, FacilityService, RecruitmentService
-│   └── settings/          # 설정, 시설 관리 (FacilityScreen)
+│   └── settings/          # 설정 (시간 가속)
 └── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay, StatusBadge)
 ```
 
@@ -71,11 +72,13 @@ band_of_mercenaries/lib/
 ### 상태 관리
 
 **Flutter Riverpod** 사용. 주요 Provider:
-- `gameTickProvider`: 1초 간격 Stream으로 게임 루프 구동 (퀘스트 완료, 이동 도착 체크)
+- `gameTickProvider`: 1초 간격 Stream으로 게임 루프 구동 (퀘스트 완료, 이동 도착, 건설 완료 체크)
 - `userDataProvider`: 전역 게임 상태 (골드, 위치, 이동 상태)
 - `staticDataProvider`: 로컬 JSON 캐시에서 로드된 정적 데이터 (Region, Job, Trait 등). 앱 시작/포그라운드 복귀 시 Supabase와 버전 비교 후 갱신
 - `mercenaryListProvider` / `questListProvider`: 용병 및 퀘스트 상태
 - `activityLogProvider`: 활동 로그 (Hive `activityLogs` 박스, 최대 100개)
+- `currentTabProvider`: 하단 네비게이션 탭 인덱스 (`core/providers/navigation_provider.dart`)
+- `constructionCompletedProvider`: 건설 완료 알림 (`features/facility/domain/construction_completion_provider.dart`)
 
 ### 데이터 흐름
 
@@ -127,6 +130,7 @@ band_of_mercenaries/lib/
 
 **Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings` 5개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
 - `mercenaries` 박스: Mercenary 모델 — HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸/삭제 트레잇 기록 → 재획득 방지), HiveField(17) `deletedTraitIds` (List<String>, 삭제된 트레잇 기록 → 히스토리 UI에서 (삭제) 구분 표시). `allTraitIds` getter로 구 traitId 호환
+- `user` 박스 건설 큐: HiveField(12) `constructionFacilityId` (String?, 건설 중 시설 ID), HiveField(13) `constructionStartTime` (DateTime?), HiveField(14) `constructionEndTime` (DateTime?)
 - `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
 
 ### 코드 생성
@@ -141,14 +145,14 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **경제**: 파견비용(난이도별 min~max, 소요시간 비례 보간) + 인건비(용병 티어별) 선차감, 순수익 = 보상 - 인건비 - 파견비용
 - **경험치/레벨**: 퀘스트 완료 시 XP 획득 (난이도 × 기본XP × 결과배수 + 시설보너스), 최대 레벨 5
 - **명성/랭크**: 퀘스트 완료 시 명성 획득, 등급 F~A, 랭크에 따라 상위 티어 리전 잠금 해제
-- **시설**: 훈련소(XP보너스), 의무실(회복감소 + 트레잇 삭제 해금: Lv2 acquired, Lv4 evolved), 주둔지(용병상한), 정보망(퀘스트수). 골드로 업그레이드
+- **시설**: 12종, 최대 Lv25, 건설 큐 1개(한 번에 하나만 건설). 골드 비용 + 건설 시간(Lv1: 5분, Lv2: 10분, Lv3+: `25×1.45^(Lv-3)` 분). 효과 로그 스케일(`maxEffect × ln(1+level×α) / ln(1+25×α)`). 비용 4티어: Core(300G)/Standard(500G)/Premium(700G)/Expensive(1,000G), 배율 1.5. `ConstructionService`로 공식 계산, `FacilityService`는 wrapper. 건설 완료는 gameTickProvider에서 체크. 시간 가속 적용. 기능 해금 이정표는 milestones JSONB로 정의(현재 stub). 시설 목록: 훈련소(XP)/의무실(회복+트레잇삭제)/주둔지(용병상한)/정보망(퀘스트수)/대장간(장비stub)/주점(모집확률)/연구소(조사stub)/방어시설(피해감소)/금고(방치보상)/게시판(품질stub)/이동수단(이동시간)/야전병원(부상감소)
 - **용병 상태**: 정상 → 피곤함(능력치 80%, 5분) → 부상(난이도×10분) → 사망(영구 제거). 레벨업 시 능력치 증가
 - **모집**: 티어별 확률 가중 (Tier1: 45%, Tier2: 30%, Tier3: 15%, Tier4: 8%, Tier5: 2%). 선천 트레잇 1~3개 랜덤 부여 (Physical/Background/Talent 각 60% 확률, 최소 1개). 주둔지 용량 제한
 - **트레잇 시스템**: 선천(최대 3, 영구) + 후천(최대 4, 획득/진화/삭제). `MercenaryStatService`로 23개 행동 지표 추적 → 퀘스트 완료 시 `TraitAcquisitionService`가 조건 체크 → 자동 획득. `TraitEffectService`로 effect_json 기반 성공률/데미지 보정. 충돌 관계 검증 포함(`hasConflict` public static). `TraitEvolutionService`로 단일 진화(acquired → evolved, conditionJson 충족 시 교체) + 조합 진화(2개 acquired → evolved, 원본 소멸 + 슬롯 해방). `TraitDeletionService`로 후천 트레잇 삭제(acquired 200G/evolved 500G, 의무실 레벨 해금). 소멸/삭제 트레잇은 `traitHistory`에 기록되어 재획득 방지. 퀘스트 완료 시 획득은 자동 적용 후 알림 팝업, 진화는 `pendingTraitEventsProvider`를 통해 UI에서 카드 비교형 선택 팝업으로 플레이어가 경로 결정 (보류 가능). 여행 이벤트로 빈 선천 슬롯에 트레잇 부여 가능 (`lastTravelEventTraitResultProvider`로 결과 전달)
 - **방출**: 파견 중이 아닌 용병을 퇴직금(인건비×레벨) 지급 후 영구 방출. 재모집 불가
 - **퀘스트 갱신**: 대기 중 퀘스트는 1시간(게임 시간)마다 자동 교체. 5개 미만이면 채우기 가능
-- **방치형 보상**: 앱 미접속 시간 기준 분당 1G, 최대 480G(8시간). 실제 시간 기준
-- **시간 가속**: 속도 변경 시 모든 활성 타이머의 endTime을 비례 재계산 (개발/테스트용)
+- **방치형 보상**: 앱 미접속 시간 기준 분당 1G, 최대 480G(8시간) + 금고 시설 보너스. 실제 시간 기준
+- **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설)의 endTime을 비례 재계산 (개발/테스트용)
 - **이동 제한**: 파견 중인 용병이 있으면 이동 불가
 
 ## 분석 설정
@@ -160,7 +164,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - 한국어 텍스트 (국제화 미적용)
 - Material 3 다크 프라이머리 테마
 - 티어별 색상: 회색(1) → 초록(2) → 파랑(3) → 보라(4) → 빨강(5)
-- 하단 5탭: 이동 / 파견 / 홈 / 모집 / 설정
+- 하단 6탭: 이동 / 파견 / 홈 / 모집 / 시설 / 설정
 - 웹: `_MobileFrame`에서 `ConstrainedBox(maxWidth: 430)`으로 모바일 해상도 제한. 새 화면 전환 시 `Navigator.push` 대신 상태 기반 렌더링 사용 (Navigator가 ConstrainedBox 바깥으로 빠져나가는 문제 방지)
 - 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼)
 - 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장. 이후 트레잇 획득 알림 → 진화 선택 팝업 순서로 체이닝

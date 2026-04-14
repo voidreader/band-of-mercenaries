@@ -16,6 +16,8 @@ class GameConstants {
   static const Set<String> innateCategories = {'Physical', 'Background', 'Talent'};
   static const Set<String> acquiredCategories = {'CombatStyle', 'Survival', 'Behavior', 'Mental', 'Experience'};
 
+  static const int maxFacilityLevel = 25;
+
   // Trait deletion
   static const int traitDeletionCostAcquired = 200;
   static const int traitDeletionCostEvolved = 500;

@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
+import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
   const MovementScreen({super.key});
@@ -57,7 +58,14 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
           userData.region, userData.sector, _selectedRegion, _selectedSector,
         );
         final speedMult = ref.watch(speedMultiplierProvider);
-        final moveTime = UserData.calculateMoveTime(distance, speedMultiplier: speedMult);
+        double travelReduction = 0.0;
+        final transportFacility = data.facilities.where((f) => f.id == 'transport').firstOrNull;
+        if (transportFacility != null) {
+          final transportLevel = userData.facilities['transport'] ?? 0;
+          travelReduction = ConstructionService.getEffectValue(transportFacility, transportLevel);
+        }
+        final rawMoveTime = UserData.calculateMoveTime(distance, speedMultiplier: speedMult);
+        final moveTime = Duration(seconds: (rawMoveTime.inSeconds * (1.0 - travelReduction)).round());
         final isTargetAccessible = ReputationService.isRegionAccessible(
           targetRegion.regionTier, userData.reputation, data.ranks,
         );
@@ -253,6 +261,11 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                       Text(
                         '약 ${moveTime.inSeconds}초',
                         style: const TextStyle(fontSize: 14, color: AppTheme.timerBlue, fontWeight: FontWeight.w600),
+                      ),
+                    if (distance > 0 && travelReduction > 0)
+                      Text(
+                        '이동수단 효과: -${(travelReduction * 100).round()}%',
+                        style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
                       ),
                     const SizedBox(height: 10),
                     if (!isTargetAccessible)

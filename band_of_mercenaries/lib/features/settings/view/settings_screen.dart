@@ -1,66 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
+import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
-import 'package:band_of_mercenaries/features/settings/view/facility_screen.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 
-class SettingsScreen extends ConsumerStatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends ConsumerState<SettingsScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          color: AppTheme.surface,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: AppTheme.textPrimary,
-            unselectedLabelColor: AppTheme.textHint,
-            indicatorColor: AppTheme.textPrimary,
-            tabs: const [
-              Tab(text: '시설 관리'),
-              Tab(text: '설정'),
-            ],
-          ),
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              const FacilityScreen(),
-              _buildSettingsTab(),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettingsTab() {
+  Widget build(BuildContext context, WidgetRef ref) {
     final speedMult = ref.watch(speedMultiplierProvider);
     return Padding(
       padding: const EdgeInsets.all(18),
@@ -91,6 +42,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                               ref.read(questListProvider.notifier).recalculateTimers(oldSpeed, speed);
                               ref.read(movementProvider.notifier).recalculateTimers(oldSpeed, speed);
                               ref.read(mercenaryListProvider.notifier).recalculateTimers(oldSpeed, speed);
+                              ref.read(userDataProvider.notifier).recalculateConstructionTimer(oldSpeed, speed);
                             },
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),

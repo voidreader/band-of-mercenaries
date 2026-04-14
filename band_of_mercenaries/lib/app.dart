@@ -6,7 +6,6 @@ import 'package:band_of_mercenaries/core/data/supabase_initializer.dart';
 import 'package:band_of_mercenaries/core/data/sync_service.dart';
 import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
-import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/shared/widgets/bottom_nav_bar.dart';
 import 'package:band_of_mercenaries/features/home/view/home_screen.dart';
@@ -14,10 +13,16 @@ import 'package:band_of_mercenaries/features/movement/view/movement_screen.dart'
 import 'package:band_of_mercenaries/features/quest/view/dispatch_screen.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/recruit_screen.dart';
 import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart';
+import 'package:band_of_mercenaries/features/facility/view/facility_tab_screen.dart';
+import 'package:band_of_mercenaries/features/facility/domain/construction_completion_provider.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/providers/mercenary_detail_provider.dart';
+import 'package:band_of_mercenaries/core/providers/navigation_provider.dart';
+import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
+import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
+import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_detail_overlay.dart';
-
-final currentTabProvider = StateProvider<int>((ref) => 2); // Home is default
 
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
@@ -70,6 +75,7 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
     DispatchScreen(),
     HomeScreen(),
     RecruitScreen(),
+    FacilityTabScreen(),
     SettingsScreen(),
   ];
 
@@ -117,6 +123,44 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
   Widget build(BuildContext context) {
     final currentTab = ref.watch(currentTabProvider);
     final selectedMercId = ref.watch(selectedMercenaryIdProvider);
+
+    ref.listen(gameTickProvider, (prev, next) {
+      ref.read(userDataProvider.notifier).checkConstructionCompletion();
+    });
+
+    ref.listen<String?>(constructionCompletedProvider, (_, next) {
+      if (next == null) return;
+      final staticData = ref.read(staticDataProvider).value;
+      final facilityName = staticData?.facilities
+          .where((f) => f.id == next)
+          .firstOrNull
+          ?.name ?? next;
+      final userData = ref.read(userDataProvider);
+      final newLevel = userData?.facilities[next] ?? 1;
+      ref.read(activityLogProvider.notifier).addLog(
+        '$facilityName이(가) Lv.$newLevel(으)로 업그레이드되었습니다',
+        ActivityLogType.facilityUpgrade,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('건설 완료'),
+            content: Text('$facilityName이(가) 업그레이드되었습니다!'),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  ref.read(constructionCompletedProvider.notifier).state = null;
+                },
+                child: const Text('확인'),
+              ),
+            ],
+          ),
+        );
+      });
+    });
 
     return Scaffold(
       body: SafeArea(
