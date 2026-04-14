@@ -68,7 +68,25 @@
       "Bash(mv features/home/domain/activity_log_provider.dart core/domain/activity_log_provider.dart)",
       "Bash(mv features/home/data/activity_log_repository.dart core/domain/activity_log_repository.dart)",
       "Bash(mv features/quest/domain/experience_service.dart core/domain/experience_service.dart)",
-      "Bash(find lib:*)"
+      "Bash(find lib:*)",
+      "mcp__plugin_supabase_supabase__list_projects",
+      "Bash(npx tsx:*)",
+      "Bash(grep -E \"\\\\.dart$\")",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "Bash(npx eslint:*)",
+      "mcp__plugin_supabase_supabase__list_migrations",
+      "mcp__plugin_supabase_supabase__list_tables",
+      "Bash(dart analyze:*)",
+      "Bash(mkdir -p /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/trait-roadmap-complete)",
+      "Bash(mv /Users/radiogaga/git/band-of-mercenaries/Docs/Trait-Roadmap.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/trait-roadmap-complete/)",
+      "Bash(mv /Users/radiogaga/git/band-of-mercenaries/Docs/Trait-Roadmap_plan.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/trait-roadmap-complete/)",
+      "Bash(ls /Users/radiogaga/git/band-of-mercenaries/Docs/*.md)",
+      "mcp__plugin_supabase_supabase__execute_sql",
+      "Bash(ls:*)",
+      "mcp__plugin_supabase_supabase__apply_migration"
     ]
   }
 }

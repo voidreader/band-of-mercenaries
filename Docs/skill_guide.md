@@ -1,6 +1,6 @@
 # 스킬 및 에이전트 사용 가이드
 
-> 마지막 업데이트: 2026-04-11
+> 마지막 업데이트: 2026-04-14
 
 이 문서는 프로젝트에 등록된 Claude Code 스킬의 역할과 사용법을 정리한다.
 
@@ -44,22 +44,42 @@
 
 ## 명세서 작성
 
-기획 문서를 개발 명세서로 변환하는 스킬이다.
+기획 문서를 개발 명세서로 변환하고 검증하는 스킬이다. 일반적으로 `spec-pipeline`을 사용하며, 명세서 작성과 검증을 단독으로 실행할 때는 `spec-writer`와 `verify-spec`을 개별 호출한다.
 
 | 스킬 | 호출 | 역할 |
 |------|------|------|
-| `spec-writer` | `/spec-writer` | 기획 문서 → 개발 명세서 변환 |
+| `spec-pipeline` | `/spec-pipeline` | 기획 문서 → 명세서 작성 + 검증 파이프라인 (권장) |
+| `spec-writer` | `/spec-writer` | 기획 문서 → 개발 명세서 변환 (단독 실행) |
+| `verify-spec` | `/verify-spec` | 명세서 검증 (단독 실행) |
+
+### spec-pipeline
+
+기획 문서를 받아 `spec-writer`로 명세서를 작성하고 `verify-spec`으로 검증하는 파이프라인을 수행한다. FAIL 시 최대 2회 수정 루프 후 `implement-spec` 또는 `implement-agent` 실행을 안내한다.
+
+```bash
+/spec-pipeline @Docs/content-design/20260414_travel-choice.md
+```
+
+- 산출물: `Docs/spec/{날짜}_{기능명}.md`
+- 내부적으로 Opus 서브에이전트를 호출하여 검증을 수행한다
 
 ### spec-writer
 
 기획 문서를 읽고 코드베이스를 탐색하여 구현에 필요한 상세 정보를 담은 개발 명세서를 생성한다. 완료 후 구현 규모를 분석하여 `implement-spec` 또는 `implement-agent` 중 적합한 스킬을 추천한다.
 
 ```bash
-/spec-writer @Docs/content-design/20260411_travel-choice.md
-/spec-writer @Docs/content-design/20260411_travel-choice.md #1234   # Redmine 일감 연동
+/spec-writer @Docs/content-design/20260414_travel-choice.md
 ```
 
-- 산출물: `Docs/{날짜}_{기능명}.md`
+- 산출물: `Docs/spec/{날짜}_{기능명}.md`
+
+### verify-spec
+
+명세서가 기획 문서의 의도를 정확히 반영했는지 5개 항목(기획 의도 반영도, FR 명확성, 수치·공식 정확성, 시스템 상호작용 완결성, verifier 검증 가능성)을 체크하여 PASS 또는 FAIL과 이슈 목록을 반환한다. `spec-pipeline`에서 자동 호출되며 단독 실행도 가능하다.
+
+```bash
+/verify-spec @Docs/content-design/20260414_travel-choice.md @Docs/spec/20260414_travel-choice.md
+```
 
 ---
 
@@ -77,7 +97,7 @@
 명세서를 읽고 요구사항 분석, 구현 계획 수립, 코드 구현을 단일 세션에서 수행한다.
 
 ```bash
-/implement-spec @Docs/20260411_travel-choice.md
+/implement-spec @Docs/spec/20260414_travel-choice.md
 ```
 
 ### implement-agent
@@ -85,7 +105,7 @@
 명세서를 기반으로 서브에이전트 파이프라인을 조율하여 대규모 구현을 진행한다. git 충돌 감지 후 analyzer → architect → coder → verifier 순서로 진행한다.
 
 ```bash
-/implement-agent @Docs/20260411_travel-choice.md
+/implement-agent @Docs/spec/20260414_travel-choice.md
 ```
 
 ---
@@ -149,7 +169,7 @@
 ```
 1. /content-designer    → 컨텐츠 기획서 작성
 2. /balance-designer    → 밸런스 검토 (필요 시)
-3. /spec-writer         → 개발 명세서 변환
+3. /spec-pipeline       → 개발 명세서 작성 + 검증 (또는 /spec-writer 단독 실행)
 4. /implement-spec 또는 /implement-agent → 코드 구현
 5. /finalize-feature    → 문서 정리 및 커밋
 ```
