@@ -16,13 +16,13 @@ Recommended Model : Claude Opus
 1. 사용자로부터 전달된 명세서 파일 경로를 확인한다.
 
 - 명세서 파일이 전달되지 않은 경우:
-  - 사용자에게 "명세서 파일 경로를 전달해주세요. (예: Docs/20260305_feature.md)" 메시지를 출력한다.
+  - 사용자에게 "명세서 파일 경로를 전달해주세요. (예: Docs/spec/[spec] 20260305_feature.md)" 메시지를 출력한다.
   - 경로가 전달될 때까지 다음 단계를 진행하지 않는다.
 
 2. 전달된 Markdown 파일을 읽는다.
 
-- 일반적으로 전달된 명세서 파일의 규칙 : 날짜\_타이틀\_담당자.md
-- ex: 20260309_new-skill.radiogaga.md
+- 일반적으로 전달된 명세서 파일의 규칙 : `[spec] 날짜_주제.md`
+- ex: `[spec] 20260309_new-skill.md`
 
 3. **리모트 브랜치 충돌 감지** (명세서를 읽은 직후 수행)
 
@@ -173,9 +173,9 @@ Recommended Model : Claude Opus
 
    b. **plan 문서 생성** (필수)
       - 명세서 파일명에서 `.md` 확장자를 제거한 이름을 `{specBase}`로 사용한다.
-        - 예: 명세서가 `20260318_quest-system_radiogaga.md`인 경우, `{specBase}` = `20260318_quest-system_radiogaga`
+        - 예: 명세서가 `[spec] 20260318_quest-system.md`인 경우, `{specBase}` = `[spec] 20260318_quest-system`
       - 파일명: `{specBase}_plan.md`
-      - 위치: `Docs/` (명세서와 동일한 디렉토리)
+      - 위치: `Docs/spec/` (명세서와 동일한 디렉토리)
       - 내용:
         - 최상단에 사용한 스킬명 기재. ex: `Skill used : implement-agent`
         - 수립한 구현 계획과 실제 개발 사항 정리

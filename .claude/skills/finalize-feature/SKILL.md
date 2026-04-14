@@ -25,8 +25,8 @@ Recommended Model : Claude Sonnet
 
 다음 우선순위로 scope를 결정한다:
 
-1. `Docs/` 에서 `{specBase}_plan.md` 파일을 찾아 명세서 이름에서 scope 추출
-2. plan 파일이 없으면 `Docs/` 의 명세서 파일명에서 추출 (예: `20260305_feature_name.md`)
+1. `Docs/spec/` 에서 `{specBase}_plan.md` 파일을 찾아 명세서 이름에서 scope 추출
+2. plan 파일이 없으면 `Docs/spec/` 의 명세서 파일명에서 추출 (예: `[spec] 20260305_feature_name.md`)
 
 ### 3. 커밋 메시지 생성
 
@@ -103,24 +103,45 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### 6. 문서 아카이브
 
-**먼저 `Docs/` 에서 구현 스킬(implement-spec / implement-agent)이 생성한 산출물 문서가 있는지 확인한다.**
+최종 아카이브 구조:
+```
+Docs/Archive/{날짜_주제}/
+├── design.md   ← 기획서 (content-designer / balance-designer 산출물)
+├── spec.md     ← 명세서 (spec-writer 산출물)
+└── plan.md     ← 구현 계획 (implement-spec / implement-agent 산출물)
+```
 
-네이밍 규칙: 명세서가 `{specBase}.md`이면, 관련 산출물은 `{specBase}_plan.md`이다.
+**6-1. 대상 파일 수집**
 
-`Docs/` 에서 명세서와 동일한 `{specBase}` 네이밍의 파일들을 수집한다:
-- `{specBase}.md` — 명세서 원본
-- `{specBase}_plan.md` — 구현 계획 문서
+`Docs/spec/` 에서 명세서와 plan 파일을 찾는다:
+- `[spec] {날짜}_{주제}.md` — 명세서
+- `[spec] {날짜}_{주제}_plan.md` — 구현 계획 문서
 
-아카이브 수행:
-1. `Docs/Archive/{specBase}/` 폴더를 생성한다.
-2. `{specBase}.md` → `spec.md`로 이름 변경하여 아카이브 폴더에 저장한다.
-3. `{specBase}_plan.md` → `plan.md`로 이름 변경하여 아카이브 폴더에 저장한다.
-4. `Docs/` 의 원본 파일들을 삭제한다 (`git rm` 사용).
+명세서 파일을 Read로 읽어 frontmatter에서 기획서 경로를 확인한다:
+- `> 기획 문서: {경로}` 라인을 파싱하여 기획서 파일 경로를 추출한다.
+- 해당 파일이 실제로 존재하는지 확인한다.
+- 기획서가 없거나 경로를 찾을 수 없으면 사용자에게 알리고 기획서 없이 진행한다.
+
+**6-2. 아카이브 폴더명 결정**
+
+`{specBase}`에서 `[spec] ` prefix를 제거한 값을 폴더명으로 사용한다.
+- 예: `[spec] 20260318_quest-system` → 폴더명 `20260318_quest-system`
+
+**6-3. 아카이브 수행**
+
+1. `Docs/Archive/{폴더명}/` 폴더를 생성한다.
+2. 기획서가 있으면 → `design.md`로 이름 변경하여 아카이브 폴더에 저장한다.
+3. `{specBase}.md` → `spec.md`로 이름 변경하여 아카이브 폴더에 저장한다.
+4. `{specBase}_plan.md` → `plan.md`로 이름 변경하여 아카이브 폴더에 저장한다.
+5. 원본 파일들을 모두 삭제한다 (`git rm` 사용):
+   - `Docs/spec/{specBase}.md`
+   - `Docs/spec/{specBase}_plan.md`
+   - 기획서 원본 파일 (있는 경우)
 
 **아카이브 문서 갱신**: implement-spec 이후 사용자 테스트 피드백, 오류 수정, 추가 구현 등이 진행된 경우, 아카이브 문서를 업데이트한다:
 
-- **plan.md**: `## 추가 변경 사항` 섹션을 하단에 추가한다. implement-spec이 작성한 기존 내용은 유지하고, 이후 변경된 파일 목록과 수정 내역을 추가 기재한다.
-- **spec.md**: 명세서 원본이므로 수정하지 않는다.
+- **plan.md**: `## 추가 변경 사항` 섹션을 하단에 추가한다. 기존 내용은 유지하고, 이후 변경된 파일 목록과 수정 내역을 추가 기재한다.
+- **spec.md**, **design.md**: 원본이므로 수정하지 않는다.
 
 ### 7. git 커밋 수행
 

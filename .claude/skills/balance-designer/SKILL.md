@@ -120,7 +120,7 @@ digraph mode_decision {
 
 기획 문서를 `Docs/balance-design/` 디렉토리에 생성한다.
 
-**파일명 규칙:** `{YYYYMMDD}_{주제}.md`
+**파일명 규칙:** `[balance] {YYYYMMDD}_{주제}.md`
 
 **산출물 형식:**
 

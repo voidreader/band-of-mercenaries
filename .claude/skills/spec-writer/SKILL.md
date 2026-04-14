@@ -3,7 +3,7 @@ name: spec-writer
 description: 게임 기획 문서를 읽고 코드베이스를 탐색하여, implement-spec 또는 implement-agent에서 바로 사용할 수 있는 개발 명세서를 생성한다.
 ---
 
-Recommended Model : Claude Opus
+Recommended Model : Claude Sonnet
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?
@@ -63,16 +63,15 @@ Recommended Model : Claude Opus
 
 ## 4단계: 명세서 생성
 
-아래 형식의 명세서를 `Docs/` 디렉토리에 생성한다.
+아래 형식의 명세서를 `Docs/spec/` 디렉토리에 생성한다.
 
 ### 파일명 규칙
 
-`{날짜}_{기능명}_{담당자}.md`
+`[spec] {날짜}_{주제}.md`
 - 날짜: YYYYMMDD (오늘 날짜)
-- 기능명: kebab-case
-- 담당자: 기획 문서에서 확인 가능하면 사용, 없으면 사용자에게 확인
+- 주제: kebab-case
 
-예: `20260323_quest-system.md`
+예: `[spec] 20260323_quest-system.md`
 
 ### 명세서 형식
 
@@ -81,7 +80,6 @@ Recommended Model : Claude Opus
 
 > 기획 문서: {기획 문서 파일 경로}
 > 작성일: {날짜}
-> 담당자: {담당자}
 
 ## 1. 개요
 
@@ -165,7 +163,7 @@ Recommended Model : Claude Opus
 
 # 출력 규칙
 
-- 명세서는 `Docs/` 디렉토리에 마크다운 파일로 생성한다.
+- 명세서는 `Docs/spec/` 디렉토리에 마크다운 파일로 생성한다.
 - 기술적인 용어를 유지하며 한국어 스타일을 유지한다.
 - 기획 문서의 의도를 변경하지 않는다. 기술적으로 대안이 필요한 경우 명세서의 "기술 참고사항"에 대안을 제시하되 최종 결정은 사용자에게 맡긴다.
 - 기획 문서에 없는 내용을 임의로 추가하지 않는다. 구현에 필요하지만 기획에 없는 사항은 "기획 확인 사항"에 기재한다.
