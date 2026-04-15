@@ -335,12 +335,20 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           rewardGold: result.rewardGold,
           mercLevel: merc.level,
         );
-        await mercRepo.updateStats(merc.id, newStats);
+        final userData = ref.read(userDataProvider);
+        final finalStats = MercenaryStatService.updateStatsForFacilityBenefit(
+          newStats,
+          facilities: userData?.facilities ?? {},
+          isFailure: result.resultType == QuestResult.failure ||
+              result.resultType == QuestResult.criticalFailure,
+          damageStatus: damage.newStatus,
+        );
+        await mercRepo.updateStats(merc.id, finalStats);
 
         final staticData = ref.read(staticDataProvider).value;
         if (staticData != null) {
           final candidates = TraitAcquisitionService.checkAcquisitionCandidates(
-            stats: newStats,
+            stats: finalStats,
             currentTraitIds: merc.allTraitIds,
             traitHistory: merc.traitHistory,
             allTraits: staticData.traits,

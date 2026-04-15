@@ -102,4 +102,30 @@ class MercenaryStatService {
     stats['tier_max_visited'] = max(stats['tier_max_visited'] ?? 0, regionTier);
     return stats;
   }
+
+  static Map<String, int> updateStatsForFacilityBenefit(
+    Map<String, int> current, {
+    required Map<String, int> facilities,
+    required bool isFailure,
+    required MercenaryStatus damageStatus,
+  }) {
+    final stats = Map<String, int>.from(current);
+
+    if ((facilities['training'] ?? 0) > 0) {
+      stats['training_benefit_count'] = (stats['training_benefit_count'] ?? 0) + 1;
+    }
+
+    if ((facilities['infirmary'] ?? 0) > 0 && damageStatus == MercenaryStatus.injured) {
+      stats['infirmary_recovery_count'] = (stats['infirmary_recovery_count'] ?? 0) + 1;
+    }
+
+    if ((facilities['field_hospital'] ?? 0) > 0 &&
+        isFailure &&
+        damageStatus != MercenaryStatus.dead &&
+        damageStatus != MercenaryStatus.injured) {
+      stats['field_hospital_benefit_count'] = (stats['field_hospital_benefit_count'] ?? 0) + 1;
+    }
+
+    return stats;
+  }
 }
