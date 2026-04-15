@@ -43,6 +43,7 @@ class SettingsScreen extends ConsumerWidget {
                               ref.read(movementProvider.notifier).recalculateTimers(oldSpeed, speed);
                               ref.read(mercenaryListProvider.notifier).recalculateTimers(oldSpeed, speed);
                               ref.read(userDataProvider.notifier).recalculateConstructionTimer(oldSpeed, speed);
+                              ref.read(userDataProvider.notifier).recalculateInvestigationTimer(oldSpeed, speed);
                             },
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),

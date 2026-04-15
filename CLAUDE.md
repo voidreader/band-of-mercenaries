@@ -58,6 +58,7 @@ band_of_mercenaries/lib/
 │   ├── quest/             # 퀘스트/파견 시스템, QuestCompletionService
 │   ├── facility/          # 시설 시스템 (건설 큐, ConstructionService, 시설 탭 UI)
 │   ├── mercenary/         # 용병 모집/관리, FacilityService, RecruitmentService
+│   ├── investigation/     # 지역 조사 시스템 (InvestigationNotifier, RegionStateRepository, InvestigationWidget)
 │   └── settings/          # 설정 (시간 가속)
 └── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay, StatusBadge)
 ```
@@ -79,6 +80,8 @@ band_of_mercenaries/lib/
 - `activityLogProvider`: 활동 로그 (Hive `activityLogs` 박스, 최대 100개)
 - `currentTabProvider`: 하단 네비게이션 탭 인덱스 (`core/providers/navigation_provider.dart`)
 - `constructionCompletedProvider`: 건설 완료 알림 (`features/facility/domain/construction_completion_provider.dart`)
+- `investigationNotifierProvider`: 지역 조사 시작/완료 로직 (`features/investigation/domain/investigation_notifier.dart`)
+- `investigationCompletedProvider`: 조사 완료 알림 StateProvider<InvestigationResult?> (`features/investigation/domain/investigation_completion_provider.dart`)
 
 ### 데이터 흐름
 
@@ -95,12 +98,12 @@ band_of_mercenaries/lib/
 정적 데이터는 Supabase 서버에서 관리되며, operation-bom 웹앱에서 편집/버전 발행한다. Flutter 앱은 로컬 JSON 캐시(`앱 문서 디렉토리/cache/*.json`)에 저장하여 오프라인에서도 동작한다.
 
 **동기화 방식:**
-- 첫 실행: 서버 연결 필수, 전체 16개 테이블 다운로드
+- 첫 실행: 서버 연결 필수, 전체 17개 테이블 다운로드
 - 이후 실행: `data_versions` 테이블로 버전 비교, 변경된 테이블만 다운로드
 - 서버 연결 실패 시: 로컬 캐시로 오프라인 플레이 가능 (캐시 있는 경우)
 - 싱크 타이밍: 앱 시작 + 포그라운드 복귀
 
-**정적 데이터 테이블 (16개):**
+**정적 데이터 테이블 (17개):**
 - regions: 199개 리전 (5단계 티어)
 - jobs: 5티어 30+ 직업
 - trait_categories: 8개 트레잇 카테고리 (Physical, Background, Talent, CombatStyle, Survival, Behavior, Mental, Experience)
@@ -116,6 +119,7 @@ band_of_mercenaries/lib/
 - facilities: 시설 종류 및 레벨별 비용/효과 (훈련소, 의무실, 주둔지, 정보망)
 - ranks: 명성 등급 (F~A) 및 티어 잠금 해제 조건
 - mercenary_wages: 티어별 용병 인건비
+- region_discoveries: 리전별 발견 데이터 (id TEXT PK, region_id INTEGER, knowledge_threshold INTEGER, discovery_type TEXT, discovery_data JSONB, description TEXT)
 
 **모델 JSON 키 규칙:** 모든 정적 데이터 모델은 snake_case @JsonKey를 사용 (Supabase 컬럼명과 일치). Dart 필드명과 동일한 경우 @JsonKey 생략.
 
@@ -128,9 +132,11 @@ band_of_mercenaries/lib/
 
 ### 영속성
 
-**Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings` 5개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
+**Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings`, `regionStates` 6개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
 - `mercenaries` 박스: Mercenary 모델 — HiveField(4) `str` (int), HiveField(5) `intelligence` (int), HiveField(6) `vit` (int), HiveField(7) `agi` (int, 기존 double speed에서 변환). HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸/삭제 트레잇 기록 → 재획득 방지), HiveField(17) `deletedTraitIds` (List<String>, 삭제된 트레잇 기록 → 히스토리 UI에서 (삭제) 구분 표시). `allTraitIds` getter로 구 traitId 호환. 앱 첫 실행 시 `stat_migration_v2` 플래그(settings 박스)로 일회성 데이터 초기화 수행
 - `user` 박스 건설 큐: HiveField(12) `constructionFacilityId` (String?, 건설 중 시설 ID), HiveField(13) `constructionStartTime` (DateTime?), HiveField(14) `constructionEndTime` (DateTime?)
+- `user` 박스 지역 조사: HiveField(15) `investigatingMercId` (String?, 조사 중 용병 ID), HiveField(16) `investigationEndTime` (DateTime?), HiveField(17) `investigationRegionId` (int?)
+- `regionStates` 박스: RegionState 모델 (typeId:8) — regionId(int), knowledge(int 0~100), triggeredDiscoveries(List<String>). regionId 키로 저장
 - `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
 
 ### 코드 생성
@@ -154,8 +160,9 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **방출**: 파견 중이 아닌 용병을 퇴직금(인건비×레벨) 지급 후 영구 방출. 재모집 불가
 - **퀘스트 갱신**: 대기 중 퀘스트는 1시간(게임 시간)마다 자동 교체. 5개 미만이면 채우기 가능
 - **방치형 보상**: 앱 미접속 시간 기준 분당 1G, 최대 480G(8시간) + 금고 시설 보너스. 실제 시간 기준
-- **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설)의 endTime을 비례 재계산 (개발/테스트용)
-- **이동 제한**: 파견 중인 용병이 있으면 이동 불가
+- **지역 조사**: 용병 1명을 현재 리전에 배치하여 지식 포인트(knowledge 0~100) 누적. 성공률 = `(85 + (AGI+VIT)/200).clamp(5,95)%`. 소요시간 리전 티어별(T1=5분~T5=20분). 지식 임계값 도달 시 `region_discoveries` 발견 자동 트리거. 파견·이동과 독립된 별도 슬롯. `InvestigationNotifier`(StateNotifier<void>)가 완료 처리, 결과는 `investigationCompletedProvider`(StateProvider<InvestigationResult?>)로 전달
+- **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설, 조사)의 endTime을 비례 재계산 (개발/테스트용)
+- **이동 제한**: 파견 중인 용병이 있거나 조사 진행 중이면 이동 불가. 조사 중에도 이동 불가 (양방향 상호 배제)
 
 ## 분석 설정
 

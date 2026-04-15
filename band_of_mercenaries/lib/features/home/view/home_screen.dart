@@ -18,6 +18,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_provider.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
+import 'package:band_of_mercenaries/features/investigation/view/investigation_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -328,6 +329,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             orElse: () => const SizedBox.shrink(),
           ),
 
+        // Investigation mini widget
+        const InvestigationWidget(),
+
         // Dashboard
         staticDataAsync.maybeWhen(
           data: (staticData) => _buildDashboard(mercs, staticData, userData),
@@ -507,6 +511,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case ActivityLogType.traitEvolved: return '⭐';
       case ActivityLogType.traitDeleted: return '🗑';
       case ActivityLogType.facilityUpgrade: return '🏗';
+      case ActivityLogType.investigationSuccess: return '🔍';
+      case ActivityLogType.investigationFailed: return '❌';
+      case ActivityLogType.discoveryFound: return '💎';
     }
   }
 

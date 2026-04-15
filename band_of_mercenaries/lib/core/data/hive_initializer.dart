@@ -4,6 +4,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/core/models/user_data.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_repository.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 
 class HiveInitializer {
   static const String userBoxName = 'user';
@@ -11,6 +12,7 @@ class HiveInitializer {
   static const String questBoxName = 'quests';
   static const String settingsBoxName = 'settings';
   static const String staticDataCacheBoxName = 'staticDataCache';
+  static const String regionStateBoxName = 'regionStates';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -23,6 +25,7 @@ class HiveInitializer {
     Hive.registerAdapter(UserDataAdapter());
     Hive.registerAdapter(ActivityLogTypeAdapter());
     Hive.registerAdapter(ActivityLogAdapter());
+    Hive.registerAdapter(RegionStateAdapter());
 
     await Hive.openBox(settingsBoxName);
     final settingsBox = Hive.box(settingsBoxName);
@@ -37,5 +40,6 @@ class HiveInitializer {
     await Hive.openBox<ActiveQuest>(questBoxName);
     await Hive.openBox<ActivityLog>(ActivityLogRepository.boxName);
     await Hive.openBox<String>(staticDataCacheBoxName);
+    await Hive.openBox<RegionState>(regionStateBoxName);
   }
 }

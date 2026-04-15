@@ -32,13 +32,16 @@ class UserDataAdapter extends TypeAdapter<UserData> {
       constructionFacilityId: fields[12] as String?,
       constructionStartTime: fields[13] as DateTime?,
       constructionEndTime: fields[14] as DateTime?,
+      investigatingMercId: fields[15] as String?,
+      investigationEndTime: fields[16] as DateTime?,
+      investigationRegionId: fields[17] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserData obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.gold)
       ..writeByte(1)
@@ -68,7 +71,13 @@ class UserDataAdapter extends TypeAdapter<UserData> {
       ..writeByte(13)
       ..write(obj.constructionStartTime)
       ..writeByte(14)
-      ..write(obj.constructionEndTime);
+      ..write(obj.constructionEndTime)
+      ..writeByte(15)
+      ..write(obj.investigatingMercId)
+      ..writeByte(16)
+      ..write(obj.investigationEndTime)
+      ..writeByte(17)
+      ..write(obj.investigationRegionId);
   }
 
   @override

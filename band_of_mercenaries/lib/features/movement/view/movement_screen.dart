@@ -49,6 +49,7 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
 
     return staticData.when(
       data: (data) {
+        final isInvestigating = userData.investigatingMercId != null;
         final currentRegion = data.regions.firstWhere((r) => r.region == userData.region);
         final targetRegion = data.regions.firstWhere(
           (r) => r.region == _selectedRegion,
@@ -290,21 +291,41 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                           ),
                         ),
                       ),
+                    if (isInvestigating)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.tier3Bg,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.tier3.withValues(alpha: 0.3)),
+                          ),
+                          child: const Text(
+                            '조사가 진행 중이라 이동할 수 없습니다',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, color: AppTheme.tier3, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: (userData.isMoving || distance == 0 || !isTargetAccessible || hasDispatchedQuests)
+                        onPressed: (userData.isMoving || distance == 0 || !isTargetAccessible || hasDispatchedQuests || isInvestigating)
                             ? null
                             : () {
                                 ref.read(movementProvider.notifier)
                                     .startMovement(_selectedRegion, _selectedSector);
                               },
                         child: Text(
-                          userData.isMoving
-                              ? '이동 중...'
-                              : hasDispatchedQuests
-                                  ? '파견된 용병이 있습니다'
-                                  : '이동 시작',
+                          isInvestigating
+                              ? '조사 진행 중'
+                              : userData.isMoving
+                                  ? '이동 중...'
+                                  : hasDispatchedQuests
+                                      ? '파견된 용병이 있습니다'
+                                      : '이동 시작',
                         ),
                       ),
                     ),

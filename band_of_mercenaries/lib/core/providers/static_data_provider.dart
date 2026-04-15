@@ -18,6 +18,7 @@ import 'package:band_of_mercenaries/core/models/travel_event.dart';
 import 'package:band_of_mercenaries/core/models/facility.dart';
 import 'package:band_of_mercenaries/core/models/rank.dart';
 import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_discovery_data.dart';
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -36,6 +37,7 @@ class StaticGameData {
   final List<Facility> facilities;
   final List<Rank> ranks;
   final List<MercenaryWage> mercenaryWages;
+  final List<RegionDiscoveryData> regionDiscoveries;
 
   const StaticGameData({
     required this.difficulties,
@@ -54,6 +56,7 @@ class StaticGameData {
     required this.facilities,
     required this.ranks,
     required this.mercenaryWages,
+    required this.regionDiscoveries,
   });
 }
 
@@ -78,5 +81,6 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     facilities: dataLoader.loadFromCache('facilities', Facility.fromJson),
     ranks: dataLoader.loadFromCache('ranks', Rank.fromJson),
     mercenaryWages: dataLoader.loadFromCache('mercenary_wages', MercenaryWage.fromJson),
+    regionDiscoveries: dataLoader.loadFromCache('region_discoveries', RegionDiscoveryData.fromJson),
   );
 });

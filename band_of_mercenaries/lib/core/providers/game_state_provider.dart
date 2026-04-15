@@ -26,6 +26,7 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     if (box.isNotEmpty) {
       state = box.getAt(0);
       _checkPastConstruction();
+      _checkPastInvestigation();
     }
   }
 
@@ -34,6 +35,10 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     if (DateTime.now().isAfter(state!.constructionEndTime!)) {
       completeConstruction();
     }
+  }
+
+  void _checkPastInvestigation() {
+    // 실제 완료 처리는 InvestigationNotifier.checkCompletion에서 수행
   }
 
   void refresh() => _load();
@@ -172,5 +177,37 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     if (DateTime.now().isAfter(state!.constructionEndTime!)) {
       completeConstruction();
     }
+  }
+
+  Future<bool> startInvestigation(String mercId, DateTime endTime, int regionId) async {
+    if (state == null || state!.investigatingMercId != null) return false;
+    state!.investigatingMercId = mercId;
+    state!.investigationEndTime = endTime;
+    state!.investigationRegionId = regionId;
+    await state!.save();
+    state = state;
+    return true;
+  }
+
+  Future<void> clearInvestigation() async {
+    if (state == null) return;
+    state!.investigatingMercId = null;
+    state!.investigationEndTime = null;
+    state!.investigationRegionId = null;
+    await state!.save();
+    state = state;
+  }
+
+  void recalculateInvestigationTimer(double oldSpeed, double newSpeed) {
+    if (state == null || state!.investigationEndTime == null) return;
+    final now = DateTime.now();
+    final remaining = state!.investigationEndTime!.difference(now);
+    if (remaining.isNegative) return;
+    final adjustedRemaining = Duration(
+      milliseconds: (remaining.inMilliseconds * oldSpeed / newSpeed).round(),
+    );
+    state!.investigationEndTime = now.add(adjustedRemaining);
+    state!.save();
+    state = state;
   }
 }

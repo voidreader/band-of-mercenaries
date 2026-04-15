@@ -15,6 +15,11 @@ import 'package:band_of_mercenaries/features/mercenary/view/recruit_screen.dart'
 import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart';
 import 'package:band_of_mercenaries/features/facility/view/facility_tab_screen.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_completion_provider.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/investigation_notifier.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/investigation_completion_provider.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/investigation_result.dart';
+import 'package:band_of_mercenaries/features/investigation/view/investigation_widget.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/providers/mercenary_detail_provider.dart';
@@ -126,6 +131,7 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
 
     ref.listen(gameTickProvider, (prev, next) {
       ref.read(userDataProvider.notifier).checkConstructionCompletion();
+      ref.read(investigationNotifierProvider.notifier).checkCompletion();
     });
 
     ref.listen<String?>(constructionCompletedProvider, (_, next) {
@@ -159,6 +165,21 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
             ],
           ),
         );
+      });
+    });
+
+    ref.listen<InvestigationResult?>(investigationCompletedProvider, (_, next) {
+      if (next == null) return;
+      final mercs = ref.read(mercenaryListProvider);
+      final mercName = mercs.where((m) => m.id == next.mercId).firstOrNull?.name ?? next.mercId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => InvestigationResultDialog(result: next, mercName: mercName),
+        ).then((_) {
+          ref.read(investigationCompletedProvider.notifier).state = null;
+        });
       });
     });
 

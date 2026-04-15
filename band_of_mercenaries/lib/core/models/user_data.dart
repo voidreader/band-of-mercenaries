@@ -49,6 +49,15 @@ class UserData extends HiveObject {
   @HiveField(14)
   DateTime? constructionEndTime;
 
+  @HiveField(15)
+  String? investigatingMercId;
+
+  @HiveField(16)
+  DateTime? investigationEndTime;
+
+  @HiveField(17)
+  int? investigationRegionId;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -65,6 +74,9 @@ class UserData extends HiveObject {
     this.constructionFacilityId,
     this.constructionStartTime,
     this.constructionEndTime,
+    this.investigatingMercId,
+    this.investigationEndTime,
+    this.investigationRegionId,
   }) : facilities = facilities ?? {};
 
   static int calculateDistance(

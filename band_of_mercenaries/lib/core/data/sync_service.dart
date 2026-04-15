@@ -32,6 +32,7 @@ class SyncService {
     'facilities',
     'ranks',
     'mercenary_wages',
+    'region_discoveries',
   ];
 
   SyncService({

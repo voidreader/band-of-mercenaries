@@ -24,6 +24,12 @@ enum ActivityLogType {
   traitDeleted,
   @HiveField(9)
   facilityUpgrade,
+  @HiveField(10)
+  investigationSuccess,
+  @HiveField(11)
+  investigationFailed,
+  @HiveField(12)
+  discoveryFound,
 }
 
 @HiveType(typeId: 7)

@@ -73,6 +73,7 @@ class MovementNotifier extends StateNotifier<MovementState?> {
   Future<void> startMovement(int targetRegion, int targetSector) async {
     final userData = ref.read(userDataProvider);
     if (userData == null || userData.isMoving) return;
+    if (userData.investigatingMercId != null) return;
 
     final staticData = ref.read(staticDataProvider).value;
     if (staticData == null) return;

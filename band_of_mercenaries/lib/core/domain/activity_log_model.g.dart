@@ -73,6 +73,12 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.traitDeleted;
       case 9:
         return ActivityLogType.facilityUpgrade;
+      case 10:
+        return ActivityLogType.investigationSuccess;
+      case 11:
+        return ActivityLogType.investigationFailed;
+      case 12:
+        return ActivityLogType.discoveryFound;
       default:
         return ActivityLogType.questResult;
     }
@@ -110,6 +116,15 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.facilityUpgrade:
         writer.writeByte(9);
+        break;
+      case ActivityLogType.investigationSuccess:
+        writer.writeByte(10);
+        break;
+      case ActivityLogType.investigationFailed:
+        writer.writeByte(11);
+        break;
+      case ActivityLogType.discoveryFound:
+        writer.writeByte(12);
         break;
     }
   }

@@ -41,9 +41,10 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
           orElse: () => data.difficulties.first,
         );
 
-        // Filter mercenaries: exclude dead and dispatched
         final availableMercs = mercs.where((m) =>
-          m.status != MercenaryStatus.dead && !m.isDispatched
+          m.status != MercenaryStatus.dead &&
+          !m.isDispatched &&
+          m.id != userData.investigatingMercId
         ).toList();
 
         final selectedMercs = mercs.where((m) => _selectedMercIds.contains(m.id)).toList();
