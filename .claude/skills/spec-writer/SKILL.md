@@ -67,11 +67,11 @@ Recommended Model : Claude Sonnet
 
 ### 파일명 규칙
 
-`[spec] {날짜}_{주제}.md`
+`[spec]{날짜}_{주제}.md`
 - 날짜: YYYYMMDD (오늘 날짜)
 - 주제: kebab-case
 
-예: `[spec] 20260323_quest-system.md`
+예: `[spec]20260323_quest-system.md`
 
 ### 명세서 형식
 

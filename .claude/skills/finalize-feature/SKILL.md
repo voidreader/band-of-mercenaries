@@ -26,7 +26,7 @@ Recommended Model : Claude Sonnet
 다음 우선순위로 scope를 결정한다:
 
 1. `Docs/spec/` 에서 `{specBase}_plan.md` 파일을 찾아 명세서 이름에서 scope 추출
-2. plan 파일이 없으면 `Docs/spec/` 의 명세서 파일명에서 추출 (예: `[spec] 20260305_feature_name.md`)
+2. plan 파일이 없으면 `Docs/spec/` 의 명세서 파일명에서 추출 (예: `[spec]20260305_feature_name.md`)
 
 ### 3. 커밋 메시지 생성
 
@@ -114,8 +114,8 @@ Docs/Archive/{날짜_주제}/
 **6-1. 대상 파일 수집**
 
 `Docs/spec/` 에서 명세서와 plan 파일을 찾는다:
-- `[spec] {날짜}_{주제}.md` — 명세서
-- `[spec] {날짜}_{주제}_plan.md` — 구현 계획 문서
+- `[spec]{날짜}_{주제}.md` — 명세서
+- `[spec]{날짜}_{주제}_plan.md` — 구현 계획 문서
 
 명세서 파일을 Read로 읽어 frontmatter에서 기획서 경로를 확인한다:
 - `> 기획 문서: {경로}` 라인을 파싱하여 기획서 파일 경로를 추출한다.
@@ -124,8 +124,8 @@ Docs/Archive/{날짜_주제}/
 
 **6-2. 아카이브 폴더명 결정**
 
-`{specBase}`에서 `[spec] ` prefix를 제거한 값을 폴더명으로 사용한다.
-- 예: `[spec] 20260318_quest-system` → 폴더명 `20260318_quest-system`
+`{specBase}`에서 `[spec]` prefix를 제거한 값을 폴더명으로 사용한다.
+- 예: `[spec]20260318_quest-system` → 폴더명 `20260318_quest-system`
 
 **6-3. 아카이브 수행**
 

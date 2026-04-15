@@ -10,7 +10,7 @@ Recommended Model : Claude Opus
 
 - `spec-pipeline` 오케스트레이터에서 Opus sub-agent로 자동 호출된다.
 - 명세서를 단독으로 재검증할 때 직접 호출할 수 있다.
-- 호출 예: `/verify-spec @Docs/content-design/[content] 20260414_plan.md @Docs/spec/[spec] 20260414_spec.md`
+- 호출 예: `/verify-spec @Docs/content-design/[content]20260414_plan.md @Docs/spec/[spec]20260414_spec.md`
 
 ## Instructions
 

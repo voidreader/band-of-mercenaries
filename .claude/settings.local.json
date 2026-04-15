@@ -86,7 +86,8 @@
       "Bash(ls /Users/radiogaga/git/band-of-mercenaries/Docs/*.md)",
       "mcp__plugin_supabase_supabase__execute_sql",
       "Bash(ls:*)",
-      "mcp__plugin_supabase_supabase__apply_migration"
+      "mcp__plugin_supabase_supabase__apply_migration",
+      "Bash(grep -E \"\\\\.\\(py|ts|js\\)$\")"
     ]
   }
 }

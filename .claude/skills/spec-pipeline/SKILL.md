@@ -10,7 +10,7 @@ Recommended Model : Claude Sonnet
 
 - 자동으로 사용되지 않도록 한다.
 - 기획 문서가 완성된 후 명세서 작성부터 검증까지 한 번에 진행할 때 사용한다.
-- 호출 예: `/spec-pipeline @Docs/content-design/[content] 20260414_facility_system_design.md`
+- 호출 예: `/spec-pipeline @Docs/content-design/[content]20260414_facility_system_design.md`
 
 ## Instructions
 
