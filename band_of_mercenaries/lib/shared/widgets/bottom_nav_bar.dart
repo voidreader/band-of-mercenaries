@@ -18,7 +18,7 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(icon: Text('🏕', style: TextStyle(fontSize: 22)), label: '홈'),
         BottomNavigationBarItem(icon: Text('👥', style: TextStyle(fontSize: 22)), label: '모집'),
         BottomNavigationBarItem(icon: Text('🏗', style: TextStyle(fontSize: 22)), label: '시설'),
-        BottomNavigationBarItem(icon: Text('⚙', style: TextStyle(fontSize: 22)), label: '설정'),
+        BottomNavigationBarItem(icon: Text('📋', style: TextStyle(fontSize: 22)), label: '정보'),
       ],
     );
   }

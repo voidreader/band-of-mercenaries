@@ -12,7 +12,7 @@ import 'package:band_of_mercenaries/features/home/view/home_screen.dart';
 import 'package:band_of_mercenaries/features/movement/view/movement_screen.dart';
 import 'package:band_of_mercenaries/features/quest/view/dispatch_screen.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/recruit_screen.dart';
-import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart';
+import 'package:band_of_mercenaries/features/info/view/info_screen.dart';
 import 'package:band_of_mercenaries/features/facility/view/facility_tab_screen.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_completion_provider.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_notifier.dart';
@@ -81,7 +81,7 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
     HomeScreen(),
     RecruitScreen(),
     FacilityTabScreen(),
-    SettingsScreen(),
+    InfoScreen(),
   ];
 
   @override

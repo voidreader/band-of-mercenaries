@@ -1,3 +1,5 @@
+import 'package:band_of_mercenaries/features/info/domain/faction_clue_result.dart';
+
 class InvestigationResult {
   final bool success;
   final int regionId;
@@ -6,6 +8,7 @@ class InvestigationResult {
   final List<String> newDiscoveryIds;
   final bool mercInjured;
   final String mercId;
+  final List<FactionClueResult> factionClues;
 
   const InvestigationResult({
     required this.success,
@@ -15,5 +18,6 @@ class InvestigationResult {
     required this.newDiscoveryIds,
     required this.mercInjured,
     required this.mercId,
+    this.factionClues = const [],
   });
 }

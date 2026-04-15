@@ -59,6 +59,7 @@ band_of_mercenaries/lib/
 │   ├── facility/          # 시설 시스템 (건설 큐, ConstructionService, 시설 탭 UI)
 │   ├── mercenary/         # 용병 모집/관리, FacilityService, RecruitmentService
 │   ├── investigation/     # 지역 조사 시스템 (InvestigationNotifier, RegionStateRepository, InvestigationWidget)
+│   ├── info/              # 정보 탭 (InfoScreen, FactionCodexScreen, FactionDetailScreen, FactionStateRepository)
 │   └── settings/          # 설정 (시간 가속)
 └── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay, StatusBadge)
 ```
@@ -82,6 +83,9 @@ band_of_mercenaries/lib/
 - `constructionCompletedProvider`: 건설 완료 알림 (`features/facility/domain/construction_completion_provider.dart`)
 - `investigationNotifierProvider`: 지역 조사 시작/완료 로직 (`features/investigation/domain/investigation_notifier.dart`)
 - `investigationCompletedProvider`: 조사 완료 알림 StateProvider<InvestigationResult?> (`features/investigation/domain/investigation_completion_provider.dart`)
+- `factionStateRepositoryProvider`: FactionStateRepository 인스턴스 (`features/info/data/faction_state_repository.dart`)
+- `factionListProvider`: staticDataProvider의 factions를 동기 제공하는 Provider<List<FactionData>> (`features/info/domain/faction_codex_providers.dart`)
+- `factionCodexScrollTargetProvider`: 조사 완료 팝업 → 세력 도감 자동 스크롤용 StateProvider<String?> (`features/info/domain/faction_codex_providers.dart`)
 
 ### 데이터 흐름
 
@@ -98,12 +102,12 @@ band_of_mercenaries/lib/
 정적 데이터는 Supabase 서버에서 관리되며, operation-bom 웹앱에서 편집/버전 발행한다. Flutter 앱은 로컬 JSON 캐시(`앱 문서 디렉토리/cache/*.json`)에 저장하여 오프라인에서도 동작한다.
 
 **동기화 방식:**
-- 첫 실행: 서버 연결 필수, 전체 17개 테이블 다운로드
+- 첫 실행: 서버 연결 필수, 전체 18개 테이블 다운로드
 - 이후 실행: `data_versions` 테이블로 버전 비교, 변경된 테이블만 다운로드
 - 서버 연결 실패 시: 로컬 캐시로 오프라인 플레이 가능 (캐시 있는 경우)
 - 싱크 타이밍: 앱 시작 + 포그라운드 복귀
 
-**정적 데이터 테이블 (17개):**
+**정적 데이터 테이블 (18개):**
 - regions: 199개 리전 (5단계 티어)
 - jobs: 5티어 30+ 직업
 - trait_categories: 8개 트레잇 카테고리 (Physical, Background, Talent, CombatStyle, Survival, Behavior, Mental, Experience)
@@ -120,6 +124,7 @@ band_of_mercenaries/lib/
 - ranks: 명성 등급 (F~A) 및 티어 잠금 해제 조건
 - mercenary_wages: 티어별 용병 인건비
 - region_discoveries: 리전별 발견 데이터 (id TEXT PK, region_id INTEGER, knowledge_threshold INTEGER, discovery_type TEXT, discovery_data JSONB, description TEXT)
+- factions: 세력 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, philosophy TEXT, tier_range JSONB, color TEXT)
 
 **모델 JSON 키 규칙:** 모든 정적 데이터 모델은 snake_case @JsonKey를 사용 (Supabase 컬럼명과 일치). Dart 필드명과 동일한 경우 @JsonKey 생략.
 
@@ -137,6 +142,7 @@ band_of_mercenaries/lib/
 - `user` 박스 건설 큐: HiveField(12) `constructionFacilityId` (String?, 건설 중 시설 ID), HiveField(13) `constructionStartTime` (DateTime?), HiveField(14) `constructionEndTime` (DateTime?)
 - `user` 박스 지역 조사: HiveField(15) `investigatingMercId` (String?, 조사 중 용병 ID), HiveField(16) `investigationEndTime` (DateTime?), HiveField(17) `investigationRegionId` (int?)
 - `regionStates` 박스: RegionState 모델 (typeId:8) — regionId(int), knowledge(int 0~100), triggeredDiscoveries(List<String>). regionId 키로 저장
+- `factionStates` 박스: FactionState 모델 (typeId:9) — factionId(String), clueRecords(List<FactionClueRecord>). `discoveredInRegions` getter로 고유 리전 ID 계산. FactionClueRecord(typeId:10) — factionId, regionId, discoveryId, foundAt. `FactionStateRepository`로 CRUD
 - `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
 
 ### 코드 생성
@@ -163,6 +169,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **지역 조사**: 용병 1명을 현재 리전에 배치하여 지식 포인트(knowledge 0~100) 누적. 성공률 = `(85 + (AGI+VIT)/200).clamp(5,95)%`. 소요시간 리전 티어별(T1=5분~T5=20분). 지식 임계값 도달 시 `region_discoveries` 발견 자동 트리거. 파견·이동과 독립된 별도 슬롯. `InvestigationNotifier`(StateNotifier<void>)가 완료 처리, 결과는 `investigationCompletedProvider`(StateProvider<InvestigationResult?>)로 전달
 - **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설, 조사)의 endTime을 비례 재계산 (개발/테스트용)
 - **이동 제한**: 파견 중인 용병이 있거나 조사 진행 중이면 이동 불가. 조사 중에도 이동 불가 (양방향 상호 배제)
+- **세력 발견**: 지역 조사 완료 시 `region_discoveries`의 `discovery_type == 'faction_clue'` 항목이 트리거되면 세력 단서를 발견. `discovery_data` JSON에서 `faction_id`, `clue_level`(1~3), `clue_text` 추출 → `FactionStateRepository.processClue()`로 Hive 저장. 동일 discoveryId 중복 발견 시 기록만 추가(maxClueLevel 유지). clue_level별 활동 로그: level1 "세력 단서 발견", level2 "세력 발견: {name}의 정체를 파악했다", level3 "거점 발견: {name}의 전초기지 위치를 파악했다". 조사 완료 팝업에 인라인 표시 + "도감에서 확인" 버튼으로 정보 탭 → 세력 도감 자동 이동
 
 ## 분석 설정
 
@@ -173,8 +180,10 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - 한국어 텍스트 (국제화 미적용)
 - Material 3 다크 프라이머리 테마
 - 티어별 색상: 회색(1) → 초록(2) → 파랑(3) → 보라(4) → 빨강(5)
-- 하단 6탭: 이동 / 파견 / 홈 / 모집 / 시설 / 설정
+- 하단 6탭: 이동 / 파견 / 홈 / 모집 / 시설 / 정보
 - 웹: `_MobileFrame`에서 `ConstrainedBox(maxWidth: 430)`으로 모바일 해상도 제한. 새 화면 전환 시 `Navigator.push` 대신 상태 기반 렌더링 사용 (Navigator가 ConstrainedBox 바깥으로 빠져나가는 문제 방지)
 - 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼)
 - 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장. 이후 트레잇 획득 알림 → 진화 선택 팝업 순서로 체이닝
 - 용병 상세 오버레이: `selectedMercenaryIdProvider`로 앱 레벨 전체화면 오버레이. 용병 카드 탭 → 프로필/트레잇 슬롯(TraitSlotGrid)/행동 지표(BehaviorStatsSection)/히스토리(TraitHistorySection) 단일 스크롤. 트레잇 탭 → TraitDetailDialog (효과, 진화 경로 진행도, 시너지, 충돌)
+- 설정 화면: 홈 탭 상단 우측 `Icons.settings` 아이콘 버튼 탭 → `_showSettings` 상태 변수로 상태 기반 렌더링 (탭 6번째 자리 → 정보 탭으로 대체됨)
+- 정보 탭 (`InfoScreen`): 세력 도감(`FactionCodexScreen`) 진입 허브. `_showCodex`/`_selectedFactionId` 상태 변수로 화면 전환. `factionCodexScrollTargetProvider` non-null 감지 시 자동으로 도감 화면으로 전환

@@ -57,6 +57,7 @@ StaticGameData _makeStaticData({
       const MercenaryWage(tier: 1, wage: 10),
     ],
     regionDiscoveries: const [],
+    factions: const [],
   );
 }
 

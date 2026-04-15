@@ -19,6 +19,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_provider.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 import 'package:band_of_mercenaries/features/investigation/view/investigation_widget.dart';
+import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -31,6 +32,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _wasMoving = false;
   bool _isShowingQuestResult = false;
   final Set<String> _shownQuestResultIds = {};
+  bool _showSettings = false;
 
   Future<void> _showQuestResult(ActiveQuest quest) async {
     await showDialog<void>(
@@ -162,6 +164,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     if (userData == null) return const Center(child: CircularProgressIndicator());
 
+    if (_showSettings) {
+      return Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: const BoxDecoration(
+              color: AppTheme.surface,
+              border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  onPressed: () => setState(() => _showSettings = false),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 8),
+                const Text('설정', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+          const Expanded(child: SettingsScreen()),
+        ],
+      );
+    }
+
     final inProgressQuests = quests.where((q) => q.status == QuestStatus.inProgress).toList();
     final aliveMercs = mercs.where((m) => m.status != MercenaryStatus.dead).length;
 
@@ -178,8 +207,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('💰 ${userData.gold}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              Text('대륙 ${userData.continent} : 지역 ${userData.region} : 섹터 ${userData.sector}',
-                  style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary)),
+              Row(
+                children: [
+                  Text('대륙 ${userData.continent} : 지역 ${userData.region} : 섹터 ${userData.sector}',
+                      style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary)),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.settings, size: 18),
+                    onPressed: () => setState(() => _showSettings = true),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

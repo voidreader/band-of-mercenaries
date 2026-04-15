@@ -9,6 +9,8 @@ import 'package:band_of_mercenaries/features/investigation/data/region_state_rep
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_notifier.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_result.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_service.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
+import 'package:band_of_mercenaries/core/providers/navigation_provider.dart';
 
 class InvestigationWidget extends ConsumerWidget {
   const InvestigationWidget({super.key});
@@ -354,7 +356,7 @@ class _MercenarySelectSheet extends ConsumerWidget {
   }
 }
 
-class InvestigationResultDialog extends StatelessWidget {
+class InvestigationResultDialog extends ConsumerWidget {
   final InvestigationResult result;
   final String mercName;
 
@@ -365,7 +367,7 @@ class InvestigationResultDialog extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AlertDialog(
       title: Text(
         result.success ? '조사 완료' : '조사 실패',
@@ -376,8 +378,20 @@ class InvestigationResultDialog extends StatelessWidget {
       ),
       content: _DialogContent(result: result, mercName: mercName),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
+        if (result.factionClues.isNotEmpty)
+          TextButton(
+            onPressed: () {
+              ref.read(factionCodexScrollTargetProvider.notifier).state =
+                  result.factionClues.first.factionId;
+              ref.read(currentTabProvider.notifier).state = 5;
+              Navigator.pop(context);
+            },
+            child: const Text('도감에서 확인'),
+          ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
           child: const Text('확인'),
         ),
       ],
@@ -463,6 +477,23 @@ class _DialogContent extends ConsumerWidget {
             ),
           ),
         ),
+        if (result.factionClues.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            '새로운 단서 발견!',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.tier4,
+            ),
+          ),
+          ...result.factionClues.map((clue) => Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '• ${clue.factionName ?? "(알 수 없는 세력)"}: ${clue.clueText}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          )),
+        ],
       ],
     );
   }

@@ -5,6 +5,7 @@ import 'package:band_of_mercenaries/core/models/user_data.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 
 class HiveInitializer {
   static const String userBoxName = 'user';
@@ -13,6 +14,7 @@ class HiveInitializer {
   static const String settingsBoxName = 'settings';
   static const String staticDataCacheBoxName = 'staticDataCache';
   static const String regionStateBoxName = 'regionStates';
+  static const String factionStateBoxName = 'factionStates';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -26,6 +28,8 @@ class HiveInitializer {
     Hive.registerAdapter(ActivityLogTypeAdapter());
     Hive.registerAdapter(ActivityLogAdapter());
     Hive.registerAdapter(RegionStateAdapter());
+    Hive.registerAdapter(FactionClueRecordAdapter());
+    Hive.registerAdapter(FactionStateAdapter());
 
     await Hive.openBox(settingsBoxName);
     final settingsBox = Hive.box(settingsBoxName);
@@ -41,5 +45,6 @@ class HiveInitializer {
     await Hive.openBox<ActivityLog>(ActivityLogRepository.boxName);
     await Hive.openBox<String>(staticDataCacheBoxName);
     await Hive.openBox<RegionState>(regionStateBoxName);
+    await Hive.openBox<FactionState>(factionStateBoxName);
   }
 }

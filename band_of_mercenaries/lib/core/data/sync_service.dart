@@ -33,6 +33,7 @@ class SyncService {
     'ranks',
     'mercenary_wages',
     'region_discoveries',
+    'factions',
   ];
 
   SyncService({

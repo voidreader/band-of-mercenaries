@@ -11,6 +11,8 @@ import 'package:band_of_mercenaries/features/investigation/data/region_state_rep
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_service.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_result.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_completion_provider.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_clue_result.dart';
 
 final investigationNotifierProvider = StateNotifierProvider<InvestigationNotifier, void>(
   (ref) => InvestigationNotifier(ref),
@@ -110,7 +112,62 @@ class InvestigationNotifier extends StateNotifier<void> {
         '${merc.name} — 조사 완료 (지식 +$gain)',
         ActivityLogType.investigationSuccess,
       );
+
+      final factionClueResults = <FactionClueResult>[];
+      final factionRepo = _ref.read(factionStateRepositoryProvider);
+      final staticDataForFaction = _ref.read(staticDataProvider).value;
+
       for (final d in newlyTriggered) {
+        if (d.discoveryType == 'faction_clue') {
+          final factionId = d.discoveryData?['faction_id'] as String?;
+          final clueLevel = d.discoveryData?['clue_level'] as int?;
+          final clueText = d.discoveryData?['clue_text'] as String?;
+          if (factionId == null || clueLevel == null || clueText == null) continue;
+
+          final factionName = staticDataForFaction?.factions
+              .where((f) => f.id == factionId)
+              .firstOrNull
+              ?.name;
+
+          final isNew = await factionRepo.processClue(
+            factionId: factionId,
+            regionId: regionId,
+            discoveryId: d.id,
+            foundAt: DateTime.now(),
+          );
+
+          factionClueResults.add(FactionClueResult(
+            factionId: factionId,
+            factionName: factionName,
+            clueLevel: clueLevel,
+            clueText: clueText,
+            regionId: regionId,
+            discoveryId: d.id,
+          ));
+
+          if (isNew) {
+            String logMessage;
+            switch (clueLevel) {
+              case 1:
+                logMessage = '세력 단서 발견: $clueText';
+                break;
+              case 2:
+                logMessage = '세력 발견: ${factionName ?? "(알 수 없는 세력)"}의 정체를 파악했다';
+                break;
+              case 3:
+                logMessage = '거점 발견: ${factionName ?? "(알 수 없는 세력)"}의 전초기지 위치를 파악했다';
+                break;
+              default:
+                logMessage = '세력 단서 발견: $clueText';
+            }
+            _ref.read(activityLogProvider.notifier).addLog(
+              logMessage,
+              ActivityLogType.discoveryFound,
+            );
+          }
+          continue;
+        }
+
         _ref.read(activityLogProvider.notifier).addLog(
           '발견: ${d.description}',
           ActivityLogType.discoveryFound,
@@ -125,6 +182,7 @@ class InvestigationNotifier extends StateNotifier<void> {
         newDiscoveryIds: newlyTriggered.map((d) => d.id).toList(),
         mercInjured: false,
         mercId: mercId,
+        factionClues: factionClueResults,
       );
     } else {
       final injuryChance = InvestigationService.getInjuryChance(tier);
@@ -159,6 +217,7 @@ class InvestigationNotifier extends StateNotifier<void> {
         newDiscoveryIds: [],
         mercInjured: injured,
         mercId: mercId,
+        factionClues: const [],
       );
     }
 
