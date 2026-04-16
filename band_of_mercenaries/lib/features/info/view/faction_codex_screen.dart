@@ -1,5 +1,5 @@
+// band_of_mercenaries/lib/features/info/view/faction_codex_screen.dart
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
@@ -19,7 +19,8 @@ class FactionCodexScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<FactionCodexScreen> createState() => _FactionCodexScreenState();
+  ConsumerState<FactionCodexScreen> createState() =>
+      _FactionCodexScreenState();
 }
 
 class _FactionCodexScreenState extends ConsumerState<FactionCodexScreen> {
@@ -29,31 +30,33 @@ class _FactionCodexScreenState extends ConsumerState<FactionCodexScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final targetId = ref.read(factionCodexScrollTargetProvider);
-      if (targetId == null) return;
-
-      final factions = ref.read(factionListProvider);
-      final repo = ref.read(factionStateRepositoryProvider);
-      final allStates = repo.getAll();
-
-      final sortedFactions = _sortedFactions(factions, allStates);
-      final index = sortedFactions.indexWhere((f) => f.id == targetId);
-      if (index < 0) return;
-
-      // 카드 높이(약 76px) + 구분선 기준 대략적인 오프셋 계산
-      const itemHeight = 76.0;
-      final offset = (index * itemHeight).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      );
-      _scrollController.animateTo(
-        offset,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-
-      ref.read(factionCodexScrollTargetProvider.notifier).state = null;
+      _maybeScrollToTarget();
     });
+  }
+
+  void _maybeScrollToTarget() {
+    final targetId = ref.read(factionCodexScrollTargetProvider);
+    if (targetId == null) return;
+
+    final factions = ref.read(factionListProvider);
+    final repo = ref.read(factionStateRepositoryProvider);
+    final allStates = repo.getAll();
+    final stateMap = _buildStateMap(allStates);
+    final sorted = _sortedFactions(factions, stateMap);
+    final index = sorted.indexWhere((f) => f.id == targetId);
+    if (index < 0) return;
+
+    const itemHeight = 76.0;
+    final offset = (index * itemHeight).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+    ref.read(factionCodexScrollTargetProvider.notifier).state = null;
   }
 
   @override
@@ -62,42 +65,45 @@ class _FactionCodexScreenState extends ConsumerState<FactionCodexScreen> {
     super.dispose();
   }
 
-  int _maxClueLevel(FactionState? state) {
-    if (state == null || state.clueRecords.isEmpty) return 0;
-    final uniqueCount =
-        state.clueRecords.map((r) => r.discoveryId).toSet().length;
-    return min(3, uniqueCount);
+  Map<String, FactionState> _buildStateMap(List<FactionState> states) {
+    return {for (final s in states) s.factionId: s};
+  }
+
+  int _displayClueLevel(FactionData faction, FactionState? state) {
+    if (faction.visibilityType == 'public') {
+      // 공개 세력: 최소 level 1 (이름 항상 노출)
+      return max(1, state?.maxClueLevel ?? 0);
+    }
+    return state?.maxClueLevel ?? 0;
   }
 
   List<FactionData> _sortedFactions(
     List<FactionData> factions,
-    List<FactionState> allStates,
+    Map<String, FactionState> stateMap,
   ) {
-    final stateMap = <String, FactionState>{};
-    for (final s in allStates) {
-      stateMap[s.factionId] = s;
-    }
-
+    final publicFactions = <FactionData>[];
     final discovered = <FactionData>[];
     final undiscovered = <FactionData>[];
 
     for (final f in factions) {
       final state = stateMap[f.id];
-      if (state != null && state.clueRecords.isNotEmpty) {
+      if (f.visibilityType == 'public') {
+        publicFactions.add(f);
+      } else if (state != null && state.clueRecords.isNotEmpty) {
         discovered.add(f);
       } else {
         undiscovered.add(f);
       }
     }
 
-    // 발견된 세력: maxClueLevel 내림차순 정렬
+    // 발견된 비밀/지역 세력: clueLevel 내림차순
     discovered.sort((a, b) {
-      final aLevel = _maxClueLevel(stateMap[a.id]);
-      final bLevel = _maxClueLevel(stateMap[b.id]);
+      final aLevel = stateMap[a.id]?.maxClueLevel ?? 0;
+      final bLevel = stateMap[b.id]?.maxClueLevel ?? 0;
       return bLevel.compareTo(aLevel);
     });
 
-    return [...discovered, ...undiscovered];
+    return [...publicFactions, ...discovered, ...undiscovered];
   }
 
   Color _parseFactionColor(String hex) {
@@ -115,26 +121,23 @@ class _FactionCodexScreenState extends ConsumerState<FactionCodexScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // factionRefreshProvider를 watch해서 join/leave 후 자동 갱신
+    ref.watch(factionRefreshProvider);
+
     final factions = ref.watch(factionListProvider);
     final repo = ref.read(factionStateRepositoryProvider);
     final allStates = repo.getAll();
+    final stateMap = _buildStateMap(allStates);
+    final sorted = _sortedFactions(factions, stateMap);
 
-    final stateMap = <String, FactionState>{};
-    for (final s in allStates) {
-      stateMap[s.factionId] = s;
-    }
-
-    final sortedFactions = _sortedFactions(factions, allStates);
-    final discoveredCount =
-        sortedFactions.where((f) {
-          final state = stateMap[f.id];
-          return state != null && state.clueRecords.isNotEmpty;
-        }).length;
-    final hasUndiscovered = factions.length > discoveredCount;
+    final hasUndiscovered = factions.any((f) {
+      if (f.visibilityType == 'public') return false;
+      final state = stateMap[f.id];
+      return state == null || state.clueRecords.isEmpty;
+    });
 
     return Column(
       children: [
-        // 상단 바
         Container(
           color: AppTheme.surface,
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -158,30 +161,27 @@ class _FactionCodexScreenState extends ConsumerState<FactionCodexScreen> {
           ),
         ),
         const Divider(height: 1, color: AppTheme.border),
-        // 세력 카드 리스트
         Expanded(
           child: ListView.separated(
             controller: _scrollController,
             padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: sortedFactions.length + (hasUndiscovered ? 1 : 0),
+            itemCount: sorted.length + (hasUndiscovered ? 1 : 0),
             separatorBuilder: (context, index) =>
                 const Divider(height: 1, color: AppTheme.borderLight),
             itemBuilder: (context, index) {
-              // 미발견 행 (리스트 맨 마지막)
-              if (hasUndiscovered && index == sortedFactions.length) {
+              if (hasUndiscovered && index == sorted.length) {
                 return _UnknownFactionRow();
               }
-
-              final faction = sortedFactions[index];
+              final faction = sorted[index];
               final state = stateMap[faction.id];
-              final clueLevel = _maxClueLevel(state);
-              final isDiscovered = clueLevel > 0;
+              final clueLevel = _displayClueLevel(faction, state);
+              final joined = state?.isJoined ?? false;
 
               return _FactionCard(
                 faction: faction,
                 clueLevel: clueLevel,
-                isDiscovered: isDiscovered,
-                factionColor: isDiscovered
+                joined: joined,
+                factionColor: clueLevel >= 1
                     ? _parseFactionColor(faction.color)
                     : Colors.grey,
                 onTap: () => widget.onSelectFaction(faction.id),
@@ -197,14 +197,14 @@ class _FactionCodexScreenState extends ConsumerState<FactionCodexScreen> {
 class _FactionCard extends StatelessWidget {
   final FactionData faction;
   final int clueLevel;
-  final bool isDiscovered;
+  final bool joined;
   final Color factionColor;
   final VoidCallback onTap;
 
   const _FactionCard({
     required this.faction,
     required this.clueLevel,
-    required this.isDiscovered,
+    required this.joined,
     required this.factionColor,
     required this.onTap,
   });
@@ -218,7 +218,6 @@ class _FactionCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 좌측 어센트 바
             Container(
               width: 4,
               height: 44,
@@ -228,14 +227,12 @@ class _FactionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // 정보 영역
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      // 세력 이름
                       Expanded(
                         child: Text(
                           clueLevel >= 1 ? faction.name : '???',
@@ -248,12 +245,30 @@ class _FactionCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // 별 3개 진행도
-                      _StarProgress(clueLevel: clueLevel),
+                      if (joined)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: factionColor.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                                color: factionColor.withValues(alpha: 0.5)),
+                          ),
+                          child: Text(
+                            '가입',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: factionColor,
+                            ),
+                          ),
+                        )
+                      else
+                        _StarProgress(clueLevel: clueLevel),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // 설명
                   Text(
                     clueLevel >= 2 ? faction.description : '???',
                     style: const TextStyle(
@@ -267,11 +282,8 @@ class _FactionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(
-              Icons.chevron_right,
-              color: AppTheme.textHint,
-              size: 20,
-            ),
+            const Icon(Icons.chevron_right,
+                color: AppTheme.textHint, size: 20),
           ],
         ),
       ),
@@ -281,7 +293,6 @@ class _FactionCard extends StatelessWidget {
 
 class _StarProgress extends StatelessWidget {
   final int clueLevel;
-
   const _StarProgress({required this.clueLevel});
 
   @override
