@@ -230,7 +230,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     );
 
     // Trait event popups
-    if (mounted) {
+    if (context.mounted) {
       final events = ref.read(pendingTraitEventsProvider)[quest.id];
       if (events != null) {
         await _showTraitEvents(context, ref, events);
@@ -244,7 +244,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     ref.read(questListProvider.notifier).clearCompleted(quest.id);
     _isShowingResult = false;
     // 다음 완료된 퀘스트가 있으면 표시
-    if (mounted) {
+    if (context.mounted) {
       final quests = ref.read(questListProvider);
       final nextCompleted = quests.where(
         (q) => q.status == QuestStatus.completed && !_shownResultIds.contains(q.id),
@@ -271,12 +271,12 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
       final mercId = entry.key;
       final event = entry.value;
       final merc = mercs.where((m) => m.id == mercId).firstOrNull;
-      if (merc == null || !mounted) continue;
+      if (merc == null || !context.mounted) continue;
 
       // 1. Acquisition notification
       if (event.acquiredTraitKey != null) {
         final traitData = staticData.traits.where((t) => t.key == event.acquiredTraitKey).firstOrNull;
-        if (traitData != null && mounted) {
+        if (traitData != null && context.mounted) {
           await showDialog<void>(
             context: context,
             barrierDismissible: false,
@@ -287,7 +287,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
 
       // 2. Evolution selection
       if (event.singleEvoCandidates.isNotEmpty || event.comboEvoCandidates.isNotEmpty) {
-        if (!mounted) break;
+        if (!context.mounted) break;
         // Get current acquired traits for the card comparison view
         final updatedMerc = mercRepo.getAll().where((m) => m.id == mercId).firstOrNull;
         if (updatedMerc == null) continue;
