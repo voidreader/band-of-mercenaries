@@ -13,3 +13,6 @@ final factionCodexScrollTargetProvider = StateProvider<String?>((ref) => null);
 final factionListProvider = Provider<List<FactionData>>((ref) {
   return ref.watch(staticDataProvider).value?.factions ?? const [];
 });
+
+/// UI 갱신 트리거 Provider — join/leave/평판 변경 후 increment
+final factionRefreshProvider = StateProvider<int>((ref) => 0);
