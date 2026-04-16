@@ -59,7 +59,7 @@ band_of_mercenaries/lib/
 │   ├── facility/          # 시설 시스템 (건설 큐, ConstructionService, 시설 탭 UI)
 │   ├── mercenary/         # 용병 모집/관리, FacilityService, RecruitmentService
 │   ├── investigation/     # 지역 조사 시스템 (InvestigationNotifier, RegionStateRepository, InvestigationWidget)
-│   ├── info/              # 정보 탭 (InfoScreen, FactionCodexScreen, FactionDetailScreen, FactionStateRepository)
+│   ├── info/              # 정보 탭 (InfoScreen, FactionCodexScreen, FactionDetailScreen, FactionStateRepository, FactionJoinService)
 │   └── settings/          # 설정 (시간 가속)
 └── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay, StatusBadge)
 ```
@@ -86,6 +86,7 @@ band_of_mercenaries/lib/
 - `factionStateRepositoryProvider`: FactionStateRepository 인스턴스 (`features/info/data/faction_state_repository.dart`)
 - `factionListProvider`: staticDataProvider의 factions를 동기 제공하는 Provider<List<FactionData>> (`features/info/domain/faction_codex_providers.dart`)
 - `factionCodexScrollTargetProvider`: 조사 완료 팝업 → 세력 도감 자동 스크롤용 StateProvider<String?> (`features/info/domain/faction_codex_providers.dart`)
+- `factionRefreshProvider`: 세력 가입/탈퇴·평판 변경 후 FactionCodexScreen·FactionDetailScreen 강제 갱신용 StateProvider<int> 카운터 (`features/info/domain/faction_codex_providers.dart`)
 
 ### 데이터 흐름
 
@@ -124,7 +125,7 @@ band_of_mercenaries/lib/
 - ranks: 명성 등급 (F~A) 및 티어 잠금 해제 조건
 - mercenary_wages: 티어별 용병 인건비
 - region_discoveries: 리전별 발견 데이터 (id TEXT PK, region_id INTEGER, knowledge_threshold INTEGER, discovery_type TEXT, discovery_data JSONB, description TEXT)
-- factions: 세력 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, philosophy TEXT, tier_range JSONB, color TEXT)
+- factions: 세력 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, philosophy TEXT, tier_range JSONB, color TEXT, visibility_type TEXT DEFAULT 'public', join_rank_min TEXT nullable, join_needs_clue BOOLEAN DEFAULT false, passive_bonus_json JSONB DEFAULT '{}', conflict_faction_ids JSONB DEFAULT '[]'). 14개: 공개 6 / 비밀 4 / 지역 4
 
 **모델 JSON 키 규칙:** 모든 정적 데이터 모델은 snake_case @JsonKey를 사용 (Supabase 컬럼명과 일치). Dart 필드명과 동일한 경우 @JsonKey 생략.
 
@@ -142,7 +143,7 @@ band_of_mercenaries/lib/
 - `user` 박스 건설 큐: HiveField(12) `constructionFacilityId` (String?, 건설 중 시설 ID), HiveField(13) `constructionStartTime` (DateTime?), HiveField(14) `constructionEndTime` (DateTime?)
 - `user` 박스 지역 조사: HiveField(15) `investigatingMercId` (String?, 조사 중 용병 ID), HiveField(16) `investigationEndTime` (DateTime?), HiveField(17) `investigationRegionId` (int?)
 - `regionStates` 박스: RegionState 모델 (typeId:8) — regionId(int), knowledge(int 0~100), triggeredDiscoveries(List<String>). regionId 키로 저장
-- `factionStates` 박스: FactionState 모델 (typeId:9) — factionId(String), clueRecords(List<FactionClueRecord>). `discoveredInRegions` getter로 고유 리전 ID 계산. FactionClueRecord(typeId:10) — factionId, regionId, discoveryId, foundAt. `FactionStateRepository`로 CRUD
+- `factionStates` 박스: FactionState 모델 (typeId:9) — factionId(String), clueRecords(List<FactionClueRecord>), HiveField(2) reputation(int?, null-safe 하위호환), HiveField(3) joined(bool?), HiveField(4) joinedAt(DateTime?), HiveField(5) facilityLevels(Map<String,int>?). `isJoined` getter(joined ?? false), `currentReputation` getter(reputation ?? 0), `maxClueLevel` getter(고유 discoveryId 수, 0~3). `discoveredInRegions` getter로 고유 리전 ID 계산. FactionClueRecord(typeId:10) — factionId, regionId, discoveryId, foundAt. `FactionStateRepository`로 CRUD (join/leave/addReputation/setReputation/applyConflictPenalty/getJoinedFactionIds). 순수 정적 서비스 `FactionJoinService`(`features/info/domain/faction_join_service.dart`)로 가입 조건 판정·평판 클램프·패시브 설명 처리
 - `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
 
 ### 코드 생성
@@ -170,6 +171,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설, 조사)의 endTime을 비례 재계산 (개발/테스트용)
 - **이동 제한**: 파견 중인 용병이 있거나 조사 진행 중이면 이동 불가. 조사 중에도 이동 불가 (양방향 상호 배제)
 - **세력 발견**: 지역 조사 완료 시 `region_discoveries`의 `discovery_type == 'faction_clue'` 항목이 트리거되면 세력 단서를 발견. `discovery_data` JSON에서 `faction_id`, `clue_level`(1~3), `clue_text` 추출 → `FactionStateRepository.processClue()`로 Hive 저장. 동일 discoveryId 중복 발견 시 기록만 추가(maxClueLevel 유지). clue_level별 활동 로그: level1 "세력 단서 발견", level2 "세력 발견: {name}의 정체를 파악했다", level3 "거점 발견: {name}의 전초기지 위치를 파악했다". 조사 완료 팝업에 인라인 표시 + "도감에서 확인" 버튼으로 정보 탭 → 세력 도감 자동 이동
+- **세력 가입/관리**: `FactionJoinService.canJoin()`으로 가입 조건 판정. 가입 조건: 평판 > 0 / `joinNeedsClue`이면 clueLevel 3 필요 / `joinRankMin`이면 현재 랭크 충족 필요 / 충돌 세력 제외 후 실효 가입 수 < 3. 평판은 `clampReputation()`으로 미가입 시 최대 10 / 가입 시 최대 100 / 최소 -100. 가입 시 충돌 세력(`conflict_faction_ids`)은 자동 탈퇴 + 평판 -20 패널티(`applyConflictPenalty`). 세력별 `passive_bonus_json`으로 패시브 혜택 기술(현재 표시만, 실제 효과 stub). `visibilityType` = 'public' 세력은 이름 항상 노출(clueLevel 1 보장), 'secret'/'regional' 세력은 발견 전 '???' 표시. 세력 도감(`FactionCodexScreen`): 공개 → 발견 비밀/지역(clueLevel 내림차순) → 미발견 순 정렬. 세력 상세(`FactionDetailScreen`): 평판 바, 가입 조건, 패시브, 가입/탈퇴 버튼
 
 ## 분석 설정
 
