@@ -62,17 +62,29 @@ class FactionStateAdapter extends TypeAdapter<FactionState> {
     return FactionState(
       factionId: fields[0] as String,
       clueRecords: (fields[1] as List?)?.cast<FactionClueRecord>(),
+      reputation: fields[2] as int,
+      joined: fields[3] as bool,
+      joinedAt: fields[4] as DateTime?,
+      facilityLevels: (fields[5] as Map?)?.cast<String, int>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, FactionState obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.factionId)
       ..writeByte(1)
-      ..write(obj.clueRecords);
+      ..write(obj.clueRecords)
+      ..writeByte(2)
+      ..write(obj.reputation)
+      ..writeByte(3)
+      ..write(obj.joined)
+      ..writeByte(4)
+      ..write(obj.joinedAt)
+      ..writeByte(5)
+      ..write(obj.facilityLevels);
   }
 
   @override
