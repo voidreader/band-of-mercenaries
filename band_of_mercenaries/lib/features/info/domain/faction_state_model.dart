@@ -32,28 +32,33 @@ class FactionState extends HiveObject {
   @HiveField(1)
   late List<FactionClueRecord> clueRecords;
 
-  // 신규 필드 (기존 Hive 데이터는 null로 읽히므로 생성자에서 0/false/{} 기본값 처리)
+  // 신규 필드 (기존 Hive 데이터는 null로 읽히므로 nullable 타입으로 선언)
   @HiveField(2)
-  late int reputation;
+  int? reputation;
 
   @HiveField(3)
-  late bool joined;
+  bool? joined;
 
   @HiveField(4)
   DateTime? joinedAt;
 
   @HiveField(5)
-  late Map<String, int> facilityLevels;
+  Map<String, int>? facilityLevels;
 
   FactionState({
     required this.factionId,
     List<FactionClueRecord>? clueRecords,
-    this.reputation = 0,
-    this.joined = false,
+    int? reputation,
+    bool? joined,
     this.joinedAt,
     Map<String, int>? facilityLevels,
   })  : clueRecords = clueRecords ?? [],
+        reputation = reputation ?? 0,
+        joined = joined ?? false,
         facilityLevels = facilityLevels ?? {};
+
+  bool get isJoined => joined ?? false;
+  int get currentReputation => reputation ?? 0;
 
   List<int> get discoveredInRegions =>
       clueRecords.map((r) => r.regionId).toSet().toList();

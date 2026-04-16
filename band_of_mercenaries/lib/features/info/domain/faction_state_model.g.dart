@@ -62,8 +62,8 @@ class FactionStateAdapter extends TypeAdapter<FactionState> {
     return FactionState(
       factionId: fields[0] as String,
       clueRecords: (fields[1] as List?)?.cast<FactionClueRecord>(),
-      reputation: fields[2] as int,
-      joined: fields[3] as bool,
+      reputation: fields[2] as int?,
+      joined: fields[3] as bool?,
       joinedAt: fields[4] as DateTime?,
       facilityLevels: (fields[5] as Map?)?.cast<String, int>(),
     );
