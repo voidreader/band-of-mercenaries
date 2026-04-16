@@ -26,7 +26,19 @@ mixin _$FactionData {
   String get philosophy => throw _privateConstructorUsedError;
   @JsonKey(name: 'tier_range')
   List<int> get tierRange => throw _privateConstructorUsedError;
-  String get color => throw _privateConstructorUsedError;
+  String get color =>
+      throw _privateConstructorUsedError; // 신규 필드 — Supabase 컬럼 추가 전까지 @Default로 호환
+  @JsonKey(name: 'visibility_type')
+  String get visibilityType => throw _privateConstructorUsedError;
+  @JsonKey(name: 'join_rank_min')
+  String? get joinRankMin => throw _privateConstructorUsedError;
+  @JsonKey(name: 'join_needs_clue')
+  bool get joinNeedsClue => throw _privateConstructorUsedError;
+  @JsonKey(name: 'passive_bonus_json')
+  Map<String, dynamic> get passiveBonusJson =>
+      throw _privateConstructorUsedError;
+  @JsonKey(name: 'conflict_faction_ids')
+  List<String> get conflictFactionIds => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -46,7 +58,13 @@ abstract class $FactionDataCopyWith<$Res> {
       String description,
       String philosophy,
       @JsonKey(name: 'tier_range') List<int> tierRange,
-      String color});
+      String color,
+      @JsonKey(name: 'visibility_type') String visibilityType,
+      @JsonKey(name: 'join_rank_min') String? joinRankMin,
+      @JsonKey(name: 'join_needs_clue') bool joinNeedsClue,
+      @JsonKey(name: 'passive_bonus_json')
+      Map<String, dynamic> passiveBonusJson,
+      @JsonKey(name: 'conflict_faction_ids') List<String> conflictFactionIds});
 }
 
 /// @nodoc
@@ -68,6 +86,11 @@ class _$FactionDataCopyWithImpl<$Res, $Val extends FactionData>
     Object? philosophy = null,
     Object? tierRange = null,
     Object? color = null,
+    Object? visibilityType = null,
+    Object? joinRankMin = freezed,
+    Object? joinNeedsClue = null,
+    Object? passiveBonusJson = null,
+    Object? conflictFactionIds = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -94,6 +117,26 @@ class _$FactionDataCopyWithImpl<$Res, $Val extends FactionData>
           ? _value.color
           : color // ignore: cast_nullable_to_non_nullable
               as String,
+      visibilityType: null == visibilityType
+          ? _value.visibilityType
+          : visibilityType // ignore: cast_nullable_to_non_nullable
+              as String,
+      joinRankMin: freezed == joinRankMin
+          ? _value.joinRankMin
+          : joinRankMin // ignore: cast_nullable_to_non_nullable
+              as String?,
+      joinNeedsClue: null == joinNeedsClue
+          ? _value.joinNeedsClue
+          : joinNeedsClue // ignore: cast_nullable_to_non_nullable
+              as bool,
+      passiveBonusJson: null == passiveBonusJson
+          ? _value.passiveBonusJson
+          : passiveBonusJson // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
+      conflictFactionIds: null == conflictFactionIds
+          ? _value.conflictFactionIds
+          : conflictFactionIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 }
@@ -112,7 +155,13 @@ abstract class _$$FactionDataImplCopyWith<$Res>
       String description,
       String philosophy,
       @JsonKey(name: 'tier_range') List<int> tierRange,
-      String color});
+      String color,
+      @JsonKey(name: 'visibility_type') String visibilityType,
+      @JsonKey(name: 'join_rank_min') String? joinRankMin,
+      @JsonKey(name: 'join_needs_clue') bool joinNeedsClue,
+      @JsonKey(name: 'passive_bonus_json')
+      Map<String, dynamic> passiveBonusJson,
+      @JsonKey(name: 'conflict_faction_ids') List<String> conflictFactionIds});
 }
 
 /// @nodoc
@@ -132,6 +181,11 @@ class __$$FactionDataImplCopyWithImpl<$Res>
     Object? philosophy = null,
     Object? tierRange = null,
     Object? color = null,
+    Object? visibilityType = null,
+    Object? joinRankMin = freezed,
+    Object? joinNeedsClue = null,
+    Object? passiveBonusJson = null,
+    Object? conflictFactionIds = null,
   }) {
     return _then(_$FactionDataImpl(
       id: null == id
@@ -158,6 +212,26 @@ class __$$FactionDataImplCopyWithImpl<$Res>
           ? _value.color
           : color // ignore: cast_nullable_to_non_nullable
               as String,
+      visibilityType: null == visibilityType
+          ? _value.visibilityType
+          : visibilityType // ignore: cast_nullable_to_non_nullable
+              as String,
+      joinRankMin: freezed == joinRankMin
+          ? _value.joinRankMin
+          : joinRankMin // ignore: cast_nullable_to_non_nullable
+              as String?,
+      joinNeedsClue: null == joinNeedsClue
+          ? _value.joinNeedsClue
+          : joinNeedsClue // ignore: cast_nullable_to_non_nullable
+              as bool,
+      passiveBonusJson: null == passiveBonusJson
+          ? _value._passiveBonusJson
+          : passiveBonusJson // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
+      conflictFactionIds: null == conflictFactionIds
+          ? _value._conflictFactionIds
+          : conflictFactionIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -171,8 +245,17 @@ class _$FactionDataImpl implements _FactionData {
       required this.description,
       required this.philosophy,
       @JsonKey(name: 'tier_range') required final List<int> tierRange,
-      required this.color})
-      : _tierRange = tierRange;
+      required this.color,
+      @JsonKey(name: 'visibility_type') this.visibilityType = 'public',
+      @JsonKey(name: 'join_rank_min') this.joinRankMin,
+      @JsonKey(name: 'join_needs_clue') this.joinNeedsClue = false,
+      @JsonKey(name: 'passive_bonus_json')
+      final Map<String, dynamic> passiveBonusJson = const <String, dynamic>{},
+      @JsonKey(name: 'conflict_faction_ids')
+      final List<String> conflictFactionIds = const <String>[]})
+      : _tierRange = tierRange,
+        _passiveBonusJson = passiveBonusJson,
+        _conflictFactionIds = conflictFactionIds;
 
   factory _$FactionDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$FactionDataImplFromJson(json);
@@ -196,10 +279,38 @@ class _$FactionDataImpl implements _FactionData {
 
   @override
   final String color;
+// 신규 필드 — Supabase 컬럼 추가 전까지 @Default로 호환
+  @override
+  @JsonKey(name: 'visibility_type')
+  final String visibilityType;
+  @override
+  @JsonKey(name: 'join_rank_min')
+  final String? joinRankMin;
+  @override
+  @JsonKey(name: 'join_needs_clue')
+  final bool joinNeedsClue;
+  final Map<String, dynamic> _passiveBonusJson;
+  @override
+  @JsonKey(name: 'passive_bonus_json')
+  Map<String, dynamic> get passiveBonusJson {
+    if (_passiveBonusJson is EqualUnmodifiableMapView) return _passiveBonusJson;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_passiveBonusJson);
+  }
+
+  final List<String> _conflictFactionIds;
+  @override
+  @JsonKey(name: 'conflict_faction_ids')
+  List<String> get conflictFactionIds {
+    if (_conflictFactionIds is EqualUnmodifiableListView)
+      return _conflictFactionIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_conflictFactionIds);
+  }
 
   @override
   String toString() {
-    return 'FactionData(id: $id, name: $name, description: $description, philosophy: $philosophy, tierRange: $tierRange, color: $color)';
+    return 'FactionData(id: $id, name: $name, description: $description, philosophy: $philosophy, tierRange: $tierRange, color: $color, visibilityType: $visibilityType, joinRankMin: $joinRankMin, joinNeedsClue: $joinNeedsClue, passiveBonusJson: $passiveBonusJson, conflictFactionIds: $conflictFactionIds)';
   }
 
   @override
@@ -215,13 +326,34 @@ class _$FactionDataImpl implements _FactionData {
                 other.philosophy == philosophy) &&
             const DeepCollectionEquality()
                 .equals(other._tierRange, _tierRange) &&
-            (identical(other.color, color) || other.color == color));
+            (identical(other.color, color) || other.color == color) &&
+            (identical(other.visibilityType, visibilityType) ||
+                other.visibilityType == visibilityType) &&
+            (identical(other.joinRankMin, joinRankMin) ||
+                other.joinRankMin == joinRankMin) &&
+            (identical(other.joinNeedsClue, joinNeedsClue) ||
+                other.joinNeedsClue == joinNeedsClue) &&
+            const DeepCollectionEquality()
+                .equals(other._passiveBonusJson, _passiveBonusJson) &&
+            const DeepCollectionEquality()
+                .equals(other._conflictFactionIds, _conflictFactionIds));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, description,
-      philosophy, const DeepCollectionEquality().hash(_tierRange), color);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      description,
+      philosophy,
+      const DeepCollectionEquality().hash(_tierRange),
+      color,
+      visibilityType,
+      joinRankMin,
+      joinNeedsClue,
+      const DeepCollectionEquality().hash(_passiveBonusJson),
+      const DeepCollectionEquality().hash(_conflictFactionIds));
 
   @JsonKey(ignore: true)
   @override
@@ -244,7 +376,14 @@ abstract class _FactionData implements FactionData {
       required final String description,
       required final String philosophy,
       @JsonKey(name: 'tier_range') required final List<int> tierRange,
-      required final String color}) = _$FactionDataImpl;
+      required final String color,
+      @JsonKey(name: 'visibility_type') final String visibilityType,
+      @JsonKey(name: 'join_rank_min') final String? joinRankMin,
+      @JsonKey(name: 'join_needs_clue') final bool joinNeedsClue,
+      @JsonKey(name: 'passive_bonus_json')
+      final Map<String, dynamic> passiveBonusJson,
+      @JsonKey(name: 'conflict_faction_ids')
+      final List<String> conflictFactionIds}) = _$FactionDataImpl;
 
   factory _FactionData.fromJson(Map<String, dynamic> json) =
       _$FactionDataImpl.fromJson;
@@ -262,6 +401,21 @@ abstract class _FactionData implements FactionData {
   List<int> get tierRange;
   @override
   String get color;
+  @override // 신규 필드 — Supabase 컬럼 추가 전까지 @Default로 호환
+  @JsonKey(name: 'visibility_type')
+  String get visibilityType;
+  @override
+  @JsonKey(name: 'join_rank_min')
+  String? get joinRankMin;
+  @override
+  @JsonKey(name: 'join_needs_clue')
+  bool get joinNeedsClue;
+  @override
+  @JsonKey(name: 'passive_bonus_json')
+  Map<String, dynamic> get passiveBonusJson;
+  @override
+  @JsonKey(name: 'conflict_faction_ids')
+  List<String> get conflictFactionIds;
   @override
   @JsonKey(ignore: true)
   _$$FactionDataImplCopyWith<_$FactionDataImpl> get copyWith =>

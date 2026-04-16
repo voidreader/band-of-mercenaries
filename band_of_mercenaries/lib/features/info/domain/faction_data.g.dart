@@ -16,6 +16,15 @@ _$FactionDataImpl _$$FactionDataImplFromJson(Map<String, dynamic> json) =>
           .map((e) => (e as num).toInt())
           .toList(),
       color: json['color'] as String,
+      visibilityType: json['visibility_type'] as String? ?? 'public',
+      joinRankMin: json['join_rank_min'] as String?,
+      joinNeedsClue: json['join_needs_clue'] as bool? ?? false,
+      passiveBonusJson: json['passive_bonus_json'] as Map<String, dynamic>? ??
+          const <String, dynamic>{},
+      conflictFactionIds: (json['conflict_faction_ids'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
     );
 
 Map<String, dynamic> _$$FactionDataImplToJson(_$FactionDataImpl instance) =>
@@ -26,4 +35,9 @@ Map<String, dynamic> _$$FactionDataImplToJson(_$FactionDataImpl instance) =>
       'philosophy': instance.philosophy,
       'tier_range': instance.tierRange,
       'color': instance.color,
+      'visibility_type': instance.visibilityType,
+      'join_rank_min': instance.joinRankMin,
+      'join_needs_clue': instance.joinNeedsClue,
+      'passive_bonus_json': instance.passiveBonusJson,
+      'conflict_faction_ids': instance.conflictFactionIds,
     };
