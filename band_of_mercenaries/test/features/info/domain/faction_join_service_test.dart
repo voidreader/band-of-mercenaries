@@ -111,35 +111,53 @@ void main() {
       );
     });
 
-    test('이해충돌 세력이 이미 가입되어 있으면 가입 불가', () {
+    test('이해충돌 세력이 가입 중이더라도 다른 자리가 있으면 가입 가능', () {
+      // 충돌 세력 B가 가입 중, 하지만 가입 시 B는 제거되므로 effective count = 0
       expect(
         FactionJoinService.canJoin(
           factionId: 'faction_a',
           reputation: 5,
-          joinNeedsClue: baseArgs.joinNeedsClue,
-          maxClueLevel: baseArgs.maxClueLevel,
-          joinRankMin: baseArgs.joinRankMin,
-          currentRank: baseArgs.currentRank,
+          joinNeedsClue: false,
+          maxClueLevel: 0,
+          joinRankMin: null,
+          currentRank: 'F',
           conflictFactionIds: const ['faction_b'],
           currentlyJoinedFactionIds: const ['faction_b'],
+        ),
+        isTrue, // conflict 세력은 자동 탈퇴되므로 가입 가능
+      );
+    });
+
+    test('이미 3개 가입 중이고 충돌 세력 없으면 가입 불가', () {
+      expect(
+        FactionJoinService.canJoin(
+          factionId: baseArgs.factionId,
+          reputation: 5,
+          joinNeedsClue: false,
+          maxClueLevel: 0,
+          joinRankMin: null,
+          currentRank: 'F',
+          conflictFactionIds: const [],
+          currentlyJoinedFactionIds: const ['x', 'y', 'z'],
         ),
         isFalse,
       );
     });
 
-    test('이미 3개 가입 중이면 가입 불가', () {
+    test('이미 3개 가입 중이지만 그 중 하나가 충돌 세력이면 가입 가능', () {
+      // [x, y, faction_b]에서 faction_b가 conflict → effective = [x, y] = 2 < 3
       expect(
         FactionJoinService.canJoin(
-          factionId: baseArgs.factionId,
+          factionId: 'faction_a',
           reputation: 5,
-          joinNeedsClue: baseArgs.joinNeedsClue,
-          maxClueLevel: baseArgs.maxClueLevel,
-          joinRankMin: baseArgs.joinRankMin,
-          currentRank: baseArgs.currentRank,
-          conflictFactionIds: baseArgs.conflictFactionIds,
-          currentlyJoinedFactionIds: const ['x', 'y', 'z'],
+          joinNeedsClue: false,
+          maxClueLevel: 0,
+          joinRankMin: null,
+          currentRank: 'F',
+          conflictFactionIds: const ['faction_b'],
+          currentlyJoinedFactionIds: const ['x', 'y', 'faction_b'],
         ),
-        isFalse,
+        isTrue,
       );
     });
 

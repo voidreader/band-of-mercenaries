@@ -23,10 +23,12 @@ class FactionJoinService {
     if (joinRankMin != null && !isRankSufficient(currentRank, joinRankMin)) {
       return false;
     }
-    for (final conflictId in conflictFactionIds) {
-      if (currentlyJoinedFactionIds.contains(conflictId)) return false;
-    }
-    if (currentlyJoinedFactionIds.length >= 3) return false;
+    // 충돌 세력은 가입 시 자동 탈퇴되므로 유효 가입 수 계산에서 제외
+    final conflictSet = conflictFactionIds.toSet();
+    final effectiveJoined = currentlyJoinedFactionIds
+        .where((id) => !conflictSet.contains(id))
+        .length;
+    if (effectiveJoined >= 3) return false;
     return true;
   }
 

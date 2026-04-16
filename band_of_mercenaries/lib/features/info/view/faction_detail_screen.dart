@@ -322,7 +322,8 @@ class _FactionBody extends ConsumerWidget {
               _JoinConditions(
                   faction: faction,
                   clueLevel: clueLevel,
-                  currentRank: currentRank),
+                  currentRank: currentRank,
+                  reputation: reputation),
               if (conflictNames.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Text(
@@ -588,21 +589,23 @@ class _JoinConditions extends StatelessWidget {
   final FactionData faction;
   final int clueLevel;
   final String currentRank;
+  final int reputation;
 
   const _JoinConditions({
     required this.faction,
     required this.clueLevel,
     required this.currentRank,
+    required this.reputation,
   });
 
   @override
   Widget build(BuildContext context) {
     final conditions = <Widget>[];
 
-    // 평판 > 0 조건 (항상 표시)
-    conditions.add(const _ConditionRow(
+    // 평판 > 0 조건 (실제 값 기반)
+    conditions.add(_ConditionRow(
       label: '세력 평판 > 0',
-      met: true,
+      met: reputation > 0,
     ));
 
     // clue 조건
