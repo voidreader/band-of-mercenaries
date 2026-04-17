@@ -1,5 +1,7 @@
 # CHANGELOG
 
+<!-- sync test -->
+
 ## 2026-04-15
 
 ### 세력 발견 시스템 (World Expansion Phase 6)
