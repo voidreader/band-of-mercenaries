@@ -1,5 +1,78 @@
 # CHANGELOG
 
+## 2026-04-15
+
+### 세력 발견 시스템 (World Expansion Phase 6)
+
+- 지역 조사 완료 시 세력 단서(`faction_clue`) 발견 흐름 추가 — clue_level 1~3 단계별 정보 공개
+- 하단 탭 6번째를 설정에서 정보 탭으로 교체, 설정은 홈 화면 상단 아이콘 버튼으로 이전
+- 세력 도감 화면 신설 — 발견된 세력 목록(별 진행도), 세력 상세(description/philosophy/tierRange 단계별 공개)
+- 조사 완료 팝업에 단서 인라인 표시 및 "도감에서 확인" 버튼 추가 (자동 스크롤 연동)
+- `factionStates` Hive 박스 신설 (FactionState typeId:9, FactionClueRecord typeId:10)
+- Supabase `factions` 테이블 동기화 대상 추가 (18번째 테이블)
+
+### 세계 확장 Phase 1 — 지역 조사 시스템
+
+- 용병 1명을 현재 리전에 파견과 독립된 "지역 조사" 슬롯에 배치하여 지식 포인트(0~100) 누적
+- 지식 임계값 도달 시 `region_discoveries` 테이블 기반 발견 자동 트리거 (정보/엘리트/숨겨진 퀘스트)
+- 조사 진행 중 이동 불가, 이동 중 조사 불가 (양방향 상호 배제)
+- 조사 중인 용병은 퀘스트 파견 목록에서 자동 제외
+- 시간 가속 설정 변경 시 조사 타이머도 비례 재계산
+- Supabase `region_discoveries` 테이블 추가 (RLS anon read 정책 포함)
+
+### 시설 ↔ 트레잇 연계 (Phase B)
+
+- 시설 혜택 행동 지표 3종 추가 (training_benefit_count, infirmary_recovery_count, field_hospital_benefit_count)
+- 퀘스트 완료 시 훈련소/의무실/야전병원 사용 여부에 따라 용병별 지표 자동 누적
+- 시설 조건 기반 검증용 트레잇 3개 추가 (단련된 전사, 생존 본능, 철벽 수호)
+
+---
+
+## 2026-04-14
+
+### 시설 시스템 고도화
+
+- 시설 12종으로 확장 (기존 4종 + 신규 8종: 대장간/주점/연구소/방어시설/금고/게시판/이동수단/야전병원)
+- 최대 레벨 25, OGame 스타일 건설 시간 + 기하급수 골드 비용 도입
+- 건설 큐 1개 제한 (한 번에 하나만 건설, 취소 시 전액 환불)
+- 하단 네비게이션 6탭 확장 (시설 전용 탭 추가)
+- 시설 화면 전면 재설계 (건설 큐 상태 바, 시설 카드, 이정표 타임라인)
+- 홈 화면 건설 미니 위젯 추가
+- 로그 스케일 효과 공식 + 기능 해금 이정표 stub UI
+- 시설 효과 적용: 주점(모집 확률), 방어시설(피해 감소), 금고(방치 보상 상한), 이동수단(이동 시간 단축), 야전병원(부상 확률 감소)
+
+### 스탯 체계 재설계 — STR/INT/VIT/AGI 4스탯 전환
+
+- 용병 스탯을 ATK/DEF/HP/speed에서 STR/INTELLIGENCE/VIT/AGI로 전환
+- partyPower 계산을 퀘스트 유형별 가중치 공식으로 변경 (raid/hunt/escort/explore 각 가중치 차별화)
+- AGI가 파견 소요 시간에 반영됨 (파티 평균 AGI 기반 속도 보정, 기준값 50)
+- 기존 DEF·HP 유령 스탯 문제 해결 — VIT/INT로 퀘스트 전략 다양화
+- Supabase jobs 테이블 컬럼 변환 및 85개 직업 INT 수치 직업 아키타입 기반 재설계
+- operation-bom 웹앱 jobs 테이블 UI/타입 정의 갱신
+
+---
+
+## 2026-04-13
+
+### Phase 6: operation-bom 트레잇 웹앱 확장
+
+- operation-bom에 트레잇 시스템 6개 테이블 CRUD 관리 기능 추가 (trait_categories, traits, trait_conflicts, trait_transitions, trait_combo_evolutions, trait_synergies)
+- FieldType에 "json" 타입 추가 — JSONB 컬럼의 입력(Textarea + JSON 검증), 목록 축약 표시 지원
+- 복합 PK 테이블(trait_conflicts) 지원 — 추가/삭제만 허용, 편집 링크 숨김
+- 사이드바에 "트레잇" 카테고리 신설 (6개 테이블 + 시각화 페이지)
+- 트레잇 관계 시각화 페이지 (/traits/visualization) — 충돌/단일 진화/조합 진화/시너지 4개 섹션, 카테고리 필터
+
+### Phase A: 트레잇 라이프사이클 완성
+
+- 후천 트레잇 삭제 시스템 추가 (acquired 200G / evolved 500G, 의무실 레벨 해금)
+- 용병 상세 오버레이에서 TraitDetailDialog 연결 (트레잇 탭 → 상세 다이얼로그)
+- 트레잇 히스토리에 삭제 구분 표시 (`(삭제)` 라벨)
+- 여행 이벤트로 빈 선천 슬롯에 트레잇 부여 (3종 신규 이벤트: 혹독한 지형/노련한 여행자/재능의 발현)
+- TravelEvent 모델에 targetCategory 필드 추가
+- trait_innate 이벤트 재롤링 로직 (최대 3회)
+
+---
+
 ## 2026-04-12
 
 ### Refactors (코드 리뷰 Phase 1~3)
@@ -35,6 +108,30 @@
 ### Docs
 - 코드베이스 종합 리뷰 리포트 및 Phase 1~3 구현 결과 문서 추가
 - CLAUDE.md 아키텍처 섹션 업데이트 (core/domain, core/constants, SettingsKeys 반영)
+
+### 트레잇 시스템 고도화 (Phase 1-2)
+
+- Supabase에 트레잇 시스템 6개 테이블 생성 (trait_categories, traits, trait_conflicts, trait_transitions, trait_combo_evolutions, trait_synergies)
+- 106개 트레잇 + 관계 데이터 (충돌 16쌍, 단일진화 16개, 조합진화 15개, 시너지 39개) 입력
+- Flutter 모델 교체 (TraitData 구조 변경 + 5개 신규 모델 추가)
+- SyncService 16개 테이블 동기화 대응
+- 트레잇 카테고리 기반 색상 시스템 적용
+
+### 트레잇 시스템 핵심 엔진 (Phase 3)
+
+- 행동 지표 추적 시스템: 23개 지표(파견/생존/퀘스트유형/경제/연속기록) 퀘스트 완료 시 자동 갱신
+- 용병 모집 변경: 선천 트레잇 1~3개 랜덤 부여 (Physical/Background/Talent 카테고리별 선택)
+- 트레잇 획득 엔진: 행동 지표 → acquisition_condition 비교 → 시너지 감소 → 충돌 검증 → 자동 획득
+- 데이터 드리븐 트레잇 효과: effect_json 기반 성공률/사망률/부상률 보정 (밸런스 수치는 향후 입력)
+- quest type ID 변경: loot → raid (약탈)
+- UI: 용병 카드에 복수 트레잇 뱃지 표시
+
+### 트레잇 진화 시스템 (Phase 4)
+
+- 단일 진화 엔진: acquired 트레잇 + 행동 지표 조건 충족 → 같은 카테고리 evolved 트레잇으로 교체
+- 조합 진화 엔진: 서로 다른 카테고리의 acquired 2개 보유 시 → 원본 소멸 + evolved 트레잇 획득 + 슬롯 해방
+- 트레잇 히스토리: 소멸된 트레잇 기록 (HiveField 16) → 재획득 방지 활성화
+- 퀘스트 완료 시 자동 진화 체크 (단일 우선, 조합 후순위, 1회/턴 제한)
 
 ---
 
