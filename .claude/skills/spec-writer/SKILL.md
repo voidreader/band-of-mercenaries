@@ -50,6 +50,90 @@ Recommended Model : Claude Sonnet
 6. 관련 Hive 박스 또는 Supabase 정적 데이터 테이블을 확인했다 (데이터 모델 변경 필요 여부)
 7. build_runner 재실행이 필요한 파일(freezed, json_serializable, riverpod_generator)을 확인했다
 
+## 2.5단계: UI 구조 시각화 (Visual Companion)
+
+**조건: 기획 문서 또는 2단계 탐색 결과에 신규/변경 화면이 포함된 경우에만 수행한다.**
+
+배경 로직만 변경되거나 UI가 없는 작업(데이터 마이그레이션, 서비스 로직, Provider 추가 등)에는 이 단계를 건너뛴다.
+
+### 언제 사용하나
+
+UI 포함 여부를 아래 기준으로 판단한다:
+
+- 신규 화면(Screen/Page) 생성 → 사용
+- 기존 화면에 새 섹션/위젯 추가 → 사용
+- 기존 UI 레이아웃 변경 → 사용
+- Widget 수정 없이 도메인 로직만 변경 → 건너뜀
+
+### 진행 방식
+
+UI가 포함된 경우, 명세서 작성 전에 사용자에게 먼저 물어본다:
+
+> "UI 화면 구조를 브라우저에서 목업으로 시각화해 드릴 수 있습니다. 진행할까요?"
+
+사용자가 거절하면 텍스트 기반 UI 명세로 계속 진행한다.
+
+### 서버 시작
+
+사용자가 동의한 경우:
+
+```bash
+SCRIPTS_DIR="/Users/radiogaga/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts"
+"$SCRIPTS_DIR/start-server.sh" --project-dir /Users/radiogaga/git/band-of-mercenaries
+```
+
+반환된 JSON에서 `screen_dir`, `state_dir`, `url`을 저장한다.
+사용자에게 URL을 열도록 안내한다.
+
+### 목업 작성 원칙
+
+spec-writer의 목업은 content-designer의 "방향 선택" 목업과 다르다. **2단계에서 탐색한 기존 패턴을 반영한 구현 참조용 와이어프레임**이다.
+
+`screen_dir`에 새 파일을 Write한다. 파일명은 재사용하지 않는다. `<!DOCTYPE` 없이 콘텐츠 프래그먼트만 작성한다.
+
+목업에 반드시 포함해야 할 내용:
+- **화면 진입 조건**: 어떤 상태/액션이 이 화면을 트리거하는가
+- **위젯 계층**: 주요 Widget 타입 명시 (예: `Column > ListView > Card`)
+- **상태 변수**: 화면을 제어하는 상태 (예: `_isExpanded`, `selectedId`)
+- **기존 패턴 준수**: CLAUDE.md의 상태 기반 렌더링 제약, `ConstrainedBox(maxWidth: 430)` 등
+
+```html
+<h2>{화면명} 구조</h2>
+<p class="subtitle">2단계 탐색 기반 와이어프레임</p>
+
+<div class="mockup">
+  <div class="mockup-header">진입 조건: {트리거 설명}</div>
+  <div class="mockup-body">
+    <div class="mock-nav">{상단 네비게이션 구조}</div>
+    <div style="margin-top:8px;">
+      <div class="mock-content">
+        {위젯 계층 텍스트}<br/>
+        상태: {상태 변수 목록}<br/>
+        참조 패턴: {2단계에서 찾은 유사 구현 파일}
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+### 인터랙션 읽기
+
+```bash
+cat "$STATE_DIR/events"
+```
+
+### 목업 결과를 명세서에 반영
+
+목업이 확정되면 그 내용을 바탕으로 `2.3 UI 요구사항` 섹션을 구체적으로 작성한다. 목업 파일 경로는 명세서 상단 메타데이터에 기록한다.
+
+### 서버 정리
+
+```bash
+"$SCRIPTS_DIR/stop-server.sh" "$SESSION_DIR"
+```
+
+---
+
 ## 3단계: 기획 의도 확인
 
 기획 문서에서 다음에 해당하는 항목이 있으면 사용자에게 확인을 요청한다:
@@ -103,9 +187,14 @@ Recommended Model : Claude Sonnet
 
 ### 2.3 UI 요구사항 (해당 시)
 
-- 화면: ...
-- 동작: ...
-- 연출: ...
+> Visual Companion 목업을 사용한 경우: 목업 파일 경로를 기재한다.
+> 목업 없이 텍스트로 작성한 경우: 아래 항목을 최대한 구체적으로 기술한다.
+
+- 화면 진입 조건: {어떤 상태/액션이 이 화면을 트리거하는가}
+- 위젯 계층: {Column > ListView > Card 등 주요 Widget 타입}
+- 상태 변수: {화면을 제어하는 로컬 상태 목록}
+- 화면 전환: {Navigator.push vs 상태 기반 렌더링 — CLAUDE.md 제약 준수}
+- 연출/애니메이션: ...
 
 ## 3. 영향 범위
 
