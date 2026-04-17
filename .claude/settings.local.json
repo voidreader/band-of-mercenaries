@@ -87,7 +87,16 @@
       "mcp__plugin_supabase_supabase__execute_sql",
       "Bash(ls:*)",
       "mcp__plugin_supabase_supabase__apply_migration",
-      "Bash(grep -E \"\\\\.\\(py|ts|js\\)$\")"
+      "Bash(grep -E \"\\\\.\\(py|ts|js\\)$\")",
+      "Bash(grep *)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(npm run *)",
+      "Bash(find /Users/radiogaga/git/operation-bom/src/app/\\\\\\(authenticated\\\\\\)/ -name \"layout.tsx\" -exec head -50 {} \\\\;)",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/content-design/[content]20260415_faction_discovery_phase6.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260415_faction-discovery-phase6/design.md\")",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260415_faction-discovery-phase6.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260415_faction-discovery-phase6/spec.md\")",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260415_faction-discovery-phase6_plan.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260415_faction-discovery-phase6/plan.md\")",
+      "Bash(xargs -I {} bash -c \"echo '=== {} ===' && grep 'CREATE TABLE' {}\")"
     ]
   }
 }

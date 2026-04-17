@@ -138,7 +138,17 @@ band_of_mercenaries/lib/
 
 ### 영속성
 
-**Hive** (NoSQL key-value): `user`, `mercenaries`, `quests`, `activityLogs`, `settings`, `regionStates` 6개 박스 사용. Hive 어댑터는 `hive_generator`로 자동 생성.
+**Hive** (NoSQL key-value): 8개 박스. Hive 어댑터는 `hive_generator`로 자동 생성.
+- `settings`: 일반 key-value (SettingsKeys 참조)
+- `user`: UserData (골드, 위치, 이동/건설/조사 상태)
+- `mercenaries`: Mercenary 모델
+- `quests`: ActiveQuest 모델
+- `activityLogs`: ActivityLog 모델 (최대 100개)
+- `staticDataCache`: String 타입, 정적 데이터 JSON 로컬 캐시 (오프라인 플레이용, SyncService가 관리)
+- `regionStates`: RegionState 모델 (typeId:8)
+- `factionStates`: FactionState 모델 (typeId:9)
+
+상세 필드 구조:
 - `mercenaries` 박스: Mercenary 모델 — HiveField(4) `str` (int), HiveField(5) `intelligence` (int), HiveField(6) `vit` (int), HiveField(7) `agi` (int, 기존 double speed에서 변환). HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸/삭제 트레잇 기록 → 재획득 방지), HiveField(17) `deletedTraitIds` (List<String>, 삭제된 트레잇 기록 → 히스토리 UI에서 (삭제) 구분 표시). `allTraitIds` getter로 구 traitId 호환. 앱 첫 실행 시 `stat_migration_v2` 플래그(settings 박스)로 일회성 데이터 초기화 수행
 - `user` 박스 건설 큐: HiveField(12) `constructionFacilityId` (String?, 건설 중 시설 ID), HiveField(13) `constructionStartTime` (DateTime?), HiveField(14) `constructionEndTime` (DateTime?)
 - `user` 박스 지역 조사: HiveField(15) `investigatingMercId` (String?, 조사 중 용병 ID), HiveField(16) `investigationEndTime` (DateTime?), HiveField(17) `investigationRegionId` (int?)
@@ -172,6 +182,25 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **이동 제한**: 파견 중인 용병이 있거나 조사 진행 중이면 이동 불가. 조사 중에도 이동 불가 (양방향 상호 배제)
 - **세력 발견**: 지역 조사 완료 시 `region_discoveries`의 `discovery_type == 'faction_clue'` 항목이 트리거되면 세력 단서를 발견. `discovery_data` JSON에서 `faction_id`, `clue_level`(1~3), `clue_text` 추출 → `FactionStateRepository.processClue()`로 Hive 저장. 동일 discoveryId 중복 발견 시 기록만 추가(maxClueLevel 유지). clue_level별 활동 로그: level1 "세력 단서 발견", level2 "세력 발견: {name}의 정체를 파악했다", level3 "거점 발견: {name}의 전초기지 위치를 파악했다". 조사 완료 팝업에 인라인 표시 + "도감에서 확인" 버튼으로 정보 탭 → 세력 도감 자동 이동
 - **세력 가입/관리**: `FactionJoinService.canJoin()`으로 가입 조건 판정. 가입 조건: 평판 > 0 / `joinNeedsClue`이면 clueLevel 3 필요 / `joinRankMin`이면 현재 랭크 충족 필요 / 충돌 세력 제외 후 실효 가입 수 < 3. 평판은 `clampReputation()`으로 미가입 시 최대 10 / 가입 시 최대 100 / 최소 -100. 가입 시 충돌 세력(`conflict_faction_ids`)은 자동 탈퇴 + 평판 -20 패널티(`applyConflictPenalty`). 세력별 `passive_bonus_json`으로 패시브 혜택 기술(현재 표시만, 실제 효과 stub). `visibilityType` = 'public' 세력은 이름 항상 노출(clueLevel 1 보장), 'secret'/'regional' 세력은 발견 전 '???' 표시. 세력 도감(`FactionCodexScreen`): 공개 → 발견 비밀/지역(clueLevel 내림차순) → 미발견 순 정렬. 세력 상세(`FactionDetailScreen`): 평판 바, 가입 조건, 패시브, 가입/탈퇴 버튼
+
+## 테스트 구조
+
+24개 테스트 파일, `test/` 디렉토리 아래 `lib/` 구조와 동일하게 배치. 도메인 서비스 유닛 테스트 위주 (QuestCalculator, TraitEvolutionService, FactionJoinService 등), 뷰 위젯 테스트 일부 포함 (BehaviorStatsSection, TraitSlotGrid).
+
+```bash
+# 기능별 테스트
+cd band_of_mercenaries && flutter test test/features/quest/
+cd band_of_mercenaries && flutter test test/features/mercenary/
+```
+
+## 문서 구조
+
+`Docs/` — 기획/개발 문서
+- `proto_design.md`: 원본 기획 문서 (게임 시스템 레퍼런스)
+- `content_status.md`: 콘텐츠 구현 현황 추적
+- `game_overview.md`: 게임 개요 (AI 컨텍스트용)
+- `spec/`: 구현 명세서 (spec-pipeline 산출물)
+- `changelog-fragments/`: 릴리스 노트 fragment 파일 (merge-changelog 스킬로 CHANGELOG.md에 병합)
 
 ## 분석 설정
 

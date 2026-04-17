@@ -69,8 +69,9 @@ digraph mode_decision {
    - 예: "Melvor Idle의 마스터리 시스템은 이런 방식으로 장기 목표를 제공합니다"
 4. 현재 구현 상태와의 호환성을 검토한다
    - 기존 Hive 박스, Supabase 테이블, Provider 구조에 미치는 영향
-5. 아이디어가 충분히 구체화되면 사용자에게 최종 확인을 받는다
-6. 승인 시 기획 문서를 생성한다
+5. **시각적 판단이 필요한 경우 Visual Companion을 사용한다** (아래 섹션 참조)
+6. 아이디어가 충분히 구체화되면 사용자에게 최종 확인을 받는다
+7. 승인 시 기획 문서를 생성한다
 
 ### 3단계-B: 분석 리포트
 
@@ -116,6 +117,101 @@ digraph mode_decision {
 
 - 밸런스 검토가 필요한 수치가 포함된 경우: "`/balance-designer`로 밸런스 검토를 권장합니다"
 - 구현을 진행하려는 경우: "`/spec-writer @{기획서 경로}`로 개발 명세서를 생성할 수 있습니다"
+
+## Visual Companion (브라우저 목업)
+
+컨설팅 중 텍스트 설명보다 눈으로 보는 게 더 나은 경우 브라우저에 HTML 목업을 표시한다.
+
+### 언제 사용하나
+
+Visual Companion은 토큰 비용이 크므로 **자동으로 시작하지 않는다.**
+
+다음 상황에서 사용자에게 먼저 물어본다:
+> "UI 레이아웃을 브라우저에서 목업으로 비교해 드릴 수 있습니다. 사용하시겠어요?"
+
+**브라우저 사용이 유용한 경우 (물어볼 타이밍):**
+- UI 화면 레이아웃 비교 (파견 화면, 용병 상세, 시설 탭 등)
+- 두 가지 이상의 디자인 방향을 나란히 비교할 때
+- 게임 흐름(플로우) 다이어그램을 시각화할 때
+- 색상/계층/공간 배치 관련 질문
+
+**터미널로 충분한 경우 (물어보지 않음):**
+- 기능 범위, 규칙 결정
+- 수치/밸런스 논의
+- 아키텍처 접근법 선택
+- 레퍼런스 게임 비교
+
+사용자가 거절하면 텍스트로 계속 진행한다.
+
+### 서버 시작
+
+```bash
+SCRIPTS_DIR="/Users/radiogaga/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts"
+"$SCRIPTS_DIR/start-server.sh" --project-dir /Users/radiogaga/git/band-of-mercenaries
+```
+
+반환된 JSON에서 `screen_dir`, `state_dir`, `url`을 저장한다.
+사용자에게 URL을 열도록 안내한다.
+
+### HTML 콘텐츠 작성
+
+`screen_dir`에 새 파일을 Write한다. 서버가 최신 파일을 자동 서빙한다.
+`<!DOCTYPE` 없이 콘텐츠 프래그먼트만 작성하면 서버가 테마/스크립트를 자동 주입한다.
+
+**게임 UI 목업 예시 — 옵션 비교:**
+```html
+<h2>파견 화면 레이아웃 — 어떤 구조가 더 자연스럽나요?</h2>
+<p class="subtitle">용병 선택과 퀘스트 정보의 배치를 비교합니다</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>퀘스트 상단 고정</h3>
+      <p>퀘스트 정보를 상단에, 용병 목록을 하단에 배치</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>용병 목록 우선</h3>
+      <p>용병을 먼저 선택한 뒤 퀘스트를 매칭하는 흐름</p>
+    </div>
+  </div>
+</div>
+```
+
+**wireframe 목업 예시:**
+```html
+<h2>세력 상세 화면 구조</h2>
+<div class="mockup">
+  <div class="mockup-header">세력 상세 — 미리보기</div>
+  <div class="mockup-body">
+    <div class="mock-nav">← 도감 | 세력명 | 가입/탈퇴 버튼</div>
+    <div style="display:flex; gap:12px; margin-top:8px;">
+      <div class="mock-sidebar" style="flex:1">평판 바<br/>가입 조건<br/>패시브 보너스</div>
+      <div class="mock-content" style="flex:2">발견 단서 목록<br/>활동 이력</div>
+    </div>
+  </div>
+</div>
+```
+
+### 인터랙션 읽기
+
+사용자가 브라우저에서 클릭한 선택은 `$STATE_DIR/events`에 기록된다:
+```bash
+cat "$STATE_DIR/events"   # JSON lines — 마지막 choice가 최종 선택
+```
+
+다음 화면으로 넘어갈 때는 새 파일명(예: `layout-v2.html`)으로 Write한다. 파일명은 재사용하지 않는다.
+
+### 정리
+
+```bash
+"$SCRIPTS_DIR/stop-server.sh" "$SESSION_DIR"
+```
+
+목업 파일은 `.superpowers/brainstorm/`에 보존된다. `.gitignore`에 `.superpowers/`를 추가한다.
 
 ## 주의사항
 
