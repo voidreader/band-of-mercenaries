@@ -21,13 +21,24 @@ QuestPool _$QuestPoolFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$QuestPool {
   String get id => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
+  String get name =>
+      throw _privateConstructorUsedError; // Deprecated: quest_types 외래 키는 type_id 사용 (Supabase quest_pools.type 컬럼 호환용으로 유지)
   double get type => throw _privateConstructorUsedError;
   double get difficulty => throw _privateConstructorUsedError;
   @JsonKey(name: 'min_region_diff')
   double get minRegionDiff => throw _privateConstructorUsedError;
   @JsonKey(name: 'max_region_diff')
   double get maxRegionDiff => throw _privateConstructorUsedError;
+  @JsonKey(name: 'type_id')
+  String get typeId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'faction_tag')
+  String? get factionTag => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_faction_exclusive')
+  bool get isFactionExclusive => throw _privateConstructorUsedError;
+  @JsonKey(name: 'min_reputation')
+  int get minReputation => throw _privateConstructorUsedError;
+  @JsonKey(name: 'sector_type')
+  String? get sectorType => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -46,7 +57,12 @@ abstract class $QuestPoolCopyWith<$Res> {
       double type,
       double difficulty,
       @JsonKey(name: 'min_region_diff') double minRegionDiff,
-      @JsonKey(name: 'max_region_diff') double maxRegionDiff});
+      @JsonKey(name: 'max_region_diff') double maxRegionDiff,
+      @JsonKey(name: 'type_id') String typeId,
+      @JsonKey(name: 'faction_tag') String? factionTag,
+      @JsonKey(name: 'is_faction_exclusive') bool isFactionExclusive,
+      @JsonKey(name: 'min_reputation') int minReputation,
+      @JsonKey(name: 'sector_type') String? sectorType});
 }
 
 /// @nodoc
@@ -68,6 +84,11 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
     Object? difficulty = null,
     Object? minRegionDiff = null,
     Object? maxRegionDiff = null,
+    Object? typeId = null,
+    Object? factionTag = freezed,
+    Object? isFactionExclusive = null,
+    Object? minReputation = null,
+    Object? sectorType = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -94,6 +115,26 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
           ? _value.maxRegionDiff
           : maxRegionDiff // ignore: cast_nullable_to_non_nullable
               as double,
+      typeId: null == typeId
+          ? _value.typeId
+          : typeId // ignore: cast_nullable_to_non_nullable
+              as String,
+      factionTag: freezed == factionTag
+          ? _value.factionTag
+          : factionTag // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isFactionExclusive: null == isFactionExclusive
+          ? _value.isFactionExclusive
+          : isFactionExclusive // ignore: cast_nullable_to_non_nullable
+              as bool,
+      minReputation: null == minReputation
+          ? _value.minReputation
+          : minReputation // ignore: cast_nullable_to_non_nullable
+              as int,
+      sectorType: freezed == sectorType
+          ? _value.sectorType
+          : sectorType // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -112,7 +153,12 @@ abstract class _$$QuestPoolImplCopyWith<$Res>
       double type,
       double difficulty,
       @JsonKey(name: 'min_region_diff') double minRegionDiff,
-      @JsonKey(name: 'max_region_diff') double maxRegionDiff});
+      @JsonKey(name: 'max_region_diff') double maxRegionDiff,
+      @JsonKey(name: 'type_id') String typeId,
+      @JsonKey(name: 'faction_tag') String? factionTag,
+      @JsonKey(name: 'is_faction_exclusive') bool isFactionExclusive,
+      @JsonKey(name: 'min_reputation') int minReputation,
+      @JsonKey(name: 'sector_type') String? sectorType});
 }
 
 /// @nodoc
@@ -132,6 +178,11 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
     Object? difficulty = null,
     Object? minRegionDiff = null,
     Object? maxRegionDiff = null,
+    Object? typeId = null,
+    Object? factionTag = freezed,
+    Object? isFactionExclusive = null,
+    Object? minReputation = null,
+    Object? sectorType = freezed,
   }) {
     return _then(_$QuestPoolImpl(
       id: null == id
@@ -158,6 +209,26 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
           ? _value.maxRegionDiff
           : maxRegionDiff // ignore: cast_nullable_to_non_nullable
               as double,
+      typeId: null == typeId
+          ? _value.typeId
+          : typeId // ignore: cast_nullable_to_non_nullable
+              as String,
+      factionTag: freezed == factionTag
+          ? _value.factionTag
+          : factionTag // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isFactionExclusive: null == isFactionExclusive
+          ? _value.isFactionExclusive
+          : isFactionExclusive // ignore: cast_nullable_to_non_nullable
+              as bool,
+      minReputation: null == minReputation
+          ? _value.minReputation
+          : minReputation // ignore: cast_nullable_to_non_nullable
+              as int,
+      sectorType: freezed == sectorType
+          ? _value.sectorType
+          : sectorType // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -171,7 +242,12 @@ class _$QuestPoolImpl implements _QuestPool {
       required this.type,
       required this.difficulty,
       @JsonKey(name: 'min_region_diff') required this.minRegionDiff,
-      @JsonKey(name: 'max_region_diff') required this.maxRegionDiff});
+      @JsonKey(name: 'max_region_diff') required this.maxRegionDiff,
+      @JsonKey(name: 'type_id') this.typeId = 'raid',
+      @JsonKey(name: 'faction_tag') this.factionTag,
+      @JsonKey(name: 'is_faction_exclusive') this.isFactionExclusive = false,
+      @JsonKey(name: 'min_reputation') this.minReputation = 0,
+      @JsonKey(name: 'sector_type') this.sectorType});
 
   factory _$QuestPoolImpl.fromJson(Map<String, dynamic> json) =>
       _$$QuestPoolImplFromJson(json);
@@ -180,6 +256,7 @@ class _$QuestPoolImpl implements _QuestPool {
   final String id;
   @override
   final String name;
+// Deprecated: quest_types 외래 키는 type_id 사용 (Supabase quest_pools.type 컬럼 호환용으로 유지)
   @override
   final double type;
   @override
@@ -190,10 +267,25 @@ class _$QuestPoolImpl implements _QuestPool {
   @override
   @JsonKey(name: 'max_region_diff')
   final double maxRegionDiff;
+  @override
+  @JsonKey(name: 'type_id')
+  final String typeId;
+  @override
+  @JsonKey(name: 'faction_tag')
+  final String? factionTag;
+  @override
+  @JsonKey(name: 'is_faction_exclusive')
+  final bool isFactionExclusive;
+  @override
+  @JsonKey(name: 'min_reputation')
+  final int minReputation;
+  @override
+  @JsonKey(name: 'sector_type')
+  final String? sectorType;
 
   @override
   String toString() {
-    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff)';
+    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType)';
   }
 
   @override
@@ -209,13 +301,33 @@ class _$QuestPoolImpl implements _QuestPool {
             (identical(other.minRegionDiff, minRegionDiff) ||
                 other.minRegionDiff == minRegionDiff) &&
             (identical(other.maxRegionDiff, maxRegionDiff) ||
-                other.maxRegionDiff == maxRegionDiff));
+                other.maxRegionDiff == maxRegionDiff) &&
+            (identical(other.typeId, typeId) || other.typeId == typeId) &&
+            (identical(other.factionTag, factionTag) ||
+                other.factionTag == factionTag) &&
+            (identical(other.isFactionExclusive, isFactionExclusive) ||
+                other.isFactionExclusive == isFactionExclusive) &&
+            (identical(other.minReputation, minReputation) ||
+                other.minReputation == minReputation) &&
+            (identical(other.sectorType, sectorType) ||
+                other.sectorType == sectorType));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-      runtimeType, id, name, type, difficulty, minRegionDiff, maxRegionDiff);
+      runtimeType,
+      id,
+      name,
+      type,
+      difficulty,
+      minRegionDiff,
+      maxRegionDiff,
+      typeId,
+      factionTag,
+      isFactionExclusive,
+      minReputation,
+      sectorType);
 
   @JsonKey(ignore: true)
   @override
@@ -233,13 +345,18 @@ class _$QuestPoolImpl implements _QuestPool {
 
 abstract class _QuestPool implements QuestPool {
   const factory _QuestPool(
-      {required final String id,
-      required final String name,
-      required final double type,
-      required final double difficulty,
-      @JsonKey(name: 'min_region_diff') required final double minRegionDiff,
-      @JsonKey(name: 'max_region_diff')
-      required final double maxRegionDiff}) = _$QuestPoolImpl;
+          {required final String id,
+          required final String name,
+          required final double type,
+          required final double difficulty,
+          @JsonKey(name: 'min_region_diff') required final double minRegionDiff,
+          @JsonKey(name: 'max_region_diff') required final double maxRegionDiff,
+          @JsonKey(name: 'type_id') final String typeId,
+          @JsonKey(name: 'faction_tag') final String? factionTag,
+          @JsonKey(name: 'is_faction_exclusive') final bool isFactionExclusive,
+          @JsonKey(name: 'min_reputation') final int minReputation,
+          @JsonKey(name: 'sector_type') final String? sectorType}) =
+      _$QuestPoolImpl;
 
   factory _QuestPool.fromJson(Map<String, dynamic> json) =
       _$QuestPoolImpl.fromJson;
@@ -248,7 +365,7 @@ abstract class _QuestPool implements QuestPool {
   String get id;
   @override
   String get name;
-  @override
+  @override // Deprecated: quest_types 외래 키는 type_id 사용 (Supabase quest_pools.type 컬럼 호환용으로 유지)
   double get type;
   @override
   double get difficulty;
@@ -258,6 +375,21 @@ abstract class _QuestPool implements QuestPool {
   @override
   @JsonKey(name: 'max_region_diff')
   double get maxRegionDiff;
+  @override
+  @JsonKey(name: 'type_id')
+  String get typeId;
+  @override
+  @JsonKey(name: 'faction_tag')
+  String? get factionTag;
+  @override
+  @JsonKey(name: 'is_faction_exclusive')
+  bool get isFactionExclusive;
+  @override
+  @JsonKey(name: 'min_reputation')
+  int get minReputation;
+  @override
+  @JsonKey(name: 'sector_type')
+  String? get sectorType;
   @override
   @JsonKey(ignore: true)
   _$$QuestPoolImplCopyWith<_$QuestPoolImpl> get copyWith =>

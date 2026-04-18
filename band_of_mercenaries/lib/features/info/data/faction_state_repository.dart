@@ -24,6 +24,33 @@ class FactionStateRepository {
   List<String> getJoinedFactionIds() =>
       _box.values.where((s) => s.isJoined).map((s) => s.factionId).toList();
 
+  /// 저장된 모든 세력의 현재 평판 맵을 반환한다.
+  /// 반환값: factionId → currentReputation
+  Map<String, int> getAllReputations() {
+    final result = <String, int>{};
+    for (final state in _box.values) {
+      result[state.factionId] = state.currentReputation;
+    }
+    return result;
+  }
+
+  /// 특정 리전에서 발견된 세력별 단서 레벨 맵을 반환한다.
+  /// 반환값: factionId → clueLevel (해당 리전 기준 고유 discoveryId 수, 0~3 클램프).
+  /// 단서가 없는 세력은 맵에 포함되지 않는다.
+  Map<String, int> getClueLevelsByRegion(int regionId) {
+    final result = <String, int>{};
+    for (final state in _box.values) {
+      final regionDiscoveryIds = state.clueRecords
+          .where((r) => r.regionId == regionId)
+          .map((r) => r.discoveryId)
+          .toSet();
+      if (regionDiscoveryIds.isNotEmpty) {
+        result[state.factionId] = regionDiscoveryIds.length.clamp(0, 3);
+      }
+    }
+    return result;
+  }
+
   // ─── Clue 처리 ───────────────────────────────────────────────
 
   Future<bool> processClue({

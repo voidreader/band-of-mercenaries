@@ -85,8 +85,18 @@ class QuestCalculator {
     return QuestResult.criticalFailure;
   }
 
-  static int calculateReward({required int baseReward, required double rewardMultiplier, bool isGreatSuccess = false}) {
-    final reward = (baseReward * rewardMultiplier).round();
+  static int calculateReward({
+    required int baseReward,
+    required double rewardMultiplier,
+    bool isGreatSuccess = false,
+    // 전용 퀘스트 트랙 보너스 (basic: 0.30 / advanced: 0.40), 기본값 0.0으로 하위 호환
+    double trackBonus = 0.0,
+    // PassiveBonusService 결과에서 변환한 가산값 (랭크 quest_reward_multiplier 포함)
+    double passiveRewardBonus = 0.0,
+  }) {
+    // 가산 보너스 합산, 최대 +0.80 상한 적용
+    final stackedBonus = (trackBonus + passiveRewardBonus).clamp(0.0, 0.80);
+    final reward = (baseReward * rewardMultiplier * (1 + stackedBonus)).round();
     return isGreatSuccess ? reward * 2 : reward;
   }
 

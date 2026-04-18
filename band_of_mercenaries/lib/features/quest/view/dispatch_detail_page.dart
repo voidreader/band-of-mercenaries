@@ -21,6 +21,19 @@ class DispatchDetailPage extends ConsumerStatefulWidget {
 class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
   final Set<String> _selectedMercIds = {};
 
+  Color _parseFactionColor(String hex) {
+    try {
+      final cleaned = hex.replaceFirst('#', '');
+      final value = int.parse(
+        cleaned.length == 6 ? 'FF$cleaned' : cleaned,
+        radix: 16,
+      );
+      return Color(value);
+    } catch (_) {
+      return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final quests = ref.watch(questListProvider);
@@ -70,6 +83,10 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
         );
         final hasEnoughGold = userData.gold >= dispatchCost;
 
+        final factionForQuest = quest.factionTag != null
+            ? data.factions.where((f) => f.id == quest.factionTag).firstOrNull
+            : null;
+
         return Column(
               children: [
                 // Top fixed: Quest info
@@ -97,6 +114,36 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                           ),
                         ],
                       ),
+                      if (quest.isFactionExclusive && factionForQuest != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          '${factionForQuest.name} · ${quest.isAdvancedTrack == true ? '고급 트랙' : '기본 트랙'}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _parseFactionColor(factionForQuest.color),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ] else if (quest.factionTag != null && factionForQuest != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: _parseFactionColor(factionForQuest.color),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              factionForQuest.name,
+                              style: const TextStyle(fontSize: 12, color: AppTheme.textHint),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 6),
                       Text(
                         '${questType.name} · 난이도 ${quest.difficulty} · 보상 ${grossReward}G · 소요 ${questType.baseDuration}초',

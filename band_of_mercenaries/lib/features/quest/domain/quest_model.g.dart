@@ -34,13 +34,16 @@ class ActiveQuestAdapter extends TypeAdapter<ActiveQuest> {
       dispatchCost: fields[14] as int?,
       earnedXp: fields[15] as int?,
       earnedReputation: fields[16] as int?,
+      factionTag: fields[17] as String?,
+      reputationReward: fields[18] as int?,
+      isAdvancedTrack: fields[19] as bool?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ActiveQuest obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +77,13 @@ class ActiveQuestAdapter extends TypeAdapter<ActiveQuest> {
       ..writeByte(15)
       ..write(obj.earnedXp)
       ..writeByte(16)
-      ..write(obj.earnedReputation);
+      ..write(obj.earnedReputation)
+      ..writeByte(17)
+      ..write(obj.factionTag)
+      ..writeByte(18)
+      ..write(obj.reputationReward)
+      ..writeByte(19)
+      ..write(obj.isAdvancedTrack);
   }
 
   @override

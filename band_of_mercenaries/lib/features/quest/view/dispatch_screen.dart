@@ -15,6 +15,7 @@ import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_dialog.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_evolution_dialog.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 
 class DispatchScreen extends ConsumerStatefulWidget {
@@ -165,9 +166,35 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     );
   }
 
+  Color _parseFactionColor(String hex) {
+    try {
+      final cleaned = hex.replaceFirst('#', '');
+      final value = int.parse(
+        cleaned.length == 6 ? 'FF$cleaned' : cleaned,
+        radix: 16,
+      );
+      return Color(value);
+    } catch (_) {
+      return Colors.grey;
+    }
+  }
+
   Widget _buildQuestCard(ActiveQuest quest, StaticGameData data) {
     final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
     final isSelected = _selectedQuestId == quest.id;
+
+    final FactionData? faction = quest.factionTag == null
+        ? null
+        : data.factions.where((f) => f.id == quest.factionTag).firstOrNull;
+
+    final factionColor = faction != null ? _parseFactionColor(faction.color) : null;
+    final isExclusive = quest.isFactionExclusive;
+
+    final borderColor = isSelected
+        ? AppTheme.primary
+        : (isExclusive && factionColor != null)
+            ? factionColor
+            : AppTheme.borderLight;
 
     return GestureDetector(
       onTap: () {
@@ -177,45 +204,105 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.borderLight),
+          border: Border.all(color: borderColor),
           boxShadow: isSelected ? [const BoxShadow(color: Colors.black12, blurRadius: 4)] : null,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(quest.questName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                Text(questType.name, style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text('난이도 ${quest.difficulty} · 보상 ${questType.baseReward}G · 소요 ${questType.baseDuration}초',
-                style: const TextStyle(fontSize: 13, color: AppTheme.textHint)),
-            if (quest.status == QuestStatus.pending && quest.createdAt != null)
-              Builder(builder: (_) {
-                final speedMult = ref.read(speedMultiplierProvider);
-                final realElapsed = DateTime.now().difference(quest.createdAt!);
-                final gameElapsedMs = (realElapsed.inMilliseconds * speedMult).round();
-                final gameElapsed = Duration(milliseconds: gameElapsedMs);
-                final remaining = const Duration(hours: 1) - gameElapsed;
-                if (remaining.isNegative) return const SizedBox.shrink();
-                final mins = remaining.inMinutes;
-                final secs = remaining.inSeconds % 60;
-                return Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    '갱신까지 ${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}',
-                    style: const TextStyle(fontSize: 11, color: AppTheme.textHint),
+            if (isExclusive && factionColor != null)
+              Container(
+                width: 3,
+                decoration: BoxDecoration(
+                  color: factionColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(7),
+                    bottomLeft: Radius.circular(7),
                   ),
-                );
-              }),
+                ),
+              ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(quest.questName,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        ),
+                        if (faction != null) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: factionColor!.withValues(alpha: 0.85),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isExclusive)
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 3),
+                                    child: Text('전용',
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.white70,
+                                            fontWeight: FontWeight.w500)),
+                                  ),
+                                Text(faction.name,
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          Text(questType.name,
+                              style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
+                        ],
+                      ],
+                    ),
+                    if (faction != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Text(questType.name,
+                            style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary)),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                        '난이도 ${quest.difficulty} · 보상 ${questType.baseReward}G · 소요 ${questType.baseDuration}초',
+                        style: const TextStyle(fontSize: 13, color: AppTheme.textHint)),
+                    if (quest.status == QuestStatus.pending && quest.createdAt != null)
+                      Builder(builder: (_) {
+                        final speedMult = ref.read(speedMultiplierProvider);
+                        final realElapsed = DateTime.now().difference(quest.createdAt!);
+                        final gameElapsedMs = (realElapsed.inMilliseconds * speedMult).round();
+                        final gameElapsed = Duration(milliseconds: gameElapsedMs);
+                        final remaining = const Duration(hours: 1) - gameElapsed;
+                        if (remaining.isNegative) return const SizedBox.shrink();
+                        final mins = remaining.inMinutes;
+                        final secs = remaining.inSeconds % 60;
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '갱신까지 ${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}',
+                            style: const TextStyle(fontSize: 11, color: AppTheme.textHint),
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

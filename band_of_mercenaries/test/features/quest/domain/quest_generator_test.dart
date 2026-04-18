@@ -22,13 +22,13 @@ void main() {
 
   group('QuestGenerator', () {
     test('generates correct number of quests', () {
-      final quests = QuestGenerator.generateQuests(regionTier: 1, regionId: 3, questPools: questPools, questTypes: questTypes, count: 5, random: Random(42));
+      final quests = QuestGenerator.generateQuests(regionTier: 1, regionId: 3, questPools: questPools, questTypes: questTypes, count: 5, random: Random(42), joinedFactionIds: const [], factionReputations: const {}, clueLevelsInRegion: const {}, cooldownExclusiveQuestIds: const {}, activeSlotCount: 5);
       expect(quests.length, lessThanOrEqualTo(5));
       expect(quests.length, greaterThan(0));
     });
 
     test('filters quests by region tier correctly', () {
-      final quests = QuestGenerator.generateQuests(regionTier: 1, regionId: 3, questPools: questPools, questTypes: questTypes, count: 5, random: Random(42));
+      final quests = QuestGenerator.generateQuests(regionTier: 1, regionId: 3, questPools: questPools, questTypes: questTypes, count: 5, random: Random(42), joinedFactionIds: const [], factionReputations: const {}, clueLevelsInRegion: const {}, cooldownExclusiveQuestIds: const {}, activeSlotCount: 5);
       for (final quest in quests) {
         final pool = questPools.firstWhere((p) => p.id == quest.questPoolId);
         expect(pool.minRegionDiff, lessThanOrEqualTo(1));
@@ -37,13 +37,13 @@ void main() {
     });
 
     test('assigns quest types from available types', () {
-      final quests = QuestGenerator.generateQuests(regionTier: 1, regionId: 3, questPools: questPools, questTypes: questTypes, count: 5, random: Random(42));
+      final quests = QuestGenerator.generateQuests(regionTier: 1, regionId: 3, questPools: questPools, questTypes: questTypes, count: 5, random: Random(42), joinedFactionIds: const [], factionReputations: const {}, clueLevelsInRegion: const {}, cooldownExclusiveQuestIds: const {}, activeSlotCount: 5);
       final validTypeIds = questTypes.map((t) => t.id).toSet();
       for (final quest in quests) { expect(validTypeIds.contains(quest.questTypeId), true); }
     });
 
     test('returns empty list when no quests match region tier', () {
-      final quests = QuestGenerator.generateQuests(regionTier: 99, regionId: 1, questPools: questPools, questTypes: questTypes, count: 5, random: Random(42));
+      final quests = QuestGenerator.generateQuests(regionTier: 99, regionId: 1, questPools: questPools, questTypes: questTypes, count: 5, random: Random(42), joinedFactionIds: const [], factionReputations: const {}, clueLevelsInRegion: const {}, cooldownExclusiveQuestIds: const {}, activeSlotCount: 5);
       expect(quests, isEmpty);
     });
   });

@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import 'package:band_of_mercenaries/core/models/quest_pool.dart';
 import 'package:band_of_mercenaries/core/models/quest_type.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/faction_tag_resolver.dart';
 
 class QuestGenerator {
   static const _uuid = Uuid();
@@ -14,17 +15,55 @@ class QuestGenerator {
     required List<QuestType> questTypes,
     required int count,
     required Random random,
+    required List<String> joinedFactionIds,
+    required Map<String, int> factionReputations,
+    required Map<String, int> clueLevelsInRegion,
+    required Set<String> cooldownExclusiveQuestIds,
+    required int activeSlotCount,
+    int proximityTier = 3,
+    List<String> hostileFactionIds = const [],
   }) {
+    // 1. 기본 티어 필터
     final filtered = questPools
-        .where((q) => q.minRegionDiff <= regionTier && q.maxRegionDiff >= regionTier)
+        .where((p) => p.minRegionDiff <= regionTier && p.maxRegionDiff >= regionTier)
         .toList();
     if (filtered.isEmpty) return [];
-    filtered.shuffle(random);
-    final selected = filtered.take(count).toList();
 
-    return selected.map((pool) {
-      final questType = questTypes[random.nextInt(questTypes.length)];
-      return ActiveQuest(
+    // 2. 전용/일반 분리
+    final exclusivePools = filtered.where((p) => p.isFactionExclusive).toList();
+    final generalPools = filtered.where((p) => !p.isFactionExclusive).toList();
+
+    // 3. 전용 퀘스트 후보 필터링
+    final eligibleExclusive = exclusivePools.where((p) =>
+        p.factionTag != null &&
+        joinedFactionIds.contains(p.factionTag) &&
+        !hostileFactionIds.contains(p.factionTag) &&
+        (factionReputations[p.factionTag] ?? 0) >= p.minReputation &&
+        !cooldownExclusiveQuestIds.contains(p.id)).toList();
+    eligibleExclusive.shuffle(random);
+
+    // 4. 전용 노출 상한 계산
+    int exclusiveCap = min(joinedFactionIds.length * 2, (activeSlotCount * 0.5).floor());
+    exclusiveCap = min(exclusiveCap, count);
+    final selectedExclusivePools = eligibleExclusive.take(exclusiveCap).toList();
+
+    // 5. 일반 퀘스트 채우기
+    final remainingCount = count - selectedExclusivePools.length;
+    generalPools.shuffle(random);
+    final selectedGeneralPools = generalPools.take(remainingCount).toList();
+
+    // 6. ActiveQuest 생성
+    final results = <ActiveQuest>[];
+
+    // 전용 퀘스트
+    for (final pool in selectedExclusivePools) {
+      final isAdvanced = pool.minReputation >= 61;
+      final repReward = isAdvanced ? (8 + random.nextInt(3)) : (5 + random.nextInt(3));
+      final questType = questTypes.firstWhere(
+        (t) => t.id == pool.typeId,
+        orElse: () => questTypes.first,
+      );
+      results.add(ActiveQuest(
         id: _uuid.v4(),
         questPoolId: pool.id,
         questTypeId: questType.id,
@@ -32,7 +71,41 @@ class QuestGenerator {
         region: regionId,
         questName: pool.name,
         createdAt: DateTime.now(),
+        factionTag: pool.factionTag,
+        reputationReward: repReward,
+        isAdvancedTrack: isAdvanced,
+      ));
+    }
+
+    // 일반 퀘스트
+    for (final pool in selectedGeneralPools) {
+      final tag = FactionTagResolver.resolve(
+        regionId: regionId,
+        joinedFactionIds: joinedFactionIds,
+        clueLevelsInRegion: clueLevelsInRegion,
+        hostileFactionIds: hostileFactionIds,
+        proximityTier: proximityTier,
+        random: random,
       );
-    }).toList();
+      final repReward = tag != null ? FactionTagResolver.tagReputationGain(proximityTier) : null;
+      final questType = questTypes.firstWhere(
+        (t) => t.id == pool.typeId,
+        orElse: () => questTypes.first,
+      );
+      results.add(ActiveQuest(
+        id: _uuid.v4(),
+        questPoolId: pool.id,
+        questTypeId: questType.id,
+        difficulty: pool.difficulty.round(),
+        region: regionId,
+        questName: pool.name,
+        createdAt: DateTime.now(),
+        factionTag: tag,
+        reputationReward: repReward,
+        isAdvancedTrack: null,
+      ));
+    }
+
+    return results;
   }
 }

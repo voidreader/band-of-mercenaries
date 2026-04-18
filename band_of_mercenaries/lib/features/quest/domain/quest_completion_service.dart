@@ -8,6 +8,7 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 
 class TraitEventResult {
   final String? acquiredTraitKey;
@@ -48,6 +49,8 @@ class QuestCompletionResult {
   final int xpGain;
   final int repGain;
   final List<MercDamageResult> mercDamages;
+  final String? factionTag;
+  final int factionRepGain;
 
   const QuestCompletionResult({
     required this.resultType,
@@ -57,6 +60,8 @@ class QuestCompletionResult {
     required this.xpGain,
     required this.repGain,
     required this.mercDamages,
+    this.factionTag,
+    this.factionRepGain = 0,
   });
 }
 
@@ -101,20 +106,26 @@ class QuestCompletionService {
     final roll = random.nextDouble() * 100;
     final resultType = QuestCalculator.determineResult(successRate: successRate, roll: roll);
 
-    // 보상 계산 (패시브 보상 배수 적용)
-    final passiveRewardMultiplier = PassiveBonusService.getQuestRewardMultiplier(
+    // 보상 계산 (가산 방식으로 통합)
+    final passiveRewardBonus = PassiveBonusService.getQuestRewardMultiplier(
       passiveEffects,
       quest.questTypeId,
-    );
+    ) - 1.0;
+    final trackBonus = quest.isFactionExclusive
+        ? (quest.isAdvancedTrack == true
+            ? GameConstants.trackRewardAdvanced
+            : GameConstants.trackRewardBasic)
+        : 0.0;
     int rewardGold = 0;
     int totalWage = 0;
     if (resultType == QuestResult.greatSuccess || resultType == QuestResult.success) {
-      final baseRewardGold = QuestCalculator.calculateReward(
+      rewardGold = QuestCalculator.calculateReward(
         baseReward: questType.baseReward,
         rewardMultiplier: difficulty.rewardMultiplier,
         isGreatSuccess: resultType == QuestResult.greatSuccess,
+        trackBonus: trackBonus,
+        passiveRewardBonus: passiveRewardBonus,
       );
-      rewardGold = (baseRewardGold * passiveRewardMultiplier).round();
       final mercTiers = mercs.map((merc) {
         final job = staticData.jobs.firstWhere(
           (j) => j.id == merc.jobId,
@@ -213,6 +224,13 @@ class QuestCompletionService {
       }
     }
 
+    // 세력 평판 보상 (성공/대성공 시에만 지급)
+    final factionRepGain = (quest.factionTag != null &&
+            (resultType == QuestResult.greatSuccess ||
+                resultType == QuestResult.success))
+        ? (quest.reputationReward ?? 0)
+        : 0;
+
     return QuestCompletionResult(
       resultType: resultType,
       rewardGold: rewardGold,
@@ -221,6 +239,8 @@ class QuestCompletionService {
       xpGain: xpGain,
       repGain: repGain,
       mercDamages: mercDamages,
+      factionTag: quest.factionTag,
+      factionRepGain: factionRepGain,
     );
   }
 }

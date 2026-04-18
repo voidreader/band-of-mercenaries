@@ -77,6 +77,18 @@ class ActiveQuest extends HiveObject {
   @HiveField(16)
   int? earnedReputation;
 
+  // 런타임 부여된 세력 태그 또는 전용 퀘스트 고정 세력
+  @HiveField(17)
+  String? factionTag;
+
+  // 완료 시 지급될 세력 평판 (생성 시점에 미리 계산)
+  @HiveField(18)
+  int? reputationReward;
+
+  // 전용 퀘스트 트랙 구분 (null=일반, false=기본, true=고급)
+  @HiveField(19)
+  bool? isAdvancedTrack;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -95,5 +107,11 @@ class ActiveQuest extends HiveObject {
     this.dispatchCost,
     this.earnedXp,
     this.earnedReputation,
+    this.factionTag,
+    this.reputationReward,
+    this.isAdvancedTrack,
   });
+
+  // 전용 퀘스트 여부 (isAdvancedTrack이 설정된 경우)
+  bool get isFactionExclusive => isAdvancedTrack != null;
 }

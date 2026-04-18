@@ -18,6 +18,16 @@ class GameConstants {
 
   static const int maxFacilityLevel = 25;
 
+  // 세력 태그/전용 퀘스트 파라미터 (balance report 2026-04-17)
+  static const double tagProbNear = 0.30;
+  static const double tagProbMid = 0.20;
+  static const double tagProbFar = 0.10;
+  static const double tagProbVeryFar = 0.05;
+  static const double trackRewardBasic = 0.30;
+  static const double trackRewardAdvanced = 0.40;
+  static const double rewardBonusStackCap = 0.80;
+  static const Duration factionQuestCooldown = Duration(hours: 6);
+
   // Trait deletion
   static const int traitDeletionCostAcquired = 200;
   static const int traitDeletionCostEvolved = 500;

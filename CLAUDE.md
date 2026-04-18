@@ -118,7 +118,7 @@ band_of_mercenaries/lib/
 - trait_combo_evolutions: 조합 진화 레시피 (15개)
 - trait_synergies: 선천-후천 시너지 (39개, 획득 조건 완화 비율)
 - difficulties: 5단계 난이도 설정 (min_dispatch_cost/max_dispatch_cost로 시간 비례 비용)
-- quest_types / quest_pools: 퀘스트 유형 및 풀
+- quest_types / quest_pools: 퀘스트 유형 및 풀. `quest_pools` 세력 태그 확장 컬럼: `type_id`(text NOT NULL DEFAULT 'raid', 신규 유형 참조용), `faction_tag`(text nullable FK → factions.id, 전용 퀘스트 고정 세력), `is_faction_exclusive`(bool NOT NULL DEFAULT false), `min_reputation`(int NOT NULL DEFAULT 0, 전용 퀘스트 해금 임계 기본 11 / 고급 61), `sector_type`(text nullable, M3 대비 필드). 기존 `type` real 필드는 deprecated 유지. 세력 전용 퀘스트 98행(14세력 × 7개) 포함, 총 298행
 - person_names: 한국어 이름 ~500개
 - travel_events: 이동 중 랜덤 이벤트 (발견, 습격, 날씨, 행운, 조우)
 - facilities: 시설 종류 및 레벨별 비용/효과 (훈련소, 의무실, 주둔지, 정보망)
@@ -154,7 +154,8 @@ band_of_mercenaries/lib/
 - `user` 박스 지역 조사: HiveField(15) `investigatingMercId` (String?, 조사 중 용병 ID), HiveField(16) `investigationEndTime` (DateTime?), HiveField(17) `investigationRegionId` (int?)
 - `regionStates` 박스: RegionState 모델 (typeId:8) — regionId(int), knowledge(int 0~100), triggeredDiscoveries(List<String>). regionId 키로 저장
 - `factionStates` 박스: FactionState 모델 (typeId:9) — factionId(String), clueRecords(List<FactionClueRecord>), HiveField(2) reputation(int?, null-safe 하위호환), HiveField(3) joined(bool?), HiveField(4) joinedAt(DateTime?), HiveField(5) facilityLevels(Map<String,int>?). `isJoined` getter(joined ?? false), `currentReputation` getter(reputation ?? 0), `maxClueLevel` getter(고유 discoveryId 수, 0~3). `discoveredInRegions` getter로 고유 리전 ID 계산. FactionClueRecord(typeId:10) — factionId, regionId, discoveryId, foundAt. `FactionStateRepository`로 CRUD (join/leave/addReputation/setReputation/applyConflictPenalty/getJoinedFactionIds). 순수 정적 서비스 `FactionJoinService`(`features/info/domain/faction_join_service.dart`)로 가입 조건 판정·평판 클램프·패시브 설명 처리
-- `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리
+- `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리. `factionQuestCooldowns` 키는 전용 퀘스트 6시간 쿨다운 맵(`{questId: ISO8601}` JSON 문자열). 접근 시마다 lazy cleanup 수행
+- `quests` 박스 세력 태그 확장: HiveField(17) `factionTag` (String?, 런타임 부여된 세력 태그 또는 전용 퀘스트 고정 세력), HiveField(18) `reputationReward` (int?, 완료 시 지급될 세력 평판 값, 생성 시점에 미리 계산), HiveField(19) `isAdvancedTrack` (bool?, 전용 퀘스트 트랙 구분: null=일반, false=기본, true=고급). `isFactionExclusive` getter(`isAdvancedTrack != null`)로 전용 퀘스트 판별
 
 ### 코드 생성
 
@@ -176,6 +177,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **트레잇 시스템**: 선천(최대 3, 영구) + 후천(최대 4, 획득/진화/삭제). `MercenaryStatService`로 23개 행동 지표 추적 → 퀘스트 완료 시 `TraitAcquisitionService`가 조건 체크 → 자동 획득. `TraitEffectService`로 effect_json 기반 성공률/데미지 보정. 충돌 관계 검증 포함(`hasConflict` public static). `TraitEvolutionService`로 단일 진화(acquired → evolved, conditionJson 충족 시 교체) + 조합 진화(2개 acquired → evolved, 원본 소멸 + 슬롯 해방). `TraitDeletionService`로 후천 트레잇 삭제(acquired 200G/evolved 500G, 의무실 레벨 해금). 소멸/삭제 트레잇은 `traitHistory`에 기록되어 재획득 방지. 퀘스트 완료 시 획득은 자동 적용 후 알림 팝업, 진화는 `pendingTraitEventsProvider`를 통해 UI에서 카드 비교형 선택 팝업으로 플레이어가 경로 결정 (보류 가능). 여행 이벤트로 빈 선천 슬롯에 트레잇 부여 가능 (`lastTravelEventTraitResultProvider`로 결과 전달)
 - **방출**: 파견 중이 아닌 용병을 퇴직금(인건비×레벨) 지급 후 영구 방출. 재모집 불가
 - **퀘스트 갱신**: 대기 중 퀘스트는 1시간(게임 시간)마다 자동 교체. 5개 미만이면 채우기 가능
+- **세력 태그 + 전용 퀘스트**: `FactionTagResolver.resolve()`가 일반 퀘스트 생성 시 런타임으로 세력 태그 부여. 가입 세력 단서 보유 → 100%, 비가입 세력은 거점 근접도 기반 확률(tier 1: 30% / 2: 20% / 3(M1 기본): 10% / 4: 5%). 적대 세력(평판 -100) 제외. 태그 퀘스트 완료 시 평판 +1 or +2(근접도). `quest_pools.is_faction_exclusive = true`인 전용 퀘스트는 가입 세력 + `min_reputation` 충족 + 6h 쿨다운 미포함 조건으로만 노출. 노출 상한 `min(joinedCount×2, activeSlotCount×0.5)`. 전용 퀘스트는 기본 트랙(평판 11, 보상 +0.30) / 고급 트랙(평판 61, 보상 +0.40) 구분, 완료 시 평판 5~7 / 8~10 지급. 보상 공식은 `QuestCalculator.calculateReward`에 `trackBonus + passiveRewardBonus` 가산 상한 +0.80 clamp로 통합(`rankRewardBonus`는 `passiveEffects`에 포함되어 중복 방지). 전용 퀘스트 완료 시 `settings` 박스의 `factionQuestCooldowns` 맵에 `questId + now()` 기록, 6시간 경과 후 자동 재노출
 - **방치형 보상**: 앱 미접속 시간 기준 분당 1G, 최대 480G(8시간) + 금고 시설 보너스. 실제 시간 기준
 - **지역 조사**: 용병 1명을 현재 리전에 배치하여 지식 포인트(knowledge 0~100) 누적. 성공률 = `(85 + (AGI+VIT)/200).clamp(5,95)%`. 소요시간 리전 티어별(T1=5분~T5=20분). 지식 임계값 도달 시 `region_discoveries` 발견 자동 트리거. 파견·이동과 독립된 별도 슬롯. `InvestigationNotifier`(StateNotifier<void>)가 완료 처리, 결과는 `investigationCompletedProvider`(StateProvider<InvestigationResult?>)로 전달
 - **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설, 조사)의 endTime을 비례 재계산 (개발/테스트용)
@@ -213,7 +215,7 @@ cd band_of_mercenaries && flutter test test/features/mercenary/
 - 티어별 색상: 회색(1) → 초록(2) → 파랑(3) → 보라(4) → 빨강(5)
 - 하단 6탭: 이동 / 파견 / 홈 / 모집 / 시설 / 정보
 - 웹: `_MobileFrame`에서 `ConstrainedBox(maxWidth: 430)`으로 모바일 해상도 제한. 새 화면 전환 시 `Navigator.push` 대신 상태 기반 렌더링 사용 (Navigator가 ConstrainedBox 바깥으로 빠져나가는 문제 방지)
-- 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼)
+- 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼). 퀘스트 카드에 세력 태그 배지(세력명 + `FactionData.color`) 표시, 전용 퀘스트는 좌측 3px 세로 막대 + 테두리 강조 + "전용" 레이블. `DispatchDetailPage` 상단에 전용 → "세력명 · 고급/기본 트랙" 텍스트, 태그 → 원형 세력 컬러 + 세력명 조건부 렌더링
 - 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장. 이후 트레잇 획득 알림 → 진화 선택 팝업 순서로 체이닝
 - 용병 상세 오버레이: `selectedMercenaryIdProvider`로 앱 레벨 전체화면 오버레이. 용병 카드 탭 → 프로필/트레잇 슬롯(TraitSlotGrid)/행동 지표(BehaviorStatsSection)/히스토리(TraitHistorySection) 단일 스크롤. 트레잇 탭 → TraitDetailDialog (효과, 진화 경로 진행도, 시너지, 충돌)
 - 설정 화면: 홈 탭 상단 우측 `Icons.settings` 아이콘 버튼 탭 → `_showSettings` 상태 변수로 상태 기반 렌더링 (탭 6번째 자리 → 정보 탭으로 대체됨)

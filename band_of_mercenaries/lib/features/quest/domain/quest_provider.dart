@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/features/quest/data/quest_repository.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
@@ -18,9 +20,40 @@ import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_stat_ser
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_acquisition_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
+import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
+import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
+
+// ─── 세력 전용 퀘스트 쿨다운 헬퍼 ─────────────────────────────────────────
+
+Map<String, DateTime> _loadActiveCooldowns(Box settingsBox) {
+  final raw = settingsBox.get(SettingsKeys.factionQuestCooldowns) as String?;
+  if (raw == null || raw.isEmpty) return {};
+  try {
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final now = DateTime.now();
+    final result = <String, DateTime>{};
+    decoded.forEach((key, value) {
+      final ts = DateTime.tryParse(value as String);
+      if (ts != null && now.difference(ts) < GameConstants.factionQuestCooldown) {
+        result[key] = ts;
+      }
+    });
+    _saveCooldowns(settingsBox, result);
+    return result;
+  } catch (_) {
+    return {};
+  }
+}
+
+void _saveCooldowns(Box settingsBox, Map<String, DateTime> map) {
+  final encoded = jsonEncode(
+    map.map((k, v) => MapEntry(k, v.toIso8601String())),
+  );
+  settingsBox.put(SettingsKeys.factionQuestCooldowns, encoded);
+}
 
 // key: questId, value: { mercId: TraitEventResult }
 final pendingTraitEventsProvider = StateProvider<Map<String, Map<String, TraitEventResult>>>((ref) => {});
@@ -85,6 +118,13 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     // 정보망 시설 + 패시브 슬롯 보너스를 통합 계산
     final questCount = getMaxQuestCount();
 
+    final factionRepo = ref.read(factionStateRepositoryProvider);
+    final joinedFactionIds = factionRepo.getJoinedFactionIds();
+    final factionReputations = factionRepo.getAllReputations();
+    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(userData.region);
+    final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
+    final cooldownMap = _loadActiveCooldowns(settingsBox);
+
     await _repo.clearPending();
     final quests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
@@ -93,6 +133,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       questTypes: staticData.questTypes,
       count: questCount,
       random: Random(),
+      joinedFactionIds: joinedFactionIds,
+      factionReputations: factionReputations,
+      clueLevelsInRegion: clueLevelsInRegion,
+      cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
+      activeSlotCount: questCount,
     );
     await _repo.addQuests(quests);
     _load();
@@ -136,6 +181,13 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     final region = staticData.regions.firstWhere((r) => r.region == userData.region);
 
+    final factionRepo = ref.read(factionStateRepositoryProvider);
+    final joinedFactionIds = factionRepo.getJoinedFactionIds();
+    final factionReputations = factionRepo.getAllReputations();
+    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(userData.region);
+    final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
+    final cooldownMap = _loadActiveCooldowns(settingsBox);
+
     final newQuests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -143,6 +195,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       questTypes: staticData.questTypes,
       count: deficit,
       random: Random(),
+      joinedFactionIds: joinedFactionIds,
+      factionReputations: factionReputations,
+      clueLevelsInRegion: clueLevelsInRegion,
+      cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
+      activeSlotCount: maxCount,
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -249,6 +306,14 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       await _repo.removeQuest(quest.id);
     }
 
+    final factionRepo = ref.read(factionStateRepositoryProvider);
+    final joinedFactionIds = factionRepo.getJoinedFactionIds();
+    final factionReputations = factionRepo.getAllReputations();
+    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(userData.region);
+    final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
+    final cooldownMap = _loadActiveCooldowns(settingsBox);
+    final totalSlotCount = getMaxQuestCount();
+
     final newQuests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -256,6 +321,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       questTypes: staticData.questTypes,
       count: expired.length,
       random: Random(),
+      joinedFactionIds: joinedFactionIds,
+      factionReputations: factionReputations,
+      clueLevelsInRegion: clueLevelsInRegion,
+      cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
+      activeSlotCount: totalSlotCount,
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -430,6 +500,22 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     if (result.repGain > 0) {
       await ref.read(userDataProvider.notifier).addReputation(result.repGain);
+    }
+
+    // 세력 평판 지급
+    if (result.factionTag != null && result.factionRepGain > 0) {
+      ref.read(factionStateRepositoryProvider).addReputation(
+        result.factionTag!,
+        result.factionRepGain,
+      );
+    }
+
+    // 전용 퀘스트 완료 시 쿨다운 기록
+    if (quest.isFactionExclusive) {
+      final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
+      final cooldowns = _loadActiveCooldowns(settingsBox);
+      cooldowns[quest.id] = DateTime.now();
+      _saveCooldowns(settingsBox, cooldowns);
     }
 
     if (traitEvents.values.any((e) => e.hasEvents)) {
