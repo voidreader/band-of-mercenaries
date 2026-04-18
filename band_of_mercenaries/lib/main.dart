@@ -7,10 +7,12 @@ import 'package:band_of_mercenaries/core/data/sync_service.dart';
 import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/core/domain/idle_reward_service.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/app.dart';
 
 void main() async {
@@ -167,7 +169,24 @@ class _IdleRewardWrapperState extends ConsumerState<_IdleRewardWrapper> {
       }
     }
 
-    final reward = IdleRewardService.calculateReward(lastActive, idleBonusAmount: idleBonusAmount);
+    final joinedIds = ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+    final effects = staticData != null
+        ? PassiveBonusService.collect(
+            reputation: userData?.reputation ?? 0,
+            allRanks: staticData.ranks,
+            joinedFactions: staticData.factions
+                .where((f) => joinedIds.contains(f.id))
+                .toList(),
+          )
+        : const CollectedEffects.empty();
+    final idle = PassiveBonusService.getIdleRewardBonus(effects);
+
+    final reward = IdleRewardService.calculateReward(
+      lastActive,
+      idleBonusAmount: idleBonusAmount,
+      rateBonus: idle.rate,
+      capBonus: idle.cap,
+    );
 
     if (reward <= 0) return;
 

@@ -24,13 +24,14 @@ class TraitEvolutionService {
     required List<String> currentTraitIds,
     required List<TraitTransition> transitions,
     required List<TraitData> allTraits,
+    double passiveRelief = 0.0,
   }) {
     final candidates = <SingleEvolutionCandidate>[];
     for (final transition in transitions) {
       if (!currentTraitIds.contains(transition.fromTraitKey)) continue;
       final fromTrait = allTraits.where((t) => t.key == transition.fromTraitKey).firstOrNull;
       if (fromTrait == null || fromTrait.type != 'acquired') continue;
-      if (!_meetsCondition(stats, transition.conditionJson)) continue;
+      if (!_meetsCondition(stats, transition.conditionJson, passiveRelief)) continue;
       candidates.add(SingleEvolutionCandidate(transition.fromTraitKey, transition.toTraitKey));
     }
     return candidates;
@@ -40,7 +41,9 @@ class TraitEvolutionService {
     required List<String> currentTraitIds,
     required List<TraitComboEvolution> comboEvolutions,
     required List<TraitData> allTraits,
+    double passiveRelief = 0.0,
   }) {
+    // TODO(M2+): apply passiveRelief when combo evolution gains condition_json
     final candidates = <ComboEvolutionCandidate>[];
     for (final combo in comboEvolutions) {
       if (!currentTraitIds.contains(combo.requiredTrait1)) continue;
@@ -71,19 +74,24 @@ class TraitEvolutionService {
     return candidates;
   }
 
-  static bool _meetsCondition(Map<String, int> stats, Map<String, dynamic> condition) {
+  static bool _meetsCondition(
+    Map<String, int> stats,
+    Map<String, dynamic> condition, [
+    double passiveRelief = 0.0,
+  ]) {
     for (final entry in condition.entries) {
       final key = entry.key;
-      final required = (entry.value as num).toInt();
+      final rawRequired = (entry.value as num).toInt();
+      final adjusted = (rawRequired * (1.0 - passiveRelief)).ceil();
 
       if (key == 'max_quest_type_count') {
         final maxCount = _questTypeCountKeys
             .map((k) => stats[k] ?? 0)
             .reduce(max);
-        if (maxCount < required) return false;
+        if (maxCount < adjusted) return false;
       } else {
         final actual = stats[key] ?? 0;
-        if (actual < required) return false;
+        if (actual < adjusted) return false;
       }
     }
     return true;

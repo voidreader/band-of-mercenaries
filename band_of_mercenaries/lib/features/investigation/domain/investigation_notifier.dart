@@ -13,6 +13,7 @@ import 'package:band_of_mercenaries/features/investigation/domain/investigation_
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_completion_provider.dart';
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_clue_result.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 
 final investigationNotifierProvider = StateNotifierProvider<InvestigationNotifier, void>(
   (ref) => InvestigationNotifier(ref),
@@ -87,7 +88,20 @@ class InvestigationNotifier extends StateNotifier<void> {
     final region = staticData.regions.where((r) => r.region == regionId).firstOrNull;
     final tier = region?.regionTier ?? 1;
 
-    final successRate = InvestigationService.calculateSuccessRate(merc.effectiveAgi, merc.effectiveVit);
+    double successRate = InvestigationService.calculateSuccessRate(merc.effectiveAgi, merc.effectiveVit);
+    final staticDataForPassive = _ref.read(staticDataProvider).value;
+    if (staticDataForPassive != null) {
+      final userData2 = _ref.read(userDataProvider);
+      final joinedIds = _ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+      final joinedFactions = staticDataForPassive.factions.where((f) => joinedIds.contains(f.id)).toList();
+      final effects = PassiveBonusService.collect(
+        reputation: userData2?.reputation ?? 0,
+        allRanks: staticDataForPassive.ranks,
+        joinedFactions: joinedFactions,
+      );
+      final investBonus = PassiveBonusService.getInvestigationSuccessRateBonus(effects);
+      successRate = (successRate + investBonus).clamp(5.0, 95.0);
+    }
     final success = Random().nextDouble() * 100 < successRate;
 
     final repo = _ref.read(regionStateRepositoryProvider);

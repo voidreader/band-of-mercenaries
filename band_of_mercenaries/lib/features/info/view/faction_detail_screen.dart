@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/features/info/data/faction_state_repository.
 import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_join_service.dart';
+import 'package:band_of_mercenaries/features/info/domain/passive_bonus_formatter.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 
@@ -233,7 +234,7 @@ class _FactionBody extends ConsumerWidget {
     }).toList();
 
     final passiveDesc =
-        FactionJoinService.describePassiveBonus(faction.passiveBonusJson);
+        PassiveBonusFormatter.describe(faction.passiveBonusJson);
 
     return ListView(
       padding: const EdgeInsets.all(16),

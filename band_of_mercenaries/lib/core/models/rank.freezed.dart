@@ -26,6 +26,8 @@ mixin _$Rank {
   int get requiredReputation => throw _privateConstructorUsedError;
   @JsonKey(name: 'unlock_tier')
   int get unlockTier => throw _privateConstructorUsedError;
+  @JsonKey(name: 'bonus_json')
+  Map<String, dynamic> get bonusJson => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -41,7 +43,8 @@ abstract class $RankCopyWith<$Res> {
       {String grade,
       String name,
       @JsonKey(name: 'required_reputation') int requiredReputation,
-      @JsonKey(name: 'unlock_tier') int unlockTier});
+      @JsonKey(name: 'unlock_tier') int unlockTier,
+      @JsonKey(name: 'bonus_json') Map<String, dynamic> bonusJson});
 }
 
 /// @nodoc
@@ -61,6 +64,7 @@ class _$RankCopyWithImpl<$Res, $Val extends Rank>
     Object? name = null,
     Object? requiredReputation = null,
     Object? unlockTier = null,
+    Object? bonusJson = null,
   }) {
     return _then(_value.copyWith(
       grade: null == grade
@@ -79,6 +83,10 @@ class _$RankCopyWithImpl<$Res, $Val extends Rank>
           ? _value.unlockTier
           : unlockTier // ignore: cast_nullable_to_non_nullable
               as int,
+      bonusJson: null == bonusJson
+          ? _value.bonusJson
+          : bonusJson // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
     ) as $Val);
   }
 }
@@ -94,7 +102,8 @@ abstract class _$$RankImplCopyWith<$Res> implements $RankCopyWith<$Res> {
       {String grade,
       String name,
       @JsonKey(name: 'required_reputation') int requiredReputation,
-      @JsonKey(name: 'unlock_tier') int unlockTier});
+      @JsonKey(name: 'unlock_tier') int unlockTier,
+      @JsonKey(name: 'bonus_json') Map<String, dynamic> bonusJson});
 }
 
 /// @nodoc
@@ -111,6 +120,7 @@ class __$$RankImplCopyWithImpl<$Res>
     Object? name = null,
     Object? requiredReputation = null,
     Object? unlockTier = null,
+    Object? bonusJson = null,
   }) {
     return _then(_$RankImpl(
       grade: null == grade
@@ -129,6 +139,10 @@ class __$$RankImplCopyWithImpl<$Res>
           ? _value.unlockTier
           : unlockTier // ignore: cast_nullable_to_non_nullable
               as int,
+      bonusJson: null == bonusJson
+          ? _value._bonusJson
+          : bonusJson // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
     ));
   }
 }
@@ -140,7 +154,10 @@ class _$RankImpl implements _Rank {
       {required this.grade,
       required this.name,
       @JsonKey(name: 'required_reputation') required this.requiredReputation,
-      @JsonKey(name: 'unlock_tier') required this.unlockTier});
+      @JsonKey(name: 'unlock_tier') required this.unlockTier,
+      @JsonKey(name: 'bonus_json')
+      final Map<String, dynamic> bonusJson = const <String, dynamic>{}})
+      : _bonusJson = bonusJson;
 
   factory _$RankImpl.fromJson(Map<String, dynamic> json) =>
       _$$RankImplFromJson(json);
@@ -155,10 +172,18 @@ class _$RankImpl implements _Rank {
   @override
   @JsonKey(name: 'unlock_tier')
   final int unlockTier;
+  final Map<String, dynamic> _bonusJson;
+  @override
+  @JsonKey(name: 'bonus_json')
+  Map<String, dynamic> get bonusJson {
+    if (_bonusJson is EqualUnmodifiableMapView) return _bonusJson;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_bonusJson);
+  }
 
   @override
   String toString() {
-    return 'Rank(grade: $grade, name: $name, requiredReputation: $requiredReputation, unlockTier: $unlockTier)';
+    return 'Rank(grade: $grade, name: $name, requiredReputation: $requiredReputation, unlockTier: $unlockTier, bonusJson: $bonusJson)';
   }
 
   @override
@@ -171,13 +196,15 @@ class _$RankImpl implements _Rank {
             (identical(other.requiredReputation, requiredReputation) ||
                 other.requiredReputation == requiredReputation) &&
             (identical(other.unlockTier, unlockTier) ||
-                other.unlockTier == unlockTier));
+                other.unlockTier == unlockTier) &&
+            const DeepCollectionEquality()
+                .equals(other._bonusJson, _bonusJson));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, grade, name, requiredReputation, unlockTier);
+  int get hashCode => Object.hash(runtimeType, grade, name, requiredReputation,
+      unlockTier, const DeepCollectionEquality().hash(_bonusJson));
 
   @JsonKey(ignore: true)
   @override
@@ -199,7 +226,8 @@ abstract class _Rank implements Rank {
           required final String name,
           @JsonKey(name: 'required_reputation')
           required final int requiredReputation,
-          @JsonKey(name: 'unlock_tier') required final int unlockTier}) =
+          @JsonKey(name: 'unlock_tier') required final int unlockTier,
+          @JsonKey(name: 'bonus_json') final Map<String, dynamic> bonusJson}) =
       _$RankImpl;
 
   factory _Rank.fromJson(Map<String, dynamic> json) = _$RankImpl.fromJson;
@@ -214,6 +242,9 @@ abstract class _Rank implements Rank {
   @override
   @JsonKey(name: 'unlock_tier')
   int get unlockTier;
+  @override
+  @JsonKey(name: 'bonus_json')
+  Map<String, dynamic> get bonusJson;
   @override
   @JsonKey(ignore: true)
   _$$RankImplCopyWith<_$RankImpl> get copyWith =>

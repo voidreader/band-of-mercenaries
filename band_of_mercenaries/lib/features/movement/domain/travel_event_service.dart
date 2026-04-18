@@ -32,4 +32,14 @@ class TravelEventService {
   static double applyDamageReduction(double magnitude, double damageReduction) {
     return magnitude * (1.0 - damageReduction);
   }
+
+  /// 이동 이벤트 골드 손실 완화.
+  /// magnitude: 기본 손실 골드량.
+  /// mitigation: 완화 비율 (0.0~0.95, PassiveBonusService가 이미 클램프).
+  /// 반환: 완화 후 손실 골드량 (정수).
+  static int applyGoldLossMitigation(int magnitude, double mitigation) {
+    final clamped = mitigation.clamp(0.0, 0.95);
+    final reduced = (magnitude * (1.0 - clamped)).round();
+    return reduced < 0 ? 0 : reduced;
+  }
 }

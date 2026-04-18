@@ -10,6 +10,9 @@ class Rank with _$Rank {
     required String name,
     @JsonKey(name: 'required_reputation') required int requiredReputation,
     @JsonKey(name: 'unlock_tier') required int unlockTier,
+    @JsonKey(name: 'bonus_json')
+    @Default(<String, dynamic>{})
+    Map<String, dynamic> bonusJson,
   }) = _Rank;
 
   factory Rank.fromJson(Map<String, dynamic> json) =>

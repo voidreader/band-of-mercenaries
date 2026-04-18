@@ -6,8 +6,9 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
-import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_card.dart';
@@ -38,6 +39,16 @@ class RecruitScreen extends ConsumerWidget {
             ? FacilityService.getMaxMercenaries(barracksData, barracksLevel)
             : FacilityService.baseMercenaryMax;
         final isAtCapacity = aliveMercs.length >= maxMercs;
+
+        final joinedIds = ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+        final joinedFactions = data.factions.where((f) => joinedIds.contains(f.id)).toList();
+        final effects = PassiveBonusService.collect(
+          reputation: userData.reputation,
+          allRanks: data.ranks,
+          joinedFactions: joinedFactions,
+        );
+        final costMul = PassiveBonusService.getRecruitmentCostMultiplier(effects);
+        final paidCost = RecruitmentService.effectivePaidCost(costMul);
 
         return Column(
         children: [
@@ -115,9 +126,9 @@ class RecruitScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: userData.gold >= GameConstants.paidRecruitCost && !isAtCapacity
+                        onPressed: userData.gold >= paidCost && !isAtCapacity
                             ? () async {
-                                await ref.read(userDataProvider.notifier).spendGold(GameConstants.paidRecruitCost);
+                                await ref.read(userDataProvider.notifier).spendGold(paidCost);
                                 await ref.read(mercenaryListProvider.notifier).recruit();
                               }
                             : null,
@@ -129,7 +140,7 @@ class RecruitScreen extends ConsumerWidget {
                           children: [
                             Text(isAtCapacity ? '정원 초과' : '골드 모집',
                                 style: const TextStyle(color: AppTheme.textPrimary)),
-                            Text('${GameConstants.paidRecruitCost}G', style: const TextStyle(fontSize: 12, color: AppTheme.textHint)),
+                            Text('${paidCost}G', style: const TextStyle(fontSize: 12, color: AppTheme.textHint)),
                           ],
                         ),
                       ),

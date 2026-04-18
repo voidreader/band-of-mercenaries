@@ -16,6 +16,7 @@ class TraitAcquisitionService {
     required List<TraitCategory> categories,
     required List<TraitConflict> conflicts,
     required List<TraitSynergy> synergies,
+    double passiveRelief = 0.0,
   }) {
     final currentCategories = <String>{};
     int acquiredCount = 0;
@@ -35,7 +36,7 @@ class TraitAcquisitionService {
       if (acquiredCount >= GameConstants.maxAcquiredTraits) continue;
       if (hasConflict(trait.key, currentTraitIds, conflicts)) continue;
       if (trait.acquisitionCondition == null || trait.acquisitionCondition!.isEmpty) continue;
-      if (_meetsCondition(stats, trait.acquisitionCondition!, trait.key, currentTraitIds, synergies, allTraits)) {
+      if (_meetsCondition(stats, trait.acquisitionCondition!, trait.key, currentTraitIds, synergies, allTraits, passiveRelief: passiveRelief)) {
         candidates.add(trait.key);
       }
     }
@@ -63,26 +64,30 @@ class TraitAcquisitionService {
     String targetTraitKey,
     List<String> currentTraitIds,
     List<TraitSynergy> synergies,
-    List<TraitData> allTraits,
-  ) {
+    List<TraitData> allTraits, {
+    double passiveRelief = 0.0,
+  }) {
     final reductionPercent = _calculateSynergyReduction(
       targetTraitKey, currentTraitIds, synergies, allTraits,
     );
-    final reductionFactor = 1.0 - (reductionPercent / 100.0);
+    final synergyResidual = 1.0 - (reductionPercent / 100.0);
+    final passiveResidual = 1.0 - passiveRelief;
+    final combinedResidual = synergyResidual * passiveResidual;
 
     for (final entry in condition.entries) {
       final key = entry.key;
       final requiredRaw = (entry.value as num).toDouble();
-      final required = (requiredRaw * reductionFactor).ceil();
+      final threshold = requiredRaw;
+      final effectiveThreshold = (threshold * combinedResidual).clamp(threshold * 0.10, threshold.toDouble()).ceil();
 
       if (key == 'max_quest_type_count') {
         final maxCount = _questTypeCountKeys
             .map((k) => stats[k] ?? 0)
             .reduce(max);
-        if (maxCount < required) return false;
+        if (maxCount < effectiveThreshold) return false;
       } else {
         final actual = stats[key] ?? 0;
-        if (actual < required) return false;
+        if (actual < effectiveThreshold) return false;
       }
     }
     return true;

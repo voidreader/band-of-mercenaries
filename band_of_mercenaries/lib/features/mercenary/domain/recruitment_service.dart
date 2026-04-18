@@ -24,8 +24,11 @@ class RecruitmentService {
   static const _tierProbabilities = <int, double>{1: 0.45, 2: 0.30, 3: 0.15, 4: 0.08, 5: 0.02};
   static const _uuid = Uuid();
 
-  static int selectTier(Random random, {double recruitBonus = 0.0}) {
-    if (recruitBonus <= 0.0) {
+  static int selectTier(Random random, {double recruitBonus = 0.0, double extraHighTierBoost = 0.0}) {
+    // 주점 시설 보너스와 세력 패시브 고티어 확률 보너스를 합산, 최대 0.5 제한
+    final totalBonus = (recruitBonus + extraHighTierBoost).clamp(0.0, 0.5);
+
+    if (totalBonus <= 0.0) {
       final roll = random.nextDouble();
       double cumulative = 0;
       for (final entry in _tierProbabilities.entries) {
@@ -35,7 +38,7 @@ class RecruitmentService {
       return 1;
     }
 
-    final tier1Prob = 0.45 * (1.0 - recruitBonus);
+    final tier1Prob = 0.45 * (1.0 - totalBonus);
     final reduction = 0.45 - tier1Prob;
     final tier2Prob = _tierProbabilities[2]! + reduction / 4;
     final tier3Prob = _tierProbabilities[3]! + reduction / 4;
@@ -93,8 +96,9 @@ class RecruitmentService {
     required Random random,
     int? forceTier,
     double recruitBonus = 0.0,
+    double extraHighTierBoost = 0.0,
   }) {
-    final tier = forceTier ?? selectTier(random, recruitBonus: recruitBonus);
+    final tier = forceTier ?? selectTier(random, recruitBonus: recruitBonus, extraHighTierBoost: extraHighTierBoost);
     final tierJobs = jobs.where((j) => j.tier == tier).toList();
     final job = tierJobs[random.nextInt(tierJobs.length)];
     final name = names[random.nextInt(names.length)];
@@ -112,6 +116,11 @@ class RecruitmentService {
       traitIds: innateTraitKeys,
     );
   }
+
+  /// 세력 패시브 적용 후 실효 골드 모집 비용.
+  /// [costMultiplier]는 PassiveBonusService.getRecruitmentCostMultiplier()의 반환값.
+  static int effectivePaidCost(double costMultiplier) =>
+      (GameConstants.paidRecruitCost * costMultiplier).round();
 
   static List<Mercenary> generateStartingMercenaries({
     required List<Job> jobs,

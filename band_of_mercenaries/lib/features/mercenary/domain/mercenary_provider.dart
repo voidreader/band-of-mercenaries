@@ -8,6 +8,8 @@ import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 
 final mercenaryRepositoryProvider = Provider((ref) => MercenaryRepository());
 
@@ -105,7 +107,7 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     final staticData = ref.read(staticDataProvider).value;
     if (staticData == null) return null;
 
-    // Capacity check: enforce barracks max
+    // 주둔지 용량 제한 체크
     final userData = ref.read(userDataProvider);
     final barracksData = staticData.facilities.where((f) => f.id == 'barracks').firstOrNull;
     if (userData != null && barracksData != null) {
@@ -115,11 +117,25 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
       if (aliveCount >= maxMercs) return null;
     }
 
+    // 주점 시설 보너스 계산
     double recruitBonus = 0.0;
     final tavernFacility = staticData.facilities.where((f) => f.id == 'tavern').firstOrNull;
     if (userData != null && tavernFacility != null) {
       final tavernLevel = userData.facilities['tavern'] ?? 0;
       recruitBonus = ConstructionService.getEffectValue(tavernFacility, tavernLevel);
+    }
+
+    // 세력 패시브 기반 고티어(T4~T5) 확률 부스트 계산
+    double extraHighTierBoost = 0.0;
+    if (userData != null) {
+      final joinedIds = ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+      final joinedFactions = staticData.factions.where((f) => joinedIds.contains(f.id)).toList();
+      final effects = PassiveBonusService.collect(
+        reputation: userData.reputation,
+        allRanks: staticData.ranks,
+        joinedFactions: joinedFactions,
+      );
+      extraHighTierBoost = PassiveBonusService.getRecruitmentTierBoost(effects);
     }
 
     final merc = await _repo.recruit(
@@ -128,6 +144,7 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
       categories: staticData.traitCategories,
       names: staticData.personNames,
       recruitBonus: recruitBonus,
+      extraHighTierBoost: extraHighTierBoost,
     );
     ref.read(activityLogProvider.notifier).addLog(
       '용병 "${merc.name}" 모집 완료',

@@ -18,6 +18,8 @@ import 'package:band_of_mercenaries/features/mercenary/domain/trait_acquisition_
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/trait_conflict.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 
 final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
@@ -213,13 +215,27 @@ class MovementNotifier extends StateNotifier<MovementState?> {
       }
     }
 
+    // 세력 패시브 effects 수집
+    CollectedEffects passiveEffects = const CollectedEffects.empty();
+    if (userData != null && staticData != null) {
+      final joinedIds = ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+      final joinedFactions = staticData.factions.where((f) => joinedIds.contains(f.id)).toList();
+      passiveEffects = PassiveBonusService.collect(
+        reputation: userData.reputation,
+        allRanks: staticData.ranks,
+        joinedFactions: joinedFactions,
+      );
+    }
+
     switch (event.effectType) {
       case 'gold':
         if (event.magnitude > 0) {
           await ref.read(userDataProvider.notifier).addGold(event.magnitude.abs().round());
         } else {
-          final reducedMagnitude = TravelEventService.applyDamageReduction(event.magnitude.abs(), damageReduction);
-          await ref.read(userDataProvider.notifier).spendGold(reducedMagnitude.round());
+          // gold_loss 이벤트: passive mitigation 적용
+          final goldLossMitigation = PassiveBonusService.getTravelEventMitigation(passiveEffects, 'gold_loss');
+          final reducedMagnitude = TravelEventService.applyGoldLossMitigation(event.magnitude.abs().round(), goldLossMitigation);
+          await ref.read(userDataProvider.notifier).spendGold(reducedMagnitude);
         }
       case 'injury':
         final mercs = ref.read(mercenaryListProvider)
@@ -227,7 +243,10 @@ class MovementNotifier extends StateNotifier<MovementState?> {
             .toList();
         if (mercs.isNotEmpty) {
           final random = Random();
-          if (random.nextDouble() >= damageReduction) {
+          // damage 이벤트: 시설 기반 감소 + passive mitigation 가산 (0~0.95 clamp)
+          final damageMitigation = PassiveBonusService.getTravelEventMitigation(passiveEffects, 'damage');
+          final totalDamageReduction = (damageReduction + damageMitigation).clamp(0.0, 0.95);
+          if (random.nextDouble() >= totalDamageReduction) {
             final target = mercs[random.nextInt(mercs.length)];
             final recoverySeconds = (10 * 60 / speedMult).round();
             final recoveryTime = DateTime.now().add(Duration(seconds: recoverySeconds));

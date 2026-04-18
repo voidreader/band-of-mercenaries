@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 
 class TraitEventResult {
   final String? acquiredTraitKey;
@@ -68,6 +69,7 @@ class QuestCompletionService {
     required Map<String, int> facilities,
     required double speedMultiplier,
     required Random random,
+    CollectedEffects passiveEffects = const CollectedEffects.empty(),
   }) {
     final partyPower = QuestCalculator.calculatePartyPower(mercs, quest.questTypeId);
     final difficulty = staticData.difficulties.firstWhere(
@@ -77,9 +79,14 @@ class QuestCompletionService {
     final questType = staticData.questTypes.firstWhere((t) => t.id == quest.questTypeId);
     final distancePenalty = (quest.region - playerRegion).abs();
 
-    // 성공률 판정
+    // 성공률 판정 (트레잇 + 패시브 보너스 적용)
     final allTraitIds = mercs.expand((m) => m.allTraitIds).toSet().toList();
-    final successRate = QuestCalculator.calculateSuccessRate(
+    final passiveSuccessBonus = PassiveBonusService.getQuestSuccessRateBonus(
+      passiveEffects,
+      questType: quest.questTypeId,
+      partySize: mercs.length,
+    );
+    final baseSuccessRate = QuestCalculator.calculateSuccessRate(
       partyPower: partyPower,
       enemyPower: difficulty.enemyPower,
       traitBonuses: allTraitIds,
@@ -89,19 +96,25 @@ class QuestCompletionService {
       allTraits: staticData.traits,
       partySize: mercs.length,
     );
+    final successRate = (baseSuccessRate + passiveSuccessBonus).clamp(5.0, 95.0);
 
     final roll = random.nextDouble() * 100;
     final resultType = QuestCalculator.determineResult(successRate: successRate, roll: roll);
 
-    // 보상 계산
+    // 보상 계산 (패시브 보상 배수 적용)
+    final passiveRewardMultiplier = PassiveBonusService.getQuestRewardMultiplier(
+      passiveEffects,
+      quest.questTypeId,
+    );
     int rewardGold = 0;
     int totalWage = 0;
     if (resultType == QuestResult.greatSuccess || resultType == QuestResult.success) {
-      rewardGold = QuestCalculator.calculateReward(
+      final baseRewardGold = QuestCalculator.calculateReward(
         baseReward: questType.baseReward,
         rewardMultiplier: difficulty.rewardMultiplier,
         isGreatSuccess: resultType == QuestResult.greatSuccess,
       );
+      rewardGold = (baseRewardGold * passiveRewardMultiplier).round();
       final mercTiers = mercs.map((merc) {
         final job = staticData.jobs.firstWhere(
           (j) => j.id == merc.jobId,
@@ -129,6 +142,7 @@ class QuestCompletionService {
       difficulty: quest.difficulty.clamp(1, 5),
       resultMultiplier: xpMultiplier,
       facilityBonus: trainingBonus,
+      passiveXpBonus: PassiveBonusService.getMercenaryXpBonus(passiveEffects),
     );
 
     // 명성 계산
@@ -175,7 +189,11 @@ class QuestCompletionService {
           mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.dead, damageRoll: damageRoll));
         } else if (damageResult == DamageResult.injured) {
           final baseRecoverySeconds = (difficulty.level * 10 * 60 / speedMultiplier).round();
-          final adjustedRecoverySeconds = (baseRecoverySeconds * (1.0 - recoveryReduction)).round();
+          final passiveRecoveryMultiplier = PassiveBonusService.getRecoveryTimeMultiplier(
+            passiveEffects,
+            'injured',
+          );
+          final adjustedRecoverySeconds = (baseRecoverySeconds * (1.0 - recoveryReduction) * passiveRecoveryMultiplier).round();
           mercDamages.add(MercDamageResult(
             mercId: merc.id,
             newStatus: MercenaryStatus.injured,

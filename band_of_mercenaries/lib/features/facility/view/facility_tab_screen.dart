@@ -7,6 +7,8 @@ import 'package:band_of_mercenaries/features/facility/domain/construction_servic
 import 'package:band_of_mercenaries/features/facility/view/construction_queue_bar.dart';
 import 'package:band_of_mercenaries/features/facility/view/facility_card.dart';
 import 'package:band_of_mercenaries/core/models/facility.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 
 class FacilityTabScreen extends ConsumerWidget {
   const FacilityTabScreen({super.key});
@@ -27,10 +29,12 @@ class FacilityTabScreen extends ConsumerWidget {
     Facility facility,
     int level,
     double speedMultiplier,
+    double goldMul,
+    double timeMul,
   ) async {
     final nextLevel = level + 1;
-    final cost = ConstructionService.calculateCost(facility, nextLevel);
-    final duration = ConstructionService.calculateBuildDuration(facility, nextLevel, speedMultiplier);
+    final cost = ConstructionService.calculateCost(facility, nextLevel, costMultiplier: goldMul);
+    final duration = ConstructionService.calculateBuildDuration(facility, nextLevel, speedMultiplier, timeMultiplier: timeMul);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -78,6 +82,16 @@ class FacilityTabScreen extends ConsumerWidget {
 
         final facilities = staticData.facilities;
 
+        final joinedIds = ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+        final joinedFactions = staticData.factions.where((f) => joinedIds.contains(f.id)).toList();
+        final effects = PassiveBonusService.collect(
+          reputation: userData.reputation,
+          allRanks: staticData.ranks,
+          joinedFactions: joinedFactions,
+        );
+        final goldMul = PassiveBonusService.getFacilityCostMultiplier(effects, 'gold');
+        final timeMul = PassiveBonusService.getFacilityCostMultiplier(effects, 'time');
+
         return Column(
           children: [
             const ConstructionQueueBar(),
@@ -93,6 +107,7 @@ class FacilityTabScreen extends ConsumerWidget {
                     currentLevel,
                     userData.gold,
                     userData.constructionFacilityId,
+                    costMultiplier: goldMul,
                   );
 
                   return FacilityCard(
@@ -106,6 +121,8 @@ class FacilityTabScreen extends ConsumerWidget {
                       facility,
                       currentLevel,
                       speedMultiplier,
+                      goldMul,
+                      timeMul,
                     ),
                   );
                 },

@@ -38,6 +38,7 @@ class QuestCalculator {
     required Random random,
     List<TraitData> allTraits = const [],
     int partySize = 1,
+    double factionPassiveBonus = 0.0,
   }) {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
@@ -48,7 +49,7 @@ class QuestCalculator {
     );
     final randomVariance = (random.nextDouble() * 10.0) - 5.0;
 
-    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble() + randomVariance;
+    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble() + factionPassiveBonus + randomVariance;
     return rate.clamp(5.0, 95.0);
   }
 
@@ -60,6 +61,7 @@ class QuestCalculator {
     required int distancePenalty,
     List<TraitData> allTraits = const [],
     int partySize = 1,
+    double factionPassiveBonus = 0.0,
   }) {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
@@ -68,7 +70,7 @@ class QuestCalculator {
       traitIds: traitBonuses, allTraits: allTraits,
       questTypeId: questTypeId, partySize: partySize,
     );
-    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble();
+    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble() + factionPassiveBonus;
     return rate.clamp(5.0, 95.0);
   }
 

@@ -17,6 +17,8 @@ import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_stat_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_acquisition_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -50,6 +52,24 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
   void refresh() => _load();
 
+  /// 현재 플레이어의 세력 패시브 + 명성 랭크 보너스를 수집하여 반환.
+  /// staticData 또는 userData가 없으면 빈 effects를 반환하여 중립값으로 동작.
+  CollectedEffects _collectPassiveEffects() {
+    final staticData = ref.read(staticDataProvider).value;
+    final userData = ref.read(userDataProvider);
+    if (staticData == null || userData == null) return const CollectedEffects.empty();
+
+    final joinedIds = ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+    final joinedFactions = staticData.factions
+        .where((f) => joinedIds.contains(f.id))
+        .toList();
+    return PassiveBonusService.collect(
+      reputation: userData.reputation,
+      allRanks: staticData.ranks,
+      joinedFactions: joinedFactions,
+    );
+  }
+
   Future<void> clearCompleted(String questId) async {
     await _repo.removeQuest(questId);
     _load();
@@ -62,16 +82,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     final region = staticData.regions.firstWhere((r) => r.region == userData.region);
 
-    // Use intelligence facility bonus for quest count
-    int questCount = GameConstants.baseQuestCount;
-    final intelligenceLevel = userData.facilities['intelligence'] ?? 0;
-    if (intelligenceLevel > 0) {
-      final intelligenceFacility = staticData.facilities.firstWhere(
-        (f) => f.id == 'intelligence',
-        orElse: () => staticData.facilities.first,
-      );
-      questCount += FacilityService.getExtraQuestCount(intelligenceFacility, intelligenceLevel);
-    }
+    // 정보망 시설 + 패시브 슬롯 보너스를 통합 계산
+    final questCount = getMaxQuestCount();
 
     await _repo.clearPending();
     final quests = QuestGenerator.generateQuests(
@@ -92,6 +104,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     if (staticData == null || userData == null) return GameConstants.baseQuestCount;
 
     int count = GameConstants.baseQuestCount;
+
+    // 정보망 시설 보너스
     final intelligenceLevel = userData.facilities['intelligence'] ?? 0;
     if (intelligenceLevel > 0) {
       final intelligenceFacility = staticData.facilities.firstWhere(
@@ -100,6 +114,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       );
       count += FacilityService.getExtraQuestCount(intelligenceFacility, intelligenceLevel);
     }
+
+    // 세력 패시브 + 명성 랭크 dispatch_slot_bonus 가산 (상한 +10은 PassiveBonusService 내부 클램프)
+    final passiveSlots = PassiveBonusService.getDispatchSlotBonus(_collectPassiveEffects());
+    count += passiveSlots;
+
     return count;
   }
 
@@ -263,6 +282,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         .where((m) => quest.dispatchedMercIds.contains(m.id))
         .toList();
 
+    final passiveEffects = _collectPassiveEffects();
     final result = QuestCompletionService.calculate(
       quest: quest,
       mercs: mercs,
@@ -271,6 +291,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       facilities: userData.facilities,
       speedMultiplier: ref.read(speedMultiplierProvider),
       random: Random(),
+      passiveEffects: passiveEffects,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
@@ -347,6 +368,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
         final staticData = ref.read(staticDataProvider).value;
         if (staticData != null) {
+          final passiveEffects = _collectPassiveEffects();
+          final acquisitionRelief = PassiveBonusService.getTraitAcquisitionRelief(passiveEffects);
+          final evolutionRelief = PassiveBonusService.getTraitEvolutionRelief(passiveEffects);
+
           final candidates = TraitAcquisitionService.checkAcquisitionCandidates(
             stats: finalStats,
             currentTraitIds: merc.allTraitIds,
@@ -355,6 +380,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             categories: staticData.traitCategories,
             conflicts: staticData.traitConflicts,
             synergies: staticData.traitSynergies,
+            passiveRelief: acquisitionRelief,
           );
           if (candidates.isNotEmpty) {
             await mercRepo.addTrait(merc.id, candidates.first);
@@ -377,6 +403,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             currentTraitIds: currentTraitIds,
             transitions: staticData.traitTransitions,
             allTraits: staticData.traits,
+            passiveRelief: evolutionRelief,
           );
 
           // Combo evolution: collect candidates only if no single evolution
@@ -386,6 +413,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
               currentTraitIds: currentTraitIds,
               comboEvolutions: staticData.traitComboEvolutions,
               allTraits: staticData.traits,
+              passiveRelief: evolutionRelief,
             );
           }
 

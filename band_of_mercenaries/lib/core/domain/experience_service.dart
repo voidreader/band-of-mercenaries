@@ -5,9 +5,9 @@ class ExperienceService {
   static const int maxLevel = 5;
   static const List<int> levelThresholds = [0, 100, 350, 850, 1850];
 
-  static int calculateXpGain({required int difficulty, required double resultMultiplier, required double facilityBonus}) {
+  static int calculateXpGain({required int difficulty, required double resultMultiplier, required double facilityBonus, double passiveXpBonus = 0.0}) {
     final base = difficulty * baseXp * resultMultiplier;
-    return (base * (1.0 + facilityBonus)).round();
+    return (base * (1.0 + facilityBonus + passiveXpBonus)).round();
   }
 
   static int checkLevelUp({required int currentLevel, required int currentXp}) {

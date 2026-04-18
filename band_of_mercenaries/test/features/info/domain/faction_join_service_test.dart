@@ -207,24 +207,4 @@ void main() {
     test('B는 C 이상 통과', () => expect(FactionJoinService.isRankSufficient('B', 'C'), isTrue));
     test('A는 모든 랭크 통과', () => expect(FactionJoinService.isRankSufficient('A', 'B'), isTrue));
   });
-
-  group('FactionJoinService.describePassiveBonus', () {
-    test('탐험 보상 +15%', () {
-      final result = FactionJoinService.describePassiveBonus({'explore_reward_pct': 15});
-      expect(result, contains('탐험 퀘스트 보상 +15%'));
-    });
-
-    test('복수 보너스', () {
-      final result = FactionJoinService.describePassiveBonus({
-        'escort_reward_pct': 15,
-        'idle_reward_pct': 10,
-      });
-      expect(result, contains('호위 퀘스트 보상 +15%'));
-      expect(result, contains('방치 보상 +10%'));
-    });
-
-    test('빈 맵 → 빈 문자열', () {
-      expect(FactionJoinService.describePassiveBonus({}), isEmpty);
-    });
-  });
 }
