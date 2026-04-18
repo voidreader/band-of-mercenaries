@@ -31,6 +31,8 @@ mixin _$Job {
   int get baseVit => throw _privateConstructorUsedError;
   @JsonKey(name: 'base_agi')
   int get baseAgi => throw _privateConstructorUsedError;
+  @JsonKey(name: 'role')
+  String get role => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -49,7 +51,8 @@ abstract class $JobCopyWith<$Res> {
       @JsonKey(name: 'base_str') int baseStr,
       @JsonKey(name: 'base_intelligence') int baseIntelligence,
       @JsonKey(name: 'base_vit') int baseVit,
-      @JsonKey(name: 'base_agi') int baseAgi});
+      @JsonKey(name: 'base_agi') int baseAgi,
+      @JsonKey(name: 'role') String role});
 }
 
 /// @nodoc
@@ -71,6 +74,7 @@ class _$JobCopyWithImpl<$Res, $Val extends Job> implements $JobCopyWith<$Res> {
     Object? baseIntelligence = null,
     Object? baseVit = null,
     Object? baseAgi = null,
+    Object? role = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -101,6 +105,10 @@ class _$JobCopyWithImpl<$Res, $Val extends Job> implements $JobCopyWith<$Res> {
           ? _value.baseAgi
           : baseAgi // ignore: cast_nullable_to_non_nullable
               as int,
+      role: null == role
+          ? _value.role
+          : role // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 }
@@ -118,7 +126,8 @@ abstract class _$$JobImplCopyWith<$Res> implements $JobCopyWith<$Res> {
       @JsonKey(name: 'base_str') int baseStr,
       @JsonKey(name: 'base_intelligence') int baseIntelligence,
       @JsonKey(name: 'base_vit') int baseVit,
-      @JsonKey(name: 'base_agi') int baseAgi});
+      @JsonKey(name: 'base_agi') int baseAgi,
+      @JsonKey(name: 'role') String role});
 }
 
 /// @nodoc
@@ -137,6 +146,7 @@ class __$$JobImplCopyWithImpl<$Res> extends _$JobCopyWithImpl<$Res, _$JobImpl>
     Object? baseIntelligence = null,
     Object? baseVit = null,
     Object? baseAgi = null,
+    Object? role = null,
   }) {
     return _then(_$JobImpl(
       id: null == id
@@ -167,6 +177,10 @@ class __$$JobImplCopyWithImpl<$Res> extends _$JobCopyWithImpl<$Res, _$JobImpl>
           ? _value.baseAgi
           : baseAgi // ignore: cast_nullable_to_non_nullable
               as int,
+      role: null == role
+          ? _value.role
+          : role // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -181,7 +195,8 @@ class _$JobImpl implements _Job {
       @JsonKey(name: 'base_str') required this.baseStr,
       @JsonKey(name: 'base_intelligence') required this.baseIntelligence,
       @JsonKey(name: 'base_vit') required this.baseVit,
-      @JsonKey(name: 'base_agi') required this.baseAgi});
+      @JsonKey(name: 'base_agi') required this.baseAgi,
+      @JsonKey(name: 'role') this.role = 'specialist'});
 
   factory _$JobImpl.fromJson(Map<String, dynamic> json) =>
       _$$JobImplFromJson(json);
@@ -204,10 +219,13 @@ class _$JobImpl implements _Job {
   @override
   @JsonKey(name: 'base_agi')
   final int baseAgi;
+  @override
+  @JsonKey(name: 'role')
+  final String role;
 
   @override
   String toString() {
-    return 'Job(id: $id, tier: $tier, name: $name, baseStr: $baseStr, baseIntelligence: $baseIntelligence, baseVit: $baseVit, baseAgi: $baseAgi)';
+    return 'Job(id: $id, tier: $tier, name: $name, baseStr: $baseStr, baseIntelligence: $baseIntelligence, baseVit: $baseVit, baseAgi: $baseAgi, role: $role)';
   }
 
   @override
@@ -222,13 +240,14 @@ class _$JobImpl implements _Job {
             (identical(other.baseIntelligence, baseIntelligence) ||
                 other.baseIntelligence == baseIntelligence) &&
             (identical(other.baseVit, baseVit) || other.baseVit == baseVit) &&
-            (identical(other.baseAgi, baseAgi) || other.baseAgi == baseAgi));
+            (identical(other.baseAgi, baseAgi) || other.baseAgi == baseAgi) &&
+            (identical(other.role, role) || other.role == role));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, tier, name, baseStr, baseIntelligence, baseVit, baseAgi);
+  int get hashCode => Object.hash(runtimeType, id, tier, name, baseStr,
+      baseIntelligence, baseVit, baseAgi, role);
 
   @JsonKey(ignore: true)
   @override
@@ -252,7 +271,8 @@ abstract class _Job implements Job {
       @JsonKey(name: 'base_str') required final int baseStr,
       @JsonKey(name: 'base_intelligence') required final int baseIntelligence,
       @JsonKey(name: 'base_vit') required final int baseVit,
-      @JsonKey(name: 'base_agi') required final int baseAgi}) = _$JobImpl;
+      @JsonKey(name: 'base_agi') required final int baseAgi,
+      @JsonKey(name: 'role') final String role}) = _$JobImpl;
 
   factory _Job.fromJson(Map<String, dynamic> json) = _$JobImpl.fromJson;
 
@@ -274,6 +294,9 @@ abstract class _Job implements Job {
   @override
   @JsonKey(name: 'base_agi')
   int get baseAgi;
+  @override
+  @JsonKey(name: 'role')
+  String get role;
   @override
   @JsonKey(ignore: true)
   _$$JobImplCopyWith<_$JobImpl> get copyWith =>

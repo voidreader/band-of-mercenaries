@@ -10,6 +10,8 @@ import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart' show TraitEventResult;
+import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
+import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/features/quest/view/dispatch_detail_page.dart';
 import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
@@ -17,6 +19,15 @@ import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_di
 import 'package:band_of_mercenaries/features/mercenary/view/trait_evolution_dialog.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
+
+const Map<String, IconData> _roleIcons = {
+  'warrior': Icons.shield,
+  'ranger': Icons.gps_fixed,
+  'mage': Icons.auto_awesome,
+  'rogue': Icons.dark_mode,
+  'support': Icons.favorite,
+  'specialist': Icons.build,
+};
 
 class DispatchScreen extends ConsumerStatefulWidget {
   const DispatchScreen({super.key});
@@ -281,6 +292,39 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                     Text(
                         '난이도 ${quest.difficulty} · 보상 ${questType.baseReward}G · 소요 ${questType.baseDuration}초',
                         style: const TextStyle(fontSize: 13, color: AppTheme.textHint)),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Builder(builder: (context) {
+                        final topRoles = RoleSynergyMatrix.topRolesForQuest(
+                          quest.questTypeId,
+                          n: 2,
+                        );
+                        return Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            for (final entry in topRoles)
+                              Chip(
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 0),
+                                avatar: Icon(
+                                  _roleIcons[entry.key] ?? Icons.build,
+                                  size: 14,
+                                  color:
+                                      Theme.of(context).colorScheme.primary,
+                                ),
+                                label: Text(
+                                  RoleUtils.koreanName(entry.key),
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ),
+                          ],
+                        );
+                      }),
+                    ),
                     if (quest.status == QuestStatus.pending && quest.createdAt != null)
                       Builder(builder: (_) {
                         final speedMult = ref.read(speedMultiplierProvider);

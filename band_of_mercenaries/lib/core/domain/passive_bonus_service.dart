@@ -68,6 +68,20 @@ class PassiveBonusService {
     required String questType,
     required int partySize,
   }) {
+    return getQuestSuccessRateBonusWithDetail(
+      ce,
+      questType: questType,
+      partySize: partySize,
+    ).applied;
+  }
+
+  /// 퀘스트 성공률 보너스 상세 반환 (rawSum은 %p 단위, applied는 clamp(0,20) 적용값, lossAmount는 초과분).
+  static ({double rawSum, double applied, double lossAmount})
+      getQuestSuccessRateBonusWithDetail(
+    CollectedEffects ce, {
+    required String questType,
+    required int partySize,
+  }) {
     double sum = 0.0;
     for (final e in ce.effects) {
       if (e is QuestSuccessRateBonusEffect) {
@@ -80,8 +94,10 @@ class PassiveBonusService {
         }
       }
     }
-    // 비율 → %p 변환 후 상한 적용
-    return (sum * 100.0).clamp(0.0, 20.0);
+    final rawPp = sum * 100.0;
+    final applied = rawPp.clamp(0.0, 20.0);
+    final lossAmount = (rawPp - applied).clamp(0.0, double.infinity);
+    return (rawSum: rawPp, applied: applied, lossAmount: lossAmount);
   }
 
   /// 지역 조사 성공률 보너스 (%p). 자체 상한 +20%p (퀘스트 성공률과 별도 풀).

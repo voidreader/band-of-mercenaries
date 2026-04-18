@@ -4,6 +4,8 @@ import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_effect_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
+import 'package:band_of_mercenaries/features/quest/domain/success_rate_breakdown.dart';
 
 enum DamageResult { dead, injured, survived }
 
@@ -39,17 +41,24 @@ class QuestCalculator {
     List<TraitData> allTraits = const [],
     int partySize = 1,
     double factionPassiveBonus = 0.0,
+    List<String> partyRoles = const [],
   }) {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
     final questMod = _questModifiers[questTypeId] ?? 0.0;
-    final traitBonus = TraitEffectService.calculateSuccessRateBonus(
+    final rawTraitBonus = TraitEffectService.calculateSuccessRateBonus(
       traitIds: traitBonuses, allTraits: allTraits,
       questTypeId: questTypeId, partySize: partySize,
     );
+    final traitBonus = rawTraitBonus.clamp(-10.0, 10.0);
+    final roleSynergyBonus = RoleSynergyMatrix.partyAverageBonus(
+      partyRoles: partyRoles,
+      questTypeId: questTypeId,
+    );
     final randomVariance = (random.nextDouble() * 10.0) - 5.0;
 
-    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble() + factionPassiveBonus + randomVariance;
+    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod
+        - distancePenalty.toDouble() + roleSynergyBonus + factionPassiveBonus + randomVariance;
     return rate.clamp(5.0, 95.0);
   }
 
@@ -62,16 +71,89 @@ class QuestCalculator {
     List<TraitData> allTraits = const [],
     int partySize = 1,
     double factionPassiveBonus = 0.0,
+    List<String> partyRoles = const [],
   }) {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
     final questMod = _questModifiers[questTypeId] ?? 0.0;
-    final traitBonus = TraitEffectService.calculateSuccessRateBonus(
+    final rawTraitBonus = TraitEffectService.calculateSuccessRateBonus(
       traitIds: traitBonuses, allTraits: allTraits,
       questTypeId: questTypeId, partySize: partySize,
     );
-    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod - distancePenalty.toDouble() + factionPassiveBonus;
+    final traitBonus = rawTraitBonus.clamp(-10.0, 10.0);
+    final roleSynergyBonus = RoleSynergyMatrix.partyAverageBonus(
+      partyRoles: partyRoles,
+      questTypeId: questTypeId,
+    );
+    final rate = 50.0 + (powerRatio - 1.0) * 50.0 + traitBonus + questMod
+        - distancePenalty.toDouble() + roleSynergyBonus + factionPassiveBonus;
     return rate.clamp(5.0, 95.0);
+  }
+
+  /// 성공률 레이어별 분해 결과 반환. preview 용도로만 사용 (randomVariance 제외).
+  /// factionPassiveBonus는 호출측이 clamp 적용된 값, sharedCapLoss는 초과 손실량(양수).
+  static SuccessRateBreakdown calculateSuccessRateBreakdown({
+    required int partyPower,
+    required int enemyPower,
+    required List<String> traitBonuses,
+    required String questTypeId,
+    required int distancePenalty,
+    List<TraitData> allTraits = const [],
+    int partySize = 1,
+    double factionPassiveBonus = 0.0,
+    double passiveSharedCapLoss = 0.0,
+    List<String> partyRoles = const [],
+  }) {
+    const base = 50.0;
+    if (enemyPower <= 0) {
+      return const SuccessRateBreakdown(
+        base: base,
+        powerRatioContribution: 0.0,
+        questMod: 0.0,
+        roleSynergy: 0.0,
+        traitBonus: 0.0,
+        factionPassiveBonus: 0.0,
+        sharedCapLoss: 0.0,
+        distancePenalty: 0.0,
+        total: 95.0,
+        finalRate: 95.0,
+      );
+    }
+    final powerRatio = partyPower / enemyPower;
+    final powerRatioContribution = (powerRatio - 1.0) * 50.0;
+    final questMod = _questModifiers[questTypeId] ?? 0.0;
+    final rawTraitBonus = TraitEffectService.calculateSuccessRateBonus(
+      traitIds: traitBonuses,
+      allTraits: allTraits,
+      questTypeId: questTypeId,
+      partySize: partySize,
+    );
+    final traitBonus = rawTraitBonus.clamp(-10.0, 10.0);
+    final roleSynergy = RoleSynergyMatrix.partyAverageBonus(
+      partyRoles: partyRoles,
+      questTypeId: questTypeId,
+    );
+    final distancePenaltyValue = -distancePenalty.toDouble();
+    final total = base
+        + powerRatioContribution
+        + questMod
+        + roleSynergy
+        + traitBonus
+        + factionPassiveBonus
+        + distancePenaltyValue;
+    final finalRate = total.clamp(5.0, 95.0);
+    return SuccessRateBreakdown(
+      base: base,
+      powerRatioContribution: powerRatioContribution,
+      questMod: questMod,
+      roleSynergy: roleSynergy,
+      traitBonus: traitBonus,
+      factionPassiveBonus: factionPassiveBonus,
+      sharedCapLoss: passiveSharedCapLoss,
+      distancePenalty: distancePenaltyValue,
+      total: total,
+      finalRate: finalRate,
+    );
   }
 
   static QuestResult determineResult({required double successRate, required double roll}) {

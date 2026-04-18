@@ -110,7 +110,7 @@ band_of_mercenaries/lib/
 
 **정적 데이터 테이블 (18개):**
 - regions: 199개 리전 (5단계 티어)
-- jobs: 5티어 30+ 직업
+- jobs: 5티어 85개 직업. `role` 컬럼(text NOT NULL DEFAULT 'specialist')으로 파견 상성 매트릭스 조회 키 보유 — warrior 26 / specialist 16 / mage 16 / support 10 / ranger 9 / rogue 8
 - trait_categories: 8개 트레잇 카테고리 (Physical, Background, Talent, CombatStyle, Survival, Behavior, Mental, Experience)
 - traits: 106개 트레잇 (선천 35 + 후천 acquired 40 + 후천 evolved 31). key/name/categoryKey/type/description/effectText/acquisitionCondition/effectJson
 - trait_conflicts: 충돌 관계 (16쌍, 양방향 32행)
@@ -178,6 +178,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **방출**: 파견 중이 아닌 용병을 퇴직금(인건비×레벨) 지급 후 영구 방출. 재모집 불가
 - **퀘스트 갱신**: 대기 중 퀘스트는 1시간(게임 시간)마다 자동 교체. 5개 미만이면 채우기 가능
 - **세력 태그 + 전용 퀘스트**: `FactionTagResolver.resolve()`가 일반 퀘스트 생성 시 런타임으로 세력 태그 부여. 가입 세력 단서 보유 → 100%, 비가입 세력은 거점 근접도 기반 확률(tier 1: 30% / 2: 20% / 3(M1 기본): 10% / 4: 5%). 적대 세력(평판 -100) 제외. 태그 퀘스트 완료 시 평판 +1 or +2(근접도). `quest_pools.is_faction_exclusive = true`인 전용 퀘스트는 가입 세력 + `min_reputation` 충족 + 6h 쿨다운 미포함 조건으로만 노출. 노출 상한 `min(joinedCount×2, activeSlotCount×0.5)`. 전용 퀘스트는 기본 트랙(평판 11, 보상 +0.30) / 고급 트랙(평판 61, 보상 +0.40) 구분, 완료 시 평판 5~7 / 8~10 지급. 보상 공식은 `QuestCalculator.calculateReward`에 `trackBonus + passiveRewardBonus` 가산 상한 +0.80 clamp로 통합(`rankRewardBonus`는 `passiveEffects`에 포함되어 중복 방지). 전용 퀘스트 완료 시 `settings` 박스의 `factionQuestCooldowns` 맵에 `questId + now()` 기록, 6시간 경과 후 자동 재노출
+- **파견 상성**: `RoleSynergyMatrix` 6개 role × 4개 quest_type 정적 상수(−2 ~ +8). `QuestCalculator.calculateSuccessRate`에 `partyRoles` 파라미터 + `RoleUtils.extractRoles(mercs, jobs)`로 파티 평균 보정값 계산, ±10%p 독립 상한 클램프. 트레잇 시너지도 `traitBonus.clamp(-10.0, 10.0)` 별도 독립 상한. `calculateSuccessRateBreakdown()` static 메서드가 `SuccessRateBreakdown` 값 객체를 반환하여 레이어별(기본값/파티력/유형/상성/트레잇/세력 패시브/공유 상한 손실/거리 패널티) 분해 제공. `PassiveBonusService.getQuestSuccessRateBonusWithDetail()`이 `(rawSum, applied, lossAmount)` 레코드로 공유 상한 +20%p 초과 손실량 노출. `rankBonus` 필드는 `PassiveBonusService`가 이미 랭크 효과를 포함하므로 `0.0 stub`으로 유지(중복 가산 방지)
 - **방치형 보상**: 앱 미접속 시간 기준 분당 1G, 최대 480G(8시간) + 금고 시설 보너스. 실제 시간 기준
 - **지역 조사**: 용병 1명을 현재 리전에 배치하여 지식 포인트(knowledge 0~100) 누적. 성공률 = `(85 + (AGI+VIT)/200).clamp(5,95)%`. 소요시간 리전 티어별(T1=5분~T5=20분). 지식 임계값 도달 시 `region_discoveries` 발견 자동 트리거. 파견·이동과 독립된 별도 슬롯. `InvestigationNotifier`(StateNotifier<void>)가 완료 처리, 결과는 `investigationCompletedProvider`(StateProvider<InvestigationResult?>)로 전달
 - **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설, 조사)의 endTime을 비례 재계산 (개발/테스트용)
@@ -215,8 +216,8 @@ cd band_of_mercenaries && flutter test test/features/mercenary/
 - 티어별 색상: 회색(1) → 초록(2) → 파랑(3) → 보라(4) → 빨강(5)
 - 하단 6탭: 이동 / 파견 / 홈 / 모집 / 시설 / 정보
 - 웹: `_MobileFrame`에서 `ConstrainedBox(maxWidth: 430)`으로 모바일 해상도 제한. 새 화면 전환 시 `Navigator.push` 대신 상태 기반 렌더링 사용 (Navigator가 ConstrainedBox 바깥으로 빠져나가는 문제 방지)
-- 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼). 퀘스트 카드에 세력 태그 배지(세력명 + `FactionData.color`) 표시, 전용 퀘스트는 좌측 3px 세로 막대 + 테두리 강조 + "전용" 레이블. `DispatchDetailPage` 상단에 전용 → "세력명 · 고급/기본 트랙" 텍스트, 태그 → 원형 세력 컬러 + 세력명 조건부 렌더링
+- 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼). 퀘스트 카드에 세력 태그 배지(세력명 + `FactionData.color`) 표시, 전용 퀘스트는 좌측 3px 세로 막대 + 테두리 강조 + "전용" 레이블. `DispatchDetailPage` 상단에 전용 → "세력명 · 고급/기본 트랙" 텍스트, 태그 → 원형 세력 컬러 + 세력명 조건부 렌더링. 퀘스트 카드에 추천 role Chip×2(`RoleSynergyMatrix.topRolesForQuest`) 추가, 용병 카드는 `singleBonus >= 5.0`일 때 `primary.withValues(alpha: 0.10)` tint + `+X.X` 배지. 성공률 옆 `?` IconButton → `showModalBottomSheet` → `SuccessRateBreakdownSheet`로 레이어별 분해 표시
 - 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장. 이후 트레잇 획득 알림 → 진화 선택 팝업 순서로 체이닝
-- 용병 상세 오버레이: `selectedMercenaryIdProvider`로 앱 레벨 전체화면 오버레이. 용병 카드 탭 → 프로필/트레잇 슬롯(TraitSlotGrid)/행동 지표(BehaviorStatsSection)/히스토리(TraitHistorySection) 단일 스크롤. 트레잇 탭 → TraitDetailDialog (효과, 진화 경로 진행도, 시너지, 충돌)
+- 용병 상세 오버레이: `selectedMercenaryIdProvider`로 앱 레벨 전체화면 오버레이. 용병 카드 탭 → 프로필/트레잇 슬롯(TraitSlotGrid)/퀘스트 유형별 상성(role 한글명 + 4종 quest_type 보정값 + 트레잇 시너지 리스트)/행동 지표(BehaviorStatsSection)/히스토리(TraitHistorySection) 단일 스크롤. 트레잇 탭 → TraitDetailDialog (효과, 진화 경로 진행도, 시너지, 충돌)
 - 설정 화면: 홈 탭 상단 우측 `Icons.settings` 아이콘 버튼 탭 → `_showSettings` 상태 변수로 상태 기반 렌더링 (탭 6번째 자리 → 정보 탭으로 대체됨)
 - 정보 탭 (`InfoScreen`): 세력 도감(`FactionCodexScreen`) 진입 허브. `_showCodex`/`_selectedFactionId` 상태 변수로 화면 전환. `factionCodexScrollTargetProvider` non-null 감지 시 자동으로 도감 화면으로 전환

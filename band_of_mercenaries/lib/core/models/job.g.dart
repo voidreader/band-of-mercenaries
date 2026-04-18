@@ -14,6 +14,7 @@ _$JobImpl _$$JobImplFromJson(Map<String, dynamic> json) => _$JobImpl(
       baseIntelligence: (json['base_intelligence'] as num).toInt(),
       baseVit: (json['base_vit'] as num).toInt(),
       baseAgi: (json['base_agi'] as num).toInt(),
+      role: json['role'] as String? ?? 'specialist',
     );
 
 Map<String, dynamic> _$$JobImplToJson(_$JobImpl instance) => <String, dynamic>{
@@ -24,4 +25,5 @@ Map<String, dynamic> _$$JobImplToJson(_$JobImpl instance) => <String, dynamic>{
       'base_intelligence': instance.baseIntelligence,
       'base_vit': instance.baseVit,
       'base_agi': instance.baseAgi,
+      'role': instance.role,
     };

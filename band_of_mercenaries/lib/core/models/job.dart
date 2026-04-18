@@ -13,6 +13,7 @@ class Job with _$Job {
     @JsonKey(name: 'base_intelligence') required int baseIntelligence,
     @JsonKey(name: 'base_vit') required int baseVit,
     @JsonKey(name: 'base_agi') required int baseAgi,
+    @Default('specialist') @JsonKey(name: 'role') String role,
   }) = _Job;
 
   factory Job.fromJson(Map<String, dynamic> json) => _$JobFromJson(json);

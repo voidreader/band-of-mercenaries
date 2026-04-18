@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
+import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/core/domain/experience_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
@@ -100,6 +101,7 @@ class QuestCompletionService {
       random: random,
       allTraits: staticData.traits,
       partySize: mercs.length,
+      partyRoles: RoleUtils.extractRoles(mercs, staticData.jobs),
     );
     final successRate = (baseSuccessRate + passiveSuccessBonus).clamp(5.0, 95.0);
 

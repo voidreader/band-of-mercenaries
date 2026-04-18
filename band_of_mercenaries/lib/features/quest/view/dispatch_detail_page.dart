@@ -7,6 +7,10 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
+import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
+import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
+import 'package:band_of_mercenaries/features/quest/domain/success_rate_breakdown.dart';
+import 'package:band_of_mercenaries/features/quest/view/success_rate_breakdown_sheet.dart';
 
 class DispatchDetailPage extends ConsumerStatefulWidget {
   final String questId;
@@ -62,6 +66,19 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
 
         final selectedMercs = mercs.where((m) => _selectedMercIds.contains(m.id)).toList();
         final partyPower = QuestCalculator.calculatePartyPower(selectedMercs, quest.questTypeId);
+        final partyRoles = RoleUtils.extractRoles(selectedMercs, data.jobs);
+        final SuccessRateBreakdown breakdown = QuestCalculator.calculateSuccessRateBreakdown(
+          partyPower: partyPower,
+          enemyPower: difficulty.enemyPower,
+          traitBonuses: selectedMercs.expand((m) => m.allTraitIds).toSet().toList(),
+          questTypeId: quest.questTypeId,
+          distancePenalty: (quest.region - userData.region).abs(),
+          allTraits: data.traits,
+          partySize: selectedMercs.length,
+          factionPassiveBonus: 0.0,
+          passiveSharedCapLoss: 0.0,
+          partyRoles: partyRoles,
+        );
 
         final grossReward = QuestCalculator.calculateReward(
           baseReward: questType.baseReward,
@@ -172,13 +189,20 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                             final job = data.jobs.firstWhere((j) => j.id == merc.jobId);
                             final isSelected = _selectedMercIds.contains(merc.id);
                             final canSelect = merc.status != MercenaryStatus.injured;
+                            final roleBonus = RoleSynergyMatrix.singleBonus(job.role, quest.questTypeId);
+                            final isHighlighted = roleBonus >= 5.0;
+                            final cardColor = isHighlighted
+                                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.10)
+                                : AppTheme.surface;
+                            final showBadge = roleBonus.abs() >= 0.1;
+                            final badgeText = '${roleBonus > 0 ? '+' : ''}${roleBonus.toStringAsFixed(1)}';
 
                             return Opacity(
                               opacity: canSelect ? 1.0 : 0.5,
                               child: Container(
                                 margin: const EdgeInsets.only(bottom: 6),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.surface,
+                                  color: cardColor,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: isSelected ? AppTheme.primary : AppTheme.borderLight,
@@ -201,9 +225,29 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                                           }
                                         : null,
                                   ),
-                                  title: Text(
-                                    '${merc.name} (${job.name})',
-                                    style: const TextStyle(fontSize: 14),
+                                  title: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          '${merc.name} (${job.name})',
+                                          style: const TextStyle(fontSize: 14),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (showBadge) ...[
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          badgeText,
+                                          style: TextStyle(
+                                            color: roleBonus > 0
+                                                ? Theme.of(context).colorScheme.primary
+                                                : Theme.of(context).colorScheme.error,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                   subtitle: Text(
                                     '전투력: ${merc.effectiveStr}',
@@ -245,9 +289,31 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '성공률: ${_selectedMercIds.isEmpty ? "-" : "${QuestCalculator.calculateSuccessRatePreview(partyPower: partyPower, enemyPower: difficulty.enemyPower, traitBonuses: selectedMercs.expand((m) => m.allTraitIds).toSet().toList(), questTypeId: quest.questTypeId, distancePenalty: (quest.region - userData.region).abs(), allTraits: data.traits, partySize: selectedMercs.length).round()}%"}',
-                            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '성공률: ${_selectedMercIds.isEmpty ? "-" : "${QuestCalculator.calculateSuccessRatePreview(partyPower: partyPower, enemyPower: difficulty.enemyPower, traitBonuses: selectedMercs.expand((m) => m.allTraitIds).toSet().toList(), questTypeId: quest.questTypeId, distancePenalty: (quest.region - userData.region).abs(), allTraits: data.traits, partySize: selectedMercs.length, partyRoles: partyRoles).round()}%"}',
+                                style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.help_outline, size: 18),
+                                tooltip: '성공률 분해',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                visualDensity: VisualDensity.compact,
+                                onPressed: selectedMercs.isEmpty
+                                    ? null
+                                    : () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: false,
+                                          showDragHandle: false,
+                                          builder: (ctx) => SuccessRateBreakdownSheet(breakdown: breakdown),
+                                        );
+                                      },
+                              ),
+                            ],
                           ),
                           Text(
                             '순수익: ${_selectedMercIds.isEmpty ? "-" : "${netProfit}G"}',
