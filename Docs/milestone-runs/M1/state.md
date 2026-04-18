@@ -1,9 +1,10 @@
 # M1 실행 상태
 
 > 시작: 2026-04-17T08:19:03Z
-> 마지막 업데이트: 2026-04-18T01:25:00Z
-> 현재 페이즈: 4
+> 마지막 업데이트: 2026-04-18T07:30:00Z
+> 현재 페이즈: 4 (명세 + 구현 전체 완료)
 > 상태: completed
+> 구현 진행: 4/4 (P4-1, P4-2, P4-3, P4-4 모두 구현 완료)
 
 ## 로드맵 요구사항 요약
 
@@ -141,3 +142,11 @@
 - 2026-04-18T01:00:00Z: 페이즈 4 항목 3 완료 — QuestCalculator 상성 보정 + 파견 UI 명세 (`Docs/spec/[spec]20260418_dispatch-synergy.md`). jobs.role 85개 UPDATE + RoleSynergyMatrix 정적 상수 + QuestCalculator 시그니처 최종 통합 + SuccessRateBreakdown + 분해 툴팁. implement-agent 강력 추천(6/6점)
 - 2026-04-18T01:20:00Z: 페이즈 4 항목 4 완료 — ReputationService 랭크 보너스 + 명성 UI 명세 (`Docs/spec/[spec]20260418_rank-bonus-service.md`). getRankChain + 랭크업 감지 + RankUpOverlay + 홈 배지 팝업 + RankInfoScreen + ActivityLog 연동. implement-agent 추천(5/6점)
 - 2026-04-18T01:25:00Z: 페이즈 4 전체 완료 (4/4) — 4개 개발 명세서 교차 통합 완료. M1 마일스톤 전 페이즈 완료
+
+## 구현 이력 (명세 → 코드)
+
+- 2026-04-18T01:42:00Z: **P4-1 구현 완료** (커밋 `689705b feat(M1-P1): PassiveBonusService 신설 및 6개 도메인 서비스 통합`). 16 variant PassiveEffect sealed class + CollectedEffects + 가산/곱셈/공유 상한 +20%p 스태킹. Quest/Recruitment/Construction/TraitAcquisition·Evolution/IdleReward/TravelEvent 6개 도메인 연동. 214/214 테스트 통과
+- 2026-04-18T02:40:00Z: **P4-2 구현 완료** (커밋 `0ba94e3 feat(M1-P2): 세력 태그 + 전용 퀘스트 시스템 구현`). FactionTagResolver 신설 + QuestGenerator 전용/일반 분리 + calculateReward 가산 상한 +0.80 통일 (P4-1 곱셈 레이어 제거) + 쿨다운 관리 + 파견 UI 배지/강조. Supabase quest_pools 5컬럼 확장 + 98행 INSERT 적용 확인. 231/231 테스트 통과
+- 2026-04-18T05:30:00Z: **P4-3 구현 완료** (커밋 대기). implement-agent 파이프라인 1회 통과 (planner → coder×12 → verifier PASS). QuestCalculator.calculateSuccessRate에 partyRoles/roleSynergyBonus 추가 + traitBonus.clamp(-10,10) + 신규 calculateSuccessRateBreakdown. RoleSynergyMatrix 정적 상수(6×4 매트릭스) + RoleUtils(extractRoles/koreanName) + SuccessRateBreakdown 값 객체 + SuccessRateBreakdownSheet 위젯. PassiveBonusService에 getQuestSuccessRateBonusWithDetail record 반환 API 신설 (기존 메서드 래퍼 전환). 파견 화면: 퀘스트 카드 추천 role Chip×2, 용병 카드 +5 이상 하이라이트+배지, 성공률 옆 ? 아이콘→분해 시트. 용병 상세 오버레이: 트레잇 슬롯 아래 상성 섹션. Job Freezed role 필드 추가(@Default specialist). DB 마이그레이션 SQL 생성 없음(Supabase 기적용: jobs.role 85개 + traits.effect_json 15개 MCP 검증). 263/263 테스트 통과 (기존 231 + 신규 32)
+- 2026-04-18T07:30:00Z: **P4-4 구현 완료** (커밋 대기). implement-agent 파이프라인 1회 통과 (planner → coder×13 → verifier PASS). ReputationService.getRankChain/getRankLevel 2개 static 메서드 추가 (sumRankSuccessRateBonus는 FR-11 스킵으로 미추가). UserDataNotifier.addReputation에 oldLevel/newLevel 감지 + clamp(0, 9999999) + provider/activityLog 발행. RankUpEvent + reputationRankUpProvider StateProvider 신설. PassiveBonusContext 공통 수집 헬퍼(실제 collect 시그니처 래핑). PassiveBonusFormatter 17 variant exhaustive switch (16 명세 + TraitUnlockCategory stub). RankUpOverlay AlertDialog, RankBonusSummarySheet bottom sheet, RankInfoScreen F~A 가로 타임라인. ActivityLogType @HiveField(13) reputationRankUp / @HiveField(14) reputationRankDown 추가 + 홈 화면 _logIcon 2 case 추가. app.dart ref.listen<RankUpEvent?> 등록 (기존 construction/investigation 패턴 복제). InfoScreen _showRank 토글 분기 + '명성' ListTile. FR-11(SuccessRateBreakdown.rankBonus) 완전 스킵 확정 — P4-3 stub 0.0 유지, 이중 가산 방지. DB 신규 마이그레이션 없음(P4-1에 포함). 292/292 테스트 통과 (기존 263 + 신규 29)
+- 2026-04-18T07:30:00Z: **M1 마일스톤 전 페이즈·구현 완료** (P4-1 ~ P4-4 모두 완료, 최종 테스트 292/292 PASS)

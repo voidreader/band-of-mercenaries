@@ -3,8 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
+import 'package:band_of_mercenaries/core/providers/reputation_rank_up_provider.dart';
 import 'package:band_of_mercenaries/core/models/user_data.dart';
+import 'package:band_of_mercenaries/core/models/rank.dart';
+import 'package:band_of_mercenaries/core/models/passive_effect.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
+import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_completion_provider.dart';
@@ -97,9 +103,40 @@ class UserDataNotifier extends StateNotifier<UserData?> {
 
   Future<void> addReputation(int amount) async {
     if (state == null) return;
-    state!.reputation += amount;
+    if (amount == 0) return;
+
+    final ranks = ref.read(staticDataProvider).valueOrNull?.ranks ?? const <Rank>[];
+    final oldLevel = ranks.isEmpty
+        ? -1
+        : ReputationService.getRankLevel(state!.reputation, ranks);
+
+    state!.reputation = (state!.reputation + amount).clamp(0, 9999999);
     await state!.save();
     state = state;
+
+    if (ranks.isEmpty) return;
+    final newLevel = ReputationService.getRankLevel(state!.reputation, ranks);
+
+    if (newLevel > oldLevel && oldLevel >= 0) {
+      final sortedRanks = [...ranks]
+        ..sort((a, b) => a.requiredReputation.compareTo(b.requiredReputation));
+      final oldRank = sortedRanks[oldLevel];
+      final newRank = sortedRanks[newLevel];
+      final newEffects = PassiveEffect.parseEffects(newRank.bonusJson);
+      ref.read(reputationRankUpProvider.notifier).state =
+          RankUpEvent(from: oldRank, to: newRank, newEffects: newEffects);
+      ref.read(activityLogProvider.notifier).addLog(
+        '명성 상승: ${oldRank.grade} → ${newRank.grade} (${newRank.name})',
+        ActivityLogType.reputationRankUp,
+      );
+    } else if (newLevel < oldLevel && oldLevel >= 0) {
+      final sortedRanks = [...ranks]
+        ..sort((a, b) => a.requiredReputation.compareTo(b.requiredReputation));
+      ref.read(activityLogProvider.notifier).addLog(
+        '명성 하락: ${sortedRanks[oldLevel].grade} → ${sortedRanks[newLevel].grade}',
+        ActivityLogType.reputationRankDown,
+      );
+    }
   }
 
   Future<bool> upgradeFacility(String facilityId, int cost) async {

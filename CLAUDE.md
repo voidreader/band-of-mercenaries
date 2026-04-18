@@ -81,6 +81,7 @@ band_of_mercenaries/lib/
 - `activityLogProvider`: 활동 로그 (Hive `activityLogs` 박스, 최대 100개)
 - `currentTabProvider`: 하단 네비게이션 탭 인덱스 (`core/providers/navigation_provider.dart`)
 - `constructionCompletedProvider`: 건설 완료 알림 (`features/facility/domain/construction_completion_provider.dart`)
+- `reputationRankUpProvider`: 명성 랭크 상승 이벤트 채널 StateProvider<RankUpEvent?> (`core/providers/reputation_rank_up_provider.dart`). `UserDataNotifier.addReputation`이 publish, `app.dart`가 `ref.listen`으로 감지하여 `RankUpOverlay`를 `showDialog`로 표시 (닫기 시 오버레이가 `state = null` 리셋)
 - `investigationNotifierProvider`: 지역 조사 시작/완료 로직 (`features/investigation/domain/investigation_notifier.dart`)
 - `investigationCompletedProvider`: 조사 완료 알림 StateProvider<InvestigationResult?> (`features/investigation/domain/investigation_completion_provider.dart`)
 - `factionStateRepositoryProvider`: FactionStateRepository 인스턴스 (`features/info/data/faction_state_repository.dart`)
@@ -143,7 +144,7 @@ band_of_mercenaries/lib/
 - `user`: UserData (골드, 위치, 이동/건설/조사 상태)
 - `mercenaries`: Mercenary 모델
 - `quests`: ActiveQuest 모델
-- `activityLogs`: ActivityLog 모델 (최대 100개)
+- `activityLogs`: ActivityLog 모델 (최대 100개). `ActivityLogType` enum 확장(@HiveField(13) `reputationRankUp` / @HiveField(14) `reputationRankDown`, typeId 6 유지)
 - `staticDataCache`: String 타입, 정적 데이터 JSON 로컬 캐시 (오프라인 플레이용, SyncService가 관리)
 - `regionStates`: RegionState 모델 (typeId:8)
 - `factionStates`: FactionState 모델 (typeId:9)
@@ -170,7 +171,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **결과**: 대성공(보상 2배) / 성공 / 실패(부상) / 대실패(사망률 증가)
 - **경제**: 파견비용(난이도별 min~max, 소요시간 비례 보간) + 인건비(용병 티어별) 선차감, 순수익 = 보상 - 인건비 - 파견비용
 - **경험치/레벨**: 퀘스트 완료 시 XP 획득 (난이도 × 기본XP × 결과배수 + 시설보너스), 최대 레벨 5
-- **명성/랭크**: 퀘스트 완료 시 명성 획득, 등급 F~A, 랭크에 따라 상위 티어 리전 잠금 해제
+- **명성/랭크**: 퀘스트 완료 시 명성 획득, 등급 F~A, 랭크에 따라 상위 티어 리전 잠금 해제. `ReputationService.getRankChain(reputation, ranks)`로 F~현재 랭크까지 누적 리스트 조회, `getRankLevel(reputation, ranks)`이 인덱스 반환(빈 체인 시 -1). `UserDataNotifier.addReputation`이 oldLevel/newLevel 비교 후 상승 시 `reputationRankUpProvider`에 `RankUpEvent(from, to, newEffects=PassiveEffect.parseEffects(newRank.bonusJson))` publish + `ActivityLogType.reputationRankUp` 로그 기록. 하향(M2a 대비 stub)은 `reputationRankDown` 로그만 기록하고 UI 알림 미발생. 누적 보너스는 `PassiveBonusService.collect`가 내부에서 rankChain 필터링하여 자동 처리(`PassiveBonusContext` 헬퍼로 `Ref/WidgetRef`에서 일괄 수집). `PassiveBonusFormatter.format(PassiveEffect)`이 17개 효과 타입을 한국어 표시 문자열로 변환
 - **시설**: 12종, 최대 Lv25, 건설 큐 1개(한 번에 하나만 건설). 골드 비용 + 건설 시간(Lv1: 5분, Lv2: 10분, Lv3+: `25×1.45^(Lv-3)` 분). 효과 로그 스케일(`maxEffect × ln(1+level×α) / ln(1+25×α)`). 비용 4티어: Core(300G)/Standard(500G)/Premium(700G)/Expensive(1,000G), 배율 1.5. `ConstructionService`로 공식 계산, `FacilityService`는 wrapper. 건설 완료는 gameTickProvider에서 체크. 시간 가속 적용. 기능 해금 이정표는 milestones JSONB로 정의(현재 stub). 시설 목록: 훈련소(XP)/의무실(회복+트레잇삭제)/주둔지(용병상한)/정보망(퀘스트수)/대장간(장비stub)/주점(모집확률)/연구소(조사stub)/방어시설(피해감소)/금고(방치보상)/게시판(품질stub)/이동수단(이동시간)/야전병원(부상감소)
 - **용병 상태**: 정상 → 피곤함(능력치 80%, 5분) → 부상(난이도×10분) → 사망(영구 제거). 레벨업 시 능력치 증가
 - **모집**: 티어별 확률 가중 (Tier1: 45%, Tier2: 30%, Tier3: 15%, Tier4: 8%, Tier5: 2%). 선천 트레잇 1~3개 랜덤 부여 (Physical/Background/Talent 각 60% 확률, 최소 1개). 주둔지 용량 제한
@@ -220,4 +221,7 @@ cd band_of_mercenaries && flutter test test/features/mercenary/
 - 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장. 이후 트레잇 획득 알림 → 진화 선택 팝업 순서로 체이닝
 - 용병 상세 오버레이: `selectedMercenaryIdProvider`로 앱 레벨 전체화면 오버레이. 용병 카드 탭 → 프로필/트레잇 슬롯(TraitSlotGrid)/퀘스트 유형별 상성(role 한글명 + 4종 quest_type 보정값 + 트레잇 시너지 리스트)/행동 지표(BehaviorStatsSection)/히스토리(TraitHistorySection) 단일 스크롤. 트레잇 탭 → TraitDetailDialog (효과, 진화 경로 진행도, 시너지, 충돌)
 - 설정 화면: 홈 탭 상단 우측 `Icons.settings` 아이콘 버튼 탭 → `_showSettings` 상태 변수로 상태 기반 렌더링 (탭 6번째 자리 → 정보 탭으로 대체됨)
-- 정보 탭 (`InfoScreen`): 세력 도감(`FactionCodexScreen`) 진입 허브. `_showCodex`/`_selectedFactionId` 상태 변수로 화면 전환. `factionCodexScrollTargetProvider` non-null 감지 시 자동으로 도감 화면으로 전환
+- 정보 탭 (`InfoScreen`): 세력 도감(`FactionCodexScreen`) + 명성(`RankInfoScreen`) 진입 허브. `_showCodex` / `_selectedFactionId` / `_showRank` 상태 변수로 화면 전환 (분기 순서: `_selectedFactionId` > `_showCodex` > `_showRank` > 기본 ListTile). `factionCodexScrollTargetProvider` non-null 감지 시 자동으로 도감 화면으로 전환
+- 홈 등급 카드: `GestureDetector`로 탭 가능. 탭 시 `showModalBottomSheet(RankBonusSummarySheet)` → rankChain 전체 활성 보너스(등급 태그 포함) + 다음 등급 진행도(최고 랭크 A는 "최고 등급 도달" 안내)
+- 랭크업 축하 오버레이(`RankUpOverlay`): `showDialog(barrierDismissible: false)` 기반 AlertDialog. `app.dart`의 `ref.listen<RankUpEvent?>`가 감지 → `WidgetsBinding.addPostFrameCallback` 내 표시. 오버레이 확인 버튼 onDismiss에서 `Navigator.pop` + `reputationRankUpProvider.state = null` 리셋 (자기책임 원칙)
+- 명성 화면(`RankInfoScreen`): 상단 현재 랭크 배지 + 진행도, 중단 F~A 가로 타임라인(탭 가능), 하단 선택 등급 보너스 프리뷰(활성/잠금 표시). `_selectedRankGrade` 상태로 타임라인 선택

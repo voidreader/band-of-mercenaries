@@ -27,4 +27,26 @@ class ReputationService {
     if (idx >= ranks.length - 1) return null;
     return ranks[idx + 1];
   }
+
+  /// F부터 현재 도달한 랭크까지의 리스트 반환 (requiredReputation 오름차순).
+  /// PassiveBonusService 연동용.
+  static List<Rank> getRankChain(int reputation, List<Rank> ranks) {
+    final sorted = [...ranks]
+      ..sort((a, b) => a.requiredReputation.compareTo(b.requiredReputation));
+    final result = <Rank>[];
+    for (final rank in sorted) {
+      if (reputation >= rank.requiredReputation) {
+        result.add(rank);
+      } else {
+        break;
+      }
+    }
+    return result;
+  }
+
+  /// 현재 랭크의 인덱스(F=0, E=1, ...). 빈 체인 시 -1.
+  static int getRankLevel(int reputation, List<Rank> ranks) {
+    final chain = getRankChain(reputation, ranks);
+    return chain.length - 1;
+  }
 }

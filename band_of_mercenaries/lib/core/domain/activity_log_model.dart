@@ -30,6 +30,10 @@ enum ActivityLogType {
   investigationFailed,
   @HiveField(12)
   discoveryFound,
+  @HiveField(13)
+  reputationRankUp,
+  @HiveField(14)
+  reputationRankDown,
 }
 
 @HiveType(typeId: 7)

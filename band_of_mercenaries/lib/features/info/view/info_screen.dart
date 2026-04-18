@@ -5,6 +5,7 @@ import 'package:band_of_mercenaries/features/info/data/faction_state_repository.
 import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_codex_screen.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_detail_screen.dart';
+import 'package:band_of_mercenaries/features/info/view/rank_info_screen.dart';
 
 class InfoScreen extends ConsumerStatefulWidget {
   const InfoScreen({super.key});
@@ -15,6 +16,7 @@ class InfoScreen extends ConsumerStatefulWidget {
 
 class _InfoScreenState extends ConsumerState<InfoScreen> {
   bool _showCodex = false;
+  bool _showRank = false;
   String? _selectedFactionId;
 
   @override
@@ -39,6 +41,10 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
         onBack: () => setState(() => _showCodex = false),
         onSelectFaction: (id) => setState(() => _selectedFactionId = id),
       );
+    }
+
+    if (_showRank) {
+      return RankInfoScreen(onBack: () => setState(() => _showRank = false));
     }
 
     final repo = ref.read(factionStateRepositoryProvider);
@@ -87,6 +93,29 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                   color: AppTheme.textHint,
                 ),
                 onTap: () => setState(() => _showCodex = true),
+              ),
+              ListTile(
+                leading: const Icon(Icons.military_tech, color: AppTheme.textPrimary),
+                title: const Text(
+                  '명성',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  '용병단 명성 등급과 보너스',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textHint,
+                ),
+                onTap: () => setState(() => _showRank = true),
               ),
             ],
           ),

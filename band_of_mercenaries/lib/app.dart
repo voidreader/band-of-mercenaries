@@ -27,7 +27,9 @@ import 'package:band_of_mercenaries/core/providers/navigation_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
+import 'package:band_of_mercenaries/core/providers/reputation_rank_up_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_detail_overlay.dart';
+import 'package:band_of_mercenaries/features/home/view/rank_up_overlay.dart';
 
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
@@ -180,6 +182,24 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         ).then((_) {
           ref.read(investigationCompletedProvider.notifier).state = null;
         });
+      });
+    });
+
+    ref.listen<RankUpEvent?>(reputationRankUpProvider, (_, next) {
+      if (next == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => RankUpOverlay(
+            event: next,
+            onDismiss: () {
+              Navigator.pop(ctx);
+              ref.read(reputationRankUpProvider.notifier).state = null;
+            },
+          ),
+        );
       });
     });
 

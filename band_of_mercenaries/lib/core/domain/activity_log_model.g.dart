@@ -79,6 +79,10 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.investigationFailed;
       case 12:
         return ActivityLogType.discoveryFound;
+      case 13:
+        return ActivityLogType.reputationRankUp;
+      case 14:
+        return ActivityLogType.reputationRankDown;
       default:
         return ActivityLogType.questResult;
     }
@@ -125,6 +129,12 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.discoveryFound:
         writer.writeByte(12);
+        break;
+      case ActivityLogType.reputationRankUp:
+        writer.writeByte(13);
+        break;
+      case ActivityLogType.reputationRankDown:
+        writer.writeByte(14);
         break;
     }
   }

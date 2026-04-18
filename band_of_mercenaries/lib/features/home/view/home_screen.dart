@@ -20,6 +20,7 @@ import 'package:band_of_mercenaries/features/movement/domain/movement_provider.d
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 import 'package:band_of_mercenaries/features/investigation/view/investigation_widget.dart';
 import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart';
+import 'package:band_of_mercenaries/features/home/view/rank_bonus_summary_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -236,7 +237,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         (nextRank.requiredReputation - currentRank.requiredReputation))
                     .clamp(0.0, 1.0);
 
-            return Container(
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: false,
+                  showDragHandle: false,
+                  builder: (ctx) => const RankBonusSummarySheet(),
+                );
+              },
+              child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: const BoxDecoration(
                 color: AppTheme.surfaceAlt,
@@ -290,6 +301,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ],
               ),
+            ),
             );
           },
           orElse: () => const SizedBox.shrink(),
@@ -554,6 +566,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case ActivityLogType.investigationSuccess: return '🔍';
       case ActivityLogType.investigationFailed: return '❌';
       case ActivityLogType.discoveryFound: return '💎';
+      case ActivityLogType.reputationRankUp: return '🎖';
+      case ActivityLogType.reputationRankDown: return '📉';
     }
   }
 
