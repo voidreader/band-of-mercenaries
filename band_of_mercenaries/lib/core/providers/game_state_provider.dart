@@ -27,6 +27,11 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     _load();
   }
 
+  // HiveObject를 in-place 변경 후 state = state 할당 시 identical() 체크로 알림이
+  // 발생하지 않는 문제를 방지하기 위해 항상 notify.
+  @override
+  bool updateShouldNotify(UserData? old, UserData? current) => true;
+
   void _load() {
     final box = Hive.box<UserData>(HiveInitializer.userBoxName);
     if (box.isNotEmpty) {

@@ -390,52 +390,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           orElse: () => const SizedBox.shrink(),
         ),
 
-        // Campsite
+        // Campsite + 하단 정보 (스크롤 가능 영역)
         Expanded(
-          child: Container(
-            color: AppTheme.surfaceAlt,
-            child: Center(
-              child: CustomPaint(
-                size: const Size(300, 200),
-                painter: CampsitePainter(mercenaryCount: aliveMercs),
-              ),
-            ),
-          ),
-        ),
-
-        // Activity log
-        _buildActivityLog(),
-
-        // Progress panel
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: const BoxDecoration(
-            color: AppTheme.surface,
-            border: Border(top: BorderSide(color: AppTheme.borderLight)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('진행 상황', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 10),
-              if (userData.isMoving && userData.moveEndTime != null)
-                TimerDisplay(
-                  label: '🗺 이동 → 지역 ${userData.moveTargetRegion}',
-                  remaining: userData.moveEndTime!.difference(DateTime.now()),
-                ),
-              for (final quest in inProgressQuests)
-                if (quest.endTime != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: TimerDisplay(
-                      label: '⚔ ${quest.questName}',
-                      remaining: quest.endTime!.difference(DateTime.now()),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Campsite: 최소 80px, 최대 200px, 오버플로우 클리핑
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 80, maxHeight: 200),
+                  child: ClipRect(
+                    child: Container(
+                      color: AppTheme.surfaceAlt,
+                      width: double.infinity,
+                      child: Center(
+                        child: CustomPaint(
+                          size: const Size(300, 200),
+                          painter: CampsitePainter(mercenaryCount: aliveMercs),
+                        ),
+                      ),
                     ),
                   ),
-              if (!userData.isMoving && inProgressQuests.isEmpty)
-                const Text('진행 중인 활동이 없습니다',
-                    style: TextStyle(fontSize: 14, color: AppTheme.textHint)),
-            ],
+                ),
+
+                // Activity log
+                _buildActivityLog(),
+
+                // Progress panel
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.surface,
+                    border: Border(top: BorderSide(color: AppTheme.borderLight)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('진행 상황', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 10),
+                      if (userData.isMoving && userData.moveEndTime != null)
+                        TimerDisplay(
+                          label: '🗺 이동 → 지역 ${userData.moveTargetRegion}',
+                          remaining: userData.moveEndTime!.difference(DateTime.now()),
+                        ),
+                      for (final quest in inProgressQuests)
+                        if (quest.endTime != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: TimerDisplay(
+                              label: '⚔ ${quest.questName}',
+                              remaining: quest.endTime!.difference(DateTime.now()),
+                            ),
+                          ),
+                      if (!userData.isMoving && inProgressQuests.isEmpty)
+                        const Text('진행 중인 활동이 없습니다',
+                            style: TextStyle(fontSize: 14, color: AppTheme.textHint)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

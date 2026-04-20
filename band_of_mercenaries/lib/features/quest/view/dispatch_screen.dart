@@ -52,10 +52,19 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     if (userData == null) return const Center(child: CircularProgressIndicator());
 
     if (_dispatchQuestId != null) {
-      return DispatchDetailPage(
-        questId: _dispatchQuestId!,
-        onBack: () => setState(() => _dispatchQuestId = null),
-      );
+      // 대상 퀘스트가 pending 상태인지 확인 — 탭 전환 후 복귀 시 stale ID 방지
+      final targetQuest = quests.where((q) => q.id == _dispatchQuestId).firstOrNull;
+      if (targetQuest == null || targetQuest.status != QuestStatus.pending) {
+        // 다음 프레임에서 리셋 (build 중 setState 방지)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _dispatchQuestId = null);
+        });
+      } else {
+        return DispatchDetailPage(
+          questId: _dispatchQuestId!,
+          onBack: () => setState(() => _dispatchQuestId = null),
+        );
+      }
     }
 
     if (userData.isMoving) {

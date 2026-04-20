@@ -63,8 +63,12 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
 
     final repo = ref.read(factionStateRepositoryProvider);
     final allStates = repo.getAll();
-    final discoveredCount =
+    final allFactions = ref.read(factionListProvider);
+    // public 세력은 항상 발견 상태로 카운트
+    final publicCount = allFactions.where((f) => f.visibilityType == 'public').length;
+    final discoveredNonPublicCount =
         allStates.where((s) => s.clueRecords.isNotEmpty).length;
+    final discoveredCount = publicCount + discoveredNonPublicCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
