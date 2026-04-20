@@ -1,0 +1,11 @@
+id,name,description,flavor_text,category,slot,tier,effect_json
+equip_weapon_steel_sword,강철 장검,weapon / STR +6,단련된 강철로 만든 표준형 장검. 베테랑 용병이 선호하는 균형감.,personal_equipment,weapon,3,"{""str"":6}"
+equip_armor_chain_mail,사슬 흉갑,armor / VIT +6,촘촘히 엮은 사슬 고리가 치명타를 분산시킨다. 무게는 가볍지 않다.,personal_equipment,armor,3,"{""vit"":6}"
+equip_helmet_iron_helm,철 투구,helmet / VIT +2,정형화된 철 투구. 화려하지 않지만 튼튼하다.,personal_equipment,helmet,2,"{""vit"":2}"
+equip_boots_gale_leather,질풍의 가죽 부츠,boots / AGI +5,북방 순록 가죽으로 만든 부츠. 긴 행군에도 피로가 덜하다.,personal_equipment,boots,3,"{""agi"":5}"
+equip_accessory_forge_silver_ring,단련의 은반지,accessory / STR +6,은세공사의 정교한 세공. 손가락에 끼면 근육이 기억을 떠올린다.,personal_equipment,accessory,4,"{""str"":6}"
+equip_accessory_soul_seal,"멸혼결(滅魂結)",accessory / VIT +11 + 전설 효과,옛 시대 어떤 전사가 자신의 혼을 끊어 만들었다 전해지는 부적. 목에 걸면 어떤 공포도 평정심이 된다.,personal_equipment,accessory,5,"{""vit"":11,""legendary_effect"":{""category"":""damage_resistance"",""injury_rate_modifier"":-0.10,""death_rate_modifier"":-0.05}}"
+guild_banner_standard,용병단의 깃발,banner / 명성+5% 골드+2%,빛바랜 붉은 천. 수많은 전장을 함께 넘어온 용병단의 이름이 새겨져 있다.,guild_equipment,banner,3,"{""reputation_gain_modifier"":0.05,""gold_reward_multiplier"":0.02}"
+guild_artifact_golden_scale,황금 저울,artifact / 골드+3%,숙련된 회계관의 유물. 용병단의 모든 거래에서 한 푼도 놓치지 않는다.,guild_equipment,artifact,3,"{""gold_reward_multiplier"":0.03}"
+guild_artifact_honor_horn,명예의 뿔피리,artifact / 고티어 모집+2%p,이 피리 소리가 들리면 먼 곳의 용병들까지 고개를 돌린다.,guild_equipment,artifact,4,"{""recruit_high_tier_chance"":0.02}"
+guild_artifact_guardian_emblem,수호자의 방패 장식,artifact / 부상률-7%,야영지 중앙에 걸어두는 장식용 방패. 옛 수호자의 문장이 새겨져 있다.,guild_equipment,artifact,5,"{""injury_rate_modifier"":-0.07}"

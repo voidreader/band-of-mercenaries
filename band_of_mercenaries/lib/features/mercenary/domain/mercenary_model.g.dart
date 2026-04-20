@@ -35,13 +35,18 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       traitIds: (fields[15] as List?)?.cast<String>(),
       traitHistory: (fields[16] as List?)?.cast<String>(),
       deletedTraitIds: (fields[17] as List?)?.cast<String>(),
+      legendaryDeathPreventionCooldownUntil: fields[18] as DateTime?,
+      permanentStr: fields[19] as int,
+      permanentIntelligence: fields[20] as int,
+      permanentVit: fields[21] as int,
+      permanentAgi: fields[22] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, Mercenary obj) {
     writer
-      ..writeByte(18)
+      ..writeByte(23)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -77,7 +82,17 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       ..writeByte(16)
       ..write(obj.traitHistory)
       ..writeByte(17)
-      ..write(obj.deletedTraitIds);
+      ..write(obj.deletedTraitIds)
+      ..writeByte(18)
+      ..write(obj.legendaryDeathPreventionCooldownUntil)
+      ..writeByte(19)
+      ..write(obj.permanentStr)
+      ..writeByte(20)
+      ..write(obj.permanentIntelligence)
+      ..writeByte(21)
+      ..write(obj.permanentVit)
+      ..writeByte(22)
+      ..write(obj.permanentAgi);
   }
 
   @override

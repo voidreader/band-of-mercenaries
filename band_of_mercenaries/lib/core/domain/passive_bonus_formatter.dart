@@ -97,6 +97,8 @@ class PassiveBonusFormatter {
         _formatIdleRewardBonus(bonusType, value),
       MercenaryXpBonusEffect(:final value) => '용병 경험치 ${_pct(value)}',
       DispatchSlotBonusEffect(:final value) => '파견 슬롯 +$value',
+      InjuryRateModifierEffect(:final value) => '부상률 ${_pct(value)}',
+      ReputationGainModifierEffect(:final value) => '명성 획득 ${_pct(value)}',
       UnknownPassiveEffect(:final rawType) => '미지원 효과 ($rawType)',
     };
   }

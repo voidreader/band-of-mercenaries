@@ -5,7 +5,9 @@ import 'package:band_of_mercenaries/features/info/data/faction_state_repository.
 import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_codex_screen.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_detail_screen.dart';
+import 'package:band_of_mercenaries/features/info/view/guild_equipment_screen.dart';
 import 'package:band_of_mercenaries/features/info/view/rank_info_screen.dart';
+import 'package:band_of_mercenaries/features/inventory/view/inventory_screen.dart';
 
 class InfoScreen extends ConsumerStatefulWidget {
   const InfoScreen({super.key});
@@ -17,6 +19,8 @@ class InfoScreen extends ConsumerStatefulWidget {
 class _InfoScreenState extends ConsumerState<InfoScreen> {
   bool _showCodex = false;
   bool _showRank = false;
+  bool _showGuildEquipment = false;
+  bool _showInventory = false;
   String? _selectedFactionId;
 
   @override
@@ -45,6 +49,16 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
 
     if (_showRank) {
       return RankInfoScreen(onBack: () => setState(() => _showRank = false));
+    }
+
+    if (_showGuildEquipment) {
+      return GuildEquipmentScreen(
+        onBack: () => setState(() => _showGuildEquipment = false),
+      );
+    }
+
+    if (_showInventory) {
+      return InventoryScreen(onBack: () => setState(() => _showInventory = false));
     }
 
     final repo = ref.read(factionStateRepositoryProvider);
@@ -116,6 +130,52 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                   color: AppTheme.textHint,
                 ),
                 onTap: () => setState(() => _showRank = true),
+              ),
+              ListTile(
+                leading: const Icon(Icons.flag, color: AppTheme.textPrimary),
+                title: const Text(
+                  '용병단 장비',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  '깃발 1 + 유물 2 장착 슬롯',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textHint,
+                ),
+                onTap: () => setState(() => _showGuildEquipment = true),
+              ),
+              ListTile(
+                leading: const Icon(Icons.inventory_2, color: AppTheme.textPrimary),
+                title: const Text(
+                  '인벤토리',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  '보유 아이템 관리 · 정수 사용',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textHint,
+                ),
+                onTap: () => setState(() => _showInventory = true),
               ),
             ],
           ),

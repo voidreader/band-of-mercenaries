@@ -58,6 +58,14 @@ class UserData extends HiveObject {
   @HiveField(17)
   int? investigationRegionId;
 
+  // 용병단 깃발 슬롯
+  @HiveField(18)
+  String? bannerItemId;
+
+  // 유물 슬롯 (최대 2개)
+  @HiveField(19)
+  List<String> artifactItemIds;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -77,7 +85,10 @@ class UserData extends HiveObject {
     this.investigatingMercId,
     this.investigationEndTime,
     this.investigationRegionId,
-  }) : facilities = facilities ?? {};
+    this.bannerItemId,
+    List<String>? artifactItemIds,
+  })  : facilities = facilities ?? {},
+        artifactItemIds = artifactItemIds ?? <String>[];
 
   static int calculateDistance(
       int fromRegion, int fromSector, int toRegion, int toSector) {

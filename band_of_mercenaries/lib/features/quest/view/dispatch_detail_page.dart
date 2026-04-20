@@ -11,6 +11,7 @@ import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.da
 import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/features/quest/domain/success_rate_breakdown.dart';
 import 'package:band_of_mercenaries/features/quest/view/success_rate_breakdown_sheet.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/equipment_effect_context.dart';
 
 class DispatchDetailPage extends ConsumerStatefulWidget {
   final String questId;
@@ -65,7 +66,14 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
         ).toList();
 
         final selectedMercs = mercs.where((m) => _selectedMercIds.contains(m.id)).toList();
-        final partyPower = QuestCalculator.calculatePartyPower(selectedMercs, quest.questTypeId);
+        final equipmentBonuses = EquipmentEffectContext.forPartySync(
+          ref, selectedMercs.map((m) => m.id).toList(),
+        );
+        final partyPower = QuestCalculator.calculatePartyPower(
+          selectedMercs,
+          quest.questTypeId,
+          equipmentBonuses: equipmentBonuses,
+        );
         final partyRoles = RoleUtils.extractRoles(selectedMercs, data.jobs);
         final SuccessRateBreakdown breakdown = QuestCalculator.calculateSuccessRateBreakdown(
           partyPower: partyPower,

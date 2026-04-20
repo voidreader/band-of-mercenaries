@@ -10,6 +10,8 @@ import 'package:band_of_mercenaries/features/facility/domain/construction_servic
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/equipment_stat_bonus.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
 
 class TraitEventResult {
   final String? acquiredTraitKey;
@@ -33,12 +35,18 @@ class MercDamageResult {
   final MercenaryStatus newStatus;
   final DateTime? recoveryEndTime;
   final double damageRoll;
+  /// 전설 ⑤ 사망 방지 특수 효과로 사망이 부상으로 다운그레이드된 경우 true.
+  final bool legendaryPreventedDeath;
+  /// 전설 ⑤ 발동 시 갱신할 쿨다운 만료 시각 (Mercenary.legendaryDeathPreventionCooldownUntil).
+  final DateTime? newCooldownUntil;
 
   const MercDamageResult({
     required this.mercId,
     required this.newStatus,
     this.recoveryEndTime,
     this.damageRoll = 0.0,
+    this.legendaryPreventedDeath = false,
+    this.newCooldownUntil,
   });
 }
 
@@ -76,8 +84,18 @@ class QuestCompletionService {
     required double speedMultiplier,
     required Random random,
     CollectedEffects passiveEffects = const CollectedEffects.empty(),
+    // 파티 장비 스탯 보정 (mercId → EquipmentStatBonus)
+    Map<String, EquipmentStatBonus> partyEquipmentBonuses = const {},
+    // 파티 전설 유니크 효과 리스트
+    List<LegendaryEffect> legendaryEffects = const [],
+    // 용병별 쿨다운 맵 (mercId → legendaryDeathPreventionCooldownUntil)
+    Map<String, DateTime?> mercCooldowns = const {},
   }) {
-    final partyPower = QuestCalculator.calculatePartyPower(mercs, quest.questTypeId);
+    final partyPower = QuestCalculator.calculatePartyPower(
+      mercs,
+      quest.questTypeId,
+      equipmentBonuses: partyEquipmentBonuses,
+    );
     final difficulty = staticData.difficulties.firstWhere(
       (d) => d.level == quest.difficulty.clamp(1, 5),
       orElse: () => staticData.difficulties.first,
@@ -92,6 +110,15 @@ class QuestCompletionService {
       questType: quest.questTypeId,
       partySize: mercs.length,
     );
+    // 전설 ① success_rate_bonus 누적 (quest_type별 또는 all 적용)
+    double legendarySuccessBonus = 0.0;
+    for (final e in legendaryEffects) {
+      if (e is LegendarySuccessRateBonus &&
+          (e.questType == 'all' || e.questType == quest.questTypeId)) {
+        legendarySuccessBonus += e.value * 100.0;
+      }
+    }
+    // trait + legendary ① 합산값을 ±10%p 공유 clamp 적용 후 성공률 반환
     final baseSuccessRate = QuestCalculator.calculateSuccessRate(
       partyPower: partyPower,
       enemyPower: difficulty.enemyPower,
@@ -102,11 +129,24 @@ class QuestCompletionService {
       allTraits: staticData.traits,
       partySize: mercs.length,
       partyRoles: RoleUtils.extractRoles(mercs, staticData.jobs),
+      legendarySuccessBonus: legendarySuccessBonus,
     );
     final successRate = (baseSuccessRate + passiveSuccessBonus).clamp(5.0, 95.0);
 
     final roll = random.nextDouble() * 100;
-    final resultType = QuestCalculator.determineResult(successRate: successRate, roll: roll);
+    // 전설 ② result_upgrade: 성공 → 대성공 승격 (첫 적중 시 break)
+    var resultType = QuestCalculator.determineResult(successRate: successRate, roll: roll);
+    if (resultType == QuestResult.success) {
+      for (final e in legendaryEffects) {
+        if (e is LegendaryResultUpgrade) {
+          final upgradeRoll = random.nextDouble();
+          if (upgradeRoll <= e.chance) {
+            resultType = QuestResult.greatSuccess;
+            break;
+          }
+        }
+      }
+    }
 
     // 보상 계산 (가산 방식으로 통합)
     final passiveRewardBonus = PassiveBonusService.getQuestRewardMultiplier(
@@ -158,12 +198,13 @@ class QuestCompletionService {
       passiveXpBonus: PassiveBonusService.getMercenaryXpBonus(passiveEffects),
     );
 
-    // 명성 계산
+    // 명성 계산 (용병단 장비 reputation_gain_modifier 반영)
     int repGain = 0;
     if (resultType == QuestResult.greatSuccess || resultType == QuestResult.success) {
       repGain = ReputationService.calculateQuestReputation(
         difficulty: quest.difficulty.clamp(1, 5),
         isGreatSuccess: resultType == QuestResult.greatSuccess,
+        reputationGainModifier: PassiveBonusService.getReputationGainModifier(passiveEffects),
       );
     }
 
@@ -185,6 +226,11 @@ class QuestCompletionService {
       injuryReduction = ConstructionService.getEffectValue(fieldHospitalFacility, fieldHospitalLevel);
     }
 
+    // 부상률에 패시브 injury_rate_modifier 배수 적용
+    final effectiveInjuryRate = difficulty.injuryRate *
+        (1.0 - injuryReduction) *
+        PassiveBonusService.getInjuryRateMultiplier(passiveEffects);
+
     final now = DateTime.now();
     final mercDamages = <MercDamageResult>[];
     for (final merc in mercs) {
@@ -193,13 +239,35 @@ class QuestCompletionService {
         final damageResult = QuestCalculator.calculateDamage(
           roll: damageRoll,
           deathRate: difficulty.deathRate,
-          injuryRate: difficulty.injuryRate * (1.0 - injuryReduction),
+          injuryRate: effectiveInjuryRate,
           traitId: merc.traitId,
           traitIds: merc.allTraitIds,
           allTraits: staticData.traits,
+          legendaryEffects: legendaryEffects,
         );
         if (damageResult == DamageResult.dead) {
-          mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.dead, damageRoll: damageRoll));
+          // 전설 ⑤ 사망 방지: 쿨다운 미만료 시 부상으로 다운그레이드
+          final special = legendaryEffects.whereType<LegendarySpecial>().firstOrNull;
+          final cooldownUntil = mercCooldowns[merc.id];
+          final canPrevent = special != null && (cooldownUntil == null || now.isAfter(cooldownUntil));
+          if (canPrevent) {
+            final baseRecoverySeconds = (difficulty.level * 10 * 60 / speedMultiplier).round();
+            final passiveRecoveryMultiplier = PassiveBonusService.getRecoveryTimeMultiplier(
+              passiveEffects,
+              'injured',
+            );
+            final adjustedRecoverySeconds = (baseRecoverySeconds * (1.0 - recoveryReduction) * passiveRecoveryMultiplier).round();
+            mercDamages.add(MercDamageResult(
+              mercId: merc.id,
+              newStatus: MercenaryStatus.injured,
+              recoveryEndTime: now.add(Duration(seconds: adjustedRecoverySeconds)),
+              damageRoll: damageRoll,
+              legendaryPreventedDeath: true,
+              newCooldownUntil: now.add(Duration(hours: special.cooldownHours)),
+            ));
+          } else {
+            mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.dead, damageRoll: damageRoll));
+          }
         } else if (damageResult == DamageResult.injured) {
           final baseRecoverySeconds = (difficulty.level * 10 * 60 / speedMultiplier).round();
           final passiveRecoveryMultiplier = PassiveBonusService.getRecoveryTimeMultiplier(

@@ -198,10 +198,10 @@ CSV 생성 후 다음을 출력한다:
 
 현재 구현된 타입:
 - `faction-quest` — 세력 가입 시 제공되는 전용 퀘스트 (대상 테이블: `quest_pools`)
+- `essence` — 정수, 영구 스탯 강화 소모품 (대상 테이블: `items`, category=consumable)
+- `item` — 일반 아이템, 개인 장비 + 용병단 장비 (대상 테이블: `items`, category=personal_equipment / guild_equipment)
 
 추후 마일스톤 진입 시 아래 타입을 추가한다:
-- `essence` (M2a) — 정수 (영구 스탯 강화 아이템)
-- `item` (M2a) — 일반 아이템
 - `elite-monster` (M2b) — 엘리트 몬스터 + 드랍 테이블
 - `linked-quest` (M3) — 연계 퀘스트
 - `narrative` (M3) — 결과 서사 텍스트

@@ -23,6 +23,9 @@ import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/equipment_effect_context.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
+import 'package:band_of_mercenaries/core/models/passive_effect.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -352,7 +355,44 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         .where((m) => quest.dispatchedMercIds.contains(m.id))
         .toList();
 
-    final passiveEffects = _collectPassiveEffects();
+    // 파티 장비 스탯 보정 수집 (mercId → EquipmentStatBonus)
+    final partyEquipmentBonuses = await EquipmentEffectContext.forParty(
+      ref,
+      mercs.map((m) => m.id).toList(),
+    );
+
+    // 파티 전설 유니크 효과 수집
+    final legendaryEffects = <LegendaryEffect>[];
+    for (final m in mercs) {
+      legendaryEffects.addAll(await EquipmentEffectContext.legendariesFor(ref, m.id));
+    }
+
+    // 용병단 장비 패시브 효과 수집
+    final guildEquipments = await EquipmentEffectContext.guildEquipmentEffects(ref);
+
+    // 전설 ④ reward_bonus → PassiveEffect로 변환하여 패시브 경로에 편입
+    final personalEquipmentLegendaries = <PassiveEffect>[];
+    for (final leg in legendaryEffects) {
+      if (leg is LegendaryRewardBonus) {
+        personalEquipmentLegendaries.add(
+          PassiveEffect.questRewardMultiplier(questType: 'all', value: leg.multiplier),
+        );
+      }
+    }
+
+    // 용병별 전설 ⑤ 쿨다운 맵
+    final mercCooldowns = <String, DateTime?>{
+      for (final m in mercs) m.id: m.legendaryDeathPreventionCooldownUntil,
+    };
+
+    // 세력·명성 패시브 + 장비 소스를 합산한 최종 CollectedEffects
+    final basePassive = _collectPassiveEffects();
+    final passiveEffects = CollectedEffects([
+      ...basePassive.effects,
+      ...guildEquipments,
+      ...personalEquipmentLegendaries,
+    ]);
+
     final result = QuestCompletionService.calculate(
       quest: quest,
       mercs: mercs,
@@ -362,6 +402,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       speedMultiplier: ref.read(speedMultiplierProvider),
       random: Random(),
       passiveEffects: passiveEffects,
+      partyEquipmentBonuses: partyEquipmentBonuses,
+      legendaryEffects: legendaryEffects,
+      mercCooldowns: mercCooldowns,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
@@ -405,8 +448,28 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final mercRepo = ref.read(mercenaryRepositoryProvider);
     for (final damage in result.mercDamages) {
       await mercRepo.setDispatched(damage.mercId, false);
+      // 사망 판정 시 정수 소실 로그 기록 (용병 삭제 이전)
+      if (damage.newStatus == MercenaryStatus.dead) {
+        final deadMerc = mercs.where((m) => m.id == damage.mercId).firstOrNull;
+        if (deadMerc != null) {
+          final totalPermanent = deadMerc.permanentStr
+              + deadMerc.permanentIntelligence
+              + deadMerc.permanentVit
+              + deadMerc.permanentAgi;
+          if (totalPermanent > 0) {
+            ref.read(activityLogProvider.notifier).addLog(
+              '${deadMerc.name}이(가) 사망했다. 투입 정수 누적 +$totalPermanent 소실',
+              ActivityLogType.essenceLostOnDeath,
+            );
+          }
+        }
+      }
       if (damage.newStatus != MercenaryStatus.normal) {
         await mercRepo.updateStatus(damage.mercId, damage.newStatus, endTime: damage.recoveryEndTime);
+      }
+      // 전설 ⑤ 사망 방지 발동 시 쿨다운 기록
+      if (damage.legendaryPreventedDeath && damage.newCooldownUntil != null) {
+        await mercRepo.setLegendaryCooldown(damage.mercId, damage.newCooldownUntil);
       }
     }
 

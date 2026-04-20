@@ -124,4 +124,14 @@ class MercenaryRepository {
     merc.level = newLevel;
     await merc.save();
   }
+
+  /// 전설 ⑤ 사망 방지 발동 시 쿨다운 만료 시각을 기록한다.
+  /// [until]이 null이면 쿨다운을 초기화한다.
+  Future<void> setLegendaryCooldown(String mercId, DateTime? until) async {
+    final mercs = _box.values.where((m) => m.id == mercId).toList();
+    if (mercs.isEmpty) return;
+    final merc = mercs.first;
+    merc.legendaryDeathPreventionCooldownUntil = until;
+    await merc.save();
+  }
 }

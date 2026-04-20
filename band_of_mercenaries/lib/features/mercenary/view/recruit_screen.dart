@@ -194,29 +194,71 @@ class RecruitScreen extends ConsumerWidget {
 
                             showDialog<void>(
                               context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('용병 방출'),
-                                content: Text(
-                                  '용병 "${merc.name}"을 방출합니다.\n'
-                                  '퇴직금 ${severancePay}G가 차감됩니다.\n\n'
-                                  '방출된 용병은 다시 모집할 수 없습니다.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text('취소'),
+                              builder: (ctx) {
+                                final totalPermanent = merc.permanentStr
+                                    + merc.permanentIntelligence
+                                    + merc.permanentVit
+                                    + merc.permanentAgi;
+                                return AlertDialog(
+                                  title: const Text('용병 방출'),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '용병 "${merc.name}"을 방출합니다.\n'
+                                        '퇴직금 ${severancePay}G가 차감됩니다.',
+                                      ),
+                                      if (totalPermanent > 0) ...[
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.withValues(alpha: 0.08),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(Icons.warning_amber, color: Colors.red, size: 18),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  '이 용병에 투입된 정수 보너스(+$totalPermanent)가 영구히 소실됩니다.',
+                                                  style: const TextStyle(
+                                                    color: Colors.red,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                      const SizedBox(height: 12),
+                                      const Text(
+                                        '방출된 용병은 다시 모집할 수 없습니다.',
+                                        style: TextStyle(fontSize: 13),
+                                      ),
+                                    ],
                                   ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      ref.read(mercenaryListProvider.notifier)
-                                          .dismiss(merc.id, severancePay);
-                                      Navigator.pop(ctx);
-                                    },
-                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                    child: const Text('방출'),
-                                  ),
-                                ],
-                              ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: const Text('취소'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        ref.read(mercenaryListProvider.notifier)
+                                            .dismiss(merc.id, severancePay);
+                                        Navigator.pop(ctx);
+                                      },
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                      child: Text(totalPermanent > 0 ? '손실 감수하고 방출' : '방출'),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           },
                           style: TextButton.styleFrom(foregroundColor: Colors.red),

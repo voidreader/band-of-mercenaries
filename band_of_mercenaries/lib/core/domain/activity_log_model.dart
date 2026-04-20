@@ -34,6 +34,12 @@ enum ActivityLogType {
   reputationRankUp,
   @HiveField(14)
   reputationRankDown,
+  @HiveField(15)
+  essenceApplied,
+  @HiveField(16)
+  essenceLostOnDeath,
+  @HiveField(17)
+  essenceLostOnRelease,
 }
 
 @HiveType(typeId: 7)

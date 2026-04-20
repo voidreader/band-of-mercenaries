@@ -17,8 +17,16 @@ class ReputationService {
     return regionTier <= getMaxUnlockedTier(reputation, ranks);
   }
 
-  static int calculateQuestReputation({required int difficulty, required bool isGreatSuccess}) {
-    return difficulty * (isGreatSuccess ? 20 : 10);
+  /// 퀘스트 명성 획득량 계산.
+  /// [reputationGainModifier]는 용병단 장비 등에서 가산 수집된 수정자(0.0~0.30 상한).
+  /// 내부에서 clamp 후 `base × (1 + modifier)` 적용.
+  static int calculateQuestReputation({
+    required int difficulty,
+    required bool isGreatSuccess,
+    double reputationGainModifier = 0.0,
+  }) {
+    final base = difficulty * (isGreatSuccess ? 20 : 10);
+    return (base * (1.0 + reputationGainModifier.clamp(0.0, 0.30))).round();
   }
 
   static Rank? getNextRank(int reputation, List<Rank> ranks) {

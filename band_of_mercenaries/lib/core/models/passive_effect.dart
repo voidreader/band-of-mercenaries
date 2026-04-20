@@ -82,6 +82,16 @@ sealed class PassiveEffect with _$PassiveEffect {
     required int value,
   }) = DispatchSlotBonusEffect;
 
+  /// 부상률 수정자. 음수 값 허용 (-0.07 등). 곱셈 스태킹: (1 + Σ).clamp(0.10, 1.0)
+  const factory PassiveEffect.injuryRateModifier({
+    required double value,
+  }) = InjuryRateModifierEffect;
+
+  /// 명성 획득 수정자. 가산 스태킹, 상한 +0.30.
+  const factory PassiveEffect.reputationGainModifier({
+    required double value,
+  }) = ReputationGainModifierEffect;
+
   /// 미지원 type에 대한 fallback — 앱 다운그레이드 호환 보장
   const factory PassiveEffect.unknown({
     required String rawType,
@@ -166,6 +176,10 @@ sealed class PassiveEffect with _$PassiveEffect {
         return PassiveEffect.mercenaryXpBonus(value: dbl('value'));
       case 'dispatch_slot_bonus':
         return PassiveEffect.dispatchSlotBonus(value: integer('value'));
+      case 'injury_rate_modifier':
+        return PassiveEffect.injuryRateModifier(value: dbl('value'));
+      case 'reputation_gain_modifier':
+        return PassiveEffect.reputationGainModifier(value: dbl('value'));
       default:
         return PassiveEffect.unknown(rawType: type);
     }

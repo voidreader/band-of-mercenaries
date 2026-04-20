@@ -16,18 +16,70 @@ import 'package:band_of_mercenaries/features/mercenary/domain/trait_effect_servi
 import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
 import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_slot_grid.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/equipment_slot_grid.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/behavior_stats_section.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_history_section.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_detail_dialog.dart';
 import 'package:band_of_mercenaries/shared/widgets/status_badge.dart';
+import 'package:band_of_mercenaries/features/inventory/view/essence_select_sheet.dart';
 
-class MercenaryDetailOverlay extends ConsumerWidget {
+class MercenaryDetailOverlay extends ConsumerStatefulWidget {
+  const MercenaryDetailOverlay({super.key, required this.mercenaryId});
   final String mercenaryId;
 
-  const MercenaryDetailOverlay({super.key, required this.mercenaryId});
+  @override
+  ConsumerState<MercenaryDetailOverlay> createState() =>
+      _MercenaryDetailOverlayState();
+}
+
+class _MercenaryDetailOverlayState
+    extends ConsumerState<MercenaryDetailOverlay> {
+  bool _pulseStr = false;
+  bool _pulseInt = false;
+  bool _pulseVit = false;
+  bool _pulseAgi = false;
+
+  void _triggerPulse(String statKey) {
+    setState(() {
+      switch (statKey) {
+        case 'str':
+          _pulseStr = true;
+          break;
+        case 'intelligence':
+          _pulseInt = true;
+          break;
+        case 'vit':
+          _pulseVit = true;
+          break;
+        case 'agi':
+          _pulseAgi = true;
+          break;
+      }
+    });
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      setState(() {
+        switch (statKey) {
+          case 'str':
+            _pulseStr = false;
+            break;
+          case 'intelligence':
+            _pulseInt = false;
+            break;
+          case 'vit':
+            _pulseVit = false;
+            break;
+          case 'agi':
+            _pulseAgi = false;
+            break;
+        }
+      });
+    });
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final mercenaryId = widget.mercenaryId;
     final mercs = ref.watch(mercenaryListProvider);
     final staticDataAsync = ref.watch(staticDataProvider);
 
@@ -52,15 +104,18 @@ class MercenaryDetailOverlay extends ConsumerWidget {
         ),
         data: (staticData) {
           final allTraits = staticData.traits;
-          final job = staticData.jobs.where((j) => j.id == merc.jobId).firstOrNull;
+          final job =
+              staticData.jobs.where((j) => j.id == merc.jobId).firstOrNull;
 
           final resolvedTraits = merc.allTraitIds
               .map((id) => allTraits.where((t) => t.key == id).firstOrNull)
               .whereType<TraitData>()
               .toList();
 
-          final innateTraits = resolvedTraits.where((t) => t.type == 'innate').toList();
-          final acquiredTraits = resolvedTraits.where((t) => t.type != 'innate').toList();
+          final innateTraits =
+              resolvedTraits.where((t) => t.type == 'innate').toList();
+          final acquiredTraits =
+              resolvedTraits.where((t) => t.type != 'innate').toList();
 
           final singleCandidates = TraitEvolutionService.checkSingleEvolutions(
             stats: merc.stats,
@@ -100,11 +155,13 @@ class MercenaryDetailOverlay extends ConsumerWidget {
                 onDelete: () {
                   final cost = TraitDeletionService.deletionCost(trait);
                   ref.read(userDataProvider.notifier).spendGold(cost);
-                  ref.read(mercenaryRepositoryProvider).deleteTrait(merc.id, trait.key);
+                  ref
+                      .read(mercenaryRepositoryProvider)
+                      .deleteTrait(merc.id, trait.key);
                   ref.read(activityLogProvider.notifier).addLog(
-                    '${merc.name}의 [${trait.name}] 트레잇이 제거되었다',
-                    ActivityLogType.traitDeleted,
-                  );
+                        '${merc.name}의 [${trait.name}] 트레잇이 제거되었다',
+                        ActivityLogType.traitDeleted,
+                      );
                   ref.read(mercenaryListProvider.notifier).refresh();
                 },
               ),
@@ -113,7 +170,7 @@ class MercenaryDetailOverlay extends ConsumerWidget {
 
           return Column(
             children: [
-              _buildHeaderBar(context, ref),
+              _buildHeaderBar(context),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
@@ -121,6 +178,8 @@ class MercenaryDetailOverlay extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildProfileHeader(merc, job),
+                      const SizedBox(height: 16),
+                      EquipmentSlotGrid(mercenaryId: mercenaryId),
                       const SizedBox(height: 16),
                       TraitSlotGrid(
                         innateTraits: innateTraits,
@@ -152,7 +211,7 @@ class MercenaryDetailOverlay extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeaderBar(BuildContext context, WidgetRef ref) {
+  Widget _buildHeaderBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: const BoxDecoration(
@@ -176,14 +235,30 @@ class MercenaryDetailOverlay extends ConsumerWidget {
               color: AppTheme.textPrimary,
             ),
           ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.auto_awesome, size: 20),
+            tooltip: '정수 사용',
+            onPressed: () {
+              showEssenceSelectSheet(
+                context: context,
+                ref: ref,
+                mercenaryId: widget.mercenaryId,
+                onApplySuccess: (statKey, _) => _triggerPulse(statKey),
+              );
+            },
+            color: AppTheme.textPrimary,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildProfileHeader(Mercenary merc, dynamic job) {
-    final tierColor = job != null ? AppTheme.tierColor(job.tier) : AppTheme.textHint;
-    final tierBgColor = job != null ? AppTheme.tierBgColor(job.tier) : AppTheme.tier1Bg;
+    final tierColor =
+        job != null ? AppTheme.tierColor(job.tier) : AppTheme.textHint;
+    final tierBgColor =
+        job != null ? AppTheme.tierBgColor(job.tier) : AppTheme.tier1Bg;
     final jobName = job?.name ?? merc.jobId;
     final jobTier = job?.tier ?? 1;
 
@@ -225,7 +300,8 @@ class MercenaryDetailOverlay extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: tierBgColor,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: tierColor.withValues(alpha: 0.3)),
+                  border:
+                      Border.all(color: tierColor.withValues(alpha: 0.3)),
                 ),
                 child: Center(
                   child: Text(
@@ -265,11 +341,13 @@ class MercenaryDetailOverlay extends ConsumerWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: tierBgColor,
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: tierColor.withValues(alpha: 0.3)),
+                            border: Border.all(
+                                color: tierColor.withValues(alpha: 0.3)),
                           ),
                           child: Text(
                             'T$jobTier $jobName',
@@ -292,56 +370,105 @@ class MercenaryDetailOverlay extends ConsumerWidget {
           const SizedBox(height: 12),
           _buildStatRow(merc),
           const SizedBox(height: 10),
-          _buildXpBar(currentLevel, currentXp, xpProgress, isMaxLevel, xpForNext),
+          _buildXpBar(
+              currentLevel, currentXp, xpProgress, isMaxLevel, xpForNext),
         ],
       ),
     );
   }
 
   Widget _buildStatRow(Mercenary merc) {
+    String formatStat(int effective, int permanent) {
+      if (permanent > 0) return '$effective (+$permanent)';
+      return '$effective';
+    }
+
     return Row(
       children: [
-        _buildStatChip('STR', '${merc.effectiveStr}', const Color(0xFFC62828)),
+        Expanded(
+          child: AnimatedScale(
+            scale: _pulseStr ? 1.15 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            child: _buildStatChip(
+              'STR',
+              formatStat(merc.effectiveStr, merc.permanentStr),
+              const Color(0xFFC62828),
+            ),
+          ),
+        ),
         const SizedBox(width: 8),
-        _buildStatChip('INT', '${merc.effectiveIntelligence}', const Color(0xFF1565C0)),
+        Expanded(
+          child: AnimatedScale(
+            scale: _pulseInt ? 1.15 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            child: _buildStatChip(
+              'INT',
+              formatStat(
+                  merc.effectiveIntelligence, merc.permanentIntelligence),
+              const Color(0xFF1565C0),
+            ),
+          ),
+        ),
         const SizedBox(width: 8),
-        _buildStatChip('VIT', '${merc.effectiveVit}', const Color(0xFF2E7D32)),
+        Expanded(
+          child: AnimatedScale(
+            scale: _pulseVit ? 1.15 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            child: _buildStatChip(
+              'VIT',
+              formatStat(merc.effectiveVit, merc.permanentVit),
+              const Color(0xFF2E7D32),
+            ),
+          ),
+        ),
         const SizedBox(width: 8),
-        _buildStatChip('AGI', merc.effectiveAgi.toString(), const Color(0xFF6A1B9A)),
+        Expanded(
+          child: AnimatedScale(
+            scale: _pulseAgi ? 1.15 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            child: _buildStatChip(
+              'AGI',
+              formatStat(merc.effectiveAgi, merc.permanentAgi),
+              const Color(0xFF6A1B9A),
+            ),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildStatChip(String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.07),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: AppTheme.textHint,
-                fontWeight: FontWeight.w500,
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              color: AppTheme.textHint,
+              fontWeight: FontWeight.w500,
             ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -437,16 +564,17 @@ class MercenaryDetailOverlay extends ConsumerWidget {
     }
   }
 
-  Widget _buildXpBar(int level, int xp, double progress, bool isMax, int xpForNext) {
+  Widget _buildXpBar(
+      int level, int xp, double progress, bool isMax, int xpForNext) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            const Text(
               'EXP',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 color: AppTheme.textHint,
                 fontWeight: FontWeight.w500,
@@ -476,7 +604,6 @@ class MercenaryDetailOverlay extends ConsumerWidget {
       ],
     );
   }
-
 }
 
 class _RoleBonusChip extends StatelessWidget {

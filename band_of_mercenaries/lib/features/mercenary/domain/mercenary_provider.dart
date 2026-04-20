@@ -91,14 +91,23 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     final merc = state.firstWhere((m) => m.id == mercId);
     if (merc.isDispatched) return false;
 
+    // 정수 투입 합산 (삭제 이전에 계산)
+    final totalPermanent = merc.permanentStr
+        + merc.permanentIntelligence
+        + merc.permanentVit
+        + merc.permanentAgi;
+
     await ref.read(userDataProvider.notifier).spendGold(severancePay);
     await _repo.dismiss(mercId);
     _load();
 
-    ref.read(activityLogProvider.notifier).addLog(
-      '용병 "${merc.name}" 방출 (퇴직금: ${severancePay}G)',
-      ActivityLogType.mercenaryDismiss,
-    );
+    final logType = totalPermanent > 0
+        ? ActivityLogType.essenceLostOnRelease
+        : ActivityLogType.mercenaryDismiss;
+    final message = totalPermanent > 0
+        ? '용병 "${merc.name}" 방출 (퇴직금: ${severancePay}G, 투입 정수 누적 +$totalPermanent 소실)'
+        : '용병 "${merc.name}" 방출 (퇴직금: ${severancePay}G)';
+    ref.read(activityLogProvider.notifier).addLog(message, logType);
 
     return true;
   }

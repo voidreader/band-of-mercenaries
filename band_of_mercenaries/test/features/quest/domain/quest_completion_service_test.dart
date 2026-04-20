@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 import 'package:band_of_mercenaries/core/models/facility.dart';
 import 'package:band_of_mercenaries/core/models/rank.dart';
+import 'package:band_of_mercenaries/core/models/item_data.dart';
 
 StaticGameData _makeStaticData({
   int enemyPower = 10,
@@ -58,6 +59,7 @@ StaticGameData _makeStaticData({
     ],
     regionDiscoveries: const [],
     factions: const [],
+    items: const <ItemData>[],
   );
 }
 

@@ -52,6 +52,10 @@ class PassiveBonusFormatter {
         '용병 경험치 ${_pctPlus(value)}',
       DispatchSlotBonusEffect(:final value) =>
         '파견 슬롯 +$value',
+      InjuryRateModifierEffect(:final value) =>
+        '부상률 ${_pctSigned(value)}',
+      ReputationGainModifierEffect(:final value) =>
+        '명성 획득 ${_pctPlus(value)}',
       UnknownPassiveEffect() => '',
     };
   }
@@ -66,6 +70,12 @@ class PassiveBonusFormatter {
   static String _pctMinus(double value) {
     final pct = (value * 100).toStringAsFixed(0);
     return '-$pct%';
+  }
+
+  /// 비율(-0.07) → "-7%", (0.05) → "+5%" (부호 보존)
+  static String _pctSigned(double value) {
+    final pct = (value * 100).toStringAsFixed(0);
+    return value >= 0 ? '+$pct%' : '$pct%';
   }
 
   /// 비율(0.05) → "+5%p" (성공률 가산)

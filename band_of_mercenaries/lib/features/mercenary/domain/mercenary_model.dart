@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/equipment_stat_bonus.dart';
 
 part 'mercenary_model.g.dart';
 
@@ -71,6 +72,25 @@ class Mercenary extends HiveObject {
   @HiveField(17)
   List<String> deletedTraitIds;
 
+  @HiveField(18)
+  DateTime? legendaryDeathPreventionCooldownUntil;
+
+  /// 영구 STR 보너스 (아이템·에센스 등 외부 효과로 누적되는 정수 보정값)
+  @HiveField(19)
+  int permanentStr;
+
+  /// 영구 INTELLIGENCE 보너스
+  @HiveField(20)
+  int permanentIntelligence;
+
+  /// 영구 VIT 보너스
+  @HiveField(21)
+  int permanentVit;
+
+  /// 영구 AGI 보너스
+  @HiveField(22)
+  int permanentAgi;
+
   Mercenary({
     required this.id,
     required this.name,
@@ -90,6 +110,11 @@ class Mercenary extends HiveObject {
     List<String>? traitIds,
     List<String>? traitHistory,
     List<String>? deletedTraitIds,
+    this.legendaryDeathPreventionCooldownUntil,
+    this.permanentStr = 0,
+    this.permanentIntelligence = 0,
+    this.permanentVit = 0,
+    this.permanentAgi = 0,
   })  : stats = stats ?? {},
         traitIds = traitIds ?? [],
         traitHistory = traitHistory ?? [],
@@ -104,23 +129,52 @@ class Mercenary extends HiveObject {
   double get _levelBonus => (level - 1) * GameConstants.levelBonusPerLevel;
 
   int get effectiveStr {
-    final withLevel = (str * (1.0 + _levelBonus)).round();
+    final withLevel = ((str + permanentStr) * (1.0 + _levelBonus)).round();
     return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 
   int get effectiveIntelligence {
-    final withLevel = (intelligence * (1.0 + _levelBonus)).round();
+    final withLevel = ((intelligence + permanentIntelligence) * (1.0 + _levelBonus)).round();
     return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 
   int get effectiveVit {
-    final withLevel = (vit * (1.0 + _levelBonus)).round();
+    final withLevel = ((vit + permanentVit) * (1.0 + _levelBonus)).round();
     return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
   }
 
   int get effectiveAgi {
-    final withLevel = (agi * (1.0 + _levelBonus)).round();
+    final withLevel = ((agi + permanentAgi) * (1.0 + _levelBonus)).round();
     return status == MercenaryStatus.tired ? (withLevel * GameConstants.tiredDebuffMultiplier).round() : withLevel;
+  }
+
+  /// 장비 보정·정수 포함 effective STR. 공식: `(base + permanent + equipment) × (1 + levelBonus) × fatigueMod`.
+  int effectiveStrWith(EquipmentStatBonus bonus) {
+    final withLevel = ((str + permanentStr + bonus.str) * (1.0 + _levelBonus)).round();
+    return status == MercenaryStatus.tired
+        ? (withLevel * GameConstants.tiredDebuffMultiplier).round()
+        : withLevel;
+  }
+
+  int effectiveIntelligenceWith(EquipmentStatBonus bonus) {
+    final withLevel = ((intelligence + permanentIntelligence + bonus.intelligence) * (1.0 + _levelBonus)).round();
+    return status == MercenaryStatus.tired
+        ? (withLevel * GameConstants.tiredDebuffMultiplier).round()
+        : withLevel;
+  }
+
+  int effectiveVitWith(EquipmentStatBonus bonus) {
+    final withLevel = ((vit + permanentVit + bonus.vit) * (1.0 + _levelBonus)).round();
+    return status == MercenaryStatus.tired
+        ? (withLevel * GameConstants.tiredDebuffMultiplier).round()
+        : withLevel;
+  }
+
+  int effectiveAgiWith(EquipmentStatBonus bonus) {
+    final withLevel = ((agi + permanentAgi + bonus.agi) * (1.0 + _levelBonus)).round();
+    return status == MercenaryStatus.tired
+        ? (withLevel * GameConstants.tiredDebuffMultiplier).round()
+        : withLevel;
   }
 
   bool get isAvailable =>

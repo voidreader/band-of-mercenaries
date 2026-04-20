@@ -235,6 +235,45 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     state = state;
   }
 
+  /// 용병단 깃발 슬롯 장착/해제. null이면 해제.
+  Future<void> setGuildBanner(String? itemId) async {
+    if (state == null) return;
+    state!.bannerItemId = itemId;
+    await state!.save();
+    state = state;
+  }
+
+  /// 용병단 유물 슬롯(0 또는 1) 장착/해제. null이면 해당 슬롯 해제.
+  /// 동일 itemId가 다른 슬롯에 이미 장착되어 있으면 해당 슬롯을 null로 비운 뒤 타겟 슬롯에 삽입(중복 방지).
+  /// artifactItemIds는 길이 0~2의 리스트로 유지. null 슬롯은 리스트에서 제외(compact).
+  Future<void> setGuildArtifact(int slotIndex, String? itemId) async {
+    assert(slotIndex == 0 || slotIndex == 1, 'slotIndex must be 0 or 1');
+    if (state == null) return;
+
+    // 현재 리스트를 [slot0, slot1] 길이 2 고정 배열로 변환 (부족한 자리는 null)
+    final slots = <String?>[null, null];
+    for (int i = 0; i < state!.artifactItemIds.length && i < 2; i++) {
+      slots[i] = state!.artifactItemIds[i];
+    }
+
+    // 동일 itemId가 다른 슬롯에 있으면 제거
+    if (itemId != null) {
+      for (int i = 0; i < 2; i++) {
+        if (i != slotIndex && slots[i] == itemId) {
+          slots[i] = null;
+        }
+      }
+    }
+
+    // 타겟 슬롯 치환
+    slots[slotIndex] = itemId;
+
+    // compact: null을 제외하고 저장
+    state!.artifactItemIds = slots.whereType<String>().toList();
+    await state!.save();
+    state = state;
+  }
+
   void recalculateInvestigationTimer(double oldSpeed, double newSpeed) {
     if (state == null || state!.investigationEndTime == null) return;
     final now = DateTime.now();

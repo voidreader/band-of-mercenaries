@@ -34,6 +34,7 @@ class SyncService {
     'mercenary_wages',
     'region_discoveries',
     'factions',
+    'items', // 19. 아이템 (M2a 추가)
   ];
 
   SyncService({

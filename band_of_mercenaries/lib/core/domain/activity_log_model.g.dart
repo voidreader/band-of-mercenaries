@@ -83,6 +83,12 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.reputationRankUp;
       case 14:
         return ActivityLogType.reputationRankDown;
+      case 15:
+        return ActivityLogType.essenceApplied;
+      case 16:
+        return ActivityLogType.essenceLostOnDeath;
+      case 17:
+        return ActivityLogType.essenceLostOnRelease;
       default:
         return ActivityLogType.questResult;
     }
@@ -135,6 +141,15 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.reputationRankDown:
         writer.writeByte(14);
+        break;
+      case ActivityLogType.essenceApplied:
+        writer.writeByte(15);
+        break;
+      case ActivityLogType.essenceLostOnDeath:
+        writer.writeByte(16);
+        break;
+      case ActivityLogType.essenceLostOnRelease:
+        writer.writeByte(17);
         break;
     }
   }

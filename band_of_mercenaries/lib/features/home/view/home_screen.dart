@@ -568,6 +568,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case ActivityLogType.discoveryFound: return '💎';
       case ActivityLogType.reputationRankUp: return '🎖';
       case ActivityLogType.reputationRankDown: return '📉';
+      case ActivityLogType.essenceApplied: return '✧';
+      case ActivityLogType.essenceLostOnDeath: return '💀';
+      case ActivityLogType.essenceLostOnRelease: return '👋';
     }
   }
 

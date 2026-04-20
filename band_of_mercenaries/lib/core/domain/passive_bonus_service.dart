@@ -24,6 +24,8 @@ class PassiveBonusService {
     required int reputation,
     required List<Rank> allRanks,
     required List<FactionData> joinedFactions,
+    List<PassiveEffect> personalEquipmentLegendaries = const [],
+    List<PassiveEffect> guildEquipments = const [],
   }) {
     final buffer = <PassiveEffect>[];
 
@@ -42,6 +44,10 @@ class PassiveBonusService {
         break;
       }
     }
+
+    // 장비 소스 append
+    buffer.addAll(personalEquipmentLegendaries);
+    buffer.addAll(guildEquipments);
 
     return CollectedEffects(buffer);
   }
@@ -253,5 +259,26 @@ class PassiveBonusService {
       }
     }
     return sum.clamp(0, 10);
+  }
+
+  /// 부상률 수정자 배수. 용병단 장비 등의 `injury_rate_modifier` 효과를 곱셈 스태킹 후
+  /// `(1 + Σ value).clamp(0.10, 1.0)` 반환. value가 음수이면 배수가 1.0 미만.
+  /// 호출측: `baseInjuryRate × return`
+  static double getInjuryRateMultiplier(CollectedEffects ce) {
+    double sum = 0.0;
+    for (final e in ce.effects) {
+      if (e is InjuryRateModifierEffect) sum += e.value;
+    }
+    return (1.0 + sum).clamp(0.10, 1.0);
+  }
+
+  /// 명성 획득 수정자. 가산 스태킹 후 `clamp(0.0, 0.30)` 반환.
+  /// 호출측: `baseReputation × (1 + return)`
+  static double getReputationGainModifier(CollectedEffects ce) {
+    double sum = 0.0;
+    for (final e in ce.effects) {
+      if (e is ReputationGainModifierEffect) sum += e.value;
+    }
+    return sum.clamp(0.0, 0.30);
   }
 }

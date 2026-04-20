@@ -42,6 +42,8 @@ mixin _$PassiveEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) =>
       throw _privateConstructorUsedError;
@@ -65,6 +67,8 @@ mixin _$PassiveEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) =>
       throw _privateConstructorUsedError;
@@ -88,6 +92,8 @@ mixin _$PassiveEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) =>
@@ -123,6 +129,10 @@ mixin _$PassiveEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) =>
       throw _privateConstructorUsedError;
@@ -149,6 +159,9 @@ mixin _$PassiveEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) =>
       throw _privateConstructorUsedError;
@@ -175,6 +188,9 @@ mixin _$PassiveEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) =>
@@ -300,6 +316,8 @@ class _$QuestRewardMultiplierEffectImpl implements QuestRewardMultiplierEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return questRewardMultiplier(questType, value);
@@ -326,6 +344,8 @@ class _$QuestRewardMultiplierEffectImpl implements QuestRewardMultiplierEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return questRewardMultiplier?.call(questType, value);
@@ -352,6 +372,8 @@ class _$QuestRewardMultiplierEffectImpl implements QuestRewardMultiplierEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -393,6 +415,10 @@ class _$QuestRewardMultiplierEffectImpl implements QuestRewardMultiplierEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return questRewardMultiplier(this);
@@ -422,6 +448,9 @@ class _$QuestRewardMultiplierEffectImpl implements QuestRewardMultiplierEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return questRewardMultiplier?.call(this);
@@ -451,6 +480,9 @@ class _$QuestRewardMultiplierEffectImpl implements QuestRewardMultiplierEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -574,6 +606,8 @@ class _$QuestSuccessRateBonusEffectImpl implements QuestSuccessRateBonusEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return questSuccessRateBonus(questType, value);
@@ -600,6 +634,8 @@ class _$QuestSuccessRateBonusEffectImpl implements QuestSuccessRateBonusEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return questSuccessRateBonus?.call(questType, value);
@@ -626,6 +662,8 @@ class _$QuestSuccessRateBonusEffectImpl implements QuestSuccessRateBonusEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -667,6 +705,10 @@ class _$QuestSuccessRateBonusEffectImpl implements QuestSuccessRateBonusEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return questSuccessRateBonus(this);
@@ -696,6 +738,9 @@ class _$QuestSuccessRateBonusEffectImpl implements QuestSuccessRateBonusEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return questSuccessRateBonus?.call(this);
@@ -725,6 +770,9 @@ class _$QuestSuccessRateBonusEffectImpl implements QuestSuccessRateBonusEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -851,6 +899,8 @@ class _$QuestSuccessRateBonusPartySizeEffectImpl
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return questSuccessRateBonusPartySize(minPartySize, value);
@@ -877,6 +927,8 @@ class _$QuestSuccessRateBonusPartySizeEffectImpl
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return questSuccessRateBonusPartySize?.call(minPartySize, value);
@@ -903,6 +955,8 @@ class _$QuestSuccessRateBonusPartySizeEffectImpl
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -944,6 +998,10 @@ class _$QuestSuccessRateBonusPartySizeEffectImpl
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return questSuccessRateBonusPartySize(this);
@@ -973,6 +1031,9 @@ class _$QuestSuccessRateBonusPartySizeEffectImpl
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return questSuccessRateBonusPartySize?.call(this);
@@ -1002,6 +1063,9 @@ class _$QuestSuccessRateBonusPartySizeEffectImpl
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -1125,6 +1189,8 @@ class _$RecoveryTimeReductionEffectImpl implements RecoveryTimeReductionEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return recoveryTimeReduction(status, value);
@@ -1151,6 +1217,8 @@ class _$RecoveryTimeReductionEffectImpl implements RecoveryTimeReductionEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return recoveryTimeReduction?.call(status, value);
@@ -1177,6 +1245,8 @@ class _$RecoveryTimeReductionEffectImpl implements RecoveryTimeReductionEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -1218,6 +1288,10 @@ class _$RecoveryTimeReductionEffectImpl implements RecoveryTimeReductionEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return recoveryTimeReduction(this);
@@ -1247,6 +1321,9 @@ class _$RecoveryTimeReductionEffectImpl implements RecoveryTimeReductionEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return recoveryTimeReduction?.call(this);
@@ -1276,6 +1353,9 @@ class _$RecoveryTimeReductionEffectImpl implements RecoveryTimeReductionEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -1399,6 +1479,8 @@ class _$TravelEventMitigationEffectImpl implements TravelEventMitigationEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return travelEventMitigation(eventType, value);
@@ -1425,6 +1507,8 @@ class _$TravelEventMitigationEffectImpl implements TravelEventMitigationEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return travelEventMitigation?.call(eventType, value);
@@ -1451,6 +1535,8 @@ class _$TravelEventMitigationEffectImpl implements TravelEventMitigationEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -1492,6 +1578,10 @@ class _$TravelEventMitigationEffectImpl implements TravelEventMitigationEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return travelEventMitigation(this);
@@ -1521,6 +1611,9 @@ class _$TravelEventMitigationEffectImpl implements TravelEventMitigationEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return travelEventMitigation?.call(this);
@@ -1550,6 +1643,9 @@ class _$TravelEventMitigationEffectImpl implements TravelEventMitigationEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -1666,6 +1762,8 @@ class _$InvestigationSuccessRateBonusEffectImpl
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return investigationSuccessRateBonus(value);
@@ -1692,6 +1790,8 @@ class _$InvestigationSuccessRateBonusEffectImpl
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return investigationSuccessRateBonus?.call(value);
@@ -1718,6 +1818,8 @@ class _$InvestigationSuccessRateBonusEffectImpl
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -1759,6 +1861,10 @@ class _$InvestigationSuccessRateBonusEffectImpl
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return investigationSuccessRateBonus(this);
@@ -1788,6 +1894,9 @@ class _$InvestigationSuccessRateBonusEffectImpl
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return investigationSuccessRateBonus?.call(this);
@@ -1817,6 +1926,9 @@ class _$InvestigationSuccessRateBonusEffectImpl
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -1933,6 +2045,8 @@ class _$TraitAcquisitionConditionReliefEffectImpl
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return traitAcquisitionConditionRelief(value);
@@ -1959,6 +2073,8 @@ class _$TraitAcquisitionConditionReliefEffectImpl
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return traitAcquisitionConditionRelief?.call(value);
@@ -1985,6 +2101,8 @@ class _$TraitAcquisitionConditionReliefEffectImpl
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -2026,6 +2144,10 @@ class _$TraitAcquisitionConditionReliefEffectImpl
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return traitAcquisitionConditionRelief(this);
@@ -2055,6 +2177,9 @@ class _$TraitAcquisitionConditionReliefEffectImpl
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return traitAcquisitionConditionRelief?.call(this);
@@ -2084,6 +2209,9 @@ class _$TraitAcquisitionConditionReliefEffectImpl
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -2200,6 +2328,8 @@ class _$TraitEvolutionConditionReliefEffectImpl
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return traitEvolutionConditionRelief(value);
@@ -2226,6 +2356,8 @@ class _$TraitEvolutionConditionReliefEffectImpl
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return traitEvolutionConditionRelief?.call(value);
@@ -2252,6 +2384,8 @@ class _$TraitEvolutionConditionReliefEffectImpl
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -2293,6 +2427,10 @@ class _$TraitEvolutionConditionReliefEffectImpl
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return traitEvolutionConditionRelief(this);
@@ -2322,6 +2460,9 @@ class _$TraitEvolutionConditionReliefEffectImpl
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return traitEvolutionConditionRelief?.call(this);
@@ -2351,6 +2492,9 @@ class _$TraitEvolutionConditionReliefEffectImpl
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -2465,6 +2609,8 @@ class _$TraitUnlockCategoryEffectImpl implements TraitUnlockCategoryEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return traitUnlockCategory(categoryKey);
@@ -2491,6 +2637,8 @@ class _$TraitUnlockCategoryEffectImpl implements TraitUnlockCategoryEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return traitUnlockCategory?.call(categoryKey);
@@ -2517,6 +2665,8 @@ class _$TraitUnlockCategoryEffectImpl implements TraitUnlockCategoryEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -2558,6 +2708,10 @@ class _$TraitUnlockCategoryEffectImpl implements TraitUnlockCategoryEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return traitUnlockCategory(this);
@@ -2587,6 +2741,9 @@ class _$TraitUnlockCategoryEffectImpl implements TraitUnlockCategoryEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return traitUnlockCategory?.call(this);
@@ -2616,6 +2773,9 @@ class _$TraitUnlockCategoryEffectImpl implements TraitUnlockCategoryEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -2737,6 +2897,8 @@ class _$FacilityCostReductionEffectImpl implements FacilityCostReductionEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return facilityCostReduction(costType, value);
@@ -2763,6 +2925,8 @@ class _$FacilityCostReductionEffectImpl implements FacilityCostReductionEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return facilityCostReduction?.call(costType, value);
@@ -2789,6 +2953,8 @@ class _$FacilityCostReductionEffectImpl implements FacilityCostReductionEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -2830,6 +2996,10 @@ class _$FacilityCostReductionEffectImpl implements FacilityCostReductionEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return facilityCostReduction(this);
@@ -2859,6 +3029,9 @@ class _$FacilityCostReductionEffectImpl implements FacilityCostReductionEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return facilityCostReduction?.call(this);
@@ -2888,6 +3061,9 @@ class _$FacilityCostReductionEffectImpl implements FacilityCostReductionEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -3010,6 +3186,8 @@ class _$FacilityEffectBonusEffectImpl implements FacilityEffectBonusEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return facilityEffectBonus(facilityId, value);
@@ -3036,6 +3214,8 @@ class _$FacilityEffectBonusEffectImpl implements FacilityEffectBonusEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return facilityEffectBonus?.call(facilityId, value);
@@ -3062,6 +3242,8 @@ class _$FacilityEffectBonusEffectImpl implements FacilityEffectBonusEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -3103,6 +3285,10 @@ class _$FacilityEffectBonusEffectImpl implements FacilityEffectBonusEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return facilityEffectBonus(this);
@@ -3132,6 +3318,9 @@ class _$FacilityEffectBonusEffectImpl implements FacilityEffectBonusEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return facilityEffectBonus?.call(this);
@@ -3161,6 +3350,9 @@ class _$FacilityEffectBonusEffectImpl implements FacilityEffectBonusEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -3277,6 +3469,8 @@ class _$RecruitmentCostReductionEffectImpl
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return recruitmentCostReduction(value);
@@ -3303,6 +3497,8 @@ class _$RecruitmentCostReductionEffectImpl
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return recruitmentCostReduction?.call(value);
@@ -3329,6 +3525,8 @@ class _$RecruitmentCostReductionEffectImpl
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -3370,6 +3568,10 @@ class _$RecruitmentCostReductionEffectImpl
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return recruitmentCostReduction(this);
@@ -3399,6 +3601,9 @@ class _$RecruitmentCostReductionEffectImpl
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return recruitmentCostReduction?.call(this);
@@ -3428,6 +3633,9 @@ class _$RecruitmentCostReductionEffectImpl
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -3557,6 +3765,8 @@ class _$RecruitmentTierBoostEffectImpl implements RecruitmentTierBoostEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return recruitmentTierBoost(tierMin, tierMax, value);
@@ -3583,6 +3793,8 @@ class _$RecruitmentTierBoostEffectImpl implements RecruitmentTierBoostEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return recruitmentTierBoost?.call(tierMin, tierMax, value);
@@ -3609,6 +3821,8 @@ class _$RecruitmentTierBoostEffectImpl implements RecruitmentTierBoostEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -3650,6 +3864,10 @@ class _$RecruitmentTierBoostEffectImpl implements RecruitmentTierBoostEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return recruitmentTierBoost(this);
@@ -3679,6 +3897,9 @@ class _$RecruitmentTierBoostEffectImpl implements RecruitmentTierBoostEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return recruitmentTierBoost?.call(this);
@@ -3708,6 +3929,9 @@ class _$RecruitmentTierBoostEffectImpl implements RecruitmentTierBoostEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -3832,6 +4056,8 @@ class _$IdleRewardBonusEffectImpl implements IdleRewardBonusEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return idleRewardBonus(bonusType, value);
@@ -3858,6 +4084,8 @@ class _$IdleRewardBonusEffectImpl implements IdleRewardBonusEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return idleRewardBonus?.call(bonusType, value);
@@ -3884,6 +4112,8 @@ class _$IdleRewardBonusEffectImpl implements IdleRewardBonusEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -3925,6 +4155,10 @@ class _$IdleRewardBonusEffectImpl implements IdleRewardBonusEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return idleRewardBonus(this);
@@ -3954,6 +4188,9 @@ class _$IdleRewardBonusEffectImpl implements IdleRewardBonusEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return idleRewardBonus?.call(this);
@@ -3983,6 +4220,9 @@ class _$IdleRewardBonusEffectImpl implements IdleRewardBonusEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -4096,6 +4336,8 @@ class _$MercenaryXpBonusEffectImpl implements MercenaryXpBonusEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return mercenaryXpBonus(value);
@@ -4122,6 +4364,8 @@ class _$MercenaryXpBonusEffectImpl implements MercenaryXpBonusEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return mercenaryXpBonus?.call(value);
@@ -4148,6 +4392,8 @@ class _$MercenaryXpBonusEffectImpl implements MercenaryXpBonusEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -4189,6 +4435,10 @@ class _$MercenaryXpBonusEffectImpl implements MercenaryXpBonusEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return mercenaryXpBonus(this);
@@ -4218,6 +4468,9 @@ class _$MercenaryXpBonusEffectImpl implements MercenaryXpBonusEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return mercenaryXpBonus?.call(this);
@@ -4247,6 +4500,9 @@ class _$MercenaryXpBonusEffectImpl implements MercenaryXpBonusEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -4358,6 +4614,8 @@ class _$DispatchSlotBonusEffectImpl implements DispatchSlotBonusEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return dispatchSlotBonus(value);
@@ -4384,6 +4642,8 @@ class _$DispatchSlotBonusEffectImpl implements DispatchSlotBonusEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return dispatchSlotBonus?.call(value);
@@ -4410,6 +4670,8 @@ class _$DispatchSlotBonusEffectImpl implements DispatchSlotBonusEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -4451,6 +4713,10 @@ class _$DispatchSlotBonusEffectImpl implements DispatchSlotBonusEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return dispatchSlotBonus(this);
@@ -4480,6 +4746,9 @@ class _$DispatchSlotBonusEffectImpl implements DispatchSlotBonusEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return dispatchSlotBonus?.call(this);
@@ -4509,6 +4778,9 @@ class _$DispatchSlotBonusEffectImpl implements DispatchSlotBonusEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {
@@ -4526,6 +4798,566 @@ abstract class DispatchSlotBonusEffect implements PassiveEffect {
   int get value;
   @JsonKey(ignore: true)
   _$$DispatchSlotBonusEffectImplCopyWith<_$DispatchSlotBonusEffectImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$InjuryRateModifierEffectImplCopyWith<$Res> {
+  factory _$$InjuryRateModifierEffectImplCopyWith(
+          _$InjuryRateModifierEffectImpl value,
+          $Res Function(_$InjuryRateModifierEffectImpl) then) =
+      __$$InjuryRateModifierEffectImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({double value});
+}
+
+/// @nodoc
+class __$$InjuryRateModifierEffectImplCopyWithImpl<$Res>
+    extends _$PassiveEffectCopyWithImpl<$Res, _$InjuryRateModifierEffectImpl>
+    implements _$$InjuryRateModifierEffectImplCopyWith<$Res> {
+  __$$InjuryRateModifierEffectImplCopyWithImpl(
+      _$InjuryRateModifierEffectImpl _value,
+      $Res Function(_$InjuryRateModifierEffectImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? value = null,
+  }) {
+    return _then(_$InjuryRateModifierEffectImpl(
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$InjuryRateModifierEffectImpl implements InjuryRateModifierEffect {
+  const _$InjuryRateModifierEffectImpl({required this.value});
+
+  @override
+  final double value;
+
+  @override
+  String toString() {
+    return 'PassiveEffect.injuryRateModifier(value: $value)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$InjuryRateModifierEffectImpl &&
+            (identical(other.value, value) || other.value == value));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, value);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$InjuryRateModifierEffectImplCopyWith<_$InjuryRateModifierEffectImpl>
+      get copyWith => __$$InjuryRateModifierEffectImplCopyWithImpl<
+          _$InjuryRateModifierEffectImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(String questType, double value)
+        questRewardMultiplier,
+    required TResult Function(String questType, double value)
+        questSuccessRateBonus,
+    required TResult Function(int minPartySize, double value)
+        questSuccessRateBonusPartySize,
+    required TResult Function(String status, double value)
+        recoveryTimeReduction,
+    required TResult Function(String eventType, double value)
+        travelEventMitigation,
+    required TResult Function(double value) investigationSuccessRateBonus,
+    required TResult Function(double value) traitAcquisitionConditionRelief,
+    required TResult Function(double value) traitEvolutionConditionRelief,
+    required TResult Function(String categoryKey) traitUnlockCategory,
+    required TResult Function(String costType, double value)
+        facilityCostReduction,
+    required TResult Function(String? facilityId, double value)
+        facilityEffectBonus,
+    required TResult Function(double value) recruitmentCostReduction,
+    required TResult Function(int tierMin, int tierMax, double value)
+        recruitmentTierBoost,
+    required TResult Function(String bonusType, double value) idleRewardBonus,
+    required TResult Function(double value) mercenaryXpBonus,
+    required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
+    required TResult Function(String rawType) unknown,
+  }) {
+    return injuryRateModifier(value);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(String questType, double value)? questRewardMultiplier,
+    TResult? Function(String questType, double value)? questSuccessRateBonus,
+    TResult? Function(int minPartySize, double value)?
+        questSuccessRateBonusPartySize,
+    TResult? Function(String status, double value)? recoveryTimeReduction,
+    TResult? Function(String eventType, double value)? travelEventMitigation,
+    TResult? Function(double value)? investigationSuccessRateBonus,
+    TResult? Function(double value)? traitAcquisitionConditionRelief,
+    TResult? Function(double value)? traitEvolutionConditionRelief,
+    TResult? Function(String categoryKey)? traitUnlockCategory,
+    TResult? Function(String costType, double value)? facilityCostReduction,
+    TResult? Function(String? facilityId, double value)? facilityEffectBonus,
+    TResult? Function(double value)? recruitmentCostReduction,
+    TResult? Function(int tierMin, int tierMax, double value)?
+        recruitmentTierBoost,
+    TResult? Function(String bonusType, double value)? idleRewardBonus,
+    TResult? Function(double value)? mercenaryXpBonus,
+    TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
+    TResult? Function(String rawType)? unknown,
+  }) {
+    return injuryRateModifier?.call(value);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(String questType, double value)? questRewardMultiplier,
+    TResult Function(String questType, double value)? questSuccessRateBonus,
+    TResult Function(int minPartySize, double value)?
+        questSuccessRateBonusPartySize,
+    TResult Function(String status, double value)? recoveryTimeReduction,
+    TResult Function(String eventType, double value)? travelEventMitigation,
+    TResult Function(double value)? investigationSuccessRateBonus,
+    TResult Function(double value)? traitAcquisitionConditionRelief,
+    TResult Function(double value)? traitEvolutionConditionRelief,
+    TResult Function(String categoryKey)? traitUnlockCategory,
+    TResult Function(String costType, double value)? facilityCostReduction,
+    TResult Function(String? facilityId, double value)? facilityEffectBonus,
+    TResult Function(double value)? recruitmentCostReduction,
+    TResult Function(int tierMin, int tierMax, double value)?
+        recruitmentTierBoost,
+    TResult Function(String bonusType, double value)? idleRewardBonus,
+    TResult Function(double value)? mercenaryXpBonus,
+    TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
+    TResult Function(String rawType)? unknown,
+    required TResult orElse(),
+  }) {
+    if (injuryRateModifier != null) {
+      return injuryRateModifier(value);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(QuestRewardMultiplierEffect value)
+        questRewardMultiplier,
+    required TResult Function(QuestSuccessRateBonusEffect value)
+        questSuccessRateBonus,
+    required TResult Function(QuestSuccessRateBonusPartySizeEffect value)
+        questSuccessRateBonusPartySize,
+    required TResult Function(RecoveryTimeReductionEffect value)
+        recoveryTimeReduction,
+    required TResult Function(TravelEventMitigationEffect value)
+        travelEventMitigation,
+    required TResult Function(InvestigationSuccessRateBonusEffect value)
+        investigationSuccessRateBonus,
+    required TResult Function(TraitAcquisitionConditionReliefEffect value)
+        traitAcquisitionConditionRelief,
+    required TResult Function(TraitEvolutionConditionReliefEffect value)
+        traitEvolutionConditionRelief,
+    required TResult Function(TraitUnlockCategoryEffect value)
+        traitUnlockCategory,
+    required TResult Function(FacilityCostReductionEffect value)
+        facilityCostReduction,
+    required TResult Function(FacilityEffectBonusEffect value)
+        facilityEffectBonus,
+    required TResult Function(RecruitmentCostReductionEffect value)
+        recruitmentCostReduction,
+    required TResult Function(RecruitmentTierBoostEffect value)
+        recruitmentTierBoost,
+    required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
+    required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
+    required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
+    required TResult Function(UnknownPassiveEffect value) unknown,
+  }) {
+    return injuryRateModifier(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(QuestRewardMultiplierEffect value)? questRewardMultiplier,
+    TResult? Function(QuestSuccessRateBonusEffect value)? questSuccessRateBonus,
+    TResult? Function(QuestSuccessRateBonusPartySizeEffect value)?
+        questSuccessRateBonusPartySize,
+    TResult? Function(RecoveryTimeReductionEffect value)? recoveryTimeReduction,
+    TResult? Function(TravelEventMitigationEffect value)? travelEventMitigation,
+    TResult? Function(InvestigationSuccessRateBonusEffect value)?
+        investigationSuccessRateBonus,
+    TResult? Function(TraitAcquisitionConditionReliefEffect value)?
+        traitAcquisitionConditionRelief,
+    TResult? Function(TraitEvolutionConditionReliefEffect value)?
+        traitEvolutionConditionRelief,
+    TResult? Function(TraitUnlockCategoryEffect value)? traitUnlockCategory,
+    TResult? Function(FacilityCostReductionEffect value)? facilityCostReduction,
+    TResult? Function(FacilityEffectBonusEffect value)? facilityEffectBonus,
+    TResult? Function(RecruitmentCostReductionEffect value)?
+        recruitmentCostReduction,
+    TResult? Function(RecruitmentTierBoostEffect value)? recruitmentTierBoost,
+    TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
+    TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
+    TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
+    TResult? Function(UnknownPassiveEffect value)? unknown,
+  }) {
+    return injuryRateModifier?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(QuestRewardMultiplierEffect value)? questRewardMultiplier,
+    TResult Function(QuestSuccessRateBonusEffect value)? questSuccessRateBonus,
+    TResult Function(QuestSuccessRateBonusPartySizeEffect value)?
+        questSuccessRateBonusPartySize,
+    TResult Function(RecoveryTimeReductionEffect value)? recoveryTimeReduction,
+    TResult Function(TravelEventMitigationEffect value)? travelEventMitigation,
+    TResult Function(InvestigationSuccessRateBonusEffect value)?
+        investigationSuccessRateBonus,
+    TResult Function(TraitAcquisitionConditionReliefEffect value)?
+        traitAcquisitionConditionRelief,
+    TResult Function(TraitEvolutionConditionReliefEffect value)?
+        traitEvolutionConditionRelief,
+    TResult Function(TraitUnlockCategoryEffect value)? traitUnlockCategory,
+    TResult Function(FacilityCostReductionEffect value)? facilityCostReduction,
+    TResult Function(FacilityEffectBonusEffect value)? facilityEffectBonus,
+    TResult Function(RecruitmentCostReductionEffect value)?
+        recruitmentCostReduction,
+    TResult Function(RecruitmentTierBoostEffect value)? recruitmentTierBoost,
+    TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
+    TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
+    TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
+    TResult Function(UnknownPassiveEffect value)? unknown,
+    required TResult orElse(),
+  }) {
+    if (injuryRateModifier != null) {
+      return injuryRateModifier(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class InjuryRateModifierEffect implements PassiveEffect {
+  const factory InjuryRateModifierEffect({required final double value}) =
+      _$InjuryRateModifierEffectImpl;
+
+  double get value;
+  @JsonKey(ignore: true)
+  _$$InjuryRateModifierEffectImplCopyWith<_$InjuryRateModifierEffectImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ReputationGainModifierEffectImplCopyWith<$Res> {
+  factory _$$ReputationGainModifierEffectImplCopyWith(
+          _$ReputationGainModifierEffectImpl value,
+          $Res Function(_$ReputationGainModifierEffectImpl) then) =
+      __$$ReputationGainModifierEffectImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({double value});
+}
+
+/// @nodoc
+class __$$ReputationGainModifierEffectImplCopyWithImpl<$Res>
+    extends _$PassiveEffectCopyWithImpl<$Res,
+        _$ReputationGainModifierEffectImpl>
+    implements _$$ReputationGainModifierEffectImplCopyWith<$Res> {
+  __$$ReputationGainModifierEffectImplCopyWithImpl(
+      _$ReputationGainModifierEffectImpl _value,
+      $Res Function(_$ReputationGainModifierEffectImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? value = null,
+  }) {
+    return _then(_$ReputationGainModifierEffectImpl(
+      value: null == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ReputationGainModifierEffectImpl
+    implements ReputationGainModifierEffect {
+  const _$ReputationGainModifierEffectImpl({required this.value});
+
+  @override
+  final double value;
+
+  @override
+  String toString() {
+    return 'PassiveEffect.reputationGainModifier(value: $value)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ReputationGainModifierEffectImpl &&
+            (identical(other.value, value) || other.value == value));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, value);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ReputationGainModifierEffectImplCopyWith<
+          _$ReputationGainModifierEffectImpl>
+      get copyWith => __$$ReputationGainModifierEffectImplCopyWithImpl<
+          _$ReputationGainModifierEffectImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(String questType, double value)
+        questRewardMultiplier,
+    required TResult Function(String questType, double value)
+        questSuccessRateBonus,
+    required TResult Function(int minPartySize, double value)
+        questSuccessRateBonusPartySize,
+    required TResult Function(String status, double value)
+        recoveryTimeReduction,
+    required TResult Function(String eventType, double value)
+        travelEventMitigation,
+    required TResult Function(double value) investigationSuccessRateBonus,
+    required TResult Function(double value) traitAcquisitionConditionRelief,
+    required TResult Function(double value) traitEvolutionConditionRelief,
+    required TResult Function(String categoryKey) traitUnlockCategory,
+    required TResult Function(String costType, double value)
+        facilityCostReduction,
+    required TResult Function(String? facilityId, double value)
+        facilityEffectBonus,
+    required TResult Function(double value) recruitmentCostReduction,
+    required TResult Function(int tierMin, int tierMax, double value)
+        recruitmentTierBoost,
+    required TResult Function(String bonusType, double value) idleRewardBonus,
+    required TResult Function(double value) mercenaryXpBonus,
+    required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
+    required TResult Function(String rawType) unknown,
+  }) {
+    return reputationGainModifier(value);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(String questType, double value)? questRewardMultiplier,
+    TResult? Function(String questType, double value)? questSuccessRateBonus,
+    TResult? Function(int minPartySize, double value)?
+        questSuccessRateBonusPartySize,
+    TResult? Function(String status, double value)? recoveryTimeReduction,
+    TResult? Function(String eventType, double value)? travelEventMitigation,
+    TResult? Function(double value)? investigationSuccessRateBonus,
+    TResult? Function(double value)? traitAcquisitionConditionRelief,
+    TResult? Function(double value)? traitEvolutionConditionRelief,
+    TResult? Function(String categoryKey)? traitUnlockCategory,
+    TResult? Function(String costType, double value)? facilityCostReduction,
+    TResult? Function(String? facilityId, double value)? facilityEffectBonus,
+    TResult? Function(double value)? recruitmentCostReduction,
+    TResult? Function(int tierMin, int tierMax, double value)?
+        recruitmentTierBoost,
+    TResult? Function(String bonusType, double value)? idleRewardBonus,
+    TResult? Function(double value)? mercenaryXpBonus,
+    TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
+    TResult? Function(String rawType)? unknown,
+  }) {
+    return reputationGainModifier?.call(value);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(String questType, double value)? questRewardMultiplier,
+    TResult Function(String questType, double value)? questSuccessRateBonus,
+    TResult Function(int minPartySize, double value)?
+        questSuccessRateBonusPartySize,
+    TResult Function(String status, double value)? recoveryTimeReduction,
+    TResult Function(String eventType, double value)? travelEventMitigation,
+    TResult Function(double value)? investigationSuccessRateBonus,
+    TResult Function(double value)? traitAcquisitionConditionRelief,
+    TResult Function(double value)? traitEvolutionConditionRelief,
+    TResult Function(String categoryKey)? traitUnlockCategory,
+    TResult Function(String costType, double value)? facilityCostReduction,
+    TResult Function(String? facilityId, double value)? facilityEffectBonus,
+    TResult Function(double value)? recruitmentCostReduction,
+    TResult Function(int tierMin, int tierMax, double value)?
+        recruitmentTierBoost,
+    TResult Function(String bonusType, double value)? idleRewardBonus,
+    TResult Function(double value)? mercenaryXpBonus,
+    TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
+    TResult Function(String rawType)? unknown,
+    required TResult orElse(),
+  }) {
+    if (reputationGainModifier != null) {
+      return reputationGainModifier(value);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(QuestRewardMultiplierEffect value)
+        questRewardMultiplier,
+    required TResult Function(QuestSuccessRateBonusEffect value)
+        questSuccessRateBonus,
+    required TResult Function(QuestSuccessRateBonusPartySizeEffect value)
+        questSuccessRateBonusPartySize,
+    required TResult Function(RecoveryTimeReductionEffect value)
+        recoveryTimeReduction,
+    required TResult Function(TravelEventMitigationEffect value)
+        travelEventMitigation,
+    required TResult Function(InvestigationSuccessRateBonusEffect value)
+        investigationSuccessRateBonus,
+    required TResult Function(TraitAcquisitionConditionReliefEffect value)
+        traitAcquisitionConditionRelief,
+    required TResult Function(TraitEvolutionConditionReliefEffect value)
+        traitEvolutionConditionRelief,
+    required TResult Function(TraitUnlockCategoryEffect value)
+        traitUnlockCategory,
+    required TResult Function(FacilityCostReductionEffect value)
+        facilityCostReduction,
+    required TResult Function(FacilityEffectBonusEffect value)
+        facilityEffectBonus,
+    required TResult Function(RecruitmentCostReductionEffect value)
+        recruitmentCostReduction,
+    required TResult Function(RecruitmentTierBoostEffect value)
+        recruitmentTierBoost,
+    required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
+    required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
+    required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
+    required TResult Function(UnknownPassiveEffect value) unknown,
+  }) {
+    return reputationGainModifier(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(QuestRewardMultiplierEffect value)? questRewardMultiplier,
+    TResult? Function(QuestSuccessRateBonusEffect value)? questSuccessRateBonus,
+    TResult? Function(QuestSuccessRateBonusPartySizeEffect value)?
+        questSuccessRateBonusPartySize,
+    TResult? Function(RecoveryTimeReductionEffect value)? recoveryTimeReduction,
+    TResult? Function(TravelEventMitigationEffect value)? travelEventMitigation,
+    TResult? Function(InvestigationSuccessRateBonusEffect value)?
+        investigationSuccessRateBonus,
+    TResult? Function(TraitAcquisitionConditionReliefEffect value)?
+        traitAcquisitionConditionRelief,
+    TResult? Function(TraitEvolutionConditionReliefEffect value)?
+        traitEvolutionConditionRelief,
+    TResult? Function(TraitUnlockCategoryEffect value)? traitUnlockCategory,
+    TResult? Function(FacilityCostReductionEffect value)? facilityCostReduction,
+    TResult? Function(FacilityEffectBonusEffect value)? facilityEffectBonus,
+    TResult? Function(RecruitmentCostReductionEffect value)?
+        recruitmentCostReduction,
+    TResult? Function(RecruitmentTierBoostEffect value)? recruitmentTierBoost,
+    TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
+    TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
+    TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
+    TResult? Function(UnknownPassiveEffect value)? unknown,
+  }) {
+    return reputationGainModifier?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(QuestRewardMultiplierEffect value)? questRewardMultiplier,
+    TResult Function(QuestSuccessRateBonusEffect value)? questSuccessRateBonus,
+    TResult Function(QuestSuccessRateBonusPartySizeEffect value)?
+        questSuccessRateBonusPartySize,
+    TResult Function(RecoveryTimeReductionEffect value)? recoveryTimeReduction,
+    TResult Function(TravelEventMitigationEffect value)? travelEventMitigation,
+    TResult Function(InvestigationSuccessRateBonusEffect value)?
+        investigationSuccessRateBonus,
+    TResult Function(TraitAcquisitionConditionReliefEffect value)?
+        traitAcquisitionConditionRelief,
+    TResult Function(TraitEvolutionConditionReliefEffect value)?
+        traitEvolutionConditionRelief,
+    TResult Function(TraitUnlockCategoryEffect value)? traitUnlockCategory,
+    TResult Function(FacilityCostReductionEffect value)? facilityCostReduction,
+    TResult Function(FacilityEffectBonusEffect value)? facilityEffectBonus,
+    TResult Function(RecruitmentCostReductionEffect value)?
+        recruitmentCostReduction,
+    TResult Function(RecruitmentTierBoostEffect value)? recruitmentTierBoost,
+    TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
+    TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
+    TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
+    TResult Function(UnknownPassiveEffect value)? unknown,
+    required TResult orElse(),
+  }) {
+    if (reputationGainModifier != null) {
+      return reputationGainModifier(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class ReputationGainModifierEffect implements PassiveEffect {
+  const factory ReputationGainModifierEffect({required final double value}) =
+      _$ReputationGainModifierEffectImpl;
+
+  double get value;
+  @JsonKey(ignore: true)
+  _$$ReputationGainModifierEffectImplCopyWith<
+          _$ReputationGainModifierEffectImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -4619,6 +5451,8 @@ class _$UnknownPassiveEffectImpl implements UnknownPassiveEffect {
     required TResult Function(String bonusType, double value) idleRewardBonus,
     required TResult Function(double value) mercenaryXpBonus,
     required TResult Function(int value) dispatchSlotBonus,
+    required TResult Function(double value) injuryRateModifier,
+    required TResult Function(double value) reputationGainModifier,
     required TResult Function(String rawType) unknown,
   }) {
     return unknown(rawType);
@@ -4645,6 +5479,8 @@ class _$UnknownPassiveEffectImpl implements UnknownPassiveEffect {
     TResult? Function(String bonusType, double value)? idleRewardBonus,
     TResult? Function(double value)? mercenaryXpBonus,
     TResult? Function(int value)? dispatchSlotBonus,
+    TResult? Function(double value)? injuryRateModifier,
+    TResult? Function(double value)? reputationGainModifier,
     TResult? Function(String rawType)? unknown,
   }) {
     return unknown?.call(rawType);
@@ -4671,6 +5507,8 @@ class _$UnknownPassiveEffectImpl implements UnknownPassiveEffect {
     TResult Function(String bonusType, double value)? idleRewardBonus,
     TResult Function(double value)? mercenaryXpBonus,
     TResult Function(int value)? dispatchSlotBonus,
+    TResult Function(double value)? injuryRateModifier,
+    TResult Function(double value)? reputationGainModifier,
     TResult Function(String rawType)? unknown,
     required TResult orElse(),
   }) {
@@ -4712,6 +5550,10 @@ class _$UnknownPassiveEffectImpl implements UnknownPassiveEffect {
     required TResult Function(IdleRewardBonusEffect value) idleRewardBonus,
     required TResult Function(MercenaryXpBonusEffect value) mercenaryXpBonus,
     required TResult Function(DispatchSlotBonusEffect value) dispatchSlotBonus,
+    required TResult Function(InjuryRateModifierEffect value)
+        injuryRateModifier,
+    required TResult Function(ReputationGainModifierEffect value)
+        reputationGainModifier,
     required TResult Function(UnknownPassiveEffect value) unknown,
   }) {
     return unknown(this);
@@ -4741,6 +5583,9 @@ class _$UnknownPassiveEffectImpl implements UnknownPassiveEffect {
     TResult? Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult? Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult? Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult? Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult? Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult? Function(UnknownPassiveEffect value)? unknown,
   }) {
     return unknown?.call(this);
@@ -4770,6 +5615,9 @@ class _$UnknownPassiveEffectImpl implements UnknownPassiveEffect {
     TResult Function(IdleRewardBonusEffect value)? idleRewardBonus,
     TResult Function(MercenaryXpBonusEffect value)? mercenaryXpBonus,
     TResult Function(DispatchSlotBonusEffect value)? dispatchSlotBonus,
+    TResult Function(InjuryRateModifierEffect value)? injuryRateModifier,
+    TResult Function(ReputationGainModifierEffect value)?
+        reputationGainModifier,
     TResult Function(UnknownPassiveEffect value)? unknown,
     required TResult orElse(),
   }) {

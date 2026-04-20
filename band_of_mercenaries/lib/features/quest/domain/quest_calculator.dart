@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/equipment_stat_bonus.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_effect_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
@@ -21,14 +23,28 @@ class QuestCalculator {
     'explore': {'str': 0.10, 'intelligence': 0.45, 'vit': 0.15, 'agi': 0.30},
   };
 
-  static int calculatePartyPower(List<Mercenary> mercs, String questTypeId) {
+  static int calculatePartyPower(
+    List<Mercenary> mercs,
+    String questTypeId, {
+    Map<String, EquipmentStatBonus>? equipmentBonuses,
+  }) {
     if (mercs.isEmpty) return 0;
     final w = _statWeights[questTypeId] ?? _statWeights['raid']!;
-    return mercs.fold<int>(0, (sum, m) =>
-      sum + (m.effectiveStr * w['str']! +
-             m.effectiveIntelligence * w['intelligence']! +
-             m.effectiveVit * w['vit']! +
-             m.effectiveAgi * w['agi']!).round());
+    return mercs.fold<int>(0, (sum, m) {
+      final str = equipmentBonuses == null
+          ? m.effectiveStr
+          : m.effectiveStrWith(equipmentBonuses[m.id] ?? EquipmentStatBonus.zero);
+      final intel = equipmentBonuses == null
+          ? m.effectiveIntelligence
+          : m.effectiveIntelligenceWith(equipmentBonuses[m.id] ?? EquipmentStatBonus.zero);
+      final vit = equipmentBonuses == null
+          ? m.effectiveVit
+          : m.effectiveVitWith(equipmentBonuses[m.id] ?? EquipmentStatBonus.zero);
+      final agi = equipmentBonuses == null
+          ? m.effectiveAgi
+          : m.effectiveAgiWith(equipmentBonuses[m.id] ?? EquipmentStatBonus.zero);
+      return sum + (str * w['str']! + intel * w['intelligence']! + vit * w['vit']! + agi * w['agi']!).round();
+    });
   }
 
   static double calculateSuccessRate({
@@ -42,6 +58,7 @@ class QuestCalculator {
     int partySize = 1,
     double factionPassiveBonus = 0.0,
     List<String> partyRoles = const [],
+    double legendarySuccessBonus = 0.0,
   }) {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
@@ -50,7 +67,7 @@ class QuestCalculator {
       traitIds: traitBonuses, allTraits: allTraits,
       questTypeId: questTypeId, partySize: partySize,
     );
-    final traitBonus = rawTraitBonus.clamp(-10.0, 10.0);
+    final traitBonus = (rawTraitBonus + legendarySuccessBonus).clamp(-10.0, 10.0);
     final roleSynergyBonus = RoleSynergyMatrix.partyAverageBonus(
       partyRoles: partyRoles,
       questTypeId: questTypeId,
@@ -72,6 +89,7 @@ class QuestCalculator {
     int partySize = 1,
     double factionPassiveBonus = 0.0,
     List<String> partyRoles = const [],
+    double legendarySuccessBonus = 0.0,
   }) {
     if (enemyPower <= 0) return 95.0;
     final powerRatio = partyPower / enemyPower;
@@ -80,7 +98,7 @@ class QuestCalculator {
       traitIds: traitBonuses, allTraits: allTraits,
       questTypeId: questTypeId, partySize: partySize,
     );
-    final traitBonus = rawTraitBonus.clamp(-10.0, 10.0);
+    final traitBonus = (rawTraitBonus + legendarySuccessBonus).clamp(-10.0, 10.0);
     final roleSynergyBonus = RoleSynergyMatrix.partyAverageBonus(
       partyRoles: partyRoles,
       questTypeId: questTypeId,
@@ -103,6 +121,7 @@ class QuestCalculator {
     double factionPassiveBonus = 0.0,
     double passiveSharedCapLoss = 0.0,
     List<String> partyRoles = const [],
+    double legendarySuccessBonus = 0.0,
   }) {
     const base = 50.0;
     if (enemyPower <= 0) {
@@ -128,7 +147,7 @@ class QuestCalculator {
       questTypeId: questTypeId,
       partySize: partySize,
     );
-    final traitBonus = rawTraitBonus.clamp(-10.0, 10.0);
+    final traitBonus = (rawTraitBonus + legendarySuccessBonus).clamp(-10.0, 10.0);
     final roleSynergy = RoleSynergyMatrix.partyAverageBonus(
       partyRoles: partyRoles,
       questTypeId: questTypeId,
@@ -189,12 +208,24 @@ class QuestCalculator {
     required String traitId,
     List<String> traitIds = const [],
     List<TraitData> allTraits = const [],
+    List<LegendaryEffect> legendaryEffects = const [],
   }) {
     final ids = traitIds.isNotEmpty ? traitIds : (traitId.isNotEmpty ? [traitId] : <String>[]);
     final deathMod = TraitEffectService.calculateDeathRateModifier(traitIds: ids, allTraits: allTraits);
     final injuryMod = TraitEffectService.calculateInjuryRateModifier(traitIds: ids, allTraits: allTraits);
-    final effectiveDeathRate = (deathRate + deathMod).clamp(0.0, 1.0);
-    final effectiveInjuryRate = (injuryRate + injuryMod).clamp(0.0, 1.0);
+
+    // 전설 ③ damage_resistance 합산 (trait 수정치와 동일 가산 스태킹)
+    double legendaryDeathMod = 0.0;
+    double legendaryInjuryMod = 0.0;
+    for (final e in legendaryEffects) {
+      if (e is LegendaryDamageResistance) {
+        legendaryDeathMod += e.deathMod;
+        legendaryInjuryMod += e.injuryMod;
+      }
+    }
+
+    final effectiveDeathRate = (deathRate + deathMod + legendaryDeathMod).clamp(0.0, 1.0);
+    final effectiveInjuryRate = (injuryRate + injuryMod + legendaryInjuryMod).clamp(0.0, 1.0);
 
     if (roll < effectiveDeathRate) return DamageResult.dead;
     if (roll < effectiveInjuryRate) return DamageResult.injured;
