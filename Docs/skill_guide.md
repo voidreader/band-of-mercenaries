@@ -90,7 +90,7 @@
 | 스킬 | 호출 | 역할 | 적합한 규모 |
 |------|------|------|------------|
 | `implement-spec` | `/implement-spec` | 올인원 구현 | 수정 파일 5개 이하, 소규모 |
-| `implement-agent` | `/implement-agent` | 파이프라인 구현 (analyzer → architect → coder → verifier) | 수정 파일 6개 이상, 대규모 |
+| `implement-agent` | `/implement-agent` | 파이프라인 구현 (planner → coder → dart-build-resolver → verifier + flutter-reviewer 병렬) | 수정 파일 6개 이상, 대규모 |
 
 ### implement-spec
 
@@ -102,7 +102,12 @@
 
 ### implement-agent
 
-명세서를 기반으로 서브에이전트 파이프라인을 조율하여 대규모 구현을 진행한다. git 충돌 감지 후 analyzer → architect → coder → verifier 순서로 진행한다.
+명세서를 기반으로 서브에이전트 파이프라인을 조율하여 대규모 구현을 진행한다. git 충돌 감지 후 다음 순서로 진행한다:
+
+1. **planner** — 요구사항 분해 + 영향 범위 + 설계 + 태스크 분할
+2. **coder** — 각 태스크별 기능 구현 (병렬 가능)
+3. **dart-build-resolver** — 빌드 게이트 실패 시 외과적 에러 해결 (조건부)
+4. **verifier + flutter-reviewer** — 명세 검증과 코드 품질 리뷰 병렬 실행 (TASK ≥ 3) 또는 main + flutter-reviewer 경량 검증 (TASK ≤ 2)
 
 ```bash
 /implement-agent @Docs/spec/20260414_travel-choice.md

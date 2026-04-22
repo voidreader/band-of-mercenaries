@@ -83,11 +83,33 @@ Recommended Model : Claude Sonnet
 
    구현이 끝나면 아래 a~b를 **하나의 완료 단계**로 모두 수행한다. 검증만 하고 문서 생성을 빠뜨리지 않는다.
 
-   a. **정적 분석 검증**
-      - `flutter analyze`를 실행하여 분석 오류를 점검한다.
-      - 새로 생성한 클래스/Provider가 기존 코드에서 올바르게 참조되는지 확인한다.
-      - import 구문 누락, 오타, 패키지 불일치 등 명백한 오류를 점검한다.
-      - build_runner 재실행이 필요한 경우 사용자에게 안내한다.
+   a. **정적 분석 검증 (빌드 게이트)**
+
+      1. `cd band_of_mercenaries && flutter analyze`를 실행하여 분석 오류를 점검한다.
+      2. freezed/json_serializable/hive/riverpod 모델이 변경된 경우 `cd band_of_mercenaries && dart run build_runner build --delete-conflicting-outputs`를 실행한다.
+      3. 새로 생성한 클래스/Provider가 기존 코드에서 올바르게 참조되는지 확인한다.
+      4. import 구문 누락, 오타, 패키지 불일치 등 명백한 오류를 점검한다.
+
+      **빌드 에러 발생 시 처리:**
+      - 단순한 import 누락이나 오타 등 명백한 1~2줄 수정으로 해결 가능한 에러는 main이 직접 수정한다.
+      - 다음 경우 `dart-build-resolver` 에이전트를 Agent()로 호출하여 위임한다:
+        - 3개 이상의 분석 에러가 동시에 발생
+        - freezed/hive typeId 중복 등 코드 생성 충돌
+        - pub 의존성 버전 충돌
+        - main이 한 번 수정 시도했으나 새 에러가 파생된 경우
+
+      **dart-build-resolver 호출 시 프롬프트 내용:**
+      - 실패한 명령 출력 전문
+      - 변경 파일 목록
+      - 원본 작업 명세서 (컨텍스트 참조용)
+      - 경계 규칙: "기능 추가·리팩토링 금지. 빌드 에러만 외과적으로 수정한다."
+
+      **resolver 결과 처리:**
+      - SUCCESS → 다음 단계(산출물 생성)로 진행
+      - PARTIAL/FAILED → 잔여 에러를 사용자에게 보고하고 판단 요청 (계속 진행 / 수동 수정 / 중단)
+      - resolver가 추가로 수정한 파일은 변경 파일 목록에 합산한다.
+
+      build_runner 재실행이 추가로 필요한 경우 사용자에게 안내한다.
 
    b. **plan 문서 생성** (필수)
       - 명세서 파일명에서 `.md` 확장자를 제거한 이름을 `{specBase}`로 사용한다.
