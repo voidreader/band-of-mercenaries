@@ -3,13 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart' show EliteLootResult;
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 
 class QuestResultDialog extends ConsumerWidget {
   final ActiveQuest quest;
+  final EliteLootResult? eliteLoot;
 
-  const QuestResultDialog({super.key, required this.quest});
+  const QuestResultDialog({super.key, required this.quest, this.eliteLoot});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -111,12 +113,20 @@ class QuestResultDialog extends ConsumerWidget {
                   ),
                 ),
 
+                if (eliteLoot != null &&
+                    (eliteLoot!.bonusGold > 0 || eliteLoot!.itemDrops.isNotEmpty)) ...[
+                  const SizedBox(height: 12),
+                  _buildEliteLootSection(data),
+                ],
+
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(isSuccess ? '🪙 ${netProfit}G 보상 수령' : '확인'),
+                    child: Text(isSuccess
+                        ? '🪙 ${netProfit + (eliteLoot?.bonusGold ?? 0)}G 보상 수령'
+                        : '확인'),
                   ),
                 ),
               ],
@@ -126,6 +136,45 @@ class QuestResultDialog extends ConsumerWidget {
       },
       loading: () => const SizedBox.shrink(),
       error: (e, st) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildEliteLootSection(StaticGameData data) {
+    final loot = eliteLoot!;
+    final eliteData = data.eliteMonsters.where((m) => m.id == quest.eliteId).firstOrNull;
+    final isUnique = eliteData?.isUnique ?? false;
+    final accentColor = isUnique ? const Color(0xFFce93d8) : const Color(0xFFffb74d);
+    final bgColor = isUnique ? const Color(0xFF1a0028) : const Color(0xFF1a0d00);
+    final borderColor = isUnique ? const Color(0xFF7b1fa2) : const Color(0xFFe65100);
+    final header = isUnique ? '★ 유니크 드랍' : '🔥 엘리트 드랍';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(header, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: accentColor)),
+          const SizedBox(height: 8),
+          if (loot.bonusGold > 0) ...[
+            _buildRewardRow('추가 골드', '+${loot.bonusGold}G', accentColor),
+            const SizedBox(height: 4),
+          ],
+          for (final itemId in loot.itemDrops) ...[
+            _buildRewardRow(
+              data.items.where((i) => i.id == itemId).firstOrNull?.name ?? itemId,
+              '획득',
+              accentColor,
+            ),
+            const SizedBox(height: 4),
+          ],
+        ],
+      ),
     );
   }
 

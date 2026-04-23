@@ -21,6 +21,8 @@ import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_discovery_data.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/core/models/item_data.dart';
+import 'package:band_of_mercenaries/core/models/elite_monster_data.dart';
+import 'package:band_of_mercenaries/core/models/elite_loot_entry.dart';
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -42,6 +44,8 @@ class StaticGameData {
   final List<RegionDiscoveryData> regionDiscoveries;
   final List<FactionData> factions;
   final List<ItemData> items;
+  final List<EliteMonsterData> eliteMonsters;
+  final List<EliteLootEntry> eliteLootEntries;
 
   const StaticGameData({
     required this.difficulties,
@@ -63,6 +67,8 @@ class StaticGameData {
     required this.regionDiscoveries,
     required this.factions,
     required this.items,
+    required this.eliteMonsters,
+    required this.eliteLootEntries,
   });
 }
 
@@ -90,5 +96,7 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     regionDiscoveries: dataLoader.loadFromCache('region_discoveries', RegionDiscoveryData.fromJson),
     factions: dataLoader.loadFromCache('factions', FactionData.fromJson),
     items: dataLoader.loadFromCache('items', ItemData.fromJson),
+    eliteMonsters: dataLoader.loadFromCache('elite_monsters', EliteMonsterData.fromJson),
+    eliteLootEntries: dataLoader.loadFromCache('elite_loot_tables', EliteLootEntry.fromJson),
   );
 });

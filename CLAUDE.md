@@ -88,6 +88,7 @@ band_of_mercenaries/lib/
 - `factionListProvider`: staticDataProvider의 factions를 동기 제공하는 Provider<List<FactionData>> (`features/info/domain/faction_codex_providers.dart`)
 - `factionCodexScrollTargetProvider`: 조사 완료 팝업 → 세력 도감 자동 스크롤용 StateProvider<String?> (`features/info/domain/faction_codex_providers.dart`)
 - `factionRefreshProvider`: 세력 가입/탈퇴·평판 변경 후 FactionCodexScreen·FactionDetailScreen 강제 갱신용 StateProvider<int> 카운터 (`features/info/domain/faction_codex_providers.dart`)
+- `pendingEliteLootProvider`: 엘리트 드랍 결과를 도메인→뷰 계층으로 전달하는 StateProvider<Map<String, EliteLootResult>> (`features/quest/domain/quest_provider.dart`). `pendingTraitEventsProvider`와 동일 패턴. 퀘스트 완료 시 저장, `_showResult`에서 읽고 `QuestResultDialog`에 전달 후 제거
 
 ### 데이터 흐름
 
@@ -104,13 +105,13 @@ band_of_mercenaries/lib/
 정적 데이터는 Supabase 서버에서 관리되며, operation-bom 웹앱에서 편집/버전 발행한다. Flutter 앱은 로컬 JSON 캐시(`앱 문서 디렉토리/cache/*.json`)에 저장하여 오프라인에서도 동작한다.
 
 **동기화 방식:**
-- 첫 실행: 서버 연결 필수, 전체 18개 테이블 다운로드
+- 첫 실행: 서버 연결 필수, 전체 20개 테이블 다운로드
 - 이후 실행: `data_versions` 테이블로 버전 비교, 변경된 테이블만 다운로드
 - 서버 연결 실패 시: 로컬 캐시로 오프라인 플레이 가능 (캐시 있는 경우)
 - 싱크 타이밍: 앱 시작 + 포그라운드 복귀
 
-**정적 데이터 테이블 (18개):**
-- regions: 199개 리전 (5단계 티어)
+**정적 데이터 테이블 (20개):**
+- regions: 199개 리전 (5단계 티어). `environment_tags` JSONB 컬럼 추가 (엘리트 몬스터 스폰 환경 필터 — 예: `["forest","dungeon"]`)
 - jobs: 5티어 85개 직업. `role` 컬럼(text NOT NULL DEFAULT 'specialist')으로 파견 상성 매트릭스 조회 키 보유 — warrior 26 / specialist 16 / mage 16 / support 10 / ranger 9 / rogue 8
 - trait_categories: 8개 트레잇 카테고리 (Physical, Background, Talent, CombatStyle, Survival, Behavior, Mental, Experience)
 - traits: 106개 트레잇 (선천 35 + 후천 acquired 40 + 후천 evolved 31). key/name/categoryKey/type/description/effectText/acquisitionCondition/effectJson
@@ -127,6 +128,8 @@ band_of_mercenaries/lib/
 - mercenary_wages: 티어별 용병 인건비
 - region_discoveries: 리전별 발견 데이터 (id TEXT PK, region_id INTEGER, knowledge_threshold INTEGER, discovery_type TEXT, discovery_data JSONB, description TEXT)
 - factions: 세력 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, philosophy TEXT, tier_range JSONB, color TEXT, visibility_type TEXT DEFAULT 'public', join_rank_min TEXT nullable, join_needs_clue BOOLEAN DEFAULT false, passive_bonus_json JSONB DEFAULT '{}', conflict_faction_ids JSONB DEFAULT '[]'). 14개: 공개 6 / 비밀 4 / 지역 4
+- elite_monsters: 엘리트 몬스터 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, tier INT, environment_tags JSONB, combat_power INT, is_unique BOOL, title TEXT nullable, lore TEXT nullable, min_region_tier INT, max_region_tier INT). 보통 31종 + 유니크 8종 = 39종
+- elite_loot_tables: 엘리트 드랍 테이블 (id TEXT PK, elite_id TEXT FK, item_id TEXT nullable, bonus_gold INT, drop_weight INT, min_difficulty INT). 209행
 
 **모델 JSON 키 규칙:** 모든 정적 데이터 모델은 snake_case @JsonKey를 사용 (Supabase 컬럼명과 일치). Dart 필드명과 동일한 경우 @JsonKey 생략.
 
@@ -185,6 +188,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설, 조사)의 endTime을 비례 재계산 (개발/테스트용)
 - **이동 제한**: 파견 중인 용병이 있거나 조사 진행 중이면 이동 불가. 조사 중에도 이동 불가 (양방향 상호 배제)
 - **세력 발견**: 지역 조사 완료 시 `region_discoveries`의 `discovery_type == 'faction_clue'` 항목이 트리거되면 세력 단서를 발견. `discovery_data` JSON에서 `faction_id`, `clue_level`(1~3), `clue_text` 추출 → `FactionStateRepository.processClue()`로 Hive 저장. 동일 discoveryId 중복 발견 시 기록만 추가(maxClueLevel 유지). clue_level별 활동 로그: level1 "세력 단서 발견", level2 "세력 발견: {name}의 정체를 파악했다", level3 "거점 발견: {name}의 전초기지 위치를 파악했다". 조사 완료 팝업에 인라인 표시 + "도감에서 확인" 버튼으로 정보 탭 → 세력 도감 자동 이동
+- **엘리트 몬스터**: 퀘스트 생성 시 `EliteSpawnService.trySpawn()`이 확률적으로 엘리트를 배정. 보통 엘리트(🔥) / 유니크 엘리트(★) 2계층. 스폰 조건: 리전 티어 범위 + `environment_tags` 교집합 + 최소 난이도. 성공 시 `ActiveQuest`에 `eliteId`, `isElite=true` 저장. 완료 시 `EliteLootService.roll()`이 드랍 테이블에서 보너스 골드/아이템을 확률 추출하여 `EliteLootResult` 반환. 결과는 `pendingEliteLootProvider`를 통해 `QuestResultDialog`에 전달. `ActiveQuest` 모델 확장: HiveField(20) `eliteId`(String?), HiveField(21) `isElite`(bool?). `EliteMonsterData` / `EliteLootTableData` freezed 모델 — `core/models/elite_monster_data.dart` / `core/models/elite_loot_table_data.dart`
 - **세력 가입/관리**: `FactionJoinService.canJoin()`으로 가입 조건 판정. 가입 조건: 평판 > 0 / `joinNeedsClue`이면 clueLevel 3 필요 / `joinRankMin`이면 현재 랭크 충족 필요 / 충돌 세력 제외 후 실효 가입 수 < 3. 평판은 `clampReputation()`으로 미가입 시 최대 10 / 가입 시 최대 100 / 최소 -100. 가입 시 충돌 세력(`conflict_faction_ids`)은 자동 탈퇴 + 평판 -20 패널티(`applyConflictPenalty`). 세력별 `passive_bonus_json`으로 패시브 혜택 기술(현재 표시만, 실제 효과 stub). `visibilityType` = 'public' 세력은 이름 항상 노출(clueLevel 1 보장), 'secret'/'regional' 세력은 발견 전 '???' 표시. 세력 도감(`FactionCodexScreen`): 공개 → 발견 비밀/지역(clueLevel 내림차순) → 미발견 순 정렬. 세력 상세(`FactionDetailScreen`): 평판 바, 가입 조건, 패시브, 가입/탈퇴 버튼
 
 ## 테스트 구조
@@ -218,7 +222,8 @@ cd band_of_mercenaries && flutter test test/features/mercenary/
 - 하단 6탭: 이동 / 파견 / 홈 / 모집 / 시설 / 정보
 - 웹: `_MobileFrame`에서 `ConstrainedBox(maxWidth: 430)`으로 모바일 해상도 제한. 새 화면 전환 시 `Navigator.push` 대신 상태 기반 렌더링 사용 (Navigator가 ConstrainedBox 바깥으로 빠져나가는 문제 방지)
 - 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼). 퀘스트 카드에 세력 태그 배지(세력명 + `FactionData.color`) 표시, 전용 퀘스트는 좌측 3px 세로 막대 + 테두리 강조 + "전용" 레이블. `DispatchDetailPage` 상단에 전용 → "세력명 · 고급/기본 트랙" 텍스트, 태그 → 원형 세력 컬러 + 세력명 조건부 렌더링. 퀘스트 카드에 추천 role Chip×2(`RoleSynergyMatrix.topRolesForQuest`) 추가, 용병 카드는 `singleBonus >= 5.0`일 때 `primary.withValues(alpha: 0.10)` tint + `+X.X` 배지. 성공률 옆 `?` IconButton → `showModalBottomSheet` → `SuccessRateBreakdownSheet`로 레이어별 분해 표시
-- 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장. 이후 트레잇 획득 알림 → 진화 선택 팝업 순서로 체이닝
+- 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장. 이후 트레잇 획득 알림 → 진화 선택 팝업 순서로 체이닝. 엘리트 퀘스트 완료 시 `QuestResultDialog`에 `EliteLootResult?` 전달 → 보통 `🔥 엘리트 드랍` / 유니크 `★ 유니크 드랍` 섹션 조건부 표시
+- 파견 화면 엘리트 UI: 엘리트 퀘스트 카드에 좌측 사이드바 색상 강조(보통: `#e65100` / 유니크: `#7b1fa2`) + 상단 배지(🔥 엘리트 / ★ 유니크) + 이름 색상 강조. 퀘스트 상세 페이지(`DispatchDetailPage`)에 엘리트 서사 카드(이름·설명/로어, 그라디언트 배경) 삽입
 - 용병 상세 오버레이: `selectedMercenaryIdProvider`로 앱 레벨 전체화면 오버레이. 용병 카드 탭 → 프로필/트레잇 슬롯(TraitSlotGrid)/퀘스트 유형별 상성(role 한글명 + 4종 quest_type 보정값 + 트레잇 시너지 리스트)/행동 지표(BehaviorStatsSection)/히스토리(TraitHistorySection) 단일 스크롤. 트레잇 탭 → TraitDetailDialog (효과, 진화 경로 진행도, 시너지, 충돌)
 - 설정 화면: 홈 탭 상단 우측 `Icons.settings` 아이콘 버튼 탭 → `_showSettings` 상태 변수로 상태 기반 렌더링 (탭 6번째 자리 → 정보 탭으로 대체됨)
 - 정보 탭 (`InfoScreen`): 세력 도감(`FactionCodexScreen`) + 명성(`RankInfoScreen`) 진입 허브. `_showCodex` / `_selectedFactionId` / `_showRank` 상태 변수로 화면 전환 (분기 순서: `_selectedFactionId` > `_showCodex` > `_showRank` > 기본 ListTile). `factionCodexScrollTargetProvider` non-null 감지 시 자동으로 도감 화면으로 전환

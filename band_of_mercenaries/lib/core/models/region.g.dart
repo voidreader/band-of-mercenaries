@@ -13,6 +13,10 @@ _$RegionImpl _$$RegionImplFromJson(Map<String, dynamic> json) => _$RegionImpl(
       regionTier: (json['region_tier'] as num).toInt(),
       recommendPower: (json['recommend_power'] as num).toInt(),
       description: json['description'] as String,
+      environmentTags: (json['environment_tags'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
     );
 
 Map<String, dynamic> _$$RegionImplToJson(_$RegionImpl instance) =>
@@ -23,4 +27,5 @@ Map<String, dynamic> _$$RegionImplToJson(_$RegionImpl instance) =>
       'region_tier': instance.regionTier,
       'recommend_power': instance.recommendPower,
       'description': instance.description,
+      'environment_tags': instance.environmentTags,
     };

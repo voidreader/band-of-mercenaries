@@ -115,6 +115,8 @@ StaticGameData _makeStaticData({List<ItemData> items = const []}) {
     regionDiscoveries: const [],
     factions: const [],
     items: items,
+    eliteMonsters: const [],
+    eliteLootEntries: const [],
   );
 }
 

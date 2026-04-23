@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
+import 'package:band_of_mercenaries/core/models/elite_monster_data.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
@@ -177,6 +178,51 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                     ],
                   ),
                 ),
+
+                // Elite lore card
+                if (quest.isElite)
+                  Builder(builder: (_) {
+                    final EliteMonsterData? eliteData =
+                        data.eliteMonsters.where((m) => m.id == quest.eliteId).firstOrNull;
+                    if (eliteData == null) return const SizedBox.shrink();
+                    final isUnique = eliteData.isUnique;
+                    final borderColor = isUnique ? const Color(0xFF7b1fa2) : const Color(0xFFe65100);
+                    final gradientColors = isUnique
+                        ? [const Color(0xFF1a0028), const Color(0xFF2d0040)]
+                        : [const Color(0xFF1a0d00), const Color(0xFF2d1500)];
+                    final icon = isUnique ? '★' : '🔥';
+                    final titleText = isUnique ? (eliteData.title ?? '유니크') : '엘리트 몬스터';
+                    final bodyText = isUnique ? (eliteData.lore ?? '') : eliteData.description;
+                    return Container(
+                      margin: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: gradientColors),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$icon $titleText',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: borderColor,
+                            ),
+                          ),
+                          if (bodyText.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              bodyText,
+                              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
 
                 // Middle scroll: Mercenary list
                 Expanded(

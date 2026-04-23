@@ -89,6 +89,10 @@ class ActiveQuest extends HiveObject {
   @HiveField(19)
   bool? isAdvancedTrack;
 
+  // 엘리트 몬스터 퀘스트 ID
+  @HiveField(20)
+  String? eliteId;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -110,8 +114,11 @@ class ActiveQuest extends HiveObject {
     this.factionTag,
     this.reputationReward,
     this.isAdvancedTrack,
+    this.eliteId,
   });
 
   // 전용 퀘스트 여부 (isAdvancedTrack이 설정된 경우)
   bool get isFactionExclusive => isAdvancedTrack != null;
+
+  bool get isElite => eliteId != null;
 }

@@ -1,0 +1,17 @@
+id,region_id,knowledge_threshold,discovery_type,discovery_data,description
+rd_023_elite_wolf_ulbur,23,30,elite,"{""elite_id"":""elite_wolf_ulbur"",""reveal_text"":""발자국이 너무 크다. 이 숲에는 범상치 않은 무언가가 산다.""}",심상치 않은 거대 발자국과 반쯤 먹힌 사체를 발견했다. 달밤에 울음소리가 북쪽 숲에서 메아리쳤다.
+rd_074_elite_wolf_ulbur,74,30,elite,"{""elite_id"":""elite_wolf_ulbur"",""reveal_text"":""이 숲의 왕이 살고 있다. 눈빛이 달빛처럼 은빛이었다.""}",숲 깊은 곳에서 거대한 회색 늑대 무리의 흔적을 발견했다. 무리의 우두머리는 사람만한 크기라고 한다.
+rd_036_elite_golem_steel,36,50,elite,"{""elite_id"":""elite_golem_steel"",""reveal_text"":""폐광 최심부에 거대한 발소리가 울린다. 철과 돌이 부딪히는 소리.""}",지하 통로 깊숙이 들어갈수록 오래된 기계음이 들려온다. 바닥에는 거대한 발자국 형태의 압흔이 남아 있다.
+rd_062_elite_golem_steel,62,50,elite,"{""elite_id"":""elite_golem_steel"",""reveal_text"":""연금술 문양이 새겨진 철의 파편. 이 시대의 것이 아니다.""}",유적 바닥에 연금술 기호가 가득 새겨진 방을 발견했다. 먼지가 최근 교란된 흔적이 있다.
+rd_147_elite_hydra_swamp,147,50,elite,"{""elite_id"":""elite_hydra_swamp"",""reveal_text"":""수면 아래에서 세 개의 그림자가 일렁였다.""}",늪 중심부의 물이 이상하게 검다. 독안개가 자욱하고 근처에 접근한 동물들이 모두 사라졌다는 증언이 있다.
+rd_178_elite_hydra_swamp,178,50,elite,"{""elite_id"":""elite_hydra_swamp"",""reveal_text"":""독이 든 흙, 세 방향으로 긁힌 나무 흔적. 이것은 단일 개체가 아니다.""}",늪 가장자리에서 거대한 비늘 조각을 발견했다. 세 개의 서로 다른 크기로 나뉜 것이 기묘하다.
+rd_049_elite_skeleton_general,49,50,elite,"{""elite_id"":""elite_skeleton_general"",""reveal_text"":""녹슨 갑옷을 입은 해골들이 대형을 이루어 행진하고 있었다.""}",폐허에서 오래된 왕국의 군기를 발견했다. 밤마다 갑옷 소리와 행군 발소리가 들린다는 소문이 돌고 있다.
+rd_116_elite_skeleton_general,116,50,elite,"{""elite_id"":""elite_skeleton_general"",""reveal_text"":""지휘관의 장식이 달린 해골이 무너진 탑 위에 서 있었다.""}",폐허 깊숙이서 수백 구의 해골이 정연하게 배치된 것을 발견했다. 누군가의 명령 하에 움직이고 있는 것이 분명하다.
+rd_044_elite_guardian_desert,44,70,elite,"{""elite_id"":""elite_guardian_desert"",""reveal_text"":""모래 위에 거대한 발자국. 이 황무지에는 수천 년 된 수호자가 있다.""}",황무지 중심에서 고대 문자가 새겨진 석상의 파편을 발견했다. 일대에 가축과 상인이 사라지는 사건이 반복되고 있다.
+rd_115_elite_guardian_desert,115,70,elite,"{""elite_id"":""elite_guardian_desert"",""reveal_text"":""태양이 가장 뜨거울 때, 모래 위에 거대한 그림자가 나타난다.""}",오래된 사원 유적 근처에서 움직이는 거대 석상의 흔적을 발견했다. 아무도 이 구역을 지도에 표시하려 하지 않는다.
+rd_005_elite_witch_morgan,5,70,elite,"{""elite_id"":""elite_witch_morgan"",""reveal_text"":""숲 안에서 저주의 문양이 새겨진 나무들. 누군가 오래 전부터 이 숲을 지켜왔다.""}",깊은 숲에서 죽은 동물들이 원형으로 배치된 것을 발견했다. 나무에 알 수 없는 문양이 새겨져 있고 이 일대에는 이유 없이 용병이 실종된다.
+rd_052_elite_witch_morgan,52,70,elite,"{""elite_id"":""elite_witch_morgan"",""reveal_text"":""폐허 안쪽에서 저주 주문서를 발견했다. 잉크는 아직 마르지 않았다.""}",폐허에서 오래된 마법진과 갓 만들어진 주술 도구를 동시에 발견했다. 수백 년 된 주문이 지금도 활성화되어 있는 것 같다.
+rd_129_elite_kraken_abyss,129,70,elite,"{""elite_id"":""elite_kraken_abyss"",""reveal_text"":""절벽 아래 바닷물이 소용돌이쳤다. 수면 아래에서 무언가가 봤다.""}",해안 절벽 아래에서 거대한 빨판 자국이 암벽에 새겨진 것을 발견했다. 선원들 사이에서 거대한 해수를 목격했다는 소문이 끊이지 않는다.
+rd_190_elite_kraken_abyss,190,70,elite,"{""elite_id"":""elite_kraken_abyss"",""reveal_text"":""난파선이 너무 많다. 폭풍 때문만은 아닌 것 같다.""}",이 해안에는 원인 모를 난파선이 여러 척 가라앉아 있다. 조사 중 거대한 촉수 형태의 흔적이 수중에서 관찰되었다.
+rd_017_elite_lich_primordial,17,85,elite,"{""elite_id"":""elite_lich_primordial"",""reveal_text"":""이 유적은 수천 년 전에 봉인되었다. 그리고 아직 살아있는 것이 있다.""}",고대 유적 최심부에서 수백 년의 마법이 농축된 방을 발견했다. 벽에는 '불사의 주인'에 대한 경고가 수십 개 언어로 새겨져 있다.
+rd_084_elite_lich_primordial,84,85,elite,"{""elite_id"":""elite_lich_primordial"",""reveal_text"":""죽은 자가 일어났다. 모두 그것의 명령에 따라 움직이고 있었다.""}",지하 유적에서 수십 구의 언데드가 완벽한 대형을 이루고 있었다. 그것들의 눈빛은 모두 같은 방향 — 더 깊은 지하 — 을 향하고 있었다.

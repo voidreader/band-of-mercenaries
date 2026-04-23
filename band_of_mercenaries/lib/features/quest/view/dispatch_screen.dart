@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart' show TraitEventResult;
+import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart' show EliteLootResult;
 import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
 import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/features/quest/view/dispatch_detail_page.dart';
@@ -210,11 +211,24 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     final factionColor = faction != null ? _parseFactionColor(faction.color) : null;
     final isExclusive = quest.isFactionExclusive;
 
+    final eliteData = quest.isElite
+        ? data.eliteMonsters.where((m) => m.id == quest.eliteId).firstOrNull
+        : null;
+    final isUnique = eliteData?.isUnique ?? false;
+    final eliteNameColor = quest.isElite
+        ? (isUnique ? const Color(0xFFce93d8) : const Color(0xFFffb74d))
+        : null;
+    final eliteSidebarColor = quest.isElite
+        ? (isUnique ? const Color(0xFF7b1fa2) : const Color(0xFFe65100))
+        : null;
+
     final borderColor = isSelected
         ? AppTheme.primary
-        : (isExclusive && factionColor != null)
-            ? factionColor
-            : AppTheme.borderLight;
+        : quest.isElite
+            ? (isUnique ? const Color(0xFF3d1a5c) : const Color(0xFF4d2600))
+            : (isExclusive && factionColor != null)
+                ? factionColor
+                : AppTheme.borderLight;
 
     return GestureDetector(
       onTap: () {
@@ -234,7 +248,18 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (isExclusive && factionColor != null)
+            if (quest.isElite && eliteSidebarColor != null)
+              Container(
+                width: 3,
+                decoration: BoxDecoration(
+                  color: eliteSidebarColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(7),
+                    bottomLeft: Radius.circular(7),
+                  ),
+                ),
+              )
+            else if (isExclusive && factionColor != null)
               Container(
                 width: 3,
                 decoration: BoxDecoration(
@@ -255,9 +280,30 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                       children: [
                         Expanded(
                           child: Text(quest.questName,
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: eliteNameColor,
+                              )),
                         ),
-                        if (faction != null) ...[
+                        if (quest.isElite) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isUnique ? const Color(0xFF2d1a4d) : const Color(0xFF3d2800),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isUnique ? '★ 유니크' : '🔥 엘리트',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: eliteNameColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ] else if (faction != null) ...[
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -291,7 +337,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                         ],
                       ],
                     ),
-                    if (faction != null)
+                    if (!quest.isElite && faction != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 1),
                         child: Text(questType.name,
@@ -363,10 +409,11 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
   }
 
   Future<void> _showResult(BuildContext context, ActiveQuest quest, WidgetRef ref) async {
+    final EliteLootResult? eliteLoot = ref.read(pendingEliteLootProvider)[quest.id];
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => QuestResultDialog(quest: quest),
+      builder: (ctx) => QuestResultDialog(quest: quest, eliteLoot: eliteLoot),
     );
 
     // Trait event popups
@@ -378,6 +425,12 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
         final current = ref.read(pendingTraitEventsProvider);
         ref.read(pendingTraitEventsProvider.notifier).state = Map.from(current)..remove(quest.id);
       }
+    }
+
+    // 엘리트 loot 정리
+    final currentLoot = ref.read(pendingEliteLootProvider);
+    if (currentLoot.containsKey(quest.id)) {
+      ref.read(pendingEliteLootProvider.notifier).state = Map.from(currentLoot)..remove(quest.id);
     }
 
     // 다이얼로그 닫힘 후 퀘스트 정리

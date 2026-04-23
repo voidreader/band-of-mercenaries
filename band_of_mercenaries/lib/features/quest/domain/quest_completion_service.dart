@@ -12,6 +12,8 @@ import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/equipment_stat_bonus.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
+import 'package:band_of_mercenaries/core/models/elite_loot_entry.dart';
+import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart';
 
 class TraitEventResult {
   final String? acquiredTraitKey;
@@ -60,6 +62,7 @@ class QuestCompletionResult {
   final List<MercDamageResult> mercDamages;
   final String? factionTag;
   final int factionRepGain;
+  final EliteLootResult? eliteLoot;
 
   const QuestCompletionResult({
     required this.resultType,
@@ -71,6 +74,7 @@ class QuestCompletionResult {
     required this.mercDamages,
     this.factionTag,
     this.factionRepGain = 0,
+    this.eliteLoot,
   });
 }
 
@@ -90,6 +94,8 @@ class QuestCompletionService {
     List<LegendaryEffect> legendaryEffects = const [],
     // 용병별 쿨다운 맵 (mercId → legendaryDeathPreventionCooldownUntil)
     Map<String, DateTime?> mercCooldowns = const {},
+    // 엘리트 드랍 테이블 엔트리
+    List<EliteLootEntry> eliteLootEntries = const [],
   }) {
     final partyPower = QuestCalculator.calculatePartyPower(
       mercs,
@@ -301,6 +307,16 @@ class QuestCompletionService {
         ? (quest.reputationReward ?? 0)
         : 0;
 
+    // 엘리트 드랍 롤 (대실패 제외, eliteId 존재 시에만)
+    EliteLootResult? eliteLoot;
+    if (quest.isElite && resultType != QuestResult.criticalFailure) {
+      eliteLoot = EliteLootService.rollDrops(
+        eliteId: quest.eliteId!,
+        lootEntries: eliteLootEntries,
+        random: random,
+      );
+    }
+
     return QuestCompletionResult(
       resultType: resultType,
       rewardGold: rewardGold,
@@ -311,6 +327,7 @@ class QuestCompletionService {
       mercDamages: mercDamages,
       factionTag: quest.factionTag,
       factionRepGain: factionRepGain,
+      eliteLoot: eliteLoot,
     );
   }
 }

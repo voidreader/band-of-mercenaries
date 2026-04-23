@@ -12,6 +12,9 @@ class Region with _$Region {
     @JsonKey(name: 'region_tier') required int regionTier,
     @JsonKey(name: 'recommend_power') required int recommendPower,
     required String description,
+    @JsonKey(name: 'environment_tags')
+    @Default(<String>[])
+    List<String> environmentTags,
   }) = _Region;
 
   factory Region.fromJson(Map<String, dynamic> json) =>

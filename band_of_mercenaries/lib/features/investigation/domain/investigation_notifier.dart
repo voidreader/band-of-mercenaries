@@ -89,19 +89,16 @@ class InvestigationNotifier extends StateNotifier<void> {
     final tier = region?.regionTier ?? 1;
 
     double successRate = InvestigationService.calculateSuccessRate(merc.effectiveAgi, merc.effectiveVit);
-    final staticDataForPassive = _ref.read(staticDataProvider).value;
-    if (staticDataForPassive != null) {
-      final userData2 = _ref.read(userDataProvider);
-      final joinedIds = _ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
-      final joinedFactions = staticDataForPassive.factions.where((f) => joinedIds.contains(f.id)).toList();
-      final effects = PassiveBonusService.collect(
-        reputation: userData2?.reputation ?? 0,
-        allRanks: staticDataForPassive.ranks,
-        joinedFactions: joinedFactions,
-      );
-      final investBonus = PassiveBonusService.getInvestigationSuccessRateBonus(effects);
-      successRate = (successRate + investBonus).clamp(5.0, 95.0);
-    }
+    final userData2 = _ref.read(userDataProvider);
+    final joinedIds = _ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+    final joinedFactions = staticData.factions.where((f) => joinedIds.contains(f.id)).toList();
+    final effects = PassiveBonusService.collect(
+      reputation: userData2?.reputation ?? 0,
+      allRanks: staticData.ranks,
+      joinedFactions: joinedFactions,
+    );
+    final investBonus = PassiveBonusService.getInvestigationSuccessRateBonus(effects);
+    successRate = (successRate + investBonus).clamp(5.0, 95.0);
     final success = Random().nextDouble() * 100 < successRate;
 
     final repo = _ref.read(regionStateRepositoryProvider);
@@ -128,8 +125,8 @@ class InvestigationNotifier extends StateNotifier<void> {
       );
 
       final factionClueResults = <FactionClueResult>[];
+      final unlockedEliteIds = <String>[];
       final factionRepo = _ref.read(factionStateRepositoryProvider);
-      final staticDataForFaction = _ref.read(staticDataProvider).value;
 
       for (final d in newlyTriggered) {
         if (d.discoveryType == 'faction_clue') {
@@ -138,7 +135,7 @@ class InvestigationNotifier extends StateNotifier<void> {
           final clueText = d.discoveryData?['clue_text'] as String?;
           if (factionId == null || clueLevel == null || clueText == null) continue;
 
-          final factionName = staticDataForFaction?.factions
+          final factionName = staticData.factions
               .where((f) => f.id == factionId)
               .firstOrNull
               ?.name;
@@ -180,6 +177,16 @@ class InvestigationNotifier extends StateNotifier<void> {
             );
           }
           continue;
+        } else if (d.discoveryType == 'elite') {
+          final eliteId = d.discoveryData?['elite_id'] as String?;
+          if (eliteId == null) continue;
+          unlockedEliteIds.add(eliteId);
+          final revealText = d.discoveryData?['reveal_text'] as String?;
+          _ref.read(activityLogProvider.notifier).addLog(
+            revealText ?? '엘리트 발견: ${d.description}',
+            ActivityLogType.discoveryFound,
+          );
+          continue;
         }
 
         _ref.read(activityLogProvider.notifier).addLog(
@@ -197,6 +204,7 @@ class InvestigationNotifier extends StateNotifier<void> {
         mercInjured: false,
         mercId: mercId,
         factionClues: factionClueResults,
+        unlockedEliteIds: unlockedEliteIds,
       );
     } else {
       final injuryChance = InvestigationService.getInjuryChance(tier);
@@ -232,6 +240,7 @@ class InvestigationNotifier extends StateNotifier<void> {
         mercInjured: injured,
         mercId: mercId,
         factionClues: const [],
+        unlockedEliteIds: const [],
       );
     }
 

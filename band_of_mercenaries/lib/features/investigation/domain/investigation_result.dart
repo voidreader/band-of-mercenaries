@@ -9,6 +9,7 @@ class InvestigationResult {
   final bool mercInjured;
   final String mercId;
   final List<FactionClueResult> factionClues;
+  final List<String> unlockedEliteIds;
 
   const InvestigationResult({
     required this.success,
@@ -19,5 +20,6 @@ class InvestigationResult {
     required this.mercInjured,
     required this.mercId,
     this.factionClues = const [],
+    this.unlockedEliteIds = const [],
   });
 }

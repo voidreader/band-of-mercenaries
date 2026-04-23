@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart' show QuestCompletionService, QuestCompletionResult, TraitEventResult;
+import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart' show EliteLootResult;
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
@@ -23,9 +24,11 @@ import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
+import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/equipment_effect_context.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
 import 'package:band_of_mercenaries/core/models/passive_effect.dart';
+import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -60,6 +63,9 @@ void _saveCooldowns(Box settingsBox, Map<String, DateTime> map) {
 
 // key: questId, value: { mercId: TraitEventResult }
 final pendingTraitEventsProvider = StateProvider<Map<String, Map<String, TraitEventResult>>>((ref) => {});
+
+// key: questId, value: EliteLootResult
+final pendingEliteLootProvider = StateProvider<Map<String, EliteLootResult>>((ref) => {});
 
 final questListProvider = StateNotifierProvider<QuestListNotifier, List<ActiveQuest>>((ref) {
   return QuestListNotifier(ref);
@@ -141,6 +147,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       clueLevelsInRegion: clueLevelsInRegion,
       cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
       activeSlotCount: questCount,
+      eliteMonsters: staticData.eliteMonsters,
+      regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
+      triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
     );
     await _repo.addQuests(quests);
     _load();
@@ -203,6 +212,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       clueLevelsInRegion: clueLevelsInRegion,
       cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
       activeSlotCount: maxCount,
+      eliteMonsters: staticData.eliteMonsters,
+      regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
+      triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -329,6 +341,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       clueLevelsInRegion: clueLevelsInRegion,
       cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
       activeSlotCount: totalSlotCount,
+      eliteMonsters: staticData.eliteMonsters,
+      regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
+      triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -405,19 +420,21 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       partyEquipmentBonuses: partyEquipmentBonuses,
       legendaryEffects: legendaryEffects,
       mercCooldowns: mercCooldowns,
+      eliteLootEntries: staticData.eliteLootEntries,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
       (d) => d.level == quest.difficulty.clamp(1, 5),
       orElse: () => staticData.difficulties.first,
     );
-    await _applyCompletionResult(quest, result, mercs, deathRate: difficulty.deathRate);
+    await _applyCompletionResult(quest, result, mercs, staticData: staticData, deathRate: difficulty.deathRate);
   }
 
   Future<void> _applyCompletionResult(
     ActiveQuest quest,
     QuestCompletionResult result,
     List<Mercenary> mercs, {
+    required StaticGameData staticData,
     double deathRate = 0.05,
   }) async {
     final traitEvents = <String, TraitEventResult>{};
@@ -443,6 +460,20 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     if (result.netReward > 0) {
       await ref.read(userDataProvider.notifier).addGold(result.netReward);
+    }
+
+    final eliteLoot = result.eliteLoot;
+    if (eliteLoot != null) {
+      if (eliteLoot.bonusGold > 0) {
+        await ref.read(userDataProvider.notifier).addGold(eliteLoot.bonusGold);
+      }
+      final inventory = ref.read(inventoryRepositoryProvider);
+      final items = staticData.items;
+      for (final itemId in eliteLoot.itemDrops) {
+        await inventory.addItem(itemId: itemId, items: items);
+      }
+      final currentLoot = ref.read(pendingEliteLootProvider);
+      ref.read(pendingEliteLootProvider.notifier).state = {...currentLoot, quest.id: eliteLoot};
     }
 
     final mercRepo = ref.read(mercenaryRepositoryProvider);
@@ -591,5 +622,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     ref.read(mercenaryListProvider.notifier).refresh();
     _load();
+  }
+
+  List<String> _currentRegionEnvironmentTags(int regionId, StaticGameData staticData) {
+    final region = staticData.regions.where((r) => r.region == regionId).firstOrNull;
+    return region?.environmentTags ?? const [];
+  }
+
+  Set<String> _currentTriggeredDiscoveries(int regionId) {
+    final state = ref.read(regionStateRepositoryProvider).getState(regionId);
+    return state?.triggeredDiscoveries.toSet() ?? const {};
   }
 }

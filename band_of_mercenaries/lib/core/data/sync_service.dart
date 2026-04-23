@@ -35,6 +35,8 @@ class SyncService {
     'region_discoveries',
     'factions',
     'items', // 19. 아이템 (M2a 추가)
+    'elite_monsters', // 20. 엘리트 몬스터 (M2b 추가)
+    'elite_loot_tables', // 21. 엘리트 드랍 테이블 (M2b 추가)
   ];
 
   SyncService({
