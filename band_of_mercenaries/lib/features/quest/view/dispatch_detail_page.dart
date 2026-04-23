@@ -13,6 +13,7 @@ import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/features/quest/domain/success_rate_breakdown.dart';
 import 'package:band_of_mercenaries/features/quest/view/success_rate_breakdown_sheet.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/equipment_effect_context.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 
 class DispatchDetailPage extends ConsumerStatefulWidget {
   final String questId;
@@ -26,19 +27,6 @@ class DispatchDetailPage extends ConsumerStatefulWidget {
 
 class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
   final Set<String> _selectedMercIds = {};
-
-  Color _parseFactionColor(String hex) {
-    try {
-      final cleaned = hex.replaceFirst('#', '');
-      final value = int.parse(
-        cleaned.length == 6 ? 'FF$cleaned' : cleaned,
-        radix: 16,
-      );
-      return Color(value);
-    } catch (_) {
-      return Colors.grey;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,12 +115,9 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                     children: [
                       Row(
                         children: [
-                          GestureDetector(
-                            onTap: widget.onBack,
-                            child: const Padding(
-                              padding: EdgeInsets.only(right: 12),
-                              child: Icon(Icons.arrow_back, size: 22),
-                            ),
+                          IconButton(
+                            onPressed: widget.onBack,
+                            icon: const Icon(Icons.arrow_back, size: 22),
                           ),
                           Expanded(
                             child: Text(quest.questName,
@@ -146,7 +131,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                           '${factionForQuest.name} · ${quest.isAdvancedTrack == true ? '고급 트랙' : '기본 트랙'}',
                           style: TextStyle(
                             fontSize: 13,
-                            color: _parseFactionColor(factionForQuest.color),
+                            color: FactionData.parseColor(factionForQuest.color),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -158,7 +143,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                               width: 8,
                               height: 8,
                               decoration: BoxDecoration(
-                                color: _parseFactionColor(factionForQuest.color),
+                                color: FactionData.parseColor(factionForQuest.color),
                                 shape: BoxShape.circle,
                               ),
                             ),

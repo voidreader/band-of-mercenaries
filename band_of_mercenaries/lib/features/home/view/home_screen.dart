@@ -17,6 +17,7 @@ import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_provider.dart';
+import 'package:band_of_mercenaries/features/movement/domain/movement_state.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 import 'package:band_of_mercenaries/features/investigation/view/investigation_widget.dart';
 import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart';
@@ -30,7 +31,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _wasMoving = false;
   bool _isShowingQuestResult = false;
   final Set<String> _shownQuestResultIds = {};
   bool _showSettings = false;
@@ -59,7 +59,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final userData = ref.watch(userDataProvider);
     final mercs = ref.watch(mercenaryListProvider);
     final quests = ref.watch(questListProvider);
-    final movementState = ref.watch(movementProvider);
     ref.watch(gameTickProvider);
     final staticDataAsync = ref.watch(staticDataProvider);
 
@@ -79,89 +78,91 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     // Travel event listener: detect when movement completes
-    final isMovingNow = movementState?.isMoving ?? false;
-    if (_wasMoving && !isMovingNow) {
+    ref.listen<MovementState?>(movementProvider, (previous, next) {
+      final wasMoving = previous?.isMoving ?? false;
+      final isMovingNow = next?.isMoving ?? false;
+      if (!wasMoving || isMovingNow) return; // 이동 완료 순간만 처리
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         final event = ref.read(lastTravelEventProvider);
-        if (event != null && mounted) {
-          Widget dialogContent;
-          if (event.effectType == 'trait_innate') {
-            final traitResult = ref.read(lastTravelEventTraitResultProvider);
-            if (traitResult != null) {
-              final staticData = ref.read(staticDataProvider).value;
-              final mercs = ref.read(mercenaryListProvider);
-              final targetMerc = mercs.where((m) => m.id == traitResult.mercenaryId).firstOrNull;
-              final traitData = staticData?.traits.where((t) => t.key == traitResult.traitKey).firstOrNull;
-              dialogContent = Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(event.description),
-                  const SizedBox(height: 12),
-                  const Divider(),
+        if (event == null) return;
+        Widget dialogContent;
+        if (event.effectType == 'trait_innate') {
+          final traitResult = ref.read(lastTravelEventTraitResultProvider);
+          if (traitResult != null) {
+            final staticData = ref.read(staticDataProvider).value;
+            final mercs = ref.read(mercenaryListProvider);
+            final targetMerc = mercs.where((m) => m.id == traitResult.mercenaryId).firstOrNull;
+            final traitData = staticData?.traits.where((t) => t.key == traitResult.traitKey).firstOrNull;
+            dialogContent = Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(event.description),
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 8),
+                if (targetMerc != null)
+                  Text(
+                    '${targetMerc.name}가 새로운 선천 트레잇을 획득했습니다!',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                if (traitData != null) ...[
                   const SizedBox(height: 8),
-                  if (targetMerc != null)
-                    Text(
-                      '${targetMerc.name}가 새로운 선천 트레잇을 획득했습니다!',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  if (traitData != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          traitData.name,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                        Text(
+                          traitData.categoryKey,
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        if (traitData.description.isNotEmpty) ...[
+                          const SizedBox(height: 4),
                           Text(
-                            traitData.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            traitData.description,
+                            style: const TextStyle(fontSize: 13),
                           ),
-                          Text(
-                            traitData.categoryKey,
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                          if (traitData.description.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              traitData.description,
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ],
                         ],
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ],
-              );
-            } else {
-              dialogContent = Text(event.description);
-            }
+              ],
+            );
           } else {
             dialogContent = Text(event.description);
           }
-          showDialog<void>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('여행 중 사건 발생!'),
-              content: dialogContent,
-              actions: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('확인'),
-                ),
-              ],
-            ),
-          );
-          ref.read(lastTravelEventProvider.notifier).state = null;
-          ref.read(lastTravelEventTraitResultProvider.notifier).state = null;
+        } else {
+          dialogContent = Text(event.description);
         }
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('여행 중 사건 발생!'),
+            content: dialogContent,
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('확인'),
+              ),
+            ],
+          ),
+        );
+        ref.read(lastTravelEventProvider.notifier).state = null;
+        ref.read(lastTravelEventTraitResultProvider.notifier).state = null;
       });
-    }
-    _wasMoving = isMovingNow;
+    });
 
     if (userData == null) return const Center(child: CircularProgressIndicator());
 
@@ -413,7 +414,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
 
                 // Activity log
-                _buildActivityLog(),
+                const _ActivityLog(),
 
                 // Progress panel
                 Container(
@@ -507,7 +508,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildActivityLog() {
+}
+
+class _ActivityLog extends ConsumerWidget {
+  const _ActivityLog();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final logs = ref.watch(activityLogProvider);
 
     if (logs.isEmpty) {

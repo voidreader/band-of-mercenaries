@@ -8,7 +8,7 @@ import 'package:band_of_mercenaries/features/facility/view/construction_queue_ba
 import 'package:band_of_mercenaries/features/facility/view/facility_card.dart';
 import 'package:band_of_mercenaries/core/models/facility.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
-import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
 
 class FacilityTabScreen extends ConsumerWidget {
   const FacilityTabScreen({super.key});
@@ -69,6 +69,7 @@ class FacilityTabScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final staticDataAsync = ref.watch(staticDataProvider);
     ref.watch(gameTickProvider);
+    ref.watch(factionRefreshProvider); // 세력 가입/탈퇴 시 재빌드
     final speedMultiplier = ref.watch(speedMultiplierProvider);
 
     return staticDataAsync.when(

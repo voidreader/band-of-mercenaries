@@ -8,7 +8,7 @@ import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.d
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
-import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_card.dart';
@@ -24,6 +24,7 @@ class RecruitScreen extends ConsumerWidget {
     final staticData = ref.watch(staticDataProvider);
     final speedMult = ref.watch(speedMultiplierProvider);
     ref.watch(gameTickProvider);
+    ref.watch(factionRefreshProvider); // 세력 가입/탈퇴 시 재빌드
 
     if (userData == null) return const Center(child: CircularProgressIndicator());
 

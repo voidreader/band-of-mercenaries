@@ -8,6 +8,8 @@ import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
+export 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart'
+    show regionStateRepositoryProvider;
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_service.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_result.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_completion_provider.dart';

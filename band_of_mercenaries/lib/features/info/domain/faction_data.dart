@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'faction_data.freezed.dart';
@@ -26,4 +27,17 @@ class FactionData with _$FactionData {
 
   factory FactionData.fromJson(Map<String, dynamic> json) =>
       _$FactionDataFromJson(json);
+
+  static Color parseColor(String hex) {
+    try {
+      final cleaned = hex.replaceFirst('#', '');
+      final value = int.parse(
+        cleaned.length == 6 ? 'FF$cleaned' : cleaned,
+        radix: 16,
+      );
+      return Color(value);
+    } catch (_) {
+      return Colors.grey;
+    }
+  }
 }

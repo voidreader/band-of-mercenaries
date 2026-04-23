@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
-import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';

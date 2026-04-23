@@ -2,6 +2,31 @@
 
 ## 2026-04-23
 
+### 코드 품질 전수 점검 (flutter-reviewer)
+
+HIGH 6 / MEDIUM 6 / LOW 2 이슈 수정. 테스트 372개 전부 통과.
+
+- **Riverpod 반응성 버그 수정**
+  - `DispatchScreen`의 `ref.listen<List<ActiveQuest>>`가 3개 early return 이후에 배치되어 `userData == null` 또는 이동 중에 퀘스트 완료 이벤트가 유실되던 문제 수정 — `build()` 최상단으로 이동
+  - `RecruitScreen`/`FacilityTabScreen`이 세력 가입/탈퇴 후 모집·건설 비용 배수를 갱신하지 못하던 문제 수정 — `ref.watch(factionRefreshProvider)` 구독 추가
+  - `HomeScreen`의 여행 이벤트 다이얼로그 표시 로직을 `build()` 내부 `_wasMoving && !isMovingNow` 패턴 → `ref.listen<MovementState?>`로 전환
+- **레이어 경계 정리**
+  - `view/` → `data/` 직접 import 6곳 제거. `factionStateRepositoryProvider`/`regionStateRepositoryProvider`를 domain 레이어(`faction_codex_providers.dart`/`investigation_notifier.dart`)에서 `export ... show`로 재노출
+  - `PassiveBonusFormatter` 중복 파일(`core/domain` + `features/info/domain`) 통합 — `core/domain` 버전에 `describe`/`describeEffect` 메서드 추가하여 API 일원화, `features/info/domain/passive_bonus_formatter.dart` 삭제
+- **위젯 재빌드 최적화**
+  - `DispatchScreen._buildQuestCard` → `class _QuestCard extends ConsumerWidget` (리스트 순회 element 재사용)
+  - `HomeScreen._buildActivityLog` → `class _ActivityLog extends ConsumerWidget` (로그 추가 시 전체 홈 화면 재빌드 → 해당 서브트리만)
+  - `MercenaryDetailOverlay._buildStatChip`/`_buildXpBar`/`_buildSynergySection` → `const` 위젯 클래스 (element 재사용)
+- **UI/UX 개선**
+  - `DispatchDetailPage` 뒤로가기: `GestureDetector`+`Padding`+`Icon` → `IconButton` (터치 타겟 48×48 확보)
+  - `QuestResultDialog` 정적 데이터 로드 실패 시 `barrierDismissible: false` 상태에서 닫을 수 없던 문제 수정 — error 브랜치에 닫기 버튼 추가
+- **정리 및 방어 코드**
+  - `main.dart`에 `FlutterError.onError` + `PlatformDispatcher.instance.onError` 전역 에러 핸들러 설치 (Crashlytics/Sentry 연동 플레이스홀더)
+  - `MercenaryDetailOverlay` 티어 색상 리터럴 4개 → `AppTheme.tierN` 상수
+  - `_parseFactionColor` 중복(`dispatch_screen`/`dispatch_detail_page`) → `FactionData.parseColor` static 메서드로 통합
+  - `essence_service.dart` `debugPrint` 5건 제거
+  - `dispatch_screen.dart`의 `ref.read(speedMultiplierProvider)` → `ref.watch` 의미론 교정
+
 ### M2b: 엘리트 몬스터 시스템
 
 - 리전 `environment_tags` JSONB 컬럼 추가 — 지형/환경 태그로 퀘스트 풀 필터링 지원

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
@@ -17,6 +19,20 @@ import 'package:band_of_mercenaries/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 전역 에러 캡처 — 향후 Crashlytics/Sentry 연동 포인트
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    // 외부 에러 리포팅 서비스 연동
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FlutterError.reportError(
+      FlutterErrorDetails(exception: error, stack: stack, library: 'root'),
+    );
+    // 외부 에러 리포팅 서비스 연동
+    return true;
+  };
+
   await HiveInitializer.initialize();
   await SupabaseInitializer.initialize();
   runApp(const ProviderScope(child: AppBootstrap()));

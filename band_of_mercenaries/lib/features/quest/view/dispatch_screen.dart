@@ -50,6 +50,22 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     final staticData = ref.watch(staticDataProvider);
     ref.watch(gameTickProvider);
 
+    ref.listen<List<ActiveQuest>>(questListProvider, (previous, next) {
+      if (_isShowingResult) return;
+      final completed = next.where(
+        (q) => q.status == QuestStatus.completed && !_shownResultIds.contains(q.id),
+      ).toList();
+      if (completed.isNotEmpty) {
+        _isShowingResult = true;
+        _shownResultIds.add(completed.first.id);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showResult(context, completed.first, ref);
+          }
+        });
+      }
+    });
+
     if (userData == null) return const Center(child: CircularProgressIndicator());
 
     if (_dispatchQuestId != null) {
@@ -73,22 +89,6 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
         child: Text('이동 중에는 파견할 수 없습니다', style: TextStyle(fontSize: 16, color: AppTheme.textHint)),
       );
     }
-
-    ref.listen<List<ActiveQuest>>(questListProvider, (previous, next) {
-      if (_isShowingResult) return;
-      final completed = next.where(
-        (q) => q.status == QuestStatus.completed && !_shownResultIds.contains(q.id),
-      ).toList();
-      if (completed.isNotEmpty) {
-        _isShowingResult = true;
-        _shownResultIds.add(completed.first.id);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _showResult(context, completed.first, ref);
-          }
-        });
-      }
-    });
 
     final pendingQuests = quests.where((q) => q.status == QuestStatus.pending).toList();
     final inProgressQuests = quests.where((q) => q.status == QuestStatus.inProgress).toList();
@@ -154,7 +154,15 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                     const SizedBox(height: 8),
 
                     for (final quest in pendingQuests)
-                      _buildQuestCard(quest, data),
+                      _QuestCard(
+                        quest: quest,
+                        data: data,
+                        isSelected: _selectedQuestId == quest.id,
+                        onTap: () => setState(() {
+                          _selectedQuestId = quest.id;
+                          _dispatchQuestId = quest.id;
+                        }),
+                      ),
 
                     // Fill quests button
                     Builder(builder: (context) {
@@ -187,28 +195,155 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
     );
   }
 
-  Color _parseFactionColor(String hex) {
-    try {
-      final cleaned = hex.replaceFirst('#', '');
-      final value = int.parse(
-        cleaned.length == 6 ? 'FF$cleaned' : cleaned,
-        radix: 16,
-      );
-      return Color(value);
-    } catch (_) {
-      return Colors.grey;
+  Future<void> _showResult(BuildContext context, ActiveQuest quest, WidgetRef ref) async {
+    final EliteLootResult? eliteLoot = ref.read(pendingEliteLootProvider)[quest.id];
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => QuestResultDialog(quest: quest, eliteLoot: eliteLoot),
+    );
+
+    // Trait event popups
+    if (context.mounted) {
+      final events = ref.read(pendingTraitEventsProvider)[quest.id];
+      if (events != null) {
+        await _showTraitEvents(context, ref, events);
+        // Remove processed events
+        final current = ref.read(pendingTraitEventsProvider);
+        ref.read(pendingTraitEventsProvider.notifier).state = Map.from(current)..remove(quest.id);
+      }
+    }
+
+    // 엘리트 loot 정리
+    final currentLoot = ref.read(pendingEliteLootProvider);
+    if (currentLoot.containsKey(quest.id)) {
+      ref.read(pendingEliteLootProvider.notifier).state = Map.from(currentLoot)..remove(quest.id);
+    }
+
+    // 다이얼로그 닫힘 후 퀘스트 정리
+    ref.read(questListProvider.notifier).clearCompleted(quest.id);
+    _isShowingResult = false;
+    // 다음 완료된 퀘스트가 있으면 표시
+    if (context.mounted) {
+      final quests = ref.read(questListProvider);
+      final nextCompleted = quests.where(
+        (q) => q.status == QuestStatus.completed && !_shownResultIds.contains(q.id),
+      ).toList();
+      if (nextCompleted.isNotEmpty) {
+        _isShowingResult = true;
+        _shownResultIds.add(nextCompleted.first.id);
+        _showResult(context, nextCompleted.first, ref);
+      }
     }
   }
 
-  Widget _buildQuestCard(ActiveQuest quest, StaticGameData data) {
+  Future<void> _showTraitEvents(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, TraitEventResult> events,
+  ) async {
+    final staticData = ref.read(staticDataProvider).value;
+    if (staticData == null) return;
+    final mercs = ref.read(mercenaryListProvider);
+    final mercRepo = ref.read(mercenaryRepositoryProvider);
+
+    for (final entry in events.entries) {
+      final mercId = entry.key;
+      final event = entry.value;
+      final merc = mercs.where((m) => m.id == mercId).firstOrNull;
+      if (merc == null || !context.mounted) continue;
+
+      // 1. Acquisition notification
+      if (event.acquiredTraitKey != null) {
+        final traitData = staticData.traits.where((t) => t.key == event.acquiredTraitKey).firstOrNull;
+        if (traitData != null && context.mounted) {
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => TraitAcquisitionDialog(trait: traitData, mercenaryName: merc.name),
+          );
+        }
+      }
+
+      // 2. Evolution selection
+      if (event.singleEvoCandidates.isNotEmpty || event.comboEvoCandidates.isNotEmpty) {
+        if (!context.mounted) break;
+        // Get current acquired traits for the card comparison view
+        final updatedMerc = mercRepo.getAll().where((m) => m.id == mercId).firstOrNull;
+        if (updatedMerc == null) continue;
+        final currentTraits = updatedMerc.allTraitIds
+            .map((key) => staticData.traits.where((t) => t.key == key).firstOrNull)
+            .whereType<TraitData>()
+            .where((t) => t.type != 'innate')
+            .toList();
+
+        final choice = await showDialog<EvolutionChoice?>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => TraitEvolutionDialog(
+            mercenaryName: updatedMerc.name,
+            currentTraits: currentTraits,
+            singleCandidates: event.singleEvoCandidates,
+            comboCandidates: event.comboEvoCandidates,
+            allTraits: staticData.traits,
+          ),
+        );
+
+        // Apply evolution if chosen
+        if (choice != null) {
+          if (choice.isSingle && choice.single != null) {
+            final s = choice.single!;
+            await mercRepo.evolveTrait(mercId, s.fromKey, s.toKey);
+            final fromTrait = staticData.traits.where((t) => t.key == s.fromKey).firstOrNull;
+            final toTrait = staticData.traits.where((t) => t.key == s.toKey).firstOrNull;
+            if (fromTrait != null && toTrait != null) {
+              ref.read(activityLogProvider.notifier).addLog(
+                '${updatedMerc.name}의 "${fromTrait.name}"이(가) "${toTrait.name}"(으)로 진화!',
+                ActivityLogType.traitEvolved,
+              );
+            }
+          } else if (!choice.isSingle && choice.combo != null) {
+            final c = choice.combo!;
+            await mercRepo.comboEvolveTrait(mercId, c.trait1Key, c.trait2Key, c.resultKey);
+            final t1 = staticData.traits.where((t) => t.key == c.trait1Key).firstOrNull;
+            final t2 = staticData.traits.where((t) => t.key == c.trait2Key).firstOrNull;
+            final result = staticData.traits.where((t) => t.key == c.resultKey).firstOrNull;
+            if (t1 != null && t2 != null && result != null) {
+              ref.read(activityLogProvider.notifier).addLog(
+                '${updatedMerc.name}의 "${t1.name}" + "${t2.name}" → "${result.name}"(으)로 조합 진화!',
+                ActivityLogType.traitEvolved,
+              );
+            }
+          }
+          ref.read(mercenaryListProvider.notifier).refresh();
+        }
+      }
+    }
+  }
+}
+
+class _QuestCard extends ConsumerWidget {
+  const _QuestCard({
+    required this.quest,
+    required this.data,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final ActiveQuest quest;
+  final StaticGameData data;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
-    final isSelected = _selectedQuestId == quest.id;
 
     final FactionData? faction = quest.factionTag == null
         ? null
         : data.factions.where((f) => f.id == quest.factionTag).firstOrNull;
 
-    final factionColor = faction != null ? _parseFactionColor(faction.color) : null;
+    final factionColor = faction != null ? FactionData.parseColor(faction.color) : null;
     final isExclusive = quest.isFactionExclusive;
 
     final eliteData = quest.isElite
@@ -231,12 +366,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                 : AppTheme.borderLight;
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedQuestId = quest.id;
-          _dispatchQuestId = quest.id;
-        });
-      },
+      onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
@@ -382,7 +512,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                     ),
                     if (quest.status == QuestStatus.pending && quest.createdAt != null)
                       Builder(builder: (_) {
-                        final speedMult = ref.read(speedMultiplierProvider);
+                        final speedMult = ref.watch(speedMultiplierProvider);
                         final realElapsed = DateTime.now().difference(quest.createdAt!);
                         final gameElapsedMs = (realElapsed.inMilliseconds * speedMult).round();
                         final gameElapsed = Duration(milliseconds: gameElapsedMs);
@@ -406,131 +536,5 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _showResult(BuildContext context, ActiveQuest quest, WidgetRef ref) async {
-    final EliteLootResult? eliteLoot = ref.read(pendingEliteLootProvider)[quest.id];
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => QuestResultDialog(quest: quest, eliteLoot: eliteLoot),
-    );
-
-    // Trait event popups
-    if (context.mounted) {
-      final events = ref.read(pendingTraitEventsProvider)[quest.id];
-      if (events != null) {
-        await _showTraitEvents(context, ref, events);
-        // Remove processed events
-        final current = ref.read(pendingTraitEventsProvider);
-        ref.read(pendingTraitEventsProvider.notifier).state = Map.from(current)..remove(quest.id);
-      }
-    }
-
-    // 엘리트 loot 정리
-    final currentLoot = ref.read(pendingEliteLootProvider);
-    if (currentLoot.containsKey(quest.id)) {
-      ref.read(pendingEliteLootProvider.notifier).state = Map.from(currentLoot)..remove(quest.id);
-    }
-
-    // 다이얼로그 닫힘 후 퀘스트 정리
-    ref.read(questListProvider.notifier).clearCompleted(quest.id);
-    _isShowingResult = false;
-    // 다음 완료된 퀘스트가 있으면 표시
-    if (context.mounted) {
-      final quests = ref.read(questListProvider);
-      final nextCompleted = quests.where(
-        (q) => q.status == QuestStatus.completed && !_shownResultIds.contains(q.id),
-      ).toList();
-      if (nextCompleted.isNotEmpty) {
-        _isShowingResult = true;
-        _shownResultIds.add(nextCompleted.first.id);
-        _showResult(context, nextCompleted.first, ref);
-      }
-    }
-  }
-
-  Future<void> _showTraitEvents(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, TraitEventResult> events,
-  ) async {
-    final staticData = ref.read(staticDataProvider).value;
-    if (staticData == null) return;
-    final mercs = ref.read(mercenaryListProvider);
-    final mercRepo = ref.read(mercenaryRepositoryProvider);
-
-    for (final entry in events.entries) {
-      final mercId = entry.key;
-      final event = entry.value;
-      final merc = mercs.where((m) => m.id == mercId).firstOrNull;
-      if (merc == null || !context.mounted) continue;
-
-      // 1. Acquisition notification
-      if (event.acquiredTraitKey != null) {
-        final traitData = staticData.traits.where((t) => t.key == event.acquiredTraitKey).firstOrNull;
-        if (traitData != null && context.mounted) {
-          await showDialog<void>(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => TraitAcquisitionDialog(trait: traitData, mercenaryName: merc.name),
-          );
-        }
-      }
-
-      // 2. Evolution selection
-      if (event.singleEvoCandidates.isNotEmpty || event.comboEvoCandidates.isNotEmpty) {
-        if (!context.mounted) break;
-        // Get current acquired traits for the card comparison view
-        final updatedMerc = mercRepo.getAll().where((m) => m.id == mercId).firstOrNull;
-        if (updatedMerc == null) continue;
-        final currentTraits = updatedMerc.allTraitIds
-            .map((key) => staticData.traits.where((t) => t.key == key).firstOrNull)
-            .whereType<TraitData>()
-            .where((t) => t.type != 'innate')
-            .toList();
-
-        final choice = await showDialog<EvolutionChoice?>(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => TraitEvolutionDialog(
-            mercenaryName: updatedMerc.name,
-            currentTraits: currentTraits,
-            singleCandidates: event.singleEvoCandidates,
-            comboCandidates: event.comboEvoCandidates,
-            allTraits: staticData.traits,
-          ),
-        );
-
-        // Apply evolution if chosen
-        if (choice != null) {
-          if (choice.isSingle && choice.single != null) {
-            final s = choice.single!;
-            await mercRepo.evolveTrait(mercId, s.fromKey, s.toKey);
-            final fromTrait = staticData.traits.where((t) => t.key == s.fromKey).firstOrNull;
-            final toTrait = staticData.traits.where((t) => t.key == s.toKey).firstOrNull;
-            if (fromTrait != null && toTrait != null) {
-              ref.read(activityLogProvider.notifier).addLog(
-                '${updatedMerc.name}의 "${fromTrait.name}"이(가) "${toTrait.name}"(으)로 진화!',
-                ActivityLogType.traitEvolved,
-              );
-            }
-          } else if (!choice.isSingle && choice.combo != null) {
-            final c = choice.combo!;
-            await mercRepo.comboEvolveTrait(mercId, c.trait1Key, c.trait2Key, c.resultKey);
-            final t1 = staticData.traits.where((t) => t.key == c.trait1Key).firstOrNull;
-            final t2 = staticData.traits.where((t) => t.key == c.trait2Key).firstOrNull;
-            final result = staticData.traits.where((t) => t.key == c.resultKey).firstOrNull;
-            if (t1 != null && t2 != null && result != null) {
-              ref.read(activityLogProvider.notifier).addLog(
-                '${updatedMerc.name}의 "${t1.name}" + "${t2.name}" → "${result.name}"(으)로 조합 진화!',
-                ActivityLogType.traitEvolved,
-              );
-            }
-          }
-          ref.read(mercenaryListProvider.notifier).refresh();
-        }
-      }
-    }
   }
 }

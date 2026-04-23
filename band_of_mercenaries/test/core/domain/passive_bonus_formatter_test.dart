@@ -168,11 +168,10 @@ void main() {
       expect(s, contains('+5%'));
     });
 
-    test('UnknownPassiveEffect rawType → "미지원" + rawType 포함', () {
+    test('UnknownPassiveEffect → 빈 문자열 반환 (UI 노출 금지)', () {
       const e = PassiveEffect.unknown(rawType: 'custom_type');
       final s = PassiveBonusFormatter.format(e);
-      expect(s, contains('미지원'));
-      expect(s, contains('custom_type'));
+      expect(s, isEmpty);
     });
   });
 }

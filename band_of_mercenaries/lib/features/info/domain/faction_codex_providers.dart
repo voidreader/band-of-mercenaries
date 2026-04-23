@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
+export 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart'
+    show factionStateRepositoryProvider, FactionStateRepository;
 
 // 세력 도감 자동 스크롤 타깃 Provider
 // InvestigationResultDialog에서 "도감에서 확인" 클릭 시 factionId 설정

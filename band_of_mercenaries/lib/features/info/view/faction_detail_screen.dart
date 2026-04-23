@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/models/rank.dart';
-import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_join_service.dart';
-import 'package:band_of_mercenaries/features/info/domain/passive_bonus_formatter.dart';
+import 'package:band_of_mercenaries/core/domain/passive_bonus_formatter.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 

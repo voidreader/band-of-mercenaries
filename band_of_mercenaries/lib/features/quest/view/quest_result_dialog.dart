@@ -135,7 +135,10 @@ class QuestResultDialog extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (e, st) => const SizedBox.shrink(),
+      error: (e, st) => TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('닫기'),
+      ),
     );
   }
 

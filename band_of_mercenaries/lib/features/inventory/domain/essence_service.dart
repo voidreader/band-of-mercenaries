@@ -96,28 +96,19 @@ class EssenceService {
     if (item.category != 'consumable') return null;
     final payload = item.effectJson['permanent_stat_gain'];
     if (payload is! Map) {
-      debugPrint('[EssenceService] effect_json.permanent_stat_gain 누락: ${item.id}');
       return null;
     }
     if (payload.length != 1) {
-      debugPrint('[EssenceService] permanent_stat_gain 키 개수 ≠ 1: ${item.id}');
       return null;
     }
     final entry = payload.entries.first;
     final statKey = entry.key.toString();
     if (!_allowedStatKeys.contains(statKey)) {
-      debugPrint('[EssenceService] 허용되지 않은 stat_key: $statKey (item ${item.id})');
       return null;
     }
     final rawGain = entry.value;
     if (rawGain is! int) {
-      debugPrint('[EssenceService] gain 값이 int 아님: $rawGain (item ${item.id})');
       return null;
-    }
-    // tierGainTable과 일치 여부 경고 (적용은 fromJson 값 우선).
-    final expected = tierGainTable[item.tier];
-    if (expected != null && expected != rawGain) {
-      debugPrint('[EssenceService] tier ${item.tier} 기대값 $expected ≠ json $rawGain (item ${item.id})');
     }
     return EssenceDescriptor(statKey: statKey, gain: rawGain, tier: item.tier);
   }

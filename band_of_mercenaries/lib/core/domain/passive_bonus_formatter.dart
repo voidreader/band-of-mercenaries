@@ -99,8 +99,20 @@ class PassiveBonusFormatter {
       DispatchSlotBonusEffect(:final value) => '파견 슬롯 +$value',
       InjuryRateModifierEffect(:final value) => '부상률 ${_pct(value)}',
       ReputationGainModifierEffect(:final value) => '명성 획득 ${_pct(value)}',
-      UnknownPassiveEffect(:final rawType) => '미지원 효과 ($rawType)',
+      UnknownPassiveEffect() => '',
     };
+  }
+
+  /// features/info 버전과의 호환성 유지. [format]의 alias.
+  static String describeEffect(PassiveEffect e) => format(e);
+
+  /// bonus_json 컨테이너에서 effects를 파싱 후 각 줄을 한국어로 변환하여 "\n" join.
+  /// 모든 effect가 unknown이거나 빈 배열이면 빈 문자열 반환.
+  static String describe(Map<String, dynamic> bonusJson) {
+    final effects = PassiveEffect.parseEffects(bonusJson);
+    final lines =
+        effects.map(format).where((s) => s.isNotEmpty).toList();
+    return lines.join('\n');
   }
 
   static String _formatIdleRewardBonus(String bonusType, double value) {

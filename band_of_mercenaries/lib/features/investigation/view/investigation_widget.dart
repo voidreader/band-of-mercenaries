@@ -5,7 +5,6 @@ import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
-import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_notifier.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_result.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_service.dart';
