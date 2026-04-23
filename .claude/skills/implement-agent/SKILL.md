@@ -1,6 +1,6 @@
 ---
 name: implement-agent
-description: 사용자로부터 전달된 명세서를 기반으로 git 충돌 감지 후, 서브에이전트 파이프라인(planner→coder→verifier)을 직접 조율하여 구현을 진행하고 완료 후 산출물 문서를 생성한다. TASK 수가 적을 경우 verifier 대신 main이 경량 검증을 수행한다.
+description: 사용자로부터 전달된 명세서를 기반으로 git 충돌 감지 후, 서브에이전트 파이프라인(planner → coder → dart-build-resolver → verifier + flutter-reviewer 병렬)을 직접 조율하여 구현을 진행하고 완료 후 산출물 문서를 생성한다. TASK 수가 적을 경우 verifier 대신 main이 경량 검증을 수행한다.
 ---
 
 Recommended Model : Claude Sonnet
@@ -105,7 +105,7 @@ Recommended Model : Claude Sonnet
      - 의존성을 되도록 줄이는 방향을 고려한다.
      - CLAUDE.md 코멘트 정책 준수
      - CLAUDE.md 금지사항을 준수하고, 부득이하게 위반해야하는 경우는 사유를 반드시 완료 보고에 포함한다.
-   - (재작업인 경우) verifier의 해당 태스크 수정 지시사항
+   - (재작업인 경우) verifier 또는 flutter-reviewer의 해당 태스크 수정 지시사항
 
    실행 규칙:
    - 실행 순서의 같은 단계에 있는 태스크는 병렬로 호출할 수 있다.
@@ -115,48 +115,95 @@ Recommended Model : Claude Sonnet
    coder가 "구현 불가능" 또는 "태스크 지시 모순"을 보고한 경우:
    - 해당 내용을 사용자에게 보고하고 판단을 요청한다.
 
-   모든 태스크가 완료되면 PHASE 3으로 진행한다.
+   모든 태스크가 완료되면 PHASE 2.5(빌드 게이트)로 진행한다.
 
-   ### PHASE 3: 검증
+   ### PHASE 2.5: 빌드 게이트
+
+   모든 coder 완료 보고가 수집된 직후, 코드가 컴파일 가능한지 먼저 확인한다. PHASE 3 리뷰가 빌드 실패한 코드에 컨텍스트를 낭비하지 않도록 격리한다.
+
+   **수행 절차:**
+
+   a. `cd band_of_mercenaries && flutter analyze` 실행
+   b. freezed/json_serializable/hive/riverpod 모델이 변경된 경우 `cd band_of_mercenaries && dart run build_runner build --delete-conflicting-outputs` 실행
+   c. 두 명령 모두 PASS인 경우 → PHASE 3으로 진행
+   d. 에러가 발생한 경우 → `dart-build-resolver` 에이전트를 Agent()로 호출
+
+   **dart-build-resolver 호출 시 프롬프트 내용:**
+   - 실패한 명령 출력 전문
+   - coder가 보고한 변경 파일 목록
+   - 원본 작업 명세서 (컨텍스트 참조용)
+   - 경계 규칙: "기능 추가·리팩토링 금지. 빌드 에러만 외과적으로 수정한다."
+
+   **dart-build-resolver 결과 처리:**
+   - SUCCESS → PHASE 3으로 진행
+   - PARTIAL/FAILED → 잔여 에러를 사용자에게 보고하고 판단 요청 (계속 진행 / 수동 수정 / 중단)
+   - 수정한 파일이 추가로 발생하면 변경 파일 목록에 합산하여 PHASE 3에 전달
+
+   ### PHASE 3: 검증 (명세 검증 + 품질 리뷰 병렬 실행)
+
+   PHASE 2.5 빌드 게이트를 통과한 후 진행한다. 이 프로젝트는 두 검증자를 **역할 분리된 병렬 구조**로 운영한다:
+
+   | 에이전트 | 검증 대상 |
+   |---------|----------|
+   | `verifier` | 명세 요구사항(REQ-n) 충족 + 구현 계획 시그니처 준수 + 기존 프로젝트 호환성 |
+   | `flutter-reviewer` | Flutter/Dart 코드 품질 (Riverpod 관용구, widget rebuild, 성능, 접근성, 보안) |
+
+   두 에이전트의 관심사는 겹치지 않는다. verifier는 "명세대로 만들었는가"를, flutter-reviewer는 "Flutter답게 잘 만들었는가"를 본다.
 
    **검증 모드 분기 (TASK 수 기준)**
 
-   계획 리포트의 TASK 개수에 따라 검증 방식을 분기한다:
+   계획 리포트의 TASK 개수에 따라 검증 깊이를 분기한다:
 
-   - **경량 검증** (TASK 수 ≤ 2): main 오케스트레이터가 직접 수행
-   - **풀 검증** (TASK 수 ≥ 3): verifier 서브에이전트 호출
+   - **경량 검증** (TASK 수 ≤ 2): main이 명세 검증 수행 + flutter-reviewer 1회 호출
+   - **풀 검증** (TASK 수 ≥ 3): verifier와 flutter-reviewer를 **병렬로** Agent() 호출
 
-   #### 3-A. 경량 검증 (main 직접 수행)
+   #### 3-A. 경량 검증
 
-   TASK 수가 2개 이하일 때 적용한다. 서브에이전트를 호출하지 않고 main이 직접 다음을 수행한다:
+   TASK 수가 2개 이하일 때 적용한다. 다음을 순서대로 수행한다:
 
-   1. coder가 보고한 모든 변경 파일을 Read로 읽어 실제 내용을 확인한다.
-   2. 명세서의 각 요구사항(REQ-n)이 코드에 구현되었는지 대조한다.
-   3. 계획 리포트의 시그니처(클래스명/함수명/타입)를 coder가 정확히 따랐는지 확인한다.
-   4. `cd band_of_mercenaries && flutter analyze`를 실행하여 정적 분석 오류를 점검한다.
-   5. freezed/json_serializable/hive 모델이 변경된 경우 build_runner 재실행 필요 여부를 명시한다.
+   1. **main 직접 명세 검증**
+      - coder가 보고한 모든 변경 파일을 Read로 읽어 실제 내용을 확인한다.
+      - 명세서의 각 요구사항(REQ-n)이 코드에 구현되었는지 대조한다.
+      - 계획 리포트의 시그니처(클래스명/함수명/타입)를 coder가 정확히 따랐는지 확인한다.
+      - (정적 분석은 PHASE 2.5 빌드 게이트에서 이미 검증됨 — 중복 실행 금지)
+
+   2. **flutter-reviewer 호출** (품질 리뷰)
+      - 프롬프트에 변경 파일 목록과 원본 명세서를 전달한다.
+      - 결과(APPROVE/BLOCK + 이슈 목록)를 수집한다.
 
    **판정:**
-   - 모든 항목 통과 시 → PASS → 5단계(산출물 생성)로 진행
-   - 문제 발견 시 → FAIL → 이슈를 정리하고 해당 TASK의 coder를 재호출 (최대 2회 반복)
-   - 2회 반복 후에도 FAIL인 경우 → 사용자에게 보고 후 판단 요청
+   - main 명세 검증 PASS + flutter-reviewer APPROVE → 5단계(산출물 생성)로 진행
+   - 한쪽이라도 이슈 발생 시 → FAIL로 처리 → 이슈를 통합 정리 후 해당 TASK의 coder 재호출 (최대 2회 반복)
+   - 2회 반복 후에도 FAIL → 사용자에게 보고 후 판단 요청
 
-   #### 3-B. 풀 검증 (verifier 서브에이전트 호출)
+   #### 3-B. 풀 검증 (병렬 리뷰)
 
-   TASK 수가 3개 이상일 때 적용한다. verifier 에이전트를 Agent()로 호출한다.
+   TASK 수가 3개 이상일 때 적용한다. verifier와 flutter-reviewer를 단일 메시지에서 **병렬로** Agent() 호출한다.
 
-   프롬프트에 포함할 내용:
-   - 원본 명세서
-   - 통합 계획 리포트
-   - 모든 coder의 완료 보고 (변경 파일 목록 포함)
+   각 에이전트에 전달할 내용:
+   - **verifier**: 원본 명세서 + 통합 계획 리포트 + 모든 coder 완료 보고 (변경 파일 목록 포함)
+   - **flutter-reviewer**: 변경 파일 목록 + 원본 명세서(참조용) + 역할 경계 명시 ("명세 준수 판정은 verifier 담당. Flutter/Dart 품질만 검증")
+
+   **결과 취합:**
+
+   두 결과를 main이 다음 규칙으로 통합한다:
+
+   1. verifier가 FAIL → FAIL (명세 미충족은 차단 사유)
+   2. verifier PASS + flutter-reviewer BLOCK → FAIL (품질 이슈도 차단 사유)
+   3. verifier PASS + flutter-reviewer APPROVE → PASS
+   4. verifier PASS (with warnings, minor만) + flutter-reviewer APPROVE → PASS (이슈 기록)
+
+   **이슈 중복 병합:**
+   - 두 에이전트가 같은 파일·같은 문제를 지적하면 하나로 통합한다 (출처는 `[verifier]` / `[flutter-reviewer]` / `[both]`로 태그).
+   - 이슈 내용이 충돌할 경우(예: verifier는 "명세의 X 구현 필요" vs flutter-reviewer는 "해당 패턴 안티패턴") 사용자에게 판단 요청.
 
    **검증 결과가 PASS인 경우:**
    - 5단계(산출물 생성)로 진행한다.
 
    **검증 결과가 FAIL인 경우:**
-   - 이슈 목록의 각 이슈에 대해 해당 TASK-n의 coder를 재호출한다.
-   - 재호출 시 프롬프트에 verifier의 수정 지시사항을 포함한다.
-   - 수정 완료 후 verifier를 다시 호출한다.
+   - 통합된 이슈 목록의 각 이슈에 대해 해당 TASK-n의 coder를 재호출한다.
+   - 재호출 시 프롬프트에 어떤 에이전트가 지적한 이슈인지 출처와 수정 지시사항을 함께 포함한다.
+   - 수정 완료 후 빌드 게이트(PHASE 2.5) → 병렬 리뷰를 재실행한다.
    - 이 루프는 최대 2회까지 반복한다.
 
    **2회 반복 후에도 FAIL인 경우:**
