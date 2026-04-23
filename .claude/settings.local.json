@@ -96,7 +96,15 @@
       "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/content-design/[content]20260415_faction_discovery_phase6.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260415_faction-discovery-phase6/design.md\")",
       "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260415_faction-discovery-phase6.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260415_faction-discovery-phase6/spec.md\")",
       "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260415_faction-discovery-phase6_plan.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260415_faction-discovery-phase6/plan.md\")",
-      "Bash(xargs -I {} bash -c \"echo '=== {} ===' && grep 'CREATE TABLE' {}\")"
+      "Bash(xargs -I {} bash -c \"echo '=== {} ===' && grep 'CREATE TABLE' {}\")",
+      "Bash(sort -k2)",
+      "Bash(python3 *)",
+      "Bash($SCRIPTS_DIR/stop-server.sh *)",
+      "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/balance-design/[balance]20260423_region-environment-tag-distribution.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-1-region-environment-tags/design.md)",
+      "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260423_m2b-4-1-region-environment-tags.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-1-region-environment-tags/spec.md)",
+      "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260423_m2b-4-1-region-environment-tags_plan.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-1-region-environment-tags/plan.md)",
+      "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/content-design/[content]20260420_elite_monster_catalog.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-2-elite-data-models/design.md)",
+      "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260423_m2b-4-2-elite-data-models.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-2-elite-data-models/spec.md)"
     ]
   }
 }
