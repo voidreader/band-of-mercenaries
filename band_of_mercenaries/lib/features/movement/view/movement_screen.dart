@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
+import 'package:band_of_mercenaries/shared/widgets/card_container.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
@@ -127,13 +128,9 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                     const SizedBox(height: 20),
 
                     // Region selector
-                    Container(
+                    CardContainer(
+                      color: AppTheme.surfaceAlt,
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceAlt,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.borderLight),
-                      ),
                       child: Column(
                         children: [
                           const Text('지역 선택', style: TextStyle(fontSize: 13, color: AppTheme.textHint)),
@@ -204,13 +201,9 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                     const SizedBox(height: 14),
 
                     // Sector selector
-                    Container(
+                    CardContainer(
+                      color: AppTheme.surfaceAlt,
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceAlt,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.borderLight),
-                      ),
                       child: Column(
                         children: [
                           const Text('섹터 선택', style: TextStyle(fontSize: 13, color: AppTheme.textHint)),

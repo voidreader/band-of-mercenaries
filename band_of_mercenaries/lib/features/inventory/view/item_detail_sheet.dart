@@ -8,6 +8,7 @@ import 'package:band_of_mercenaries/features/inventory/domain/inventory_item_mod
 import 'package:band_of_mercenaries/features/inventory/domain/item_effect_service.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
 import 'package:band_of_mercenaries/features/inventory/view/essence_target_sheet.dart';
+import 'package:band_of_mercenaries/shared/widgets/tier_badge.dart';
 
 /// 인벤토리 아이템 상세 바텀 시트를 표시한다.
 ///
@@ -98,21 +99,9 @@ class _ItemDetailContent extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
+              TierBadge(
+                tier: itemData.tier,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: tierBgColor,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: tierColor.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  'T${itemData.tier}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: tierColor,
-                  ),
-                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close, size: 20),

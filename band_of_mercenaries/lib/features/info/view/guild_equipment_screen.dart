@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/core/models/item_data.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_formatter.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/item_effect_service.dart';
 import 'package:band_of_mercenaries/features/info/view/guild_equipment_equip_sheet.dart';
+import 'package:band_of_mercenaries/shared/widgets/tier_badge.dart';
 
 /// 정보 탭에서 진입하는 용병단 장비 전체화면.
 ///
@@ -199,7 +200,7 @@ class _SlotCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _TierBadge(tier: equippedItem!.tier),
+                  TierBadge(tier: equippedItem!.tier),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -254,30 +255,3 @@ class _EffectSummaryText extends StatelessWidget {
   }
 }
 
-/// 티어 숫자 배지.
-class _TierBadge extends StatelessWidget {
-  final int tier;
-  const _TierBadge({required this.tier});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = AppTheme.tierColor(tier);
-    final bgColor = AppTheme.tierBgColor(tier);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        'T$tier',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
-  }
-}

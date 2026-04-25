@@ -12,14 +12,13 @@ import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.da
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_deletion_service.dart';
-import 'package:band_of_mercenaries/features/mercenary/domain/trait_effect_service.dart';
-import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
-import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_slot_grid.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/equipment_slot_grid.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/behavior_stats_section.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_history_section.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_detail_dialog.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/mercenary_profile_header.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/mercenary_role_synergy_section.dart';
 import 'package:band_of_mercenaries/shared/widgets/status_badge.dart';
 import 'package:band_of_mercenaries/features/inventory/view/essence_select_sheet.dart';
 
@@ -188,7 +187,7 @@ class _MercenaryDetailOverlayState
                         onTraitTap: onTraitTap,
                       ),
                       const SizedBox(height: 16),
-                      _SynergySection(merc: merc, job: job, allTraits: allTraits),
+                      MercenarySynergySection(merc: merc, job: job, allTraits: allTraits),
                       const SizedBox(height: 16),
                       BehaviorStatsSection(stats: merc.stats),
                       const SizedBox(height: 16),
@@ -370,7 +369,7 @@ class _MercenaryDetailOverlayState
           const SizedBox(height: 12),
           _buildStatRow(merc),
           const SizedBox(height: 10),
-          _XpBar(
+          MercenaryXpBar(
             level: currentLevel,
             xp: currentXp,
             progress: xpProgress,
@@ -395,7 +394,7 @@ class _MercenaryDetailOverlayState
             scale: _pulseStr ? 1.15 : 1.0,
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
-            child: _StatChip(
+            child: MercenaryStatChip(
               label: 'STR',
               value: formatStat(merc.effectiveStr, merc.permanentStr),
               color: AppTheme.tier5,
@@ -408,7 +407,7 @@ class _MercenaryDetailOverlayState
             scale: _pulseInt ? 1.15 : 1.0,
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
-            child: _StatChip(
+            child: MercenaryStatChip(
               label: 'INT',
               value: formatStat(
                   merc.effectiveIntelligence, merc.permanentIntelligence),
@@ -422,7 +421,7 @@ class _MercenaryDetailOverlayState
             scale: _pulseVit ? 1.15 : 1.0,
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
-            child: _StatChip(
+            child: MercenaryStatChip(
               label: 'VIT',
               value: formatStat(merc.effectiveVit, merc.permanentVit),
               color: AppTheme.tier2,
@@ -435,7 +434,7 @@ class _MercenaryDetailOverlayState
             scale: _pulseAgi ? 1.15 : 1.0,
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
-            child: _StatChip(
+            child: MercenaryStatChip(
               label: 'AGI',
               value: formatStat(merc.effectiveAgi, merc.permanentAgi),
               color: AppTheme.tier4,
@@ -447,227 +446,3 @@ class _MercenaryDetailOverlayState
   }
 }
 
-class _StatChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatChip({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppTheme.textHint,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _XpBar extends StatelessWidget {
-  final int level;
-  final int xp;
-  final double progress;
-  final bool isMax;
-  final int xpForNext;
-
-  const _XpBar({
-    required this.level,
-    required this.xp,
-    required this.progress,
-    required this.isMax,
-    required this.xpForNext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'EXP',
-              style: TextStyle(
-                fontSize: 11,
-                color: AppTheme.textHint,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              isMax ? 'MAX' : '$xp / $xpForNext',
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppTheme.textHint,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: AppTheme.borderLight,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isMax ? AppTheme.tier5 : AppTheme.tier3,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SynergySection extends StatelessWidget {
-  final Mercenary merc;
-  final dynamic job;
-  final List<TraitData> allTraits;
-
-  const _SynergySection({
-    required this.merc,
-    required this.job,
-    required this.allTraits,
-  });
-
-  static String _questKoreanName(String typeId) {
-    switch (typeId) {
-      case 'raid':
-        return '약탈';
-      case 'hunt':
-        return '토벌';
-      case 'escort':
-        return '호위';
-      case 'explore':
-        return '탐험';
-      default:
-        return typeId;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final role = job?.role as String? ?? 'specialist';
-    final traitIds = merc.allTraitIds;
-    const questTypes = ['raid', 'hunt', 'escort', 'explore'];
-
-    final traitRows = <Widget>[];
-    for (final typeId in questTypes) {
-      final bonus = TraitEffectService.calculateSuccessRateBonus(
-        traitIds: traitIds,
-        allTraits: allTraits,
-        questTypeId: typeId,
-        partySize: 1,
-      );
-      if (bonus.abs() >= 0.1) {
-        traitRows.add(Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Text(
-            '${_questKoreanName(typeId)}: ${bonus > 0 ? '+' : ''}${bonus.toStringAsFixed(1)}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ));
-      }
-    }
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '이 용병의 상성 (${RoleUtils.koreanName(role)})',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 4,
-              children: [
-                for (final typeId in questTypes)
-                  _RoleBonusChip(
-                    label: _questKoreanName(typeId),
-                    bonus: RoleSynergyMatrix.singleBonus(role, typeId),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '트레잇 시너지',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 4),
-            if (traitRows.isEmpty)
-              Text(
-                '해당 없음',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-              )
-            else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: traitRows,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleBonusChip extends StatelessWidget {
-  final String label;
-  final double bonus;
-  const _RoleBonusChip({required this.label, required this.bonus});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    Color color;
-    if (bonus >= 5) {
-      color = theme.colorScheme.primary;
-    } else if (bonus < 0) {
-      color = theme.colorScheme.error;
-    } else {
-      color = theme.textTheme.bodyMedium?.color ?? Colors.black;
-    }
-    final sign = bonus > 0 ? '+' : '';
-    return Text(
-      '$label $sign${bonus.toStringAsFixed(0)}',
-      style: theme.textTheme.bodyMedium?.copyWith(color: color),
-    );
-  }
-}

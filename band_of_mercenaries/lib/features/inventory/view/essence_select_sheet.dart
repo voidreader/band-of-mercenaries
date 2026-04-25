@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/features/inventory/data/inventory_repository
 import 'package:band_of_mercenaries/features/inventory/domain/essence_service.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/inventory_item_model.dart';
 import 'package:band_of_mercenaries/features/inventory/view/essence_apply_preview_dialog.dart';
+import 'package:band_of_mercenaries/shared/widgets/tier_badge.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 
@@ -168,8 +169,6 @@ class _EssenceSelectContent extends ConsumerWidget {
     final statName =
         EssenceService.statKoreanNames[entry.descriptor.statKey] ??
         entry.descriptor.statKey;
-    final tierColor = AppTheme.tierColor(entry.item.tier);
-    final tierBgColor = AppTheme.tierBgColor(entry.item.tier);
     final jailBefore = entry.preview.cap - entry.preview.currentPermanent;
     final disabled = entry.preview.appliedGain == 0;
     final warn = !disabled && entry.preview.lossAmount > 0;
@@ -188,24 +187,7 @@ class _EssenceSelectContent extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: tierBgColor,
-                    borderRadius: BorderRadius.circular(4),
-                    border:
-                        Border.all(color: tierColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    'T${entry.item.tier}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: tierColor,
-                    ),
-                  ),
-                ),
+                TierBadge(tier: entry.item.tier, fontSize: 10),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

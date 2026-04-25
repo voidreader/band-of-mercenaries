@@ -9,6 +9,9 @@ import 'package:band_of_mercenaries/features/info/domain/faction_join_service.da
 import 'package:band_of_mercenaries/core/domain/passive_bonus_formatter.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
+import 'package:band_of_mercenaries/shared/widgets/card_container.dart';
+import 'package:band_of_mercenaries/features/info/view/faction_join_section.dart';
+import 'package:band_of_mercenaries/features/info/view/faction_top_bar.dart';
 
 class FactionDetailScreen extends ConsumerWidget {
   final String factionId;
@@ -39,7 +42,7 @@ class FactionDetailScreen extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _TopBar(displayName: displayName, onBack: onBack),
+          FactionTopBar(displayName: displayName, onBack: onBack),
           Expanded(
             child: faction == null
                 ? const Center(
@@ -138,46 +141,6 @@ class FactionDetailScreen extends ConsumerWidget {
   }
 }
 
-class _TopBar extends StatelessWidget {
-  final String displayName;
-  final VoidCallback onBack;
-
-  const _TopBar({required this.displayName, required this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppTheme.surface,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top,
-        left: 4,
-        right: 16,
-        bottom: 0,
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: onBack,
-            icon: const Icon(Icons.arrow_back),
-            color: AppTheme.textPrimary,
-          ),
-          Expanded(
-            child: Text(
-              displayName,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _FactionBody extends ConsumerWidget {
   final FactionData faction;
   final FactionState? state;
@@ -265,7 +228,7 @@ class _FactionBody extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  _VisibilityBadge(visibilityType: faction.visibilityType),
+                  FactionVisibilityBadge(visibilityType: faction.visibilityType),
                 ],
               ),
             ],
@@ -294,7 +257,7 @@ class _FactionBody extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              _ReputationBar(reputation: reputation, joined: joined),
+              FactionReputationBar(reputation: reputation, joined: joined),
               if (!joined && reputation >= 1)
                 const Padding(
                   padding: EdgeInsets.only(top: 4),
@@ -319,7 +282,7 @@ class _FactionBody extends ConsumerWidget {
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textHint)),
               const SizedBox(height: 8),
-              _JoinConditions(
+              FactionJoinConditions(
                   faction: faction,
                   clueLevel: clueLevel,
                   currentRank: currentRank,
@@ -541,171 +504,4 @@ class _FactionBody extends ConsumerWidget {
   }
 }
 
-class _ReputationBar extends StatelessWidget {
-  final int reputation;
-  final bool joined;
-
-  const _ReputationBar({required this.reputation, required this.joined});
-
-  @override
-  Widget build(BuildContext context) {
-    // -100~+100 범위를 0.0~1.0으로 정규화
-    final normalized = ((reputation + 100) / 200).clamp(0.0, 1.0);
-    final color = reputation < 0
-        ? Colors.red
-        : reputation == 0
-            ? AppTheme.textHint
-            : Colors.green;
-
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: normalized,
-            minHeight: 8,
-            backgroundColor: AppTheme.border,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('-100',
-                style: TextStyle(fontSize: 10, color: AppTheme.textHint)),
-            Text('0',
-                style: TextStyle(fontSize: 10, color: AppTheme.textHint)),
-            Text('+100',
-                style: TextStyle(fontSize: 10, color: AppTheme.textHint)),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _JoinConditions extends StatelessWidget {
-  final FactionData faction;
-  final int clueLevel;
-  final String currentRank;
-  final int reputation;
-
-  const _JoinConditions({
-    required this.faction,
-    required this.clueLevel,
-    required this.currentRank,
-    required this.reputation,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final conditions = <Widget>[];
-
-    // 평판 > 0 조건 (실제 값 기반)
-    conditions.add(_ConditionRow(
-      label: '세력 평판 > 0',
-      met: reputation > 0,
-    ));
-
-    // clue 조건
-    if (faction.joinNeedsClue) {
-      conditions.add(_ConditionRow(
-        label: '거점 발견 (★★★)',
-        met: clueLevel >= 3,
-      ));
-    }
-
-    // 랭크 조건
-    if (faction.joinRankMin != null) {
-      final sufficient =
-          FactionJoinService.isRankSufficient(currentRank, faction.joinRankMin!);
-      conditions.add(_ConditionRow(
-        label: '랭크 ${faction.joinRankMin} 이상 (현재: $currentRank)',
-        met: sufficient,
-      ));
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: conditions,
-    );
-  }
-}
-
-class _ConditionRow extends StatelessWidget {
-  final String label;
-  final bool met;
-
-  const _ConditionRow({required this.label, required this.met});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Icon(
-            met ? Icons.check_circle : Icons.radio_button_unchecked,
-            size: 14,
-            color: met ? Colors.green : AppTheme.textHint,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: met ? AppTheme.textPrimary : AppTheme.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VisibilityBadge extends StatelessWidget {
-  final String visibilityType;
-
-  const _VisibilityBadge({required this.visibilityType});
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (visibilityType) {
-      'secret' => ('비밀', Colors.orange),
-      'regional' => ('지역·종족', Colors.blue),
-      _ => ('공개', Colors.green),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, color: color),
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  final Widget child;
-  const _SectionCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: child,
-    );
-  }
-}
+typedef _SectionCard = CardContainer;

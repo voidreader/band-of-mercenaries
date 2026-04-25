@@ -200,13 +200,16 @@ CSV 생성 후 다음을 출력한다:
 - `faction-quest` — 세력 가입 시 제공되는 전용 퀘스트 (대상 테이블: `quest_pools`)
 - `essence` — 정수, 영구 스탯 강화 소모품 (대상 테이블: `items`, category=consumable)
 - `item` — 일반 아이템, 개인 장비 + 용병단 장비 (대상 테이블: `items`, category=personal_equipment / guild_equipment)
+- `region-environment-tag` — 리전 환경 태그 (대상 테이블: `regions`, environment_tags JSONB)
+- `elite-monster` (M2b) — 엘리트 몬스터 + 드랍 테이블 (대상 테이블: `elite_monsters`, `elite_loot_tables`)
+- `chain-quest` (M3) — 연계 퀘스트 7체인 24단계 (대상 테이블: `chain_quests`)
+- `region-transform` (M3) — 지역 변형 트리거 + 섹터 전용 퀘스트 풀 (대상 테이블: `region_discoveries`, `quest_pools`)
+- `quest-narrative` (M3) — 퀘스트 결과 서사 템플릿 88행 (대상 테이블: `quest_narratives`)
+- `travel-choice` (M3) — 이동 선택지 이벤트 12종 (대상 테이블: `travel_choice_events`, `travel_choice_options`, `travel_choice_results`)
 
 추후 마일스톤 진입 시 아래 타입을 추가한다:
-- `elite-monster` (M2b) — 엘리트 몬스터 + 드랍 테이블
-- `linked-quest` (M3) — 연계 퀘스트
-- `narrative` (M3) — 결과 서사 텍스트
 - `region-discovery` (상시) — 지역 조사 발견 데이터
-- `travel-event` (상시) — 여행 이벤트
+- `travel-event` (상시) — 여행 이벤트 (자동)
 
 새 타입 추가 방법: `.claude/skills/data-generator/types/{타입}.md` 파일 생성. 기존 `faction-quest.md`를 템플릿으로 참고한다.
 

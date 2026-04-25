@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
+import 'package:band_of_mercenaries/shared/widgets/card_container.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/trait_transition.dart';
 import 'package:band_of_mercenaries/core/models/trait_combo_evolution.dart';
@@ -30,13 +31,7 @@ class TraitHistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
+    return CardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

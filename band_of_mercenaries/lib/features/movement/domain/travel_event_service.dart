@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:band_of_mercenaries/core/domain/template_context.dart';
+import 'package:band_of_mercenaries/core/domain/template_engine.dart';
 import 'package:band_of_mercenaries/core/models/travel_event.dart';
 
 class TravelEventService {
@@ -31,6 +33,19 @@ class TravelEventService {
 
   static double applyDamageReduction(double magnitude, double damageReduction) {
     return magnitude * (1.0 - damageReduction);
+  }
+
+  static String renderDescription(
+    TravelEvent event,
+    TemplateContext context,
+    TemplateEngine engine,
+  ) {
+    final description = event.description;
+    // 치환 토큰이 없는 평문은 원문 그대로 반환 (기존 12종 자동 이벤트 호환성)
+    if (!description.contains('{') && !description.contains('[')) {
+      return description;
+    }
+    return engine.render(description, context);
   }
 
   /// 이동 이벤트 골드 손실 완화.

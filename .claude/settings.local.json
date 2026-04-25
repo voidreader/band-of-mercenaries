@@ -104,7 +104,15 @@
       "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260423_m2b-4-1-region-environment-tags.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-1-region-environment-tags/spec.md)",
       "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260423_m2b-4-1-region-environment-tags_plan.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-1-region-environment-tags/plan.md)",
       "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/content-design/[content]20260420_elite_monster_catalog.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-2-elite-data-models/design.md)",
-      "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260423_m2b-4-2-elite-data-models.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-2-elite-data-models/spec.md)"
+      "Bash(cp '/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260423_m2b-4-2-elite-data-models.md' /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260423_m2b-4-2-elite-data-models/spec.md)",
+      "Bash(sort -t: -k3 -n)",
+      "Bash(sort -t: -k2 -n)",
+      "Bash(cp /Users/radiogaga/git/band-of-mercenaries/Docs/content-design/\\\\[content\\\\]20260423_chain_quests.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_chain-quest-system/design.md)",
+      "Bash(cp /Users/radiogaga/git/band-of-mercenaries/Docs/spec/M3/\\\\[spec\\\\]20260424_chain-quest-system.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_chain-quest-system/spec.md)",
+      "Bash(cp /Users/radiogaga/git/band-of-mercenaries/Docs/spec/M3/\\\\[spec\\\\]20260424_chain-quest-system_plan.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_chain-quest-system/plan.md)"
     ]
+  },
+  "enabledPlugins": {
+    "code-simplifier@claude-plugins-official": false
   }
 }

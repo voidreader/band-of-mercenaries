@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/features/inventory/data/inventory_repository
 import 'package:band_of_mercenaries/features/inventory/domain/inventory_item_model.dart';
 import 'package:band_of_mercenaries/features/inventory/view/inventory_item_card.dart';
 import 'package:band_of_mercenaries/features/inventory/view/item_detail_sheet.dart';
+import 'package:band_of_mercenaries/shared/widgets/empty_state_widget.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 
@@ -46,7 +47,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         const Divider(height: 1, color: AppTheme.border),
         Expanded(
           child: filtered.isEmpty
-              ? _buildEmptyState()
+              ? const EmptyStateWidget(message: '보유한 아이템이 없습니다')
               : _buildList(filtered, allItems),
         ),
       ],
@@ -178,15 +179,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       return ia.name.compareTo(ib.name);
     });
     return filtered;
-  }
-
-  Widget _buildEmptyState() {
-    return const Center(
-      child: Text(
-        '보유한 아이템이 없습니다',
-        style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
-      ),
-    );
   }
 
   Widget _buildList(List<InventoryItem> rows, List<ItemData> items) {

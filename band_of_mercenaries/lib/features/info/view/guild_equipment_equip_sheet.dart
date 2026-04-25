@@ -6,6 +6,7 @@ import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/models/item_data.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_formatter.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/item_effect_service.dart';
+import 'package:band_of_mercenaries/shared/widgets/tier_badge.dart';
 
 /// 용병단 장비 슬롯 장착 변경 모달 시트.
 ///
@@ -252,8 +253,6 @@ class _ItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final tierColor = AppTheme.tierColor(item.tier);
-    final tierBgColor = AppTheme.tierBgColor(item.tier);
 
     final effects = ItemEffectService.resolveGuildEquipment(item);
     final effectSummary = effects
@@ -280,23 +279,7 @@ class _ItemTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 티어 배지
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: tierBgColor,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: tierColor.withValues(alpha: 0.5)),
-              ),
-              child: Text(
-                'T${item.tier}',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: tierColor,
-                ),
-              ),
-            ),
+            TierBadge(tier: item.tier),
             const SizedBox(width: 10),
             // 이름 + 효과 요약
             Expanded(

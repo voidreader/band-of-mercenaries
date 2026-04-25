@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/models/item_data.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/inventory_item_model.dart';
+import 'package:band_of_mercenaries/shared/widgets/tier_badge.dart';
 
 class InventoryItemCard extends StatelessWidget {
   const InventoryItemCard({
@@ -83,22 +84,7 @@ class InventoryItemCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: tierBgColor,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: tierColor.withValues(alpha: 0.3)),
-                        ),
-                        child: Text(
-                          'T${itemData.tier}',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: tierColor,
-                          ),
-                        ),
-                      ),
+                      TierBadge(tier: itemData.tier, fontSize: 10),
                     ],
                   ),
                   if (equipLabel != null) ...[
