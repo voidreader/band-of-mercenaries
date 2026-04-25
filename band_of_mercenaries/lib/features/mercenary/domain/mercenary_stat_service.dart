@@ -21,27 +21,32 @@ class MercenaryStatService {
     required double deathRate,
     required int rewardGold,
     required int mercLevel,
+    bool traitLearningBoost = false,
   }) {
     final stats = Map<String, int>.from(current);
+    // 명세 (amount * 1.5).round() — amount=1 고정 호출이므로 +2로 단순화
+    final boost = traitLearningBoost ? 2 : 1;
 
     final isSuccess = resultType == QuestResult.greatSuccess || resultType == QuestResult.success;
     final isFailure = resultType == QuestResult.failure || resultType == QuestResult.criticalFailure;
 
+    // total_dispatch_count는 절대 카운터 — 부스트 미적용
     stats['total_dispatch_count'] = (stats['total_dispatch_count'] ?? 0) + 1;
 
     if (isSuccess) {
-      stats['success_count'] = (stats['success_count'] ?? 0) + 1;
+      stats['success_count'] = (stats['success_count'] ?? 0) + boost;
     }
     if (isFailure) {
-      stats['failure_count'] = (stats['failure_count'] ?? 0) + 1;
+      stats['failure_count'] = (stats['failure_count'] ?? 0) + boost;
     }
     if (resultType == QuestResult.greatSuccess) {
-      stats['great_success_count'] = (stats['great_success_count'] ?? 0) + 1;
+      stats['great_success_count'] = (stats['great_success_count'] ?? 0) + boost;
     }
     if (resultType == QuestResult.criticalFailure) {
-      stats['great_failure_count'] = (stats['great_failure_count'] ?? 0) + 1;
+      stats['great_failure_count'] = (stats['great_failure_count'] ?? 0) + boost;
     }
 
+    // solo/team 파견 횟수는 절대 카운터 — 부스트 미적용
     if (partySize == 1) {
       stats['solo_dispatch_count'] = (stats['solo_dispatch_count'] ?? 0) + 1;
     } else {
@@ -49,38 +54,41 @@ class MercenaryStatService {
     }
 
     if (difficulty >= 4 && isSuccess) {
-      stats['high_difficulty_count'] = (stats['high_difficulty_count'] ?? 0) + 1;
+      stats['high_difficulty_count'] = (stats['high_difficulty_count'] ?? 0) + boost;
     }
     if (difficulty <= 2 && isSuccess) {
-      stats['low_difficulty_count'] = (stats['low_difficulty_count'] ?? 0) + 1;
+      stats['low_difficulty_count'] = (stats['low_difficulty_count'] ?? 0) + boost;
     }
 
     final metricKey = _questTypeMetricMap[questTypeId];
     if (metricKey != null) {
-      stats[metricKey] = (stats[metricKey] ?? 0) + 1;
+      stats[metricKey] = (stats[metricKey] ?? 0) + boost;
     }
 
     // near_death: survived but roll was within 2x death threshold
     if (isFailure && damageStatus != MercenaryStatus.dead && deathRate > 0) {
       if (damageRoll < deathRate * 2) {
-        stats['near_death_count'] = (stats['near_death_count'] ?? 0) + 1;
+        stats['near_death_count'] = (stats['near_death_count'] ?? 0) + boost;
       }
     }
 
     if (damageStatus == MercenaryStatus.injured) {
-      stats['injury_count'] = (stats['injury_count'] ?? 0) + 1;
+      stats['injury_count'] = (stats['injury_count'] ?? 0) + boost;
     }
 
     if (resultType == QuestResult.criticalFailure && damageStatus != MercenaryStatus.dead) {
-      stats['survived_great_failure'] = (stats['survived_great_failure'] ?? 0) + 1;
+      stats['survived_great_failure'] = (stats['survived_great_failure'] ?? 0) + boost;
     }
 
+    // total_gold_earned는 실제 획득량 그대로 기록 — 부스트 미적용
     if (isSuccess && rewardGold > 0) {
       stats['total_gold_earned'] = (stats['total_gold_earned'] ?? 0) + rewardGold;
     }
 
+    // current_level은 절대값 — 부스트 미적용
     stats['current_level'] = mercLevel;
 
+    // consecutive_success/failure는 리셋 로직이 있어 배수 부적합 — 부스트 미적용
     if (isSuccess) {
       stats['consecutive_success'] = (stats['consecutive_success'] ?? 0) + 1;
       stats['consecutive_failure'] = 0;
@@ -108,22 +116,25 @@ class MercenaryStatService {
     required Map<String, int> facilities,
     required bool isFailure,
     required MercenaryStatus damageStatus,
+    bool traitLearningBoost = false,
   }) {
     final stats = Map<String, int>.from(current);
+    // 명세 (amount * 1.5).round() — amount=1 고정 호출이므로 +2로 단순화
+    final boost = traitLearningBoost ? 2 : 1;
 
     if ((facilities['training'] ?? 0) > 0) {
-      stats['training_benefit_count'] = (stats['training_benefit_count'] ?? 0) + 1;
+      stats['training_benefit_count'] = (stats['training_benefit_count'] ?? 0) + boost;
     }
 
     if ((facilities['infirmary'] ?? 0) > 0 && damageStatus == MercenaryStatus.injured) {
-      stats['infirmary_recovery_count'] = (stats['infirmary_recovery_count'] ?? 0) + 1;
+      stats['infirmary_recovery_count'] = (stats['infirmary_recovery_count'] ?? 0) + boost;
     }
 
     if ((facilities['field_hospital'] ?? 0) > 0 &&
         isFailure &&
         damageStatus != MercenaryStatus.dead &&
         damageStatus != MercenaryStatus.injured) {
-      stats['field_hospital_benefit_count'] = (stats['field_hospital_benefit_count'] ?? 0) + 1;
+      stats['field_hospital_benefit_count'] = (stats['field_hospital_benefit_count'] ?? 0) + boost;
     }
 
     return stats;

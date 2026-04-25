@@ -35,6 +35,8 @@ import 'package:band_of_mercenaries/features/home/view/rank_up_overlay.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_service.dart';
 import 'package:band_of_mercenaries/features/chain_quest/view/chain_completed_dialog.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_transformed_provider.dart';
+import 'package:band_of_mercenaries/features/investigation/view/region_transform_dialog.dart';
 
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
@@ -228,6 +230,24 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
             onDismiss: () {
               Navigator.pop(ctx);
               ref.read(chainCompletedProvider.notifier).state = null;
+            },
+          ),
+        );
+      });
+    });
+
+    ref.listen<RegionTransformedEvent?>(regionTransformedProvider, (_, next) {
+      if (next == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => RegionTransformDialog(
+            event: next,
+            onDismiss: () {
+              Navigator.pop(ctx);
+              ref.read(regionTransformedProvider.notifier).state = null;
             },
           ),
         );

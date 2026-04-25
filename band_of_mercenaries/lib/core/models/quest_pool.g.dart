@@ -19,6 +19,8 @@ _$QuestPoolImpl _$$QuestPoolImplFromJson(Map<String, dynamic> json) =>
       isFactionExclusive: json['is_faction_exclusive'] as bool? ?? false,
       minReputation: (json['min_reputation'] as num?)?.toInt() ?? 0,
       sectorType: json['sector_type'] as String?,
+      specialFlags: json['special_flags'] as Map<String, dynamic>? ??
+          const <String, dynamic>{},
     );
 
 Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
@@ -34,4 +36,5 @@ Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
       'is_faction_exclusive': instance.isFactionExclusive,
       'min_reputation': instance.minReputation,
       'sector_type': instance.sectorType,
+      'special_flags': instance.specialFlags,
     };

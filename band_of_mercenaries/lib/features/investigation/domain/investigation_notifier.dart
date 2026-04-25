@@ -17,6 +17,9 @@ import 'package:band_of_mercenaries/features/info/data/faction_state_repository.
 import 'package:band_of_mercenaries/features/info/domain/faction_clue_result.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_transformed_provider.dart';
+import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
+import 'package:band_of_mercenaries/core/domain/template_context.dart';
 
 final investigationNotifierProvider = StateNotifierProvider<InvestigationNotifier, void>(
   (ref) => InvestigationNotifier(ref),
@@ -109,7 +112,7 @@ class InvestigationNotifier extends StateNotifier<void> {
 
     if (success) {
       final gain = InvestigationService.getKnowledgeGain(tier);
-      final updatedState = repo.updateKnowledge(regionId, gain);
+      final updatedState = await repo.updateKnowledge(regionId, gain);
 
       final regionDiscoveries = staticData.regionDiscoveries.where((d) => d.regionId == regionId);
       final newlyTriggered = regionDiscoveries
@@ -201,6 +204,73 @@ class InvestigationNotifier extends StateNotifier<void> {
               );
             }
           }
+          continue;
+        } else if (d.discoveryType == 'transform') {
+          final data = d.discoveryData;
+          if (data == null) continue;
+
+          final transformType = data['transform_type'] as String?;
+          final sectorIndex = (data['sector_index'] as num?)?.toInt();
+          final transformedName = data['transformed_name'] as String? ?? '';
+          final narrativeTemplate = data['narrative_template'] as String? ?? '';
+
+          if (transformType == null || sectorIndex == null) continue;
+
+          final regionStateRepo = _ref.read(regionStateRepositoryProvider);
+          final transformed = await regionStateRepo.applyTransform(
+            regionId: regionId,
+            sectorIndex: sectorIndex,
+            transformType: transformType,
+          );
+          if (!transformed) continue;
+
+          // TemplateEngine으로 서사 텍스트 렌더
+          String narrativeRendered = narrativeTemplate;
+          try {
+            final engine = _ref.read(templateEngineProvider);
+            final currentUser = _ref.read(userDataProvider);
+            final currentStaticData = _ref.read(staticDataProvider).value;
+            final allMercs = _ref.read(mercenaryListProvider);
+            final investigatingMerc = allMercs.where((m) => m.id == mercId).firstOrNull;
+            final currentRegionData =
+                currentStaticData?.regions.where((r) => r.region == regionId).firstOrNull;
+            final currentRegionState = regionStateRepo.getState(regionId);
+            final sectorChangesIntKey = currentRegionState?.sectorChanges.map(
+                  (k, v) => MapEntry(int.tryParse(k) ?? 0, v),
+                ) ??
+                {};
+
+            if (currentUser != null) {
+              narrativeRendered = engine.render(
+                narrativeTemplate,
+                TemplateContext(
+                  user: currentUser,
+                  merc: investigatingMerc,
+                  region: currentRegionData,
+                  sectorChanges: sectorChangesIntKey,
+                  evaluationScope: EvaluationScope.mercenary,
+                ),
+              );
+            }
+          } catch (_) {
+            // fail-safe: 렌더 실패 시 원문 그대로 사용
+          }
+
+          // 지역 변형 이벤트 publish
+          _ref.read(regionTransformedProvider.notifier).state = RegionTransformedEvent(
+            regionId: regionId,
+            sectorIndex: sectorIndex,
+            transformType: transformType,
+            transformedName: transformedName,
+            narrativeRendered: narrativeRendered,
+          );
+
+          // 활동 로그
+          final regionName = region?.regionName ?? '리전 $regionId';
+          _ref.read(activityLogProvider.notifier).addLog(
+            '$regionName의 섹터가 $transformedName(으)로 변형되었다',
+            ActivityLogType.regionTransform,
+          );
           continue;
         }
 

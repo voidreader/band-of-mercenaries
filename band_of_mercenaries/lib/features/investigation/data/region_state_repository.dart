@@ -26,14 +26,14 @@ class RegionStateRepository {
   }
 
   // knowledge를 delta만큼 증가시키고 clamp(0, 100), 업데이트된 RegionState 반환
-  RegionState updateKnowledge(int regionId, int delta) {
+  Future<RegionState> updateKnowledge(int regionId, int delta) async {
     var state = getState(regionId);
     if (state == null) {
       state = RegionState(regionId: regionId);
-      _box.add(state);
+      await _box.add(state);
     }
     state.knowledge = (state.knowledge + delta).clamp(0, 100);
-    state.save();
+    await state.save();
     return state;
   }
 
@@ -44,5 +44,28 @@ class RegionStateRepository {
       state.triggeredDiscoveries.add(discoveryId);
       await state.save();
     }
+  }
+
+  // 섹터 변환을 적용한다. MVP: 리전당 최대 1섹터 변형 제약. 성공 시 true 반환
+  Future<bool> applyTransform({
+    required int regionId,
+    required int sectorIndex,
+    required String transformType,
+  }) async {
+    var state = getState(regionId);
+    if (state == null) {
+      state = RegionState(regionId: regionId);
+      await _box.add(state);
+    }
+
+    // MVP: 리전당 최대 1섹터 변형 제약
+    if (state.sectorChanges.isNotEmpty) return false;
+
+    final key = sectorIndex.toString();
+    if (state.sectorChanges.containsKey(key)) return false;
+
+    state.sectorChanges[key] = transformType;
+    await state.save();
+    return true;
   }
 }

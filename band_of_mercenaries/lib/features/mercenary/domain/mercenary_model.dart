@@ -91,6 +91,10 @@ class Mercenary extends HiveObject {
   @HiveField(22)
   int permanentAgi;
 
+  /// 트레잇 학습 가속 만료 시각 (이동 선택지 `trait_acquired` 효과로 설정)
+  @HiveField(23)
+  DateTime? traitLearningBoostUntil;
+
   Mercenary({
     required this.id,
     required this.name,
@@ -115,6 +119,7 @@ class Mercenary extends HiveObject {
     this.permanentIntelligence = 0,
     this.permanentVit = 0,
     this.permanentAgi = 0,
+    this.traitLearningBoostUntil,
   })  : stats = stats ?? {},
         traitIds = traitIds ?? [],
         traitHistory = traitHistory ?? [],

@@ -40,6 +40,12 @@ class AppTheme {
     'Experience': Color(0xFFEF6C00),   // 주황
   };
 
+  // 지역 변형 타입 색상
+  static const Color transformVillage = Color(0xFF4CAF50);    // 마을 (초록)
+  static const Color transformRuins = Color(0xFF7E57C2);      // 유적지 (보라)
+  static const Color transformHidden = Color(0xFFFFD700);     // 숨겨진 섹터 (금색)
+  static const Color transformFallback = Color(0xFF9E9E9E);   // 알 수 없는 변형 (회색)
+
   // Quest result colors
   static const Color greatSuccess = Color(0xFF1565C0);
   static const Color success = Color(0xFF2E7D32);

@@ -134,4 +134,15 @@ class MercenaryRepository {
     merc.legendaryDeathPreventionCooldownUntil = until;
     await merc.save();
   }
+
+  /// 트레잇 학습 부스트 만료 시각을 기록한다.
+  /// [until]이 null이면 부스트를 초기화한다.
+  Future<void> setTraitLearningBoost(String mercId, DateTime? until) async {
+    final merc = _box.values.firstWhere(
+      (m) => m.id == mercId,
+      orElse: () => throw Exception('Mercenary not found: $mercId'),
+    );
+    merc.traitLearningBoostUntil = until;
+    await merc.save();
+  }
 }

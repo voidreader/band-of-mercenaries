@@ -12,6 +12,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 import 'package:band_of_mercenaries/shared/widgets/card_container.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_transformed_provider.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
   const MovementScreen({super.key});
@@ -45,6 +46,7 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
     final quests = ref.watch(questListProvider);
     final hasDispatchedQuests = quests.any((q) => q.status == QuestStatus.inProgress);
     ref.watch(gameTickProvider);
+    final sectorChanges = ref.watch(currentRegionSectorChangesProvider);
 
     if (userData == null) return const Center(child: CircularProgressIndicator());
 
@@ -208,38 +210,57 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                         children: [
                           const Text('섹터 선택', style: TextStyle(fontSize: 13, color: AppTheme.textHint)),
                           const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            alignment: WrapAlignment.center,
-                            children: List.generate(10, (i) {
-                              final sector = i + 1;
-                              final isSelected = sector == _selectedSector;
-                              return GestureDetector(
-                                onTap: userData.isMoving ? null : () {
-                                  setState(() => _selectedSector = sector);
-                                },
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? AppTheme.primary : AppTheme.surface,
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: isSelected ? null : Border.all(color: AppTheme.border),
-                                  ),
-                                  child: Text(
-                                    '$sector',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isSelected ? Colors.white : AppTheme.textSecondary,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          Builder(builder: (context) {
+                            return Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              alignment: WrapAlignment.center,
+                              children: List.generate(10, (i) {
+                                final sector = i + 1;
+                                final sectorKey = i.toString(); // 저장 키는 0-based
+                                final transformType = sectorChanges[sectorKey];
+                                final isSelected = sector == _selectedSector;
+                                return GestureDetector(
+                                  onTap: userData.isMoving ? null : () {
+                                    setState(() => _selectedSector = sector);
+                                  },
+                                  child: Container(
+                                    width: 40,
+                                    height: 44,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? AppTheme.primary : AppTheme.surface,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: transformType != null
+                                            ? _transformColor(transformType)
+                                            : (isSelected ? Colors.white : AppTheme.border),
+                                        width: transformType != null ? 2 : 1,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '$sector',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: isSelected ? Colors.white : AppTheme.textSecondary,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                          ),
+                                        ),
+                                        if (transformType != null)
+                                          Text(
+                                            _transformIcon(transformType),
+                                            style: const TextStyle(fontSize: 10),
+                                          ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              );
-                            }),
-                          ),
+                                );
+                              }),
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -333,4 +354,18 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
       error: (e, _) => Center(child: Text('Error: $e')),
     );
   }
+
+  Color _transformColor(String type) => switch (type) {
+    'village' => AppTheme.transformVillage,
+    'ruins' => AppTheme.transformRuins,
+    'hidden' => AppTheme.transformHidden,
+    _ => AppTheme.transformFallback,
+  };
+
+  String _transformIcon(String type) => switch (type) {
+    'village' => '🏘️',
+    'ruins' => '🏛️',
+    'hidden' => '✨',
+    _ => '',
+  };
 }

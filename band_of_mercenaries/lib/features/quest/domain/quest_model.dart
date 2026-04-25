@@ -105,6 +105,10 @@ class ActiveQuest extends HiveObject {
   @HiveField(23)
   int? chainStep;
 
+  // 런타임 특수 플래그 (key-value 맵, 서버 저장 안 함)
+  @HiveField(24)
+  Map<String, dynamic>? specialFlags;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -130,6 +134,7 @@ class ActiveQuest extends HiveObject {
     this.isChainStep,
     this.chainId,
     this.chainStep,
+    this.specialFlags,
   });
 
   // 전용 퀘스트 여부 (isAdvancedTrack이 설정된 경우)

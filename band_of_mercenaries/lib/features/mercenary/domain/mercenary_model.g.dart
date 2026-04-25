@@ -40,13 +40,14 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       permanentIntelligence: fields[20] as int,
       permanentVit: fields[21] as int,
       permanentAgi: fields[22] as int,
+      traitLearningBoostUntil: fields[23] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Mercenary obj) {
     writer
-      ..writeByte(23)
+      ..writeByte(24)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -92,7 +93,9 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       ..writeByte(21)
       ..write(obj.permanentVit)
       ..writeByte(22)
-      ..write(obj.permanentAgi);
+      ..write(obj.permanentAgi)
+      ..writeByte(23)
+      ..write(obj.traitLearningBoostUntil);
   }
 
   @override

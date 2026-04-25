@@ -26,6 +26,8 @@ class QuestGenerator {
     List<EliteMonsterData> eliteMonsters = const [],
     List<String> regionEnvironmentTags = const [],
     Set<String> triggeredDiscoveries = const {},
+    int? currentSectorIndex,
+    Map<String, String>? sectorChanges,
   }) {
     // 1. 기본 티어 필터
     final filtered = questPools
@@ -33,11 +35,21 @@ class QuestGenerator {
         .toList();
     if (filtered.isEmpty) return [];
 
-    // 2. 전용/일반 분리
-    final exclusivePools = filtered.where((p) => p.isFactionExclusive).toList();
-    final generalPools = filtered.where((p) => !p.isFactionExclusive).toList();
+    // 2. 섹터 타입 결정
+    final sectorType = (currentSectorIndex != null && sectorChanges != null)
+        ? sectorChanges[currentSectorIndex.toString()]
+        : null;
 
-    // 3. 전용 퀘스트 후보 필터링
+    // 3. 전용/일반 분리
+    final exclusivePools = filtered.where((p) => p.isFactionExclusive).toList();
+    final generalPools = filtered
+        .where((p) => !p.isFactionExclusive)
+        .where((p) => sectorType != null
+            ? p.sectorType == sectorType
+            : p.sectorType == null)
+        .toList();
+
+    // 4. 전용 퀘스트 후보 필터링
     final eligibleExclusive = exclusivePools.where((p) =>
         p.factionTag != null &&
         joinedFactionIds.contains(p.factionTag) &&
@@ -46,17 +58,17 @@ class QuestGenerator {
         !cooldownExclusiveQuestIds.contains(p.id)).toList();
     eligibleExclusive.shuffle(random);
 
-    // 4. 전용 노출 상한 계산
+    // 5. 전용 노출 상한 계산
     int exclusiveCap = min(joinedFactionIds.length * 2, (activeSlotCount * 0.5).floor());
     exclusiveCap = min(exclusiveCap, count);
     final selectedExclusivePools = eligibleExclusive.take(exclusiveCap).toList();
 
-    // 5. 일반 퀘스트 채우기
+    // 6. 일반 퀘스트 채우기
     final remainingCount = count - selectedExclusivePools.length;
     generalPools.shuffle(random);
     final selectedGeneralPools = generalPools.take(remainingCount).toList();
 
-    // 6. ActiveQuest 생성
+    // 7. ActiveQuest 생성
     final results = <ActiveQuest>[];
 
     // 전용 퀘스트
@@ -78,6 +90,7 @@ class QuestGenerator {
         factionTag: pool.factionTag,
         reputationReward: repReward,
         isAdvancedTrack: isAdvanced,
+        specialFlags: pool.specialFlags.isEmpty ? null : Map<String, dynamic>.from(pool.specialFlags),
       ));
     }
 
@@ -107,10 +120,11 @@ class QuestGenerator {
         factionTag: tag,
         reputationReward: repReward,
         isAdvancedTrack: null,
+        specialFlags: pool.specialFlags.isEmpty ? null : Map<String, dynamic>.from(pool.specialFlags),
       ));
     }
 
-    // 7. 엘리트 퀘스트 생성
+    // 8. 엘리트 퀘스트 생성
     const maxEliteCount = 2;
     final normalCandidates = eliteMonsters
         .where((m) => !m.isUnique && m.environmentTags.any(regionEnvironmentTags.contains))

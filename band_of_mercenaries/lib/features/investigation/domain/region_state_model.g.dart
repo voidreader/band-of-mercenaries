@@ -20,19 +20,22 @@ class RegionStateAdapter extends TypeAdapter<RegionState> {
       regionId: fields[0] as int,
       knowledge: fields[1] as int,
       triggeredDiscoveries: (fields[2] as List?)?.cast<String>(),
+      sectorChanges: (fields[3] as Map?)?.cast<String, String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, RegionState obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.regionId)
       ..writeByte(1)
       ..write(obj.knowledge)
       ..writeByte(2)
-      ..write(obj.triggeredDiscoveries);
+      ..write(obj.triggeredDiscoveries)
+      ..writeByte(3)
+      ..write(obj.sectorChanges);
   }
 
   @override

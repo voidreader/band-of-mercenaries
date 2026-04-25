@@ -31,6 +31,7 @@ import 'package:band_of_mercenaries/core/models/passive_effect.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
+import 'package:band_of_mercenaries/features/quest/domain/special_flag_processor.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -152,6 +153,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       eliteMonsters: staticData.eliteMonsters,
       regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
+      currentSectorIndex: (userData.sector - 1),
+      sectorChanges: ref.read(regionStateRepositoryProvider)
+          .getState(userData.region)
+          ?.sectorChanges,
     );
     await _repo.addQuests(quests);
     _load();
@@ -236,6 +241,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       eliteMonsters: staticData.eliteMonsters,
       regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
+      currentSectorIndex: (userData.sector - 1),
+      sectorChanges: ref.read(regionStateRepositoryProvider)
+          .getState(userData.region)
+          ?.sectorChanges,
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -365,6 +374,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       eliteMonsters: staticData.eliteMonsters,
       regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
+      currentSectorIndex: (userData.sector - 1),
+      sectorChanges: ref.read(regionStateRepositoryProvider)
+          .getState(userData.region)
+          ?.sectorChanges,
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -530,6 +543,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       final damage = result.mercDamages.firstWhere((d) => d.mercId == merc.id);
       if (damage.newStatus != MercenaryStatus.dead) {
         await mercRepo.addXpAndCheckLevel(merc.id, result.xpGain);
+        final traitLearningBoost = merc.traitLearningBoostUntil != null &&
+            DateTime.now().isBefore(merc.traitLearningBoostUntil!);
         final newStats = MercenaryStatService.updateStatsAfterQuest(
           merc.stats,
           resultType: result.resultType,
@@ -541,6 +556,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           deathRate: deathRate,
           rewardGold: result.rewardGold,
           mercLevel: merc.level,
+          traitLearningBoost: traitLearningBoost,
         );
         final userData = ref.read(userDataProvider);
         final finalStats = MercenaryStatService.updateStatsForFacilityBenefit(
@@ -549,6 +565,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           isFailure: result.resultType == QuestResult.failure ||
               result.resultType == QuestResult.criticalFailure,
           damageStatus: damage.newStatus,
+          traitLearningBoost: traitLearningBoost,
         );
         await mercRepo.updateStats(merc.id, finalStats);
 
@@ -610,6 +627,40 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             singleEvoCandidates: singleCandidates,
             comboEvoCandidates: comboCandidates,
           );
+        }
+      }
+    }
+
+    // SpecialFlag 처리
+    if (quest.specialFlags != null && quest.specialFlags!.isNotEmpty) {
+      final flagResult = SpecialFlagProcessor.apply(
+        quest: quest,
+        resultType: result.resultType,
+        partyMercs: mercs,
+        staticData: staticData,
+        random: Random(),
+      );
+
+      if (!flagResult.isEmpty) {
+        // 보상 아이템 지급
+        if (flagResult.extraItemIds.isNotEmpty) {
+          final inventory = ref.read(inventoryRepositoryProvider);
+          for (final itemId in flagResult.extraItemIds) {
+            await inventory.addItem(itemId: itemId, items: staticData.items);
+          }
+        }
+
+        // 추가 명성 (음수 포함)
+        if (flagResult.extraReputation != 0) {
+          await ref.read(userDataProvider.notifier).addReputation(flagResult.extraReputation);
+        }
+
+        // trait_learning_boost 갱신
+        if (flagResult.boostedMercIds.isNotEmpty) {
+          final boostUntil = DateTime.now().add(const Duration(hours: 24));
+          for (final mercId in flagResult.boostedMercIds) {
+            await mercRepo.setTraitLearningBoost(mercId, boostUntil);
+          }
         }
       }
     }
