@@ -279,6 +279,14 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     state = state;
   }
 
+  Future<void> addCompletedChain(String chainId) async {
+    if (state == null) return;
+    if (state!.completedChains.contains(chainId)) return;
+    state!.completedChains = [...state!.completedChains, chainId];
+    await state!.save();
+    state = state;
+  }
+
   void recalculateInvestigationTimer(double oldSpeed, double newSpeed) {
     if (state == null || state!.investigationEndTime == null) return;
     final now = DateTime.now();

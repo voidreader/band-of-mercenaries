@@ -89,6 +89,12 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.essenceLostOnDeath;
       case 17:
         return ActivityLogType.essenceLostOnRelease;
+      case 18:
+        return ActivityLogType.regionTransform;
+      case 19:
+        return ActivityLogType.chainProgressed;
+      case 20:
+        return ActivityLogType.chainCompleted;
       default:
         return ActivityLogType.questResult;
     }
@@ -150,6 +156,15 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.essenceLostOnRelease:
         writer.writeByte(17);
+        break;
+      case ActivityLogType.regionTransform:
+        writer.writeByte(18);
+        break;
+      case ActivityLogType.chainProgressed:
+        writer.writeByte(19);
+        break;
+      case ActivityLogType.chainCompleted:
+        writer.writeByte(20);
         break;
     }
   }

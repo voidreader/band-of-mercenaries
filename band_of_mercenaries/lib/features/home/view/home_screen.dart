@@ -591,6 +591,9 @@ class _ActivityLog extends ConsumerWidget {
       case ActivityLogType.essenceApplied: return '✧';
       case ActivityLogType.essenceLostOnDeath: return '💀';
       case ActivityLogType.essenceLostOnRelease: return '👋';
+      case ActivityLogType.regionTransform: return '🌍';
+      case ActivityLogType.chainProgressed: return '🔗';
+      case ActivityLogType.chainCompleted: return '🏆';
     }
   }
 

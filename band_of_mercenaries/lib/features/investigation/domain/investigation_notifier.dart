@@ -16,6 +16,7 @@ import 'package:band_of_mercenaries/features/investigation/domain/investigation_
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_clue_result.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 
 final investigationNotifierProvider = StateNotifierProvider<InvestigationNotifier, void>(
   (ref) => InvestigationNotifier(ref),
@@ -188,6 +189,18 @@ class InvestigationNotifier extends StateNotifier<void> {
             revealText ?? '엘리트 발견: ${d.description}',
             ActivityLogType.discoveryFound,
           );
+          continue;
+        } else if (d.discoveryType == 'hidden_quest') {
+          final chainId = d.discoveryData?['chain_id'] as String?;
+          if (chainId != null) {
+            final currentUser = _ref.read(userDataProvider);
+            if (currentUser != null) {
+              await _ref.read(chainQuestServiceProvider).tryActivate(
+                chainId: chainId,
+                user: currentUser,
+              );
+            }
+          }
           continue;
         }
 

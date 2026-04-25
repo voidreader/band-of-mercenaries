@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
@@ -30,6 +32,9 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/reputation_rank_up_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_detail_overlay.dart';
 import 'package:band_of_mercenaries/features/home/view/rank_up_overlay.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_service.dart';
+import 'package:band_of_mercenaries/features/chain_quest/view/chain_completed_dialog.dart';
 
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
@@ -134,6 +139,14 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
     ref.listen(gameTickProvider, (prev, next) {
       ref.read(userDataProvider.notifier).checkConstructionCompletion();
       ref.read(investigationNotifierProvider.notifier).checkCompletion();
+      // 1시간 주기 (3600초) 휴면 체인 퀘스트 점검
+      final tick = (next.value?.millisecondsSinceEpoch ?? 0) ~/ 1000;
+      if (tick > 0 && tick % 3600 == 0) {
+        final progresses = ref.read(chainQuestProgressProvider).valueOrNull ?? [];
+        unawaited(
+          ref.read(chainQuestServiceProvider).checkDormant(progresses: progresses),
+        );
+      }
     });
 
     ref.listen<String?>(constructionCompletedProvider, (_, next) {
@@ -197,6 +210,24 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
             onDismiss: () {
               Navigator.pop(ctx);
               ref.read(reputationRankUpProvider.notifier).state = null;
+            },
+          ),
+        );
+      });
+    });
+
+    ref.listen<ChainCompletedEvent?>(chainCompletedProvider, (_, next) {
+      if (next == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => ChainCompletedDialog(
+            event: next,
+            onDismiss: () {
+              Navigator.pop(ctx);
+              ref.read(chainCompletedProvider.notifier).state = null;
             },
           ),
         );

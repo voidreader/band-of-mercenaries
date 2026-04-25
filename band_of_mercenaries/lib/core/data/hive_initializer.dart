@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/core/domain/activity_log_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/inventory_item_model.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
 
 class HiveInitializer {
   static const String userBoxName = 'user';
@@ -17,6 +18,7 @@ class HiveInitializer {
   static const String regionStateBoxName = 'regionStates';
   static const String factionStateBoxName = 'factionStates';
   static const String inventoryBoxName = 'inventory';
+  static const String chainQuestProgressBoxName = 'chainQuestProgress';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -33,6 +35,8 @@ class HiveInitializer {
     Hive.registerAdapter(FactionClueRecordAdapter());
     Hive.registerAdapter(FactionStateAdapter());
     Hive.registerAdapter(InventoryItemAdapter());
+    Hive.registerAdapter(ChainQuestStatusAdapter());
+    Hive.registerAdapter(ChainQuestProgressAdapter());
 
     await Hive.openBox(settingsBoxName);
     final settingsBox = Hive.box(settingsBoxName);
@@ -50,5 +54,6 @@ class HiveInitializer {
     await Hive.openBox<RegionState>(regionStateBoxName);
     await Hive.openBox<FactionState>(factionStateBoxName);
     await Hive.openBox<InventoryItem>(inventoryBoxName);
+    await Hive.openBox<ChainQuestProgress>(chainQuestProgressBoxName);
   }
 }

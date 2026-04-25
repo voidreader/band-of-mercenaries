@@ -23,6 +23,14 @@ class QuestCalculator {
     'explore': {'str': 0.10, 'intelligence': 0.45, 'vit': 0.15, 'agi': 0.30},
   };
 
+  static double mercPower(Mercenary merc, String questTypeId) {
+    final weights = _statWeights[questTypeId] ?? _statWeights['raid']!;
+    return merc.effectiveStr * weights['str']! +
+        merc.effectiveIntelligence * weights['intelligence']! +
+        merc.effectiveVit * weights['vit']! +
+        merc.effectiveAgi * weights['agi']!;
+  }
+
   static int calculatePartyPower(
     List<Mercenary> mercs,
     String questTypeId, {

@@ -20,6 +20,8 @@ import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_di
 import 'package:band_of_mercenaries/features/mercenary/view/trait_evolution_dialog.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
+import 'package:band_of_mercenaries/features/chain_quest/view/chain_step_card.dart';
 
 const Map<String, IconData> _roleIcons = {
   'warrior': Icons.shield,
@@ -152,6 +154,15 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
+
+                    // 활성 체인 퀘스트 카드 (최상단)
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final activeChain = ref.watch(activeChainProvider);
+                        if (activeChain == null) return const SizedBox.shrink();
+                        return ChainStepCard(progress: activeChain);
+                      },
+                    ),
 
                     for (final quest in pendingQuests)
                       _QuestCard(

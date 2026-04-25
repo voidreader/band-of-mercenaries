@@ -96,6 +96,8 @@ class QuestCompletionService {
     Map<String, DateTime?> mercCooldowns = const {},
     // 엘리트 드랍 테이블 엔트리
     List<EliteLootEntry> eliteLootEntries = const [],
+    // 체인 퀘스트 단계 여부 (true 시 death_rate 50% 감산)
+    bool isChainStep = false,
   }) {
     final partyPower = QuestCalculator.calculatePartyPower(
       mercs,
@@ -237,6 +239,9 @@ class QuestCompletionService {
         (1.0 - injuryReduction) *
         PassiveBonusService.getInjuryRateMultiplier(passiveEffects);
 
+    // 체인 퀘스트 단계 시 사망률 50% 감산
+    final effectiveDeathRate = difficulty.deathRate * (isChainStep ? 0.5 : 1.0);
+
     final now = DateTime.now();
     final mercDamages = <MercDamageResult>[];
     for (final merc in mercs) {
@@ -244,7 +249,7 @@ class QuestCompletionService {
         final damageRoll = random.nextDouble();
         final damageResult = QuestCalculator.calculateDamage(
           roll: damageRoll,
-          deathRate: difficulty.deathRate,
+          deathRate: effectiveDeathRate,
           injuryRate: effectiveInjuryRate,
           traitId: merc.traitId,
           traitIds: merc.allTraitIds,

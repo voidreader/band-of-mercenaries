@@ -93,6 +93,18 @@ class ActiveQuest extends HiveObject {
   @HiveField(20)
   String? eliteId;
 
+  // 체인 퀘스트 단계 여부
+  @HiveField(21)
+  bool? isChainStep;
+
+  // 체인 퀘스트 ID
+  @HiveField(22)
+  String? chainId;
+
+  // 체인 퀘스트 단계 번호
+  @HiveField(23)
+  int? chainStep;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -115,10 +127,16 @@ class ActiveQuest extends HiveObject {
     this.reputationReward,
     this.isAdvancedTrack,
     this.eliteId,
+    this.isChainStep,
+    this.chainId,
+    this.chainStep,
   });
 
   // 전용 퀘스트 여부 (isAdvancedTrack이 설정된 경우)
   bool get isFactionExclusive => isAdvancedTrack != null;
 
   bool get isElite => eliteId != null;
+
+  // 체인 퀘스트 여부
+  bool get isChainQuest => isChainStep ?? false;
 }

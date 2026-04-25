@@ -66,6 +66,10 @@ class UserData extends HiveObject {
   @HiveField(19)
   List<String> artifactItemIds;
 
+  // 완료된 체인 퀘스트 ID 목록
+  @HiveField(20)
+  List<String> completedChains;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -87,8 +91,12 @@ class UserData extends HiveObject {
     this.investigationRegionId,
     this.bannerItemId,
     List<String>? artifactItemIds,
+    List<String>? completedChains,
   })  : facilities = facilities ?? {},
-        artifactItemIds = artifactItemIds ?? <String>[];
+        artifactItemIds = artifactItemIds ?? <String>[],
+        completedChains = completedChains ?? <String>[];
+
+  Set<String> get completedChainSet => completedChains.toSet();
 
   static int calculateDistance(
       int fromRegion, int fromSector, int toRegion, int toSector) {

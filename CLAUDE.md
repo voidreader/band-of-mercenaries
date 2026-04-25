@@ -58,18 +58,31 @@ band_of_mercenaries/lib/
 │   ├── quest/             # 퀘스트/파견 시스템, QuestCompletionService
 │   ├── facility/          # 시설 시스템 (건설 큐, ConstructionService, 시설 탭 UI)
 │   ├── mercenary/         # 용병 모집/관리, FacilityService, RecruitmentService
+│   │   └── view/          # MercenaryDetailOverlay, MercenaryCard, TraitDetailDialog, TraitEvolutionDialog
+│   │                      # TraitSlotGrid, TraitHistorySection, BehaviorStatsSection, EquipmentSlotGrid
+│   │                      # MercenaryProfileHeader(StatChip/XpBar), MercenaryRoleSynergySection
+│   │                      # TraitEvolutionSection, TraitSynergyConflictSection, RecruitScreen
 │   ├── investigation/     # 지역 조사 시스템 (InvestigationNotifier, RegionStateRepository, InvestigationWidget)
+│   ├── chain_quest/       # 연계 퀘스트 시스템 (ChainQuestService, ChainQuestRepository, ChainStepCard, ChainCompletedDialog)
 │   ├── info/              # 정보 탭 (InfoScreen, FactionCodexScreen, FactionDetailScreen, FactionStateRepository, FactionJoinService)
+│   │   └── view/          # FactionDetailScreen, FactionCodexScreen, RankInfoScreen, GuildEquipmentScreen
+│   │                      # FactionTopBar, FactionJoinSection(ReputationBar/JoinConditions/ConditionRow/VisibilityBadge)
 │   └── settings/          # 설정 (시간 가속)
-└── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay, StatusBadge)
+└── shared/widgets/        # 공유 위젯 (BottomNavBar, TimerDisplay, StatusBadge, TierBadge, CardContainer, EmptyStateWidget)
 ```
 
 ### feature 모듈 구조
 
 각 feature는 `view/`, `domain/`, `data/` 3계층으로 분리:
-- **view**: 화면 위젯
+- **view**: 화면 위젯. Screen 파일 + 분리된 하위 위젯 파일들 (모두 `view/` 폴더 내 배치)
 - **domain**: 비즈니스 로직 (Notifier, Calculator, Service)
 - **data**: Repository (Hive 박스 접근)
+
+UI 리팩토링 정책은 `Docs/flutter-ui-refactor.md` 참조. 주요 규칙:
+- Provider를 읽으면 ConsumerWidget, 로컬 상태만 필요하면 StatefulWidget
+- 공통 위젯은 `shared/widgets/`에 배치 (동일 패턴 3개 파일 이상 반복 시)
+- 화면 전환은 Navigator.push 대신 상태 기반 렌더링 사용
+- 스타일(TextStyle/Color)은 `core/theme/` 중앙 관리, `shared/styles/` 생성 금지
 
 ### 상태 관리
 
@@ -89,6 +102,11 @@ band_of_mercenaries/lib/
 - `factionCodexScrollTargetProvider`: 조사 완료 팝업 → 세력 도감 자동 스크롤용 StateProvider<String?> (`features/info/domain/faction_codex_providers.dart`)
 - `factionRefreshProvider`: 세력 가입/탈퇴·평판 변경 후 FactionCodexScreen·FactionDetailScreen 강제 갱신용 StateProvider<int> 카운터 (`features/info/domain/faction_codex_providers.dart`)
 - `pendingEliteLootProvider`: 엘리트 드랍 결과를 도메인→뷰 계층으로 전달하는 StateProvider<Map<String, EliteLootResult>> (`features/quest/domain/quest_provider.dart`). `pendingTraitEventsProvider`와 동일 패턴. 퀘스트 완료 시 저장, `_showResult`에서 읽고 `QuestResultDialog`에 전달 후 제거
+- `chainQuestServiceProvider`: Provider<ChainQuestService> — 연계 퀘스트 순수 서비스 (`features/chain_quest/domain/chain_quest_provider.dart`)
+- `chainQuestProgressProvider`: StreamProvider<List<ChainQuestProgress>> — Hive `chainQuestProgress` 박스 watch 스트림
+- `activeChainProvider`: Provider<ChainQuestProgress?> — 현재 활성 연계 퀘스트 단계 (currentStepAvailableAt 기준 정렬, 1개만 노출)
+- `chainCompletedProvider`: StateProvider<ChainCompletedEvent?> — 체인 완주 이벤트 채널. `ChainQuestService.completeChain`이 publish, `app.dart`가 `ref.listen`으로 감지하여 `ChainCompletedDialog`를 `showDialog(barrierDismissible: false)`로 표시 (onDismiss 콜백에서 `state = null` 리셋)
+- `templateEngineProvider`: Provider<TemplateEngine> — 스테이트리스 템플릿 엔진 (`core/providers/template_engine_provider.dart`). 변수 치환 `{namespace.field}`, 조건 분기 `[if]...[/if]`, 랜덤 변주 `[pick A|B]` 지원. `TemplateContext`(user, merc, region, factionStates 등)로 렌더
 
 ### 데이터 흐름
 
@@ -130,6 +148,7 @@ band_of_mercenaries/lib/
 - factions: 세력 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, philosophy TEXT, tier_range JSONB, color TEXT, visibility_type TEXT DEFAULT 'public', join_rank_min TEXT nullable, join_needs_clue BOOLEAN DEFAULT false, passive_bonus_json JSONB DEFAULT '{}', conflict_faction_ids JSONB DEFAULT '[]'). 14개: 공개 6 / 비밀 4 / 지역 4
 - elite_monsters: 엘리트 몬스터 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, tier INT, environment_tags JSONB, combat_power INT, is_unique BOOL, title TEXT nullable, lore TEXT nullable, min_region_tier INT, max_region_tier INT). 보통 31종 + 유니크 8종 = 39종
 - elite_loot_tables: 엘리트 드랍 테이블 (id TEXT PK, elite_id TEXT FK, item_id TEXT nullable, bonus_gold INT, drop_weight INT, min_difficulty INT). 209행
+- chain_quests: 연계 퀘스트 단계 데이터 (id TEXT PK, chain_id TEXT, chain_name TEXT, step INT, total_steps INT, region_id INT nullable, target_region_id INT nullable, name TEXT, description TEXT, quest_type_id TEXT, difficulty INT, combat_power INT, reward_gold INT, reward_xp INT, reward_items JSONB, final_reward BOOL, final_reputation_bonus INT nullable, duration_seconds INT, next_step_delay_seconds INT, faction_tag_id TEXT nullable). 7체인 24단계
 
 **모델 JSON 키 규칙:** 모든 정적 데이터 모델은 snake_case @JsonKey를 사용 (Supabase 컬럼명과 일치). Dart 필드명과 동일한 경우 @JsonKey 생략.
 
@@ -142,7 +161,7 @@ band_of_mercenaries/lib/
 
 ### 영속성
 
-**Hive** (NoSQL key-value): 8개 박스. Hive 어댑터는 `hive_generator`로 자동 생성.
+**Hive** (NoSQL key-value): 9개 박스. Hive 어댑터는 `hive_generator`로 자동 생성.
 - `settings`: 일반 key-value (SettingsKeys 참조)
 - `user`: UserData (골드, 위치, 이동/건설/조사 상태)
 - `mercenaries`: Mercenary 모델
@@ -151,6 +170,7 @@ band_of_mercenaries/lib/
 - `staticDataCache`: String 타입, 정적 데이터 JSON 로컬 캐시 (오프라인 플레이용, SyncService가 관리)
 - `regionStates`: RegionState 모델 (typeId:8)
 - `factionStates`: FactionState 모델 (typeId:9)
+- `chainQuestProgress`: ChainQuestProgress 모델 (typeId:13)
 
 상세 필드 구조:
 - `mercenaries` 박스: Mercenary 모델 — HiveField(4) `str` (int), HiveField(5) `intelligence` (int), HiveField(6) `vit` (int), HiveField(7) `agi` (int, 기존 double speed에서 변환). HiveField(14) `stats` (Map<String, int>, 23개 행동 지표), HiveField(15) `traitIds` (List<String>, 복수 트레잇), HiveField(16) `traitHistory` (List<String>, 소멸/삭제 트레잇 기록 → 재획득 방지), HiveField(17) `deletedTraitIds` (List<String>, 삭제된 트레잇 기록 → 히스토리 UI에서 (삭제) 구분 표시). `allTraitIds` getter로 구 traitId 호환. 앱 첫 실행 시 `stat_migration_v2` 플래그(settings 박스)로 일회성 데이터 초기화 수행
@@ -160,6 +180,10 @@ band_of_mercenaries/lib/
 - `factionStates` 박스: FactionState 모델 (typeId:9) — factionId(String), clueRecords(List<FactionClueRecord>), HiveField(2) reputation(int?, null-safe 하위호환), HiveField(3) joined(bool?), HiveField(4) joinedAt(DateTime?), HiveField(5) facilityLevels(Map<String,int>?). `isJoined` getter(joined ?? false), `currentReputation` getter(reputation ?? 0), `maxClueLevel` getter(고유 discoveryId 수, 0~3). `discoveredInRegions` getter로 고유 리전 ID 계산. FactionClueRecord(typeId:10) — factionId, regionId, discoveryId, foundAt. `FactionStateRepository`로 CRUD (join/leave/addReputation/setReputation/applyConflictPenalty/getJoinedFactionIds). 순수 정적 서비스 `FactionJoinService`(`features/info/domain/faction_join_service.dart`)로 가입 조건 판정·평판 클램프·패시브 설명 처리
 - `settings` 박스: 일반 key-value. 키는 `SettingsKeys` 상수 클래스(`core/data/settings_keys.dart`)에서 중앙 관리. `factionQuestCooldowns` 키는 전용 퀘스트 6시간 쿨다운 맵(`{questId: ISO8601}` JSON 문자열). 접근 시마다 lazy cleanup 수행
 - `quests` 박스 세력 태그 확장: HiveField(17) `factionTag` (String?, 런타임 부여된 세력 태그 또는 전용 퀘스트 고정 세력), HiveField(18) `reputationReward` (int?, 완료 시 지급될 세력 평판 값, 생성 시점에 미리 계산), HiveField(19) `isAdvancedTrack` (bool?, 전용 퀘스트 트랙 구분: null=일반, false=기본, true=고급). `isFactionExclusive` getter(`isAdvancedTrack != null`)로 전용 퀘스트 판별
+- `quests` 박스 체인 퀘스트 확장: HiveField(20) `eliteId` (String?, 엘리트 몬스터 ID), HiveField(21) `isChainStep` (bool?), HiveField(22) `chainId` (String?), HiveField(23) `chainStep` (int?). `isChainQuest` getter(`isChainStep ?? false`), `isElite` getter(`eliteId != null`). 체인 단계는 `QuestListNotifier.injectChainStep(ChainQuestData, userRegion)`으로 대기열에 삽입
+- `user` 박스 체인 퀘스트: HiveField(20) `completedChains` (List<String>, 완료된 체인 ID 목록). `completedChainSet` getter로 Set 변환
+- `chainQuestProgress` 박스: ChainQuestProgress 모델 (typeId:13) — chainId(String), currentStep(int), status(ChainQuestStatus typeId:14: active/completed/dormant), startedAt, completedAt?, protagonistMercId?, currentStepAvailableAt?, stepFailureCount, lastActivityAt?. `ChainQuestRepository`로 CRUD + watchAll Stream. 14일 미활동 시 dormant 전환, 탭으로 재활성화
+- `activityLogs` 박스 체인 퀘스트 확장: `ActivityLogType` enum HiveField(18) `regionTransform` / HiveField(19) `chainProgressed` / HiveField(20) `chainCompleted`
 
 ### 코드 생성
 
@@ -188,7 +212,9 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **시간 가속**: 속도 변경 시 모든 활성 타이머(퀘스트, 이동, 건설, 조사)의 endTime을 비례 재계산 (개발/테스트용)
 - **이동 제한**: 파견 중인 용병이 있거나 조사 진행 중이면 이동 불가. 조사 중에도 이동 불가 (양방향 상호 배제)
 - **세력 발견**: 지역 조사 완료 시 `region_discoveries`의 `discovery_type == 'faction_clue'` 항목이 트리거되면 세력 단서를 발견. `discovery_data` JSON에서 `faction_id`, `clue_level`(1~3), `clue_text` 추출 → `FactionStateRepository.processClue()`로 Hive 저장. 동일 discoveryId 중복 발견 시 기록만 추가(maxClueLevel 유지). clue_level별 활동 로그: level1 "세력 단서 발견", level2 "세력 발견: {name}의 정체를 파악했다", level3 "거점 발견: {name}의 전초기지 위치를 파악했다". 조사 완료 팝업에 인라인 표시 + "도감에서 확인" 버튼으로 정보 탭 → 세력 도감 자동 이동
-- **엘리트 몬스터**: 퀘스트 생성 시 `EliteSpawnService.trySpawn()`이 확률적으로 엘리트를 배정. 보통 엘리트(🔥) / 유니크 엘리트(★) 2계층. 스폰 조건: 리전 티어 범위 + `environment_tags` 교집합 + 최소 난이도. 성공 시 `ActiveQuest`에 `eliteId`, `isElite=true` 저장. 완료 시 `EliteLootService.roll()`이 드랍 테이블에서 보너스 골드/아이템을 확률 추출하여 `EliteLootResult` 반환. 결과는 `pendingEliteLootProvider`를 통해 `QuestResultDialog`에 전달. `ActiveQuest` 모델 확장: HiveField(20) `eliteId`(String?), HiveField(21) `isElite`(bool?). `EliteMonsterData` / `EliteLootTableData` freezed 모델 — `core/models/elite_monster_data.dart` / `core/models/elite_loot_table_data.dart`
+- **엘리트 몬스터**: 퀘스트 생성 시 `EliteSpawnService.trySpawn()`이 확률적으로 엘리트를 배정. 보통 엘리트(🔥) / 유니크 엘리트(★) 2계층. 스폰 조건: 리전 티어 범위 + `environment_tags` 교집합 + 최소 난이도. 성공 시 `ActiveQuest`에 `eliteId` 저장. 완료 시 `EliteLootService.roll()`이 드랍 테이블에서 보너스 골드/아이템을 확률 추출하여 `EliteLootResult` 반환. 결과는 `pendingEliteLootProvider`를 통해 `QuestResultDialog`에 전달. `EliteMonsterData` / `EliteLootTableData` freezed 모델 — `core/models/elite_monster_data.dart` / `core/models/elite_loot_table_data.dart`
+- **연계 퀘스트(체인 퀘스트)**: 지역 조사 완료 시 `discovery_type == 'hidden_quest'`인 `region_discoveries` 항목이 체인을 활성화(`ChainQuestService.tryActivate`). 체인 7종 × 최대 24단계. 파견 화면 최상단 `ChainStepCard`에 현재 단계 고정 노출 (이동 필요/대기/휴면 오버레이). 주인공 용병 선정(1단계 첫 성공 시 partyPower 기여도 최고 용병, step>1 사망 시 폴백 재지정). 체인 단계 ActiveQuest의 주인공 사망률 50% 감소. 체인 완주 시 평판 보너스 + `completedChains` 기록 + `ChainCompletedDialog` 팝업(TemplateEngine 렌더). 14일 비활동 시 `dormant` 전환. 최종 단계 진입 전 길드 장비 슬롯 여유 체크(`canAdvanceToFinal`). `ChainQuestService`는 Ref 직접 의존 없는 순수 서비스(콜백 파라미터로 의존성 역전)
+- **템플릿 엔진**: `TemplateEngine`(const 스테이트리스 클래스) — 변수 치환 `{namespace.field}`, 조건 분기 `[if condition]...[/if]`, 랜덤 변주 `[pick A|B|C]`. `TemplateContext`(freezed, user 필수)로 컨텍스트 제공. `render()` fail-safe(예외 시 원문 반환). `TravelEventService.renderDescription()`으로 이동 이벤트 설명 치환, `ChainCompletedDialog`에서 체인 완주 설명 치환
 - **세력 가입/관리**: `FactionJoinService.canJoin()`으로 가입 조건 판정. 가입 조건: 평판 > 0 / `joinNeedsClue`이면 clueLevel 3 필요 / `joinRankMin`이면 현재 랭크 충족 필요 / 충돌 세력 제외 후 실효 가입 수 < 3. 평판은 `clampReputation()`으로 미가입 시 최대 10 / 가입 시 최대 100 / 최소 -100. 가입 시 충돌 세력(`conflict_faction_ids`)은 자동 탈퇴 + 평판 -20 패널티(`applyConflictPenalty`). 세력별 `passive_bonus_json`으로 패시브 혜택 기술(현재 표시만, 실제 효과 stub). `visibilityType` = 'public' 세력은 이름 항상 노출(clueLevel 1 보장), 'secret'/'regional' 세력은 발견 전 '???' 표시. 세력 도감(`FactionCodexScreen`): 공개 → 발견 비밀/지역(clueLevel 내림차순) → 미발견 순 정렬. 세력 상세(`FactionDetailScreen`): 평판 바, 가입 조건, 패시브, 가입/탈퇴 버튼
 
 ## 테스트 구조

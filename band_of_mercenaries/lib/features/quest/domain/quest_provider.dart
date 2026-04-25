@@ -29,6 +29,8 @@ import 'package:band_of_mercenaries/features/inventory/domain/equipment_effect_c
 import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
 import 'package:band_of_mercenaries/core/models/passive_effect.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
+import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -177,6 +179,25 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     count += passiveSlots;
 
     return count;
+  }
+
+  Future<void> injectChainStep(ChainQuestData stepData, int userRegion) async {
+    final id =
+        'chain_${stepData.chainId}_${stepData.step}_${DateTime.now().millisecondsSinceEpoch}';
+    final quest = ActiveQuest(
+      id: id,
+      questPoolId: stepData.id,
+      questTypeId: stepData.questTypeId,
+      difficulty: stepData.difficulty,
+      region: stepData.regionId ?? userRegion,
+      questName: stepData.name,
+      createdAt: DateTime.now(),
+      isChainStep: true,
+      chainId: stepData.chainId,
+      chainStep: stepData.step,
+    );
+    await _repo.addQuests([quest]);
+    _load();
   }
 
   Future<void> fillQuests() async {
@@ -421,6 +442,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       legendaryEffects: legendaryEffects,
       mercCooldowns: mercCooldowns,
       eliteLootEntries: staticData.eliteLootEntries,
+      isChainStep: quest.isChainQuest,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
@@ -618,6 +640,67 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         ...current,
         quest.id: traitEvents,
       };
+    }
+
+    // 체인 퀘스트 단계 완료 후크
+    if (quest.isChainQuest && quest.chainId != null && quest.chainStep != null) {
+      final chainStepData = staticData.chainQuests
+          .where((c) => c.chainId == quest.chainId && c.step == quest.chainStep)
+          .firstOrNull;
+      if (chainStepData != null) {
+        final chainQuestService = ref.read(chainQuestServiceProvider);
+        final questResultType = {
+          QuestResult.greatSuccess: 'greatSuccess',
+          QuestResult.success: 'success',
+          QuestResult.failure: 'failure',
+          QuestResult.criticalFailure: 'criticalFailure',
+        }[result.resultType] ?? 'failure';
+
+        await chainQuestService.onStepCompleted(
+          chainId: quest.chainId!,
+          step: quest.chainStep!,
+          questResultType: questResultType,
+          partyMercs: mercs,
+          allMercs: ref.read(mercenaryListProvider),
+          questTypeId: quest.questTypeId,
+          chainStepData: chainStepData,
+          logActivity: (message, type) {
+            ref.read(activityLogProvider.notifier).addLog(message, type);
+          },
+          onChainCompleted: (chainId, finalStep) async {
+            final userData = ref.read(userDataProvider);
+            if (userData != null &&
+                !chainQuestService.canAdvanceToFinal(
+                    finalStep: finalStep, user: userData)) {
+              ref.read(activityLogProvider.notifier).addLog(
+                '연계 최종 단계 진입 불가: 길드 장비 슬롯 부족',
+                ActivityLogType.chainProgressed,
+              );
+              return;
+            }
+            await chainQuestService.completeChain(
+              chainId: chainId,
+              finalStep: finalStep,
+              logActivity: (message, type) {
+                ref.read(activityLogProvider.notifier).addLog(message, type);
+              },
+              addReputation: (reputation) async {
+                await ref
+                    .read(userDataProvider.notifier)
+                    .addReputation(reputation);
+              },
+              addCompletedChain: (id) async {
+                await ref
+                    .read(userDataProvider.notifier)
+                    .addCompletedChain(id);
+              },
+              publishCompleted: (event) {
+                ref.read(chainCompletedProvider.notifier).state = event;
+              },
+            );
+          },
+        );
+      }
     }
 
     ref.read(mercenaryListProvider.notifier).refresh();

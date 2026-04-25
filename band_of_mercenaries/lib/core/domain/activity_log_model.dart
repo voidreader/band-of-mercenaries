@@ -40,6 +40,12 @@ enum ActivityLogType {
   essenceLostOnDeath,
   @HiveField(17)
   essenceLostOnRelease,
+  @HiveField(18)
+  regionTransform,
+  @HiveField(19)
+  chainProgressed,
+  @HiveField(20)
+  chainCompleted,
 }
 
 @HiveType(typeId: 7)

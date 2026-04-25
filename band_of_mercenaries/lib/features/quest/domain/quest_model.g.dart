@@ -38,13 +38,16 @@ class ActiveQuestAdapter extends TypeAdapter<ActiveQuest> {
       reputationReward: fields[18] as int?,
       isAdvancedTrack: fields[19] as bool?,
       eliteId: fields[20] as String?,
+      isChainStep: fields[21] as bool?,
+      chainId: fields[22] as String?,
+      chainStep: fields[23] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ActiveQuest obj) {
     writer
-      ..writeByte(21)
+      ..writeByte(24)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -86,7 +89,13 @@ class ActiveQuestAdapter extends TypeAdapter<ActiveQuest> {
       ..writeByte(19)
       ..write(obj.isAdvancedTrack)
       ..writeByte(20)
-      ..write(obj.eliteId);
+      ..write(obj.eliteId)
+      ..writeByte(21)
+      ..write(obj.isChainStep)
+      ..writeByte(22)
+      ..write(obj.chainId)
+      ..writeByte(23)
+      ..write(obj.chainStep);
   }
 
   @override
