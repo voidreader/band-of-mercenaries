@@ -2,23 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
-
-// Returned from dialog to indicate which evolution path the player chose.
-class EvolutionChoice {
-  final bool isSingle;
-  final SingleEvolutionCandidate? single;
-  final ComboEvolutionCandidate? combo;
-
-  EvolutionChoice.fromSingle(SingleEvolutionCandidate c)
-      : isSingle = true,
-        single = c,
-        combo = null;
-
-  EvolutionChoice.fromCombo(ComboEvolutionCandidate c)
-      : isSingle = false,
-        single = null,
-        combo = c;
-}
+import 'package:band_of_mercenaries/features/mercenary/domain/evolution_choice.dart';
 
 // Internal model representing one selectable evolution option card.
 class _EvoCard {
