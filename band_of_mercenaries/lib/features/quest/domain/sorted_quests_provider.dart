@@ -35,6 +35,8 @@ final sortedPendingQuestsProvider = Provider<QuestSortResult>((ref) {
 
   final pending = quests.where((q) => q.status == QuestStatus.pending).toList();
   final chainProgress = chainProgressAsync.valueOrNull ?? const <ChainQuestProgress>[];
+  // Repository는 Provider<Repository> (불변 싱글턴) — 재구독 없이 read해도 항상 최신 인스턴스.
+  // 무효화 트리거는 위의 currentRegionSectorChangesProvider/factionRefreshProvider watch가 담당.
   final regionState = ref.read(regionStateRepositoryProvider).getState(userData.region);
   final joinedFactionIds =
       ref.read(factionStateRepositoryProvider).getJoinedFactionIds().toSet();
