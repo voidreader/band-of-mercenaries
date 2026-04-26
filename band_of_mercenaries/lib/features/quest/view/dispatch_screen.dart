@@ -6,8 +6,6 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/dialog_request.dart';
-import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
-import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart' show TraitEventResult;
@@ -19,8 +17,8 @@ import 'package:band_of_mercenaries/features/quest/view/dispatch_detail_page.dar
 import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
 import 'package:band_of_mercenaries/features/quest/view/chain_top_section.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
-import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_dialog.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/evolution_choice.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_dialog.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_evolution_dialog.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_notifier.dart' show regionStateRepositoryProvider;
@@ -281,12 +279,11 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
   ) async {
     final staticData = ref.read(staticDataProvider).value;
     if (staticData == null) return;
-    final mercs = ref.read(mercenaryListProvider);
-    final mercRepo = ref.read(mercenaryRepositoryProvider);
 
     for (final entry in events.entries) {
       final mercId = entry.key;
       final event = entry.value;
+      final mercs = ref.read(mercenaryListProvider);
       final merc = mercs.where((m) => m.id == mercId).firstOrNull;
       if (merc == null || !context.mounted) continue;
 
@@ -305,8 +302,8 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
       // 2. Evolution selection
       if (event.singleEvoCandidates.isNotEmpty || event.comboEvoCandidates.isNotEmpty) {
         if (!context.mounted) break;
-        // Get current acquired traits for the card comparison view
-        final updatedMerc = mercRepo.getAll().where((m) => m.id == mercId).firstOrNull;
+        // 진화 다이얼로그 표시 직전에 최신 trait 목록 fetch (방금 적용된 acquisition 반영)
+        final updatedMerc = ref.read(mercenaryListProvider).where((m) => m.id == mercId).firstOrNull;
         if (updatedMerc == null) continue;
         final currentTraits = updatedMerc.allTraitIds
             .map((key) => staticData.traits.where((t) => t.key == key).firstOrNull)
@@ -326,33 +323,8 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
           ),
         );
 
-        // Apply evolution if chosen
-        if (choice != null) {
-          if (choice.isSingle && choice.single != null) {
-            final s = choice.single!;
-            await mercRepo.evolveTrait(mercId, s.fromKey, s.toKey);
-            final fromTrait = staticData.traits.where((t) => t.key == s.fromKey).firstOrNull;
-            final toTrait = staticData.traits.where((t) => t.key == s.toKey).firstOrNull;
-            if (fromTrait != null && toTrait != null) {
-              ref.read(activityLogProvider.notifier).addLog(
-                '${updatedMerc.name}의 "${fromTrait.name}"이(가) "${toTrait.name}"(으)로 진화!',
-                ActivityLogType.traitEvolved,
-              );
-            }
-          } else if (!choice.isSingle && choice.combo != null) {
-            final c = choice.combo!;
-            await mercRepo.comboEvolveTrait(mercId, c.trait1Key, c.trait2Key, c.resultKey);
-            final t1 = staticData.traits.where((t) => t.key == c.trait1Key).firstOrNull;
-            final t2 = staticData.traits.where((t) => t.key == c.trait2Key).firstOrNull;
-            final result = staticData.traits.where((t) => t.key == c.resultKey).firstOrNull;
-            if (t1 != null && t2 != null && result != null) {
-              ref.read(activityLogProvider.notifier).addLog(
-                '${updatedMerc.name}의 "${t1.name}" + "${t2.name}" → "${result.name}"(으)로 조합 진화!',
-                ActivityLogType.traitEvolved,
-              );
-            }
-          }
-          ref.read(mercenaryListProvider.notifier).refresh();
+        if (choice != null && context.mounted) {
+          await ref.read(mercenaryListProvider.notifier).applyEvolution(mercId, choice);
         }
       }
     }
