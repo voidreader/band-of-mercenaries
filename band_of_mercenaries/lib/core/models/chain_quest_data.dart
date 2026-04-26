@@ -13,6 +13,7 @@ class ChainQuestData with _$ChainQuestData {
     @JsonKey(name: 'total_steps') required int totalSteps,
     @JsonKey(name: 'region_id') int? regionId,
     @JsonKey(name: 'target_region_id') int? targetRegionId,
+    @JsonKey(name: 'target_sector_id') int? targetSectorId,
     required String name,
     required String description,
     @JsonKey(name: 'quest_type_id') required String questTypeId,

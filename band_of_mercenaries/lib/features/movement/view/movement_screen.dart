@@ -57,16 +57,21 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
 
     return staticData.when(
       data: (data) {
-        // active 체인 진행 중인 단계의 대상 리전 ID 집합 계산
-        final chainTargetRegionIds = <int>{};
+        // active 체인 진행 중인 단계의 대상 리전→섹터 매핑 계산.
+        // value에 null이 포함되면 해당 region 전체 섹터 하이라이트(섹터 미지정 fallback).
+        // targetSectorId는 1-based(1..10) — UserData.sector / 화면 표시 sector 값과 동일.
+        final chainTargetSectors = <int, Set<int?>>{};
         for (final progress in chainProgressList) {
           if (progress.status != ChainQuestStatus.active) continue;
           final step = data.chainQuests.where(
             (q) => q.chainId == progress.chainId && q.step == progress.currentStep,
           ).firstOrNull;
           if (step == null) continue;
-          final targetId = step.targetRegionId ?? step.regionId;
-          if (targetId != null) chainTargetRegionIds.add(targetId);
+          final regionId = step.targetRegionId ?? step.regionId;
+          if (regionId == null) continue;
+          chainTargetSectors
+              .putIfAbsent(regionId, () => <int?>{})
+              .add(step.targetSectorId);
         }
         final isInvestigating = userData.investigatingMercId != null;
         final currentRegion = data.regions.firstWhere((r) => r.region == userData.region);
@@ -235,8 +240,10 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                               final sectorKey = i.toString(); // 저장 키는 0-based
                               final transformType = sectorChanges[sectorKey];
                               final isSelected = sector == _selectedSector;
-                              // 선택된 리전이 체인 대상 리전이면 해당 리전 전체 섹터에 강조 적용
-                              final isChainTarget = chainTargetRegionIds.contains(_selectedRegion);
+                              // 체인 매칭: targetSectorId 일치 또는 섹터 미지정(null=region 전체) fallback
+                              final targets = chainTargetSectors[_selectedRegion];
+                              final isChainTarget = targets != null &&
+                                  (targets.contains(null) || targets.contains(sector));
                               return GestureDetector(
                                 onTap: userData.isMoving ? null : () {
                                   setState(() => _selectedSector = sector);

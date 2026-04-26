@@ -32,6 +32,8 @@ mixin _$ChainQuestData {
   int? get regionId => throw _privateConstructorUsedError;
   @JsonKey(name: 'target_region_id')
   int? get targetRegionId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'target_sector_id')
+  int? get targetSectorId => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   @JsonKey(name: 'quest_type_id')
@@ -76,6 +78,7 @@ abstract class $ChainQuestDataCopyWith<$Res> {
       @JsonKey(name: 'total_steps') int totalSteps,
       @JsonKey(name: 'region_id') int? regionId,
       @JsonKey(name: 'target_region_id') int? targetRegionId,
+      @JsonKey(name: 'target_sector_id') int? targetSectorId,
       String name,
       String description,
       @JsonKey(name: 'quest_type_id') String questTypeId,
@@ -111,6 +114,7 @@ class _$ChainQuestDataCopyWithImpl<$Res, $Val extends ChainQuestData>
     Object? totalSteps = null,
     Object? regionId = freezed,
     Object? targetRegionId = freezed,
+    Object? targetSectorId = freezed,
     Object? name = null,
     Object? description = null,
     Object? questTypeId = null,
@@ -153,6 +157,10 @@ class _$ChainQuestDataCopyWithImpl<$Res, $Val extends ChainQuestData>
       targetRegionId: freezed == targetRegionId
           ? _value.targetRegionId
           : targetRegionId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      targetSectorId: freezed == targetSectorId
+          ? _value.targetSectorId
+          : targetSectorId // ignore: cast_nullable_to_non_nullable
               as int?,
       name: null == name
           ? _value.name
@@ -226,6 +234,7 @@ abstract class _$$ChainQuestDataImplCopyWith<$Res>
       @JsonKey(name: 'total_steps') int totalSteps,
       @JsonKey(name: 'region_id') int? regionId,
       @JsonKey(name: 'target_region_id') int? targetRegionId,
+      @JsonKey(name: 'target_sector_id') int? targetSectorId,
       String name,
       String description,
       @JsonKey(name: 'quest_type_id') String questTypeId,
@@ -259,6 +268,7 @@ class __$$ChainQuestDataImplCopyWithImpl<$Res>
     Object? totalSteps = null,
     Object? regionId = freezed,
     Object? targetRegionId = freezed,
+    Object? targetSectorId = freezed,
     Object? name = null,
     Object? description = null,
     Object? questTypeId = null,
@@ -301,6 +311,10 @@ class __$$ChainQuestDataImplCopyWithImpl<$Res>
       targetRegionId: freezed == targetRegionId
           ? _value.targetRegionId
           : targetRegionId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      targetSectorId: freezed == targetSectorId
+          ? _value.targetSectorId
+          : targetSectorId // ignore: cast_nullable_to_non_nullable
               as int?,
       name: null == name
           ? _value.name
@@ -369,6 +383,7 @@ class _$ChainQuestDataImpl implements _ChainQuestData {
       @JsonKey(name: 'total_steps') required this.totalSteps,
       @JsonKey(name: 'region_id') this.regionId,
       @JsonKey(name: 'target_region_id') this.targetRegionId,
+      @JsonKey(name: 'target_sector_id') this.targetSectorId,
       required this.name,
       required this.description,
       @JsonKey(name: 'quest_type_id') required this.questTypeId,
@@ -407,6 +422,9 @@ class _$ChainQuestDataImpl implements _ChainQuestData {
   @override
   @JsonKey(name: 'target_region_id')
   final int? targetRegionId;
+  @override
+  @JsonKey(name: 'target_sector_id')
+  final int? targetSectorId;
   @override
   final String name;
   @override
@@ -452,7 +470,7 @@ class _$ChainQuestDataImpl implements _ChainQuestData {
 
   @override
   String toString() {
-    return 'ChainQuestData(id: $id, chainId: $chainId, chainName: $chainName, step: $step, totalSteps: $totalSteps, regionId: $regionId, targetRegionId: $targetRegionId, name: $name, description: $description, questTypeId: $questTypeId, difficulty: $difficulty, combatPower: $combatPower, rewardGold: $rewardGold, rewardXp: $rewardXp, rewardItems: $rewardItems, finalReward: $finalReward, finalReputationBonus: $finalReputationBonus, durationSeconds: $durationSeconds, nextStepDelaySeconds: $nextStepDelaySeconds, factionTagId: $factionTagId)';
+    return 'ChainQuestData(id: $id, chainId: $chainId, chainName: $chainName, step: $step, totalSteps: $totalSteps, regionId: $regionId, targetRegionId: $targetRegionId, targetSectorId: $targetSectorId, name: $name, description: $description, questTypeId: $questTypeId, difficulty: $difficulty, combatPower: $combatPower, rewardGold: $rewardGold, rewardXp: $rewardXp, rewardItems: $rewardItems, finalReward: $finalReward, finalReputationBonus: $finalReputationBonus, durationSeconds: $durationSeconds, nextStepDelaySeconds: $nextStepDelaySeconds, factionTagId: $factionTagId)';
   }
 
   @override
@@ -471,6 +489,8 @@ class _$ChainQuestDataImpl implements _ChainQuestData {
                 other.regionId == regionId) &&
             (identical(other.targetRegionId, targetRegionId) ||
                 other.targetRegionId == targetRegionId) &&
+            (identical(other.targetSectorId, targetSectorId) ||
+                other.targetSectorId == targetSectorId) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -509,6 +529,7 @@ class _$ChainQuestDataImpl implements _ChainQuestData {
         totalSteps,
         regionId,
         targetRegionId,
+        targetSectorId,
         name,
         description,
         questTypeId,
@@ -548,6 +569,7 @@ abstract class _ChainQuestData implements ChainQuestData {
       @JsonKey(name: 'total_steps') required final int totalSteps,
       @JsonKey(name: 'region_id') final int? regionId,
       @JsonKey(name: 'target_region_id') final int? targetRegionId,
+      @JsonKey(name: 'target_sector_id') final int? targetSectorId,
       required final String name,
       required final String description,
       @JsonKey(name: 'quest_type_id') required final String questTypeId,
@@ -585,6 +607,9 @@ abstract class _ChainQuestData implements ChainQuestData {
   @override
   @JsonKey(name: 'target_region_id')
   int? get targetRegionId;
+  @override
+  @JsonKey(name: 'target_sector_id')
+  int? get targetSectorId;
   @override
   String get name;
   @override
