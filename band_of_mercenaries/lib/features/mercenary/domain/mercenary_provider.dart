@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/evolution_choice.dart';
 
 final mercenaryRepositoryProvider = Provider((ref) => MercenaryRepository());
 
@@ -36,6 +37,51 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
   }
 
   void refresh() => _load();
+
+  /// 트레잇 진화 선택 결과를 적용한다.
+  /// view(`_showTraitEvents`)가 EvolutionChoice를 받아 본 메서드에 위임한다.
+  ///
+  /// 책임:
+  /// 1. Repository 호출 (단일/조합 분기)
+  /// 2. 트레잇 이름 lookup (ActivityLog 메시지용)
+  /// 3. ActivityLog "진화!" 메시지 기록 (트레잇/staticData lookup 실패 시 skip)
+  /// 4. state refresh
+  Future<void> applyEvolution(String mercId, EvolutionChoice choice) async {
+    final merc = state.where((m) => m.id == mercId).firstOrNull;
+    if (merc == null) return;
+
+    final staticData = ref.read(staticDataProvider).value;
+
+    if (choice.isSingle && choice.single != null) {
+      final s = choice.single!;
+      await _repo.evolveTrait(mercId, s.fromKey, s.toKey);
+      if (staticData != null) {
+        final fromTrait = staticData.traits.where((t) => t.key == s.fromKey).firstOrNull;
+        final toTrait = staticData.traits.where((t) => t.key == s.toKey).firstOrNull;
+        if (fromTrait != null && toTrait != null) {
+          ref.read(activityLogProvider.notifier).addLog(
+            '${merc.name}의 "${fromTrait.name}"이(가) "${toTrait.name}"(으)로 진화!',
+            ActivityLogType.traitEvolved,
+          );
+        }
+      }
+    } else if (!choice.isSingle && choice.combo != null) {
+      final c = choice.combo!;
+      await _repo.comboEvolveTrait(mercId, c.trait1Key, c.trait2Key, c.resultKey);
+      if (staticData != null) {
+        final t1 = staticData.traits.where((t) => t.key == c.trait1Key).firstOrNull;
+        final t2 = staticData.traits.where((t) => t.key == c.trait2Key).firstOrNull;
+        final result = staticData.traits.where((t) => t.key == c.resultKey).firstOrNull;
+        if (t1 != null && t2 != null && result != null) {
+          ref.read(activityLogProvider.notifier).addLog(
+            '${merc.name}의 "${t1.name}" + "${t2.name}" → "${result.name}"(으)로 조합 진화!',
+            ActivityLogType.traitEvolved,
+          );
+        }
+      }
+    }
+    refresh();
+  }
 
   void _checkTimers() {
     final now = DateTime.now();
