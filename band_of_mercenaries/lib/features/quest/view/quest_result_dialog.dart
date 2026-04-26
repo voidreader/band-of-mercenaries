@@ -51,7 +51,6 @@ class QuestResultDialog extends ConsumerWidget {
                     style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary)),
                 const SizedBox(height: 16),
 
-                // Result banner
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
@@ -63,20 +62,39 @@ class QuestResultDialog extends ConsumerWidget {
                     child: Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
                   ),
                 ),
+
+                if (quest.renderedNarrative != null && quest.renderedNarrative!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.tier1Bg.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      quest.renderedNarrative!,
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
 
-                // Mercenary status
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text('용병 상태', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
                 const SizedBox(height: 8),
                 for (final mercId in quest.dispatchedMercIds)
-                  _buildMercStatus(mercId, mercs, data),
+                  _MercStatusRow(mercId: mercId, mercs: mercs, staticData: data),
 
                 const SizedBox(height: 16),
 
-                // Reward details section
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
@@ -90,25 +108,25 @@ class QuestResultDialog extends ConsumerWidget {
                     children: [
                       const Text('보상 내역', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
-                      _buildRewardRow('기본 보상', '${rewardGold}G', AppTheme.textSecondary),
+                      _RewardRow(label: '기본 보상', value: '${rewardGold}G', color: AppTheme.textSecondary),
                       const SizedBox(height: 4),
-                      _buildRewardRow('파견 비용', '-${dispatchCost}G', AppTheme.textTertiary),
+                      _RewardRow(label: '파견 비용', value: '-${dispatchCost}G', color: AppTheme.textTertiary),
                       const SizedBox(height: 4),
-                      _buildRewardRow('인건비', '-${totalWage}G', AppTheme.textTertiary),
+                      _RewardRow(label: '인건비', value: '-${totalWage}G', color: AppTheme.textTertiary),
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 6),
                         child: Divider(height: 1, color: AppTheme.borderLight),
                       ),
-                      _buildRewardRow(
-                        '순수익',
-                        '${netProfit >= 0 ? '+' : ''}${netProfit}G',
-                        netProfit >= 0 ? Colors.green : Colors.red,
+                      _RewardRow(
+                        label: '순수익',
+                        value: '${netProfit >= 0 ? '+' : ''}${netProfit}G',
+                        color: netProfit >= 0 ? AppTheme.success : AppTheme.criticalFailure,
                         isBold: true,
                       ),
                       const SizedBox(height: 4),
-                      _buildRewardRow('획득 경험치', '+$earnedXp XP', AppTheme.timerBlue),
+                      _RewardRow(label: '획득 경험치', value: '+$earnedXp XP', color: AppTheme.timerBlue),
                       const SizedBox(height: 4),
-                      _buildRewardRow('획득 명성', '+$earnedReputation', AppTheme.tier4),
+                      _RewardRow(label: '획득 명성', value: '+$earnedReputation', color: AppTheme.tier4),
                     ],
                   ),
                 ),
@@ -116,7 +134,7 @@ class QuestResultDialog extends ConsumerWidget {
                 if (eliteLoot != null &&
                     (eliteLoot!.bonusGold > 0 || eliteLoot!.itemDrops.isNotEmpty)) ...[
                   const SizedBox(height: 12),
-                  _buildEliteLootSection(data),
+                  _EliteLootSection(loot: eliteLoot!, staticData: data, eliteId: quest.eliteId),
                 ],
 
                 const SizedBox(height: 16),
@@ -141,14 +159,26 @@ class QuestResultDialog extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildEliteLootSection(StaticGameData data) {
-    final loot = eliteLoot!;
-    final eliteData = data.eliteMonsters.where((m) => m.id == quest.eliteId).firstOrNull;
+class _EliteLootSection extends StatelessWidget {
+  final EliteLootResult loot;
+  final StaticGameData staticData;
+  final String? eliteId;
+
+  const _EliteLootSection({
+    required this.loot,
+    required this.staticData,
+    required this.eliteId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final eliteData = staticData.eliteMonsters.where((m) => m.id == eliteId).firstOrNull;
     final isUnique = eliteData?.isUnique ?? false;
-    final accentColor = isUnique ? const Color(0xFFce93d8) : const Color(0xFFffb74d);
-    final bgColor = isUnique ? const Color(0xFF1a0028) : const Color(0xFF1a0d00);
-    final borderColor = isUnique ? const Color(0xFF7b1fa2) : const Color(0xFFe65100);
+    final accentColor = isUnique ? AppTheme.eliteUniqueAccent : AppTheme.eliteAccent;
+    final bgColor = isUnique ? AppTheme.eliteUniqueBg : AppTheme.eliteBg;
+    final borderColor = isUnique ? AppTheme.eliteUniqueBorder : AppTheme.eliteBorder;
     final header = isUnique ? '★ 유니크 드랍' : '🔥 엘리트 드랍';
 
     return Container(
@@ -165,14 +195,14 @@ class QuestResultDialog extends ConsumerWidget {
           Text(header, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: accentColor)),
           const SizedBox(height: 8),
           if (loot.bonusGold > 0) ...[
-            _buildRewardRow('추가 골드', '+${loot.bonusGold}G', accentColor),
+            _RewardRow(label: '추가 골드', value: '+${loot.bonusGold}G', color: accentColor),
             const SizedBox(height: 4),
           ],
           for (final itemId in loot.itemDrops) ...[
-            _buildRewardRow(
-              data.items.where((i) => i.id == itemId).firstOrNull?.name ?? itemId,
-              '획득',
-              accentColor,
+            _RewardRow(
+              label: staticData.items.where((i) => i.id == itemId).firstOrNull?.name ?? itemId,
+              value: '획득',
+              color: accentColor,
             ),
             const SizedBox(height: 4),
           ],
@@ -180,25 +210,21 @@ class QuestResultDialog extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildRewardRow(String label, String value, Color valueColor, {bool isBold = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            color: valueColor,
-            fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
+class _MercStatusRow extends StatelessWidget {
+  final String mercId;
+  final List<Mercenary> mercs;
+  final StaticGameData staticData;
 
-  Widget _buildMercStatus(String mercId, List<Mercenary> mercs, StaticGameData data) {
+  const _MercStatusRow({
+    required this.mercId,
+    required this.mercs,
+    required this.staticData,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final Mercenary? merc = mercs.where((m) => m.id == mercId).firstOrNull;
     if (merc == null) {
       return Padding(
@@ -213,7 +239,7 @@ class QuestResultDialog extends ConsumerWidget {
       );
     }
 
-    final job = data.jobs.firstWhere((j) => j.id == merc.jobId);
+    final job = staticData.jobs.firstWhere((j) => j.id == merc.jobId);
     final statusText = switch (merc.status) {
       MercenaryStatus.normal || MercenaryStatus.tired => '무사 귀환',
       MercenaryStatus.injured => '부상',
@@ -234,6 +260,38 @@ class QuestResultDialog extends ConsumerWidget {
           Text(statusText, style: TextStyle(fontSize: 14, color: statusColor, fontWeight: FontWeight.w600)),
         ],
       ),
+    );
+  }
+}
+
+class _RewardRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool isBold;
+
+  const _RewardRow({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.isBold = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            color: color,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 }

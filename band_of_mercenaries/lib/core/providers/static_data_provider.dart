@@ -24,6 +24,7 @@ import 'package:band_of_mercenaries/core/models/item_data.dart';
 import 'package:band_of_mercenaries/core/models/elite_monster_data.dart';
 import 'package:band_of_mercenaries/core/models/elite_loot_entry.dart';
 import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
+import 'package:band_of_mercenaries/core/models/quest_narrative_data.dart';
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -48,6 +49,7 @@ class StaticGameData {
   final List<EliteMonsterData> eliteMonsters;
   final List<EliteLootEntry> eliteLootEntries;
   final List<ChainQuestData> chainQuests;
+  final List<QuestNarrativeData> questNarratives;
 
   const StaticGameData({
     required this.difficulties,
@@ -72,6 +74,7 @@ class StaticGameData {
     required this.eliteMonsters,
     required this.eliteLootEntries,
     required this.chainQuests,
+    required this.questNarratives,
   });
 }
 
@@ -102,5 +105,6 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     eliteMonsters: dataLoader.loadFromCache('elite_monsters', EliteMonsterData.fromJson),
     eliteLootEntries: dataLoader.loadFromCache('elite_loot_tables', EliteLootEntry.fromJson),
     chainQuests: dataLoader.loadFromCache('chain_quests', ChainQuestData.fromJson),
+    questNarratives: dataLoader.loadFromCache('quest_narratives', QuestNarrativeData.fromJson),
   );
 });

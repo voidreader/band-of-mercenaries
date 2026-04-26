@@ -63,6 +63,7 @@ StaticGameData _makeStaticData({
     eliteMonsters: const [],
     eliteLootEntries: const [],
     chainQuests: const [],
+    questNarratives: const [],
   );
 }
 

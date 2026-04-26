@@ -25,6 +25,7 @@ mixin _$TemplateContext {
   int? get currentSectorIndex => throw _privateConstructorUsedError;
   List<Mercenary> get rosterForTeam => throw _privateConstructorUsedError;
   String? get eliteId => throw _privateConstructorUsedError;
+  String? get enemyName => throw _privateConstructorUsedError;
   int? get seed => throw _privateConstructorUsedError;
   EvaluationScope get evaluationScope => throw _privateConstructorUsedError;
 
@@ -49,6 +50,7 @@ abstract class $TemplateContextCopyWith<$Res> {
       int? currentSectorIndex,
       List<Mercenary> rosterForTeam,
       String? eliteId,
+      String? enemyName,
       int? seed,
       EvaluationScope evaluationScope});
 
@@ -77,6 +79,7 @@ class _$TemplateContextCopyWithImpl<$Res, $Val extends TemplateContext>
     Object? currentSectorIndex = freezed,
     Object? rosterForTeam = null,
     Object? eliteId = freezed,
+    Object? enemyName = freezed,
     Object? seed = freezed,
     Object? evaluationScope = null,
   }) {
@@ -116,6 +119,10 @@ class _$TemplateContextCopyWithImpl<$Res, $Val extends TemplateContext>
       eliteId: freezed == eliteId
           ? _value.eliteId
           : eliteId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      enemyName: freezed == enemyName
+          ? _value.enemyName
+          : enemyName // ignore: cast_nullable_to_non_nullable
               as String?,
       seed: freezed == seed
           ? _value.seed
@@ -159,6 +166,7 @@ abstract class _$$TemplateContextImplCopyWith<$Res>
       int? currentSectorIndex,
       List<Mercenary> rosterForTeam,
       String? eliteId,
+      String? enemyName,
       int? seed,
       EvaluationScope evaluationScope});
 
@@ -186,6 +194,7 @@ class __$$TemplateContextImplCopyWithImpl<$Res>
     Object? currentSectorIndex = freezed,
     Object? rosterForTeam = null,
     Object? eliteId = freezed,
+    Object? enemyName = freezed,
     Object? seed = freezed,
     Object? evaluationScope = null,
   }) {
@@ -226,6 +235,10 @@ class __$$TemplateContextImplCopyWithImpl<$Res>
           ? _value.eliteId
           : eliteId // ignore: cast_nullable_to_non_nullable
               as String?,
+      enemyName: freezed == enemyName
+          ? _value.enemyName
+          : enemyName // ignore: cast_nullable_to_non_nullable
+              as String?,
       seed: freezed == seed
           ? _value.seed
           : seed // ignore: cast_nullable_to_non_nullable
@@ -251,6 +264,7 @@ class _$TemplateContextImpl implements _TemplateContext {
       this.currentSectorIndex,
       final List<Mercenary> rosterForTeam = const <Mercenary>[],
       this.eliteId,
+      this.enemyName,
       this.seed,
       this.evaluationScope = EvaluationScope.mercenary})
       : _factionStates = factionStates,
@@ -298,6 +312,8 @@ class _$TemplateContextImpl implements _TemplateContext {
   @override
   final String? eliteId;
   @override
+  final String? enemyName;
+  @override
   final int? seed;
   @override
   @JsonKey()
@@ -305,7 +321,7 @@ class _$TemplateContextImpl implements _TemplateContext {
 
   @override
   String toString() {
-    return 'TemplateContext(merc: $merc, quest: $quest, region: $region, user: $user, factionStates: $factionStates, sectorChanges: $sectorChanges, currentSectorIndex: $currentSectorIndex, rosterForTeam: $rosterForTeam, eliteId: $eliteId, seed: $seed, evaluationScope: $evaluationScope)';
+    return 'TemplateContext(merc: $merc, quest: $quest, region: $region, user: $user, factionStates: $factionStates, sectorChanges: $sectorChanges, currentSectorIndex: $currentSectorIndex, rosterForTeam: $rosterForTeam, eliteId: $eliteId, enemyName: $enemyName, seed: $seed, evaluationScope: $evaluationScope)';
   }
 
   @override
@@ -326,6 +342,8 @@ class _$TemplateContextImpl implements _TemplateContext {
             const DeepCollectionEquality()
                 .equals(other._rosterForTeam, _rosterForTeam) &&
             (identical(other.eliteId, eliteId) || other.eliteId == eliteId) &&
+            (identical(other.enemyName, enemyName) ||
+                other.enemyName == enemyName) &&
             (identical(other.seed, seed) || other.seed == seed) &&
             (identical(other.evaluationScope, evaluationScope) ||
                 other.evaluationScope == evaluationScope));
@@ -343,6 +361,7 @@ class _$TemplateContextImpl implements _TemplateContext {
       currentSectorIndex,
       const DeepCollectionEquality().hash(_rosterForTeam),
       eliteId,
+      enemyName,
       seed,
       evaluationScope);
 
@@ -365,6 +384,7 @@ abstract class _TemplateContext implements TemplateContext {
       final int? currentSectorIndex,
       final List<Mercenary> rosterForTeam,
       final String? eliteId,
+      final String? enemyName,
       final int? seed,
       final EvaluationScope evaluationScope}) = _$TemplateContextImpl;
 
@@ -386,6 +406,8 @@ abstract class _TemplateContext implements TemplateContext {
   List<Mercenary> get rosterForTeam;
   @override
   String? get eliteId;
+  @override
+  String? get enemyName;
   @override
   int? get seed;
   @override

@@ -11,7 +11,7 @@ String? _resolveVariable(String namespace, String field, TemplateContext ctx) {
     case 'quest':
       final quest = ctx.quest;
       if (quest == null) return null;
-      return _resolveQuestField(field, quest);
+      return _resolveQuestField(field, quest, ctx: ctx);
 
     case 'region':
       return _resolveRegionField(field, ctx.region, ctx);
@@ -51,7 +51,7 @@ String? _resolveMercField(String field, Mercenary merc) {
   }
 }
 
-String? _resolveQuestField(String field, ActiveQuest quest) {
+String? _resolveQuestField(String field, ActiveQuest quest, {TemplateContext? ctx}) {
   switch (field) {
     case 'name':
       return quest.questName;
@@ -73,8 +73,7 @@ String? _resolveQuestField(String field, ActiveQuest quest) {
       if (reward == null || wage == null || cost == null) return null;
       return (reward - wage - cost).toString();
     case 'enemy':
-      // ActiveQuest에 enemyName 필드 없음 — 호출부에서 fallback 사용 권장
-      return null;
+      return ctx?.enemyName ?? '적';
     case 'is_elite':
       return quest.isElite.toString();
     case 'elite_name':

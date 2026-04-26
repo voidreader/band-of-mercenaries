@@ -109,6 +109,9 @@ class ActiveQuest extends HiveObject {
   @HiveField(24)
   Map<String, dynamic>? specialFlags;
 
+  @HiveField(25)
+  String? renderedNarrative;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -135,6 +138,7 @@ class ActiveQuest extends HiveObject {
     this.chainId,
     this.chainStep,
     this.specialFlags,
+    this.renderedNarrative,
   });
 
   // 전용 퀘스트 여부 (isAdvancedTrack이 설정된 경우)

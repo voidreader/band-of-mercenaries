@@ -32,6 +32,7 @@ import 'package:band_of_mercenaries/features/investigation/data/region_state_rep
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
 import 'package:band_of_mercenaries/features/quest/domain/special_flag_processor.dart';
+import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -456,6 +457,12 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       mercCooldowns: mercCooldowns,
       eliteLootEntries: staticData.eliteLootEntries,
       isChainStep: quest.isChainQuest,
+      templateEngine: ref.read(templateEngineProvider),
+      userData: userData,
+      factionStates: ref.read(factionStateRepositoryProvider).getAll(),
+      sectorChanges: ref.read(regionStateRepositoryProvider)
+          .getState(userData.region)
+          ?.sectorChanges,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
@@ -482,6 +489,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       earnedReputation: result.repGain,
     );
 
+    if (result.renderedNarrative != null) {
+      quest.renderedNarrative = result.renderedNarrative;
+      await quest.save();
+    }
+
     final resultText = {
       QuestResult.greatSuccess: '대성공',
       QuestResult.success: '성공',
@@ -489,7 +501,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       QuestResult.criticalFailure: '대실패',
     }[result.resultType] ?? '완료';
     ref.read(activityLogProvider.notifier).addLog(
-      '퀘스트 "${quest.questName}" $resultText!',
+      '퀘스트 "${quest.questName}" $resultText!${result.renderedNarrative != null ? " — ${result.renderedNarrative}" : ""}',
       ActivityLogType.questResult,
     );
 

@@ -21,6 +21,7 @@ _$QuestPoolImpl _$$QuestPoolImplFromJson(Map<String, dynamic> json) =>
       sectorType: json['sector_type'] as String?,
       specialFlags: json['special_flags'] as Map<String, dynamic>? ??
           const <String, dynamic>{},
+      enemyName: json['enemy_name'] as String?,
     );
 
 Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
@@ -37,4 +38,5 @@ Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
       'min_reputation': instance.minReputation,
       'sector_type': instance.sectorType,
       'special_flags': instance.specialFlags,
+      'enemy_name': instance.enemyName,
     };

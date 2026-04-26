@@ -41,6 +41,8 @@ mixin _$QuestPool {
   String? get sectorType => throw _privateConstructorUsedError;
   @JsonKey(name: 'special_flags')
   Map<String, dynamic> get specialFlags => throw _privateConstructorUsedError;
+  @JsonKey(name: 'enemy_name')
+  String? get enemyName => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -65,7 +67,8 @@ abstract class $QuestPoolCopyWith<$Res> {
       @JsonKey(name: 'is_faction_exclusive') bool isFactionExclusive,
       @JsonKey(name: 'min_reputation') int minReputation,
       @JsonKey(name: 'sector_type') String? sectorType,
-      @JsonKey(name: 'special_flags') Map<String, dynamic> specialFlags});
+      @JsonKey(name: 'special_flags') Map<String, dynamic> specialFlags,
+      @JsonKey(name: 'enemy_name') String? enemyName});
 }
 
 /// @nodoc
@@ -93,6 +96,7 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
     Object? minReputation = null,
     Object? sectorType = freezed,
     Object? specialFlags = null,
+    Object? enemyName = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -143,6 +147,10 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
           ? _value.specialFlags
           : specialFlags // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
+      enemyName: freezed == enemyName
+          ? _value.enemyName
+          : enemyName // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -167,7 +175,8 @@ abstract class _$$QuestPoolImplCopyWith<$Res>
       @JsonKey(name: 'is_faction_exclusive') bool isFactionExclusive,
       @JsonKey(name: 'min_reputation') int minReputation,
       @JsonKey(name: 'sector_type') String? sectorType,
-      @JsonKey(name: 'special_flags') Map<String, dynamic> specialFlags});
+      @JsonKey(name: 'special_flags') Map<String, dynamic> specialFlags,
+      @JsonKey(name: 'enemy_name') String? enemyName});
 }
 
 /// @nodoc
@@ -193,6 +202,7 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
     Object? minReputation = null,
     Object? sectorType = freezed,
     Object? specialFlags = null,
+    Object? enemyName = freezed,
   }) {
     return _then(_$QuestPoolImpl(
       id: null == id
@@ -243,6 +253,10 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
           ? _value._specialFlags
           : specialFlags // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
+      enemyName: freezed == enemyName
+          ? _value.enemyName
+          : enemyName // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -263,7 +277,8 @@ class _$QuestPoolImpl implements _QuestPool {
       @JsonKey(name: 'min_reputation') this.minReputation = 0,
       @JsonKey(name: 'sector_type') this.sectorType,
       @JsonKey(name: 'special_flags')
-      final Map<String, dynamic> specialFlags = const <String, dynamic>{}})
+      final Map<String, dynamic> specialFlags = const <String, dynamic>{},
+      @JsonKey(name: 'enemy_name') this.enemyName})
       : _specialFlags = specialFlags;
 
   factory _$QuestPoolImpl.fromJson(Map<String, dynamic> json) =>
@@ -309,8 +324,12 @@ class _$QuestPoolImpl implements _QuestPool {
   }
 
   @override
+  @JsonKey(name: 'enemy_name')
+  final String? enemyName;
+
+  @override
   String toString() {
-    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType, specialFlags: $specialFlags)';
+    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType, specialFlags: $specialFlags, enemyName: $enemyName)';
   }
 
   @override
@@ -337,7 +356,9 @@ class _$QuestPoolImpl implements _QuestPool {
             (identical(other.sectorType, sectorType) ||
                 other.sectorType == sectorType) &&
             const DeepCollectionEquality()
-                .equals(other._specialFlags, _specialFlags));
+                .equals(other._specialFlags, _specialFlags) &&
+            (identical(other.enemyName, enemyName) ||
+                other.enemyName == enemyName));
   }
 
   @JsonKey(ignore: true)
@@ -355,7 +376,8 @@ class _$QuestPoolImpl implements _QuestPool {
       isFactionExclusive,
       minReputation,
       sectorType,
-      const DeepCollectionEquality().hash(_specialFlags));
+      const DeepCollectionEquality().hash(_specialFlags),
+      enemyName);
 
   @JsonKey(ignore: true)
   @override
@@ -384,8 +406,8 @@ abstract class _QuestPool implements QuestPool {
       @JsonKey(name: 'is_faction_exclusive') final bool isFactionExclusive,
       @JsonKey(name: 'min_reputation') final int minReputation,
       @JsonKey(name: 'sector_type') final String? sectorType,
-      @JsonKey(name: 'special_flags')
-      final Map<String, dynamic> specialFlags}) = _$QuestPoolImpl;
+      @JsonKey(name: 'special_flags') final Map<String, dynamic> specialFlags,
+      @JsonKey(name: 'enemy_name') final String? enemyName}) = _$QuestPoolImpl;
 
   factory _QuestPool.fromJson(Map<String, dynamic> json) =
       _$QuestPoolImpl.fromJson;
@@ -422,6 +444,9 @@ abstract class _QuestPool implements QuestPool {
   @override
   @JsonKey(name: 'special_flags')
   Map<String, dynamic> get specialFlags;
+  @override
+  @JsonKey(name: 'enemy_name')
+  String? get enemyName;
   @override
   @JsonKey(ignore: true)
   _$$QuestPoolImplCopyWith<_$QuestPoolImpl> get copyWith =>

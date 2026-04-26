@@ -42,13 +42,14 @@ class ActiveQuestAdapter extends TypeAdapter<ActiveQuest> {
       chainId: fields[22] as String?,
       chainStep: fields[23] as int?,
       specialFlags: (fields[24] as Map?)?.cast<String, dynamic>(),
+      renderedNarrative: fields[25] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ActiveQuest obj) {
     writer
-      ..writeByte(25)
+      ..writeByte(26)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -98,7 +99,9 @@ class ActiveQuestAdapter extends TypeAdapter<ActiveQuest> {
       ..writeByte(23)
       ..write(obj.chainStep)
       ..writeByte(24)
-      ..write(obj.specialFlags);
+      ..write(obj.specialFlags)
+      ..writeByte(25)
+      ..write(obj.renderedNarrative);
   }
 
   @override

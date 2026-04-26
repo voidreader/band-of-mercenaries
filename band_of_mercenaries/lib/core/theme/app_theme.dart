@@ -46,6 +46,14 @@ class AppTheme {
   static const Color transformHidden = Color(0xFFFFD700);     // 숨겨진 섹터 (금색)
   static const Color transformFallback = Color(0xFF9E9E9E);   // 알 수 없는 변형 (회색)
 
+  // Elite monster colors
+  static const Color eliteAccent = Color(0xFFffb74d);
+  static const Color eliteUniqueAccent = Color(0xFFce93d8);
+  static const Color eliteBg = Color(0xFF1a0d00);
+  static const Color eliteUniqueBg = Color(0xFF1a0028);
+  static const Color eliteBorder = Color(0xFFe65100);
+  static const Color eliteUniqueBorder = Color(0xFF7b1fa2);
+
   // Quest result colors
   static const Color greatSuccess = Color(0xFF1565C0);
   static const Color success = Color(0xFF2E7D32);

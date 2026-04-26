@@ -171,10 +171,10 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                         data.eliteMonsters.where((m) => m.id == quest.eliteId).firstOrNull;
                     if (eliteData == null) return const SizedBox.shrink();
                     final isUnique = eliteData.isUnique;
-                    final borderColor = isUnique ? const Color(0xFF7b1fa2) : const Color(0xFFe65100);
+                    final borderColor = isUnique ? AppTheme.eliteUniqueBorder : AppTheme.eliteBorder;
                     final gradientColors = isUnique
-                        ? [const Color(0xFF1a0028), const Color(0xFF2d0040)]
-                        : [const Color(0xFF1a0d00), const Color(0xFF2d1500)];
+                        ? [AppTheme.eliteUniqueBg, const Color(0xFF2d0040)]
+                        : [AppTheme.eliteBg, const Color(0xFF2d1500)];
                     final icon = isUnique ? '★' : '🔥';
                     final titleText = isUnique ? (eliteData.title ?? '유니크') : '엘리트 몬스터';
                     final bodyText = isUnique ? (eliteData.lore ?? '') : eliteData.description;
@@ -360,7 +360,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                               fontSize: 13,
                               color: _selectedMercIds.isEmpty
                                   ? AppTheme.textSecondary
-                                  : (netProfit >= 0 ? Colors.green : Colors.red),
+                                  : (netProfit >= 0 ? AppTheme.success : AppTheme.criticalFailure),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -370,7 +370,7 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text('골드가 부족합니다 (파견비용: ${dispatchCost}G)',
-                            style: const TextStyle(fontSize: 12, color: Colors.red)),
+                            style: const TextStyle(fontSize: 12, color: AppTheme.criticalFailure)),
                         ),
                       const SizedBox(height: 8),
                       SizedBox(

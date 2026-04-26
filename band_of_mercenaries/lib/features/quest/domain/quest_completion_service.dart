@@ -1,12 +1,16 @@
 import 'dart:math';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_narrative_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/core/domain/experience_service.dart';
+import 'package:band_of_mercenaries/core/domain/template_engine.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/core/domain/reputation_service.dart';
+import 'package:band_of_mercenaries/core/models/user_data.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/trait_evolution_service.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
@@ -63,6 +67,7 @@ class QuestCompletionResult {
   final String? factionTag;
   final int factionRepGain;
   final EliteLootResult? eliteLoot;
+  final String? renderedNarrative;
 
   const QuestCompletionResult({
     required this.resultType,
@@ -75,6 +80,7 @@ class QuestCompletionResult {
     this.factionTag,
     this.factionRepGain = 0,
     this.eliteLoot,
+    this.renderedNarrative,
   });
 }
 
@@ -98,6 +104,10 @@ class QuestCompletionService {
     List<EliteLootEntry> eliteLootEntries = const [],
     // 체인 퀘스트 단계 여부 (true 시 death_rate 50% 감산)
     bool isChainStep = false,
+    TemplateEngine? templateEngine,
+    UserData? userData,
+    List<FactionState> factionStates = const [],
+    Map<String, String>? sectorChanges,
   }) {
     final partyPower = QuestCalculator.calculatePartyPower(
       mercs,
@@ -322,6 +332,21 @@ class QuestCompletionService {
       );
     }
 
+    String? renderedNarrative;
+    if (templateEngine != null && userData != null) {
+      final seed = DateTime.now().millisecondsSinceEpoch + quest.id.hashCode;
+      renderedNarrative = QuestNarrativeService.renderNarrative(
+        quest: quest,
+        partyMercs: mercs,
+        staticData: staticData,
+        userData: userData,
+        factionStates: factionStates,
+        templateEngine: templateEngine,
+        sectorChanges: sectorChanges,
+        seed: seed,
+      );
+    }
+
     return QuestCompletionResult(
       resultType: resultType,
       rewardGold: rewardGold,
@@ -333,6 +358,7 @@ class QuestCompletionService {
       factionTag: quest.factionTag,
       factionRepGain: factionRepGain,
       eliteLoot: eliteLoot,
+      renderedNarrative: renderedNarrative,
     );
   }
 }

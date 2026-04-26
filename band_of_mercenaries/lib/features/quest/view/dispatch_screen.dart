@@ -362,10 +362,10 @@ class _QuestCard extends ConsumerWidget {
         : null;
     final isUnique = eliteData?.isUnique ?? false;
     final eliteNameColor = quest.isElite
-        ? (isUnique ? const Color(0xFFce93d8) : const Color(0xFFffb74d))
+        ? (isUnique ? AppTheme.eliteUniqueAccent : AppTheme.eliteAccent)
         : null;
     final eliteSidebarColor = quest.isElite
-        ? (isUnique ? const Color(0xFF7b1fa2) : const Color(0xFFe65100))
+        ? (isUnique ? AppTheme.eliteUniqueBorder : AppTheme.eliteBorder)
         : null;
 
     final borderColor = isSelected
@@ -432,7 +432,7 @@ class _QuestCard extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: isUnique ? const Color(0xFF2d1a4d) : const Color(0xFF3d2800),
+                              color: isUnique ? AppTheme.eliteUniqueBg : AppTheme.eliteBg,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(

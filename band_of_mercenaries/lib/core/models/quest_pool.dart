@@ -19,6 +19,7 @@ class QuestPool with _$QuestPool {
     @Default(0) @JsonKey(name: 'min_reputation') int minReputation,
     @JsonKey(name: 'sector_type') String? sectorType,
     @JsonKey(name: 'special_flags') @Default(<String, dynamic>{}) Map<String, dynamic> specialFlags,
+    @JsonKey(name: 'enemy_name') String? enemyName,
   }) = _QuestPool;
 
   factory QuestPool.fromJson(Map<String, dynamic> json) =>
