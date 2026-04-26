@@ -12,7 +12,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_completion_servi
 import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart' show EliteLootResult;
 import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
 import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
-import 'package:band_of_mercenaries/features/quest/domain/quest_sort_service.dart';
+import 'package:band_of_mercenaries/features/quest/domain/sorted_quests_provider.dart';
 import 'package:band_of_mercenaries/features/quest/view/dispatch_detail_page.dart';
 import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
 import 'package:band_of_mercenaries/features/quest/view/chain_top_section.dart';
@@ -22,7 +22,6 @@ import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_di
 import 'package:band_of_mercenaries/features/mercenary/view/trait_evolution_dialog.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_notifier.dart' show regionStateRepositoryProvider;
-import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart' show factionStateRepositoryProvider;
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
@@ -101,24 +100,11 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
 
     return staticData.when(
       data: (data) {
-        // 정렬에 필요한 데이터 수집
-        final pendingRaw = quests.where((q) => q.status == QuestStatus.pending).toList();
+        // 정렬은 sortedPendingQuestsProvider가 메모이제이션 처리 (1초 tick 영향 회피)
         final inProgressQuests = quests.where((q) => q.status == QuestStatus.inProgress).toList();
         final chainProgresses = ref.watch(chainQuestProgressProvider).valueOrNull ?? const <ChainQuestProgress>[];
         final regionState = ref.watch(regionStateRepositoryProvider).getState(userData.region);
-        final joinedFactionIds = ref.watch(factionStateRepositoryProvider).getJoinedFactionIds().toSet();
-
-        final sortResult = QuestSortService.sort(
-          quests: pendingRaw,
-          chainProgress: chainProgresses,
-          currentRegion: userData.region,
-          currentSector: userData.sector,
-          regionState: regionState,
-          questPools: data.questPools,
-          questTypes: data.questTypes,
-          joinedFactionIds: joinedFactionIds,
-          eliteMonsters: data.eliteMonsters,
-        );
+        final sortResult = ref.watch(sortedPendingQuestsProvider);
 
         // Tier 0(체인 단계)는 ChainTopSection이 별도 처리, sortedRest만 목록에 사용
         final pendingQuests = sortResult.sortedRest;
