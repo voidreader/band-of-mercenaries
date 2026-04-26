@@ -20,6 +20,7 @@ import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart
 import 'package:band_of_mercenaries/features/quest/view/chain_top_section.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_dialog.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/evolution_choice.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_evolution_dialog.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/investigation_notifier.dart' show regionStateRepositoryProvider;
