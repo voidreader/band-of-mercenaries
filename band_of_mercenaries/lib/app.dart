@@ -30,6 +30,8 @@ import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/reputation_rank_up_provider.dart';
+import 'package:band_of_mercenaries/core/providers/dialog_queue_provider.dart';
+import 'package:band_of_mercenaries/core/models/dialog_request.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_detail_overlay.dart';
 import 'package:band_of_mercenaries/features/home/view/rank_up_overlay.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
@@ -93,6 +95,9 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
     InfoScreen(),
   ];
 
+  /// 큐 다이얼로그 표시 중 중복 표시 방지 플래그
+  bool _isShowingDialog = false;
+
   @override
   void initState() {
     super.initState();
@@ -151,106 +156,138 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
       }
     });
 
+    // ── 도메인 Provider → 큐 enqueue 어댑터 (5개 채널) ──────────────────────
+
+    // 건설 완료 (medium)
     ref.listen<String?>(constructionCompletedProvider, (_, next) {
       if (next == null) return;
       final staticData = ref.read(staticDataProvider).value;
-      final facilityName = staticData?.facilities
-          .where((f) => f.id == next)
-          .firstOrNull
-          ?.name ?? next;
+      final facilityName =
+          staticData?.facilities.where((f) => f.id == next).firstOrNull?.name ?? next;
       final userData = ref.read(userDataProvider);
       final newLevel = userData?.facilities[next] ?? 1;
       ref.read(activityLogProvider.notifier).addLog(
         '$facilityName이(가) Lv.$newLevel(으)로 업그레이드되었습니다',
         ActivityLogType.facilityUpgrade,
       );
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('건설 완료'),
-            content: Text('$facilityName이(가) 업그레이드되었습니다!'),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  ref.read(constructionCompletedProvider.notifier).state = null;
-                },
-                child: const Text('확인'),
-              ),
-            ],
-          ),
-        );
-      });
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'constructionComplete_${next}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.medium,
+        dialogType: DialogTypeRegistry.constructionComplete,
+        payload: {'facilityId': next, 'facilityName': facilityName, 'newLevel': newLevel},
+        builder: (ctx, dismiss) => AlertDialog(
+          title: const Text('건설 완료'),
+          content: Text('$facilityName이(가) 업그레이드되었습니다!'),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                dismiss();
+                ref.read(constructionCompletedProvider.notifier).state = null;
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      ));
     });
 
+    // 지역 조사 완료 (medium)
     ref.listen<InvestigationResult?>(investigationCompletedProvider, (_, next) {
       if (next == null) return;
       final mercs = ref.read(mercenaryListProvider);
       final mercName = mercs.where((m) => m.id == next.mercId).firstOrNull?.name ?? next.mercId;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => InvestigationResultDialog(result: next, mercName: mercName),
-        ).then((_) {
-          ref.read(investigationCompletedProvider.notifier).state = null;
-        });
-      });
+      final capturedResult = next;
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'investigationResult_${next.mercId}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.medium,
+        dialogType: DialogTypeRegistry.investigationResult,
+        payload: {'mercId': next.mercId, 'mercName': mercName},
+        builder: (ctx, dismiss) => InvestigationResultDialog(
+          result: capturedResult,
+          mercName: mercName,
+        ),
+      ));
     });
 
+    // 명성 랭크업 (critical)
     ref.listen<RankUpEvent?>(reputationRankUpProvider, (_, next) {
       if (next == null) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => RankUpOverlay(
-            event: next,
-            onDismiss: () {
-              Navigator.pop(ctx);
-              ref.read(reputationRankUpProvider.notifier).state = null;
-            },
-          ),
-        );
-      });
+      final capturedEvent = next;
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'rankUp_${next.to.grade}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.critical,
+        dialogType: DialogTypeRegistry.rankUp,
+        payload: {'toGrade': next.to.grade},
+        builder: (ctx, dismiss) => RankUpOverlay(
+          event: capturedEvent,
+          onDismiss: () {
+            dismiss();
+            ref.read(reputationRankUpProvider.notifier).state = null;
+          },
+        ),
+      ));
     });
 
+    // 체인 퀘스트 완주 (high)
     ref.listen<ChainCompletedEvent?>(chainCompletedProvider, (_, next) {
       if (next == null) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => ChainCompletedDialog(
-            event: next,
-            onDismiss: () {
-              Navigator.pop(ctx);
-              ref.read(chainCompletedProvider.notifier).state = null;
-            },
-          ),
-        );
-      });
+      final capturedEvent = next;
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'chainCompleted_${next.chainId}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.high,
+        dialogType: DialogTypeRegistry.chainCompleted,
+        payload: {'chainId': next.chainId},
+        builder: (ctx, dismiss) => ChainCompletedDialog(
+          event: capturedEvent,
+          onDismiss: () {
+            dismiss();
+            ref.read(chainCompletedProvider.notifier).state = null;
+          },
+        ),
+      ));
     });
 
+    // 지역 변형 (high)
     ref.listen<RegionTransformedEvent?>(regionTransformedProvider, (_, next) {
       if (next == null) return;
+      final capturedEvent = next;
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'regionTransform_${next.regionId}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.high,
+        dialogType: DialogTypeRegistry.regionTransform,
+        payload: {'regionId': next.regionId},
+        builder: (ctx, dismiss) => RegionTransformDialog(
+          event: capturedEvent,
+          onDismiss: () {
+            dismiss();
+            ref.read(regionTransformedProvider.notifier).state = null;
+          },
+        ),
+      ));
+    });
+
+    // ── 큐 → 단일 표시 listen ────────────────────────────────────────────────
+    ref.listen<List<DialogRequest>>(dialogQueueProvider, (prev, next) {
+      if (next.isEmpty || _isShowingDialog) return;
+      _isShowingDialog = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
+        if (!mounted) {
+          _isShowingDialog = false;
+          return;
+        }
+        final head = next.first;
         showDialog<void>(
           context: context,
-          barrierDismissible: false,
-          builder: (ctx) => RegionTransformDialog(
-            event: next,
-            onDismiss: () {
-              Navigator.pop(ctx);
-              ref.read(regionTransformedProvider.notifier).state = null;
-            },
-          ),
-        );
+          barrierDismissible: head.priority != DialogPriority.critical,
+          builder: (ctx) => head.builder(ctx, () => Navigator.of(ctx).pop()),
+        ).then((_) {
+          if (!mounted) {
+            _isShowingDialog = false;
+            return;
+          }
+          ref.read(dialogQueueProvider.notifier).dequeue();
+          _isShowingDialog = false;
+        });
       });
     });
 

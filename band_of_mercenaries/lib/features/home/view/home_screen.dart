@@ -26,6 +26,8 @@ import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart'
 import 'package:band_of_mercenaries/features/home/view/rank_bonus_summary_sheet.dart';
 import 'package:band_of_mercenaries/features/movement/domain/travel_choice_recall_provider.dart';
 import 'package:band_of_mercenaries/features/movement/view/travel_choice_recall_dialog.dart';
+import 'package:band_of_mercenaries/core/providers/dialog_queue_provider.dart';
+import 'package:band_of_mercenaries/core/models/dialog_request.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -45,13 +47,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       barrierDismissible: false,
       builder: (ctx) => QuestResultDialog(quest: quest),
     );
+    if (!mounted) return;
     ref.read(questListProvider.notifier).clearCompleted(quest.id);
     _isShowingQuestResult = false;
     final quests = ref.read(questListProvider);
     final nextCompleted = quests.where(
       (q) => q.status == QuestStatus.completed && !_shownQuestResultIds.contains(q.id),
     ).toList();
-    if (nextCompleted.isNotEmpty && mounted) {
+    if (nextCompleted.isNotEmpty) {
       _isShowingQuestResult = true;
       _shownQuestResultIds.add(nextCompleted.first.id);
       _showQuestResult(nextCompleted.first);
@@ -81,67 +84,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     });
 
-    // 이동 중 선택지 이벤트 리스너
+    // 이동 선택지 회상 팝업: 큐에 enqueue (FIFO, medium 우선순위)
     ref.listen<TravelChoiceRecallData?>(
       pendingTravelChoiceProvider,
       (prev, next) {
-        if (next != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!context.mounted) return;
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (ctx) => TravelChoiceRecallDialog(
-                data: next,
-                onDismiss: () {
-                  Navigator.of(ctx).pop();
-                  ref.read(pendingTravelChoiceProvider.notifier).state = null;
-                },
-              ),
-            );
-          });
-        }
+        if (next == null) return;
+        final data = next;
+        ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+          id: 'travelChoiceRecall_${data.event.id}_${DateTime.now().microsecondsSinceEpoch}',
+          priority: DialogPriority.medium,
+          dialogType: DialogTypeRegistry.travelChoiceRecall,
+          payload: {'eventId': data.event.id},
+          builder: (ctx, dismiss) => TravelChoiceRecallDialog(
+            data: data,
+            onDismiss: dismiss,
+          ),
+        ));
+        ref.read(pendingTravelChoiceProvider.notifier).state = null;
       },
     );
 
-    // Travel event listener: detect when movement completes
+    // 자동 이동 이벤트: 이동 완료 순간 감지 후 큐에 enqueue (medium 우선순위)
     ref.listen<MovementState?>(movementProvider, (previous, next) {
       final wasMoving = previous?.isMoving ?? false;
       final isMovingNow = next?.isMoving ?? false;
       if (!wasMoving || isMovingNow) return; // 이동 완료 순간만 처리
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final event = ref.read(lastTravelEventProvider);
-        if (event == null) return;
-        if (event.effectType == 'trait_innate') {
-          final traitResult = ref.read(lastTravelEventTraitResultProvider);
-          final staticData = ref.read(staticDataProvider).value;
-          final mercs = ref.read(mercenaryListProvider);
-          final targetMerc = traitResult != null
-              ? mercs.where((m) => m.id == traitResult.mercenaryId).firstOrNull
-              : null;
-          final traitData = traitResult != null
-              ? staticData?.traits.where((t) => t.key == traitResult.traitKey).firstOrNull
-              : null;
-          showDialog<void>(
-            context: context,
-            builder: (ctx) => _TravelEventDialog(
-              event: event,
-              traitResult: traitResult,
-              merc: targetMerc,
-              trait: traitData,
-            ),
-          );
-        } else {
-          showDialog<void>(
-            context: context,
-            builder: (ctx) => _TravelEventDialog(event: event),
-          );
-        }
-        ref.read(lastTravelEventProvider.notifier).state = null;
-        ref.read(lastTravelEventTraitResultProvider.notifier).state = null;
-      });
+      final event = ref.read(lastTravelEventProvider);
+      if (event == null) return;
+
+      final TravelEventTraitResult? traitResult;
+      final Mercenary? targetMerc;
+      final TraitData? traitData;
+
+      if (event.effectType == 'trait_innate') {
+        traitResult = ref.read(lastTravelEventTraitResultProvider);
+        final staticData = ref.read(staticDataProvider).value;
+        final mercList = ref.read(mercenaryListProvider);
+        targetMerc = traitResult != null
+            ? mercList.where((m) => m.id == traitResult!.mercenaryId).firstOrNull
+            : null;
+        traitData = traitResult != null
+            ? staticData?.traits.where((t) => t.key == traitResult!.traitKey).firstOrNull
+            : null;
+      } else {
+        traitResult = null;
+        targetMerc = null;
+        traitData = null;
+      }
+
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'autoTravelEvent_${event.id}',
+        priority: DialogPriority.medium,
+        dialogType: DialogTypeRegistry.autoTravelEvent,
+        payload: const {},
+        builder: (ctx, dismiss) => _TravelEventDialog(
+          event: event,
+          traitResult: traitResult,
+          merc: targetMerc,
+          trait: traitData,
+        ),
+      ));
+      ref.read(lastTravelEventProvider.notifier).state = null;
+      ref.read(lastTravelEventTraitResultProvider.notifier).state = null;
     });
 
     if (userData == null) return const Center(child: CircularProgressIndicator());
@@ -555,13 +560,20 @@ class _ActivityLog extends ConsumerWidget {
               itemCount: displayLogs.length,
               itemBuilder: (_, index) {
                 final log = displayLogs[index];
-                final icon = _logIcon(log.type);
+                final iconInfo = _logIcon(log.type);
                 final timeAgo = _formatTimeAgo(log.timestamp);
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Row(
                     children: [
-                      Text(icon, style: const TextStyle(fontSize: 12)),
+                      Text(
+                        iconInfo.icon,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: iconInfo.color,
+                          fontWeight: iconInfo.bold ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(log.message,
@@ -581,30 +593,53 @@ class _ActivityLog extends ConsumerWidget {
     );
   }
 
-  String _logIcon(ActivityLogType type) {
+  ({String icon, Color color, bool bold}) _logIcon(ActivityLogType type) {
+    const d = AppTheme.textSecondary;
     switch (type) {
-      case ActivityLogType.questResult: return '⚔';
-      case ActivityLogType.mercenaryStatus: return '💊';
-      case ActivityLogType.movementComplete: return '🏕';
-      case ActivityLogType.mercenaryRecruit: return '🛡';
-      case ActivityLogType.mercenaryDismiss: return '👋';
-      case ActivityLogType.levelUp: return '⬆';
-      case ActivityLogType.traitAcquired: return '✦';
-      case ActivityLogType.traitEvolved: return '⭐';
-      case ActivityLogType.traitDeleted: return '🗑';
-      case ActivityLogType.facilityUpgrade: return '🏗';
-      case ActivityLogType.investigationSuccess: return '🔍';
-      case ActivityLogType.investigationFailed: return '❌';
-      case ActivityLogType.discoveryFound: return '💎';
-      case ActivityLogType.reputationRankUp: return '🎖';
-      case ActivityLogType.reputationRankDown: return '📉';
-      case ActivityLogType.essenceApplied: return '✧';
-      case ActivityLogType.essenceLostOnDeath: return '💀';
-      case ActivityLogType.essenceLostOnRelease: return '👋';
-      case ActivityLogType.regionTransform: return '🌍';
-      case ActivityLogType.chainProgressed: return '🔗';
-      case ActivityLogType.chainCompleted: return '🏆';
-      case ActivityLogType.travelChoiceCompleted: return '🌟';
+      case ActivityLogType.questResult:
+        return (icon: '⚔', color: d, bold: false);
+      case ActivityLogType.mercenaryStatus:
+        return (icon: '💊', color: d, bold: false);
+      case ActivityLogType.movementComplete:
+        return (icon: '🏕', color: d, bold: false);
+      case ActivityLogType.mercenaryRecruit:
+        return (icon: '🛡', color: d, bold: false);
+      case ActivityLogType.mercenaryDismiss:
+        return (icon: '👋', color: d, bold: false);
+      case ActivityLogType.levelUp:
+        return (icon: '⬆', color: d, bold: false);
+      case ActivityLogType.traitAcquired:
+        return (icon: '✦', color: d, bold: false);
+      case ActivityLogType.traitEvolved:
+        return (icon: '⭐', color: d, bold: false);
+      case ActivityLogType.traitDeleted:
+        return (icon: '🗑', color: d, bold: false);
+      case ActivityLogType.facilityUpgrade:
+        return (icon: '🏗', color: d, bold: false);
+      case ActivityLogType.investigationSuccess:
+        return (icon: '🔍', color: d, bold: false);
+      case ActivityLogType.investigationFailed:
+        return (icon: '❌', color: d, bold: false);
+      case ActivityLogType.discoveryFound:
+        return (icon: '💎', color: d, bold: false);
+      case ActivityLogType.reputationRankUp:
+        return (icon: '🎖', color: d, bold: false);
+      case ActivityLogType.reputationRankDown:
+        return (icon: '📉', color: d, bold: false);
+      case ActivityLogType.essenceApplied:
+        return (icon: '✧', color: d, bold: false);
+      case ActivityLogType.essenceLostOnDeath:
+        return (icon: '💀', color: d, bold: false);
+      case ActivityLogType.essenceLostOnRelease:
+        return (icon: '👋', color: d, bold: false);
+      case ActivityLogType.regionTransform:
+        return (icon: '🗺️', color: AppTheme.transformHidden, bold: false);
+      case ActivityLogType.chainProgressed:
+        return (icon: '⛓️', color: AppTheme.primary, bold: false);
+      case ActivityLogType.chainCompleted:
+        return (icon: '⛓️', color: AppTheme.chainGold, bold: true);
+      case ActivityLogType.travelChoiceCompleted:
+        return (icon: '🛤️', color: AppTheme.textSecondary, bold: false);
     }
   }
 

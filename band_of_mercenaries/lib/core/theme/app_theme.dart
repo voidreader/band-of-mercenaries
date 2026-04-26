@@ -41,14 +41,17 @@ class AppTheme {
   };
 
   // 지역 변형 타입 색상
-  static const Color transformVillage = Color(0xFF4CAF50);    // 마을 (초록)
-  static const Color transformRuins = Color(0xFF7E57C2);      // 유적지 (보라)
-  static const Color transformHidden = Color(0xFFFFD700);     // 숨겨진 섹터 (금색)
+  static const Color transformVillage = Color(0xFF2E7D32);    // 마을 (초록)
+  static const Color transformRuins = Color(0xFF6A1B9A);      // 유적지 (보라)
+  static const Color transformHidden = Color(0xFFB8860B);     // 숨겨진 섹터 (어두운 금)
   static const Color transformFallback = Color(0xFF9E9E9E);   // 알 수 없는 변형 (회색)
 
+  // Chain quest colors
+  static const Color chainGold = Color(0xFFD4AF37);           // 연계 퀘스트 금색
+
   // Elite monster colors
-  static const Color eliteAccent = Color(0xFFffb74d);
-  static const Color eliteUniqueAccent = Color(0xFFce93d8);
+  static const Color eliteAccent = Color(0xFFFB923C);         // 엘리트 보통 이름색 (주황)
+  static const Color eliteUniqueAccent = Color(0xFFC084FC);   // 엘리트 유니크 이름색 (보라)
   static const Color eliteBg = Color(0xFF1a0d00);
   static const Color eliteUniqueBg = Color(0xFF1a0028);
   static const Color eliteBorder = Color(0xFFe65100);

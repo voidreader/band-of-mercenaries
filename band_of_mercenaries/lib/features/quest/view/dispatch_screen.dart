@@ -5,6 +5,7 @@ import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
+import 'package:band_of_mercenaries/core/models/dialog_request.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
@@ -13,15 +14,22 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_completion_servi
 import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart' show EliteLootResult;
 import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
 import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_sort_service.dart';
 import 'package:band_of_mercenaries/features/quest/view/dispatch_detail_page.dart';
 import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
+import 'package:band_of_mercenaries/features/quest/view/chain_top_section.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_dialog.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_evolution_dialog.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
-import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/investigation_notifier.dart' show regionStateRepositoryProvider;
+import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart' show factionStateRepositoryProvider;
+import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
-import 'package:band_of_mercenaries/features/chain_quest/view/chain_step_card.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
+import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
+import 'package:band_of_mercenaries/shared/widgets/layer_sidebar.dart';
+import 'package:band_of_mercenaries/shared/widgets/quest_card_badges.dart';
 
 const Map<String, IconData> _roleIcons = {
   'warrior': Icons.shield,
@@ -92,11 +100,30 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
       );
     }
 
-    final pendingQuests = quests.where((q) => q.status == QuestStatus.pending).toList();
-    final inProgressQuests = quests.where((q) => q.status == QuestStatus.inProgress).toList();
-
     return staticData.when(
       data: (data) {
+        // 정렬에 필요한 데이터 수집
+        final pendingRaw = quests.where((q) => q.status == QuestStatus.pending).toList();
+        final inProgressQuests = quests.where((q) => q.status == QuestStatus.inProgress).toList();
+        final chainProgresses = ref.watch(chainQuestProgressProvider).valueOrNull ?? const <ChainQuestProgress>[];
+        final regionState = ref.watch(regionStateRepositoryProvider).getState(userData.region);
+        final joinedFactionIds = ref.watch(factionStateRepositoryProvider).getJoinedFactionIds().toSet();
+
+        final sortResult = QuestSortService.sort(
+          quests: pendingRaw,
+          chainProgress: chainProgresses,
+          currentRegion: userData.region,
+          currentSector: userData.sector,
+          regionState: regionState,
+          questPools: data.questPools,
+          questTypes: data.questTypes,
+          joinedFactionIds: joinedFactionIds,
+          eliteMonsters: data.eliteMonsters,
+        );
+
+        // Tier 0(체인 단계)는 ChainTopSection이 별도 처리, sortedRest만 목록에 사용
+        final pendingQuests = sortResult.sortedRest;
+
         return Column(
           children: [
             // Top bar
@@ -140,7 +167,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                           ),
                         ),
 
-                    // Quest list
+                    // Quest list header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -155,20 +182,18 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    // 활성 체인 퀘스트 카드 (최상단)
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final activeChain = ref.watch(activeChainProvider);
-                        if (activeChain == null) return const SizedBox.shrink();
-                        return ChainStepCard(progress: activeChain);
-                      },
-                    ),
+                    // 연계 퀘스트 최상단 섹션 (ChainTopSection이 내부에서 0~3 카드 렌더링)
+                    const ChainTopSection(),
 
+                    // 정렬된 일반 퀘스트 목록 (Tier 1~4)
                     for (final quest in pendingQuests)
                       _QuestCard(
                         quest: quest,
                         data: data,
                         isSelected: _selectedQuestId == quest.id,
+                        chainProgresses: chainProgresses,
+                        regionState: regionState,
+                        currentSector: userData.sector,
                         onTap: () => setState(() {
                           _selectedQuestId = quest.id;
                           _dispatchQuestId = quest.id;
@@ -202,7 +227,7 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => const Center(child: Text('데이터를 불러오는 중 오류가 발생했습니다')),
     );
   }
 
@@ -338,43 +363,93 @@ class _QuestCard extends ConsumerWidget {
     required this.quest,
     required this.data,
     required this.isSelected,
+    required this.chainProgresses,
+    required this.regionState,
+    required this.currentSector,
     required this.onTap,
   });
 
   final ActiveQuest quest;
   final StaticGameData data;
   final bool isSelected;
+  final List<ChainQuestProgress> chainProgresses;
+  final RegionState? regionState;
+  final int currentSector;
   final VoidCallback onTap;
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
+  /// QuestLayerInfo를 구성한다. LayerSidebar와 QuestCardBadges 양쪽이 공유.
+  QuestLayerInfo _buildLayerInfo() {
+    // 체인 정보
+    ChainQuestInfo? chain;
+    if (quest.isChainQuest && quest.chainId != null) {
+      final step = data.chainQuests.where(
+        (s) => s.chainId == quest.chainId && s.step == quest.chainStep,
+      ).firstOrNull;
+      // 해당 chainId의 progress가 존재하고 step 데이터도 있는 경우에만 체인 정보 생성
+      if (step != null && chainProgresses.any((p) => p.chainId == quest.chainId)) {
+        chain = ChainQuestInfo(
+          chainName: step.chainName,
+          currentStep: step.step,
+          totalSteps: step.totalSteps,
+        );
+      }
+    }
 
-    final FactionData? faction = quest.factionTag == null
-        ? null
-        : data.factions.where((f) => f.id == quest.factionTag).firstOrNull;
-
-    final factionColor = faction != null ? FactionData.parseColor(faction.color) : null;
-    final isExclusive = quest.isFactionExclusive;
-
+    // 엘리트 정보
     final eliteData = quest.isElite
         ? data.eliteMonsters.where((m) => m.id == quest.eliteId).firstOrNull
         : null;
     final isUnique = eliteData?.isUnique ?? false;
-    final eliteNameColor = quest.isElite
-        ? (isUnique ? AppTheme.eliteUniqueAccent : AppTheme.eliteAccent)
-        : null;
-    final eliteSidebarColor = quest.isElite
-        ? (isUnique ? AppTheme.eliteUniqueBorder : AppTheme.eliteBorder)
-        : null;
 
-    final borderColor = isSelected
-        ? AppTheme.primary
-        : quest.isElite
-            ? (isUnique ? const Color(0xFF3d1a5c) : const Color(0xFF4d2600))
-            : (isExclusive && factionColor != null)
-                ? factionColor
-                : AppTheme.borderLight;
+    // 변형 섹터 타입 (현재 섹터의 변형이 퀘스트 풀과 일치하는 경우만)
+    String? sectorType;
+    final pool = data.questPools.where((p) => p.id == quest.questPoolId).firstOrNull;
+    if (pool?.sectorType != null &&
+        regionState?.sectorChanges[currentSector.toString()] == pool!.sectorType) {
+      sectorType = pool.sectorType;
+    }
+
+    // 세력 정보
+    final FactionData? faction = quest.factionTag == null
+        ? null
+        : data.factions.where((f) => f.id == quest.factionTag).firstOrNull;
+
+    return QuestLayerInfo(
+      chain: chain,
+      isElite: quest.isElite,
+      isUnique: isUnique,
+      sectorType: sectorType,
+      faction: faction,
+      isFactionExclusive: quest.isFactionExclusive,
+    );
+  }
+
+  /// 이름 색상을 계층 우선순위에 따라 결정한다.
+  Color? _nameColor(QuestLayerInfo layerInfo) {
+    if (layerInfo.chain != null) return AppTheme.primary;
+    if (layerInfo.isElite && layerInfo.isUnique) return AppTheme.eliteUniqueAccent;
+    if (layerInfo.isElite) return AppTheme.eliteAccent;
+    return null; // 기본 onSurface
+  }
+
+  /// 테두리 색상을 계층 우선순위에 따라 결정한다.
+  Color _borderColor(QuestLayerInfo layerInfo, bool isSelected) {
+    if (isSelected) return AppTheme.primary;
+    // 체인 → 금색 우선 (세력 전용과 중첩 시도 금색)
+    if (layerInfo.chain != null) return AppTheme.chainGold;
+    // 세력 전용 → 세력 컬러
+    if (layerInfo.isFactionExclusive && layerInfo.faction != null) {
+      return FactionData.parseColor(layerInfo.faction!.color);
+    }
+    return AppTheme.borderLight;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
+    final layerInfo = _buildLayerInfo();
+    final nameColor = _nameColor(layerInfo);
+    final borderColor = _borderColor(layerInfo, isSelected);
 
     return GestureDetector(
       onTap: onTap,
@@ -389,105 +464,46 @@ class _QuestCard extends ConsumerWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (quest.isElite && eliteSidebarColor != null)
-              Container(
-                width: 3,
-                decoration: BoxDecoration(
-                  color: eliteSidebarColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(7),
-                    bottomLeft: Radius.circular(7),
-                  ),
-                ),
-              )
-            else if (isExclusive && factionColor != null)
-              Container(
-                width: 3,
-                decoration: BoxDecoration(
-                  color: factionColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(7),
-                    bottomLeft: Radius.circular(7),
-                  ),
-                ),
+            // 좌측 사이드바 (계층 색상)
+            LayerSidebar(
+              info: layerInfo,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(7),
+                bottomLeft: Radius.circular(7),
               ),
+            ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 퀘스트 이름 + 퀘스트 유형
                     Row(
                       children: [
                         Expanded(
-                          child: Text(quest.questName,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: eliteNameColor,
-                              )),
+                          child: Text(
+                            quest.questName,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: nameColor,
+                            ),
+                          ),
                         ),
-                        if (quest.isElite) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isUnique ? AppTheme.eliteUniqueBg : AppTheme.eliteBg,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              isUnique ? '★ 유니크' : '🔥 엘리트',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: eliteNameColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ] else if (faction != null) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: factionColor!.withValues(alpha: 0.85),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (isExclusive)
-                                  const Padding(
-                                    padding: EdgeInsets.only(right: 3),
-                                    child: Text('전용',
-                                        style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.white70,
-                                            fontWeight: FontWeight.w500)),
-                                  ),
-                                Text(faction.name,
-                                    style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                          ),
-                        ] else ...[
-                          Text(questType.name,
-                              style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
-                        ],
+                        const SizedBox(width: 6),
+                        Text(questType.name,
+                            style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
                       ],
                     ),
-                    if (!quest.isElite && faction != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 1),
-                        child: Text(questType.name,
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary)),
-                      ),
+                    const SizedBox(height: 4),
+                    // 계층 배지 (체인/엘리트/변형섹터/세력)
+                    QuestCardBadges(info: layerInfo),
                     const SizedBox(height: 4),
                     Text(
                         '난이도 ${quest.difficulty} · 보상 ${questType.baseReward}G · 소요 ${questType.baseDuration}초',
                         style: const TextStyle(fontSize: 13, color: AppTheme.textHint)),
+                    // 추천 role Chip 표시
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Builder(builder: (context) {
@@ -521,6 +537,7 @@ class _QuestCard extends ConsumerWidget {
                         );
                       }),
                     ),
+                    // 자동 갱신까지 남은 시간 표시
                     if (quest.status == QuestStatus.pending && quest.createdAt != null)
                       Builder(builder: (_) {
                         final speedMult = ref.watch(speedMultiplierProvider);
