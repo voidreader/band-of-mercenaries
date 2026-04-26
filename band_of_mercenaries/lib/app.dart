@@ -180,15 +180,13 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
           content: Text('$facilityName이(가) 업그레이드되었습니다!'),
           actions: [
             ElevatedButton(
-              onPressed: () {
-                dismiss();
-                ref.read(constructionCompletedProvider.notifier).state = null;
-              },
+              onPressed: dismiss,
               child: const Text('확인'),
             ),
           ],
         ),
       ));
+      ref.read(constructionCompletedProvider.notifier).state = null;
     });
 
     // 지역 조사 완료 (medium)
@@ -207,6 +205,7 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
           mercName: mercName,
         ),
       ));
+      ref.read(investigationCompletedProvider.notifier).state = null;
     });
 
     // 명성 랭크업 (critical)
@@ -220,12 +219,10 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         payload: {'toGrade': next.to.grade},
         builder: (ctx, dismiss) => RankUpOverlay(
           event: capturedEvent,
-          onDismiss: () {
-            dismiss();
-            ref.read(reputationRankUpProvider.notifier).state = null;
-          },
+          onDismiss: dismiss,
         ),
       ));
+      ref.read(reputationRankUpProvider.notifier).state = null;
     });
 
     // 체인 퀘스트 완주 (high)
@@ -239,12 +236,10 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         payload: {'chainId': next.chainId},
         builder: (ctx, dismiss) => ChainCompletedDialog(
           event: capturedEvent,
-          onDismiss: () {
-            dismiss();
-            ref.read(chainCompletedProvider.notifier).state = null;
-          },
+          onDismiss: dismiss,
         ),
       ));
+      ref.read(chainCompletedProvider.notifier).state = null;
     });
 
     // 지역 변형 (high)
@@ -258,12 +253,10 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         payload: {'regionId': next.regionId},
         builder: (ctx, dismiss) => RegionTransformDialog(
           event: capturedEvent,
-          onDismiss: () {
-            dismiss();
-            ref.read(regionTransformedProvider.notifier).state = null;
-          },
+          onDismiss: dismiss,
         ),
       ));
+      ref.read(regionTransformedProvider.notifier).state = null;
     });
 
     // ── 큐 → 단일 표시 listen ────────────────────────────────────────────────
