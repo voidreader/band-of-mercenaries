@@ -18,10 +18,14 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_provider.dart';
 import 'package:band_of_mercenaries/features/movement/domain/movement_state.dart';
+import 'package:band_of_mercenaries/core/models/travel_event.dart';
+import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 import 'package:band_of_mercenaries/features/investigation/view/investigation_widget.dart';
 import 'package:band_of_mercenaries/features/settings/view/settings_screen.dart';
 import 'package:band_of_mercenaries/features/home/view/rank_bonus_summary_sheet.dart';
+import 'package:band_of_mercenaries/features/movement/domain/travel_choice_recall_provider.dart';
+import 'package:band_of_mercenaries/features/movement/view/travel_choice_recall_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -77,6 +81,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     });
 
+    // 이동 중 선택지 이벤트 리스너
+    ref.listen<TravelChoiceRecallData?>(
+      pendingTravelChoiceProvider,
+      (prev, next) {
+        if (next != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!context.mounted) return;
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => TravelChoiceRecallDialog(
+                data: next,
+                onDismiss: () {
+                  Navigator.of(ctx).pop();
+                  ref.read(pendingTravelChoiceProvider.notifier).state = null;
+                },
+              ),
+            );
+          });
+        }
+      },
+    );
+
     // Travel event listener: detect when movement completes
     ref.listen<MovementState?>(movementProvider, (previous, next) {
       final wasMoving = previous?.isMoving ?? false;
@@ -87,78 +114,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (!mounted) return;
         final event = ref.read(lastTravelEventProvider);
         if (event == null) return;
-        Widget dialogContent;
         if (event.effectType == 'trait_innate') {
           final traitResult = ref.read(lastTravelEventTraitResultProvider);
-          if (traitResult != null) {
-            final staticData = ref.read(staticDataProvider).value;
-            final mercs = ref.read(mercenaryListProvider);
-            final targetMerc = mercs.where((m) => m.id == traitResult.mercenaryId).firstOrNull;
-            final traitData = staticData?.traits.where((t) => t.key == traitResult.traitKey).firstOrNull;
-            dialogContent = Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(event.description),
-                const SizedBox(height: 12),
-                const Divider(),
-                const SizedBox(height: 8),
-                if (targetMerc != null)
-                  Text(
-                    '${targetMerc.name}가 새로운 선천 트레잇을 획득했습니다!',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                if (traitData != null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          traitData.name,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
-                        Text(
-                          traitData.categoryKey,
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        if (traitData.description.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            traitData.description,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            );
-          } else {
-            dialogContent = Text(event.description);
-          }
+          final staticData = ref.read(staticDataProvider).value;
+          final mercs = ref.read(mercenaryListProvider);
+          final targetMerc = traitResult != null
+              ? mercs.where((m) => m.id == traitResult.mercenaryId).firstOrNull
+              : null;
+          final traitData = traitResult != null
+              ? staticData?.traits.where((t) => t.key == traitResult.traitKey).firstOrNull
+              : null;
+          showDialog<void>(
+            context: context,
+            builder: (ctx) => _TravelEventDialog(
+              event: event,
+              traitResult: traitResult,
+              merc: targetMerc,
+              trait: traitData,
+            ),
+          );
         } else {
-          dialogContent = Text(event.description);
+          showDialog<void>(
+            context: context,
+            builder: (ctx) => _TravelEventDialog(event: event),
+          );
         }
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('여행 중 사건 발생!'),
-            content: dialogContent,
-            actions: [
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('확인'),
-              ),
-            ],
-          ),
-        );
         ref.read(lastTravelEventProvider.notifier).state = null;
         ref.read(lastTravelEventTraitResultProvider.notifier).state = null;
       });
@@ -387,7 +367,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         // Dashboard
         staticDataAsync.maybeWhen(
-          data: (staticData) => _buildDashboard(mercs, staticData, userData),
+          data: (staticData) => _DashboardSection(
+            mercs: mercs,
+            staticData: staticData,
+            userData: userData,
+          ),
           orElse: () => const SizedBox.shrink(),
         ),
 
@@ -456,13 +440,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildDashboard(List<Mercenary> mercs, StaticGameData data, UserData userData) {
+}
+
+class _DashboardSection extends StatelessWidget {
+  const _DashboardSection({
+    required this.mercs,
+    required this.staticData,
+    required this.userData,
+  });
+
+  final List<Mercenary> mercs;
+  final StaticGameData staticData;
+  final UserData userData;
+
+  @override
+  Widget build(BuildContext context) {
     final dispatchedCount = mercs.where((m) => m.isDispatched).length;
     final injuredCount = mercs.where((m) => m.status == MercenaryStatus.injured).length;
     final deadCount = mercs.where((m) => m.status == MercenaryStatus.dead).length;
     final totalPower = mercs.where((m) => m.isAvailable).fold<int>(0, (sum, m) => sum + m.effectiveStr);
 
-    final barracksData = data.facilities.where((f) => f.id == 'barracks').firstOrNull;
+    final barracksData = staticData.facilities.where((f) => f.id == 'barracks').firstOrNull;
     final barracksLevel = userData.facilities['barracks'] ?? 0;
     final maxMercs = barracksData != null
         ? FacilityService.getMaxMercenaries(barracksData, barracksLevel)
@@ -484,10 +482,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              _dashItem('보유', '$aliveCount/$maxMercs', AppTheme.textSecondary),
-              _dashItem('파견 중', '$dispatchedCount', AppTheme.primary),
-              _dashItem('부상', '$injuredCount', Colors.orange),
-              _dashItem('사망', '$deadCount', Colors.red),
+              _DashItem(label: '보유', value: '$aliveCount/$maxMercs', color: AppTheme.textSecondary),
+              _DashItem(label: '파견 중', value: '$dispatchedCount', color: AppTheme.primary),
+              _DashItem(label: '부상', value: '$injuredCount', color: AppTheme.failure),
+              _DashItem(label: '사망', value: '$deadCount', color: AppTheme.criticalFailure),
             ],
           ),
           const SizedBox(height: 4),
@@ -496,8 +494,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
+}
 
-  Widget _dashItem(String label, String value, Color color) {
+class _DashItem extends StatelessWidget {
+  const _DashItem({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       child: Column(
         children: [
@@ -507,7 +518,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-
 }
 
 class _ActivityLog extends ConsumerWidget {
@@ -594,6 +604,7 @@ class _ActivityLog extends ConsumerWidget {
       case ActivityLogType.regionTransform: return '🌍';
       case ActivityLogType.chainProgressed: return '🔗';
       case ActivityLogType.chainCompleted: return '🏆';
+      case ActivityLogType.travelChoiceCompleted: return '🌟';
     }
   }
 
@@ -603,5 +614,104 @@ class _ActivityLog extends ConsumerWidget {
     if (diff.inMinutes < 60) return '${diff.inMinutes}분 전';
     if (diff.inHours < 24) return '${diff.inHours}시간 전';
     return '${diff.inDays}일 전';
+  }
+}
+
+class _TravelEventDialog extends StatelessWidget {
+  const _TravelEventDialog({
+    required this.event,
+    this.traitResult,
+    this.merc,
+    this.trait,
+  });
+
+  final TravelEvent event;
+  final TravelEventTraitResult? traitResult;
+  final Mercenary? merc;
+  final TraitData? trait;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('여행 중 사건 발생!'),
+      content: _TravelEventDialogContent(
+        event: event,
+        traitResult: traitResult,
+        merc: merc,
+        trait: trait,
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('확인'),
+        ),
+      ],
+    );
+  }
+}
+
+class _TravelEventDialogContent extends StatelessWidget {
+  const _TravelEventDialogContent({
+    required this.event,
+    this.traitResult,
+    this.merc,
+    this.trait,
+  });
+
+  final TravelEvent event;
+  final TravelEventTraitResult? traitResult;
+  final Mercenary? merc;
+  final TraitData? trait;
+
+  @override
+  Widget build(BuildContext context) {
+    if (traitResult == null) {
+      return Text(event.description);
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(event.description),
+        const SizedBox(height: 12),
+        const Divider(),
+        const SizedBox(height: 8),
+        if (merc != null)
+          Text(
+            '${merc!.name}가 새로운 선천 트레잇을 획득했습니다!',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        if (trait != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceAlt,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  trait!.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                Text(
+                  trait!.categoryKey,
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textHint),
+                ),
+                if (trait!.description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    trait!.description,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }

@@ -95,6 +95,8 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.chainProgressed;
       case 20:
         return ActivityLogType.chainCompleted;
+      case 21:
+        return ActivityLogType.travelChoiceCompleted;
       default:
         return ActivityLogType.questResult;
     }
@@ -165,6 +167,9 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.chainCompleted:
         writer.writeByte(20);
+        break;
+      case ActivityLogType.travelChoiceCompleted:
+        writer.writeByte(21);
         break;
     }
   }

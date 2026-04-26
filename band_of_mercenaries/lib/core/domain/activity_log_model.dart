@@ -46,6 +46,8 @@ enum ActivityLogType {
   chainProgressed,
   @HiveField(20)
   chainCompleted,
+  @HiveField(21)
+  travelChoiceCompleted,
 }
 
 @HiveType(typeId: 7)

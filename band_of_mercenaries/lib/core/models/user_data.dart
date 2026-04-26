@@ -70,6 +70,10 @@ class UserData extends HiveObject {
   @HiveField(20)
   List<String> completedChains;
 
+  // 이동 중 선택지 이벤트 ID
+  @HiveField(21)
+  String? choiceEventId;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -92,6 +96,7 @@ class UserData extends HiveObject {
     this.bannerItemId,
     List<String>? artifactItemIds,
     List<String>? completedChains,
+    this.choiceEventId,
   })  : facilities = facilities ?? {},
         artifactItemIds = artifactItemIds ?? <String>[],
         completedChains = completedChains ?? <String>[];

@@ -25,6 +25,9 @@ import 'package:band_of_mercenaries/core/models/elite_monster_data.dart';
 import 'package:band_of_mercenaries/core/models/elite_loot_entry.dart';
 import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
 import 'package:band_of_mercenaries/core/models/quest_narrative_data.dart';
+import 'package:band_of_mercenaries/core/models/travel_choice_event_data.dart';
+import 'package:band_of_mercenaries/core/models/travel_choice_option_data.dart';
+import 'package:band_of_mercenaries/core/models/travel_choice_result_data.dart';
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -50,6 +53,9 @@ class StaticGameData {
   final List<EliteLootEntry> eliteLootEntries;
   final List<ChainQuestData> chainQuests;
   final List<QuestNarrativeData> questNarratives;
+  final List<TravelChoiceEventData> travelChoiceEvents;
+  final List<TravelChoiceOptionData> travelChoiceOptions;
+  final List<TravelChoiceResultData> travelChoiceResults;
 
   const StaticGameData({
     required this.difficulties,
@@ -75,6 +81,9 @@ class StaticGameData {
     required this.eliteLootEntries,
     required this.chainQuests,
     required this.questNarratives,
+    required this.travelChoiceEvents,
+    required this.travelChoiceOptions,
+    required this.travelChoiceResults,
   });
 }
 
@@ -106,5 +115,8 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     eliteLootEntries: dataLoader.loadFromCache('elite_loot_tables', EliteLootEntry.fromJson),
     chainQuests: dataLoader.loadFromCache('chain_quests', ChainQuestData.fromJson),
     questNarratives: dataLoader.loadFromCache('quest_narratives', QuestNarrativeData.fromJson),
+    travelChoiceEvents: dataLoader.loadFromCache('travel_choice_events', TravelChoiceEventData.fromJson),
+    travelChoiceOptions: dataLoader.loadFromCache('travel_choice_options', TravelChoiceOptionData.fromJson),
+    travelChoiceResults: dataLoader.loadFromCache('travel_choice_results', TravelChoiceResultData.fromJson),
   );
 });

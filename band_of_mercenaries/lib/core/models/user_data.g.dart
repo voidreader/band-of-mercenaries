@@ -38,13 +38,14 @@ class UserDataAdapter extends TypeAdapter<UserData> {
       bannerItemId: fields[18] as String?,
       artifactItemIds: (fields[19] as List?)?.cast<String>(),
       completedChains: (fields[20] as List?)?.cast<String>(),
+      choiceEventId: fields[21] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserData obj) {
     writer
-      ..writeByte(21)
+      ..writeByte(22)
       ..writeByte(0)
       ..write(obj.gold)
       ..writeByte(1)
@@ -86,7 +87,9 @@ class UserDataAdapter extends TypeAdapter<UserData> {
       ..writeByte(19)
       ..write(obj.artifactItemIds)
       ..writeByte(20)
-      ..write(obj.completedChains);
+      ..write(obj.completedChains)
+      ..writeByte(21)
+      ..write(obj.choiceEventId);
   }
 
   @override

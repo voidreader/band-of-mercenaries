@@ -59,6 +59,9 @@ StaticGameData _minimalStaticData({List<ItemData> items = const []}) {
     eliteLootEntries: const [],
     chainQuests: const [],
     questNarratives: const [],
+    travelChoiceEvents: const [],
+    travelChoiceOptions: const [],
+    travelChoiceResults: const [],
   );
 }
 

@@ -109,6 +109,7 @@ UI 리팩토링 정책은 `Docs/flutter-ui-refactor.md` 참조. 주요 규칙:
 - `regionTransformedProvider`: StateProvider<RegionTransformedEvent?> — 지역 변형 이벤트 채널 (`features/investigation/domain/region_transformed_provider.dart`). `InvestigationNotifier`가 `transform` discovery_type 완료 시 publish, `app.dart`가 `ref.listen`으로 감지하여 `RegionTransformDialog`를 `showDialog(barrierDismissible: false)`로 표시
 - `currentRegionSectorChangesProvider`: Provider<Map<String, String>> — 현재 리전의 sectorChanges 반응적 제공 (`features/investigation/domain/region_transformed_provider.dart`). `userDataProvider`(리전 변경) + `regionTransformedProvider`(변형 이벤트)를 watch하여 자동 갱신. MovementScreen이 data 레이어 직접 접근 없이 변형 섹터 정보를 조회
 - `templateEngineProvider`: Provider<TemplateEngine> — 스테이트리스 템플릿 엔진 (`core/providers/template_engine_provider.dart`). 변수 치환 `{namespace.field}`, 조건 분기 `[if]...[/if]`, 랜덤 변주 `[pick A|B]` 지원. `TemplateContext`(user, merc, region, factionStates 등)로 렌더
+- `pendingTravelChoiceProvider`: StateProvider<TravelChoiceRecallData?> — 이동 선택지 이벤트 채널 (`features/movement/domain/travel_choice_recall_provider.dart`). `MovementNotifier._triggerChoiceRecall()`이 이동 완료 시 publish, `home_screen.dart`가 `ref.listen`으로 감지하여 `TravelChoiceRecallDialog`를 `showDialog(barrierDismissible: false)`로 표시 (onDismiss에서 `state = null` 리셋)
 
 ### 데이터 흐름
 
@@ -130,7 +131,7 @@ UI 리팩토링 정책은 `Docs/flutter-ui-refactor.md` 참조. 주요 규칙:
 - 서버 연결 실패 시: 로컬 캐시로 오프라인 플레이 가능 (캐시 있는 경우)
 - 싱크 타이밍: 앱 시작 + 포그라운드 복귀
 
-**정적 데이터 테이블 (21개):**
+**정적 데이터 테이블 (24개):**
 - regions: 199개 리전 (5단계 티어). `environment_tags` JSONB 컬럼 추가 (엘리트 몬스터 스폰 환경 필터 — 예: `["forest","dungeon"]`)
 - jobs: 5티어 85개 직업. `role` 컬럼(text NOT NULL DEFAULT 'specialist')으로 파견 상성 매트릭스 조회 키 보유 — warrior 26 / specialist 16 / mage 16 / support 10 / ranger 9 / rogue 8
 - trait_categories: 8개 트레잇 카테고리 (Physical, Background, Talent, CombatStyle, Survival, Behavior, Mental, Experience)
@@ -152,6 +153,9 @@ UI 리팩토링 정책은 `Docs/flutter-ui-refactor.md` 참조. 주요 규칙:
 - elite_loot_tables: 엘리트 드랍 테이블 (id TEXT PK, elite_id TEXT FK, item_id TEXT nullable, bonus_gold INT, drop_weight INT, min_difficulty INT). 209행
 - chain_quests: 연계 퀘스트 단계 데이터 (id TEXT PK, chain_id TEXT, chain_name TEXT, step INT, total_steps INT, region_id INT nullable, target_region_id INT nullable, name TEXT, description TEXT, quest_type_id TEXT, difficulty INT, combat_power INT, reward_gold INT, reward_xp INT, reward_items JSONB, final_reward BOOL, final_reputation_bonus INT nullable, duration_seconds INT, next_step_delay_seconds INT, faction_tag_id TEXT nullable). 7체인 24단계
 - quest_narratives: 퀘스트 서사 템플릿 (id TEXT PK, quest_type TEXT, result_type TEXT — greatSuccess/success/failure/criticalFailure, is_elite BOOL DEFAULT false, template TEXT, weight INT DEFAULT 1, description TEXT nullable). 88행 (raid/hunt/escort/explore × 4결과 × 4변형 + labor/survey 각 8 + 엘리트 raid/hunt 각 4). `QuestNarrativeService.pickTemplate()`이 quest_type × result_type × is_elite 3중 필터 + weight 가중 랜덤 선택 → TemplateEngine 렌더 → `ActiveQuest.renderedNarrative` 저장
+- travel_choice_events: 이동 선택지 이벤트 (id TEXT PK, name TEXT, category TEXT, situation TEXT, min_tier INT, max_tier INT, weight INT DEFAULT 1, preferred_traits TEXT nullable). 12행
+- travel_choice_options: 선택지 옵션 (id TEXT PK, event_id TEXT FK, choice_index INT, label TEXT, visibility_expr TEXT nullable, description TEXT, risk_level TEXT — safe/risky/hidden). 30행
+- travel_choice_results: 선택지 결과 (id TEXT PK, option_id TEXT FK, result_index INT, probability REAL, conditional_expr TEXT nullable, narrative TEXT, effect_type TEXT, effect_magnitude REAL DEFAULT 0.0, effect_target TEXT nullable). 72행. `TravelChoiceService.resolveResult()`가 probability + conditional_expr 평가 후 결과 선택
 
 **모델 JSON 키 규칙:** 모든 정적 데이터 모델은 snake_case @JsonKey를 사용 (Supabase 컬럼명과 일치). Dart 필드명과 동일한 경우 @JsonKey 생략.
 
@@ -187,8 +191,10 @@ UI 리팩토링 정책은 `Docs/flutter-ui-refactor.md` 참조. 주요 규칙:
 - `quests` 박스 지역 변형 확장: HiveField(24) `specialFlags` (Map<String, dynamic>?, 퀘스트 풀의 특수 플래그 런타임 복사. null=일반 퀘스트). `SpecialFlagProcessor.apply()`가 완료 시 처리 — 6종: `trait_learning_boost`(용병 트레잇 학습 지표 2배, n분간) / `guild_drop_rare`·`guild_drop_ultra_rare`(길드 장비 드랍, 희귀/초희귀) / `essence_drop_bonus`(정수 드랍) / `equipment_drop_bonus`(personal_equipment tier 3~4 드랍) / `reputation_penalty`(퀘스트 결과 무관 평판 차감). 보상 5종은 success/greatSuccess 시만 적용, penalty는 항상 적용
 - `quests` 박스 서사 확장: HiveField(25) `renderedNarrative` (String?, 완료 시점 1회 렌더된 서사 문자열. `QuestNarrativeService.renderNarrative()`가 seed 고정 후 생성, 이후 재렌더 금지). 체인 퀘스트는 null 유지 (`chain_quests.description` 사용)
 - `user` 박스 체인 퀘스트: HiveField(20) `completedChains` (List<String>, 완료된 체인 ID 목록). `completedChainSet` getter로 Set 변환
+- `user` 박스 이동 선택지: HiveField(21) `choiceEventId` (String?, 이동 완료 시 롤된 선택지 이벤트 ID. 앱 재시작 시 recall 복원용. 팝업 표시 후 null 초기화)
 - `chainQuestProgress` 박스: ChainQuestProgress 모델 (typeId:13) — chainId(String), currentStep(int), status(ChainQuestStatus typeId:14: active/completed/dormant), startedAt, completedAt?, protagonistMercId?, currentStepAvailableAt?, stepFailureCount, lastActivityAt?. `ChainQuestRepository`로 CRUD + watchAll Stream. 14일 미활동 시 dormant 전환, 탭으로 재활성화
 - `activityLogs` 박스 체인 퀘스트 확장: `ActivityLogType` enum HiveField(18) `regionTransform` / HiveField(19) `chainProgressed` / HiveField(20) `chainCompleted`
+- `activityLogs` 박스 이동 선택지 확장: `ActivityLogType` enum HiveField(21) `travelChoiceCompleted`
 
 ### 코드 생성
 
@@ -222,6 +228,7 @@ freezed, json_serializable, hive_generator, riverpod_generator 4종을 `build_ru
 - **퀘스트 서사**: 퀘스트 완료 시 `quest_narratives` 88행에서 `quest_type × result_type × is_elite` 3중 필터 후 weight 가중 랜덤 선택 → TemplateEngine 렌더 → `ActiveQuest.renderedNarrative`(HiveField 25) 저장(이후 재렌더 금지). `QuestNarrativeService.pickTemplate()` / `.pickProtagonist()` / `.renderNarrative()` 3개 정적 메서드 (순수 서비스 클래스). 대표 용병은 파티 내 partyPower 개별 기여 최대 용병(`QuestCalculator.statWeightsFor()` 사용). `{quest.enemy}` 변수는 `TemplateContext.enemyName`으로 사전 해결(일반: `QuestPool.enemyName`, 엘리트: `EliteMonster.name`, null: `"적"` fallback). `QuestResultDialog`에 이탤릭 서사 Container 표시, 활동 로그 메시지 포맷 `'퀘스트 "이름" 결과! — 서사'`. 체인 퀘스트는 본 서비스 미사용(chain_quests.description 직접 사용)
 - **템플릿 엔진**: `TemplateEngine`(const 스테이트리스 클래스) — 변수 치환 `{namespace.field}`, 조건 분기 `[if condition]...[/if]`, 랜덤 변주 `[pick A|B|C]`. `TemplateContext`(freezed, user 필수)로 컨텍스트 제공. `render()` fail-safe(예외 시 원문 반환). `TravelEventService.renderDescription()`으로 이동 이벤트 설명 치환, `ChainCompletedDialog`에서 체인 완주 설명 치환
 - **지역 변형**: 지역 조사 완료 시 `discovery_type == 'transform'`인 `region_discoveries` 항목이 섹터를 영구 변형. `discovery_data`에서 `transform_type`(village/ruins/hidden), `sector_index`(0~9), `transformed_name`, `narrative_template` 추출 → `RegionStateRepository.applyTransform()`으로 Hive 저장 → TemplateEngine 렌더 → `regionTransformedProvider` publish → `app.dart` ref.listen → `RegionTransformDialog` 팝업. 변형된 섹터에는 `quest_pools.sector_type` 일치 퀘스트 34개 생성 (`QuestGenerator.sectorType` 분기). 일부 퀘스트는 `specialFlags`를 가지며 `SpecialFlagProcessor`로 완료 시 특수 보상 처리. MovementScreen에서 변형 섹터를 아이콘(🏘️/🏛️/✨) + 색상 테두리로 시각 구분 (`currentRegionSectorChangesProvider` watch). 리전당 1섹터 제약(MVP)
+- **이동 선택지(회상 팝업)**: 이동 완료 시 `TravelChoiceService.rollChoiceEvent()`가 `P = min(base + coeff × distance, 0.30)` 공식으로 이벤트 확률 계산 (tier별 coeff: 1-2: 0.08, 3-4: 0.10, 5: 0.12). 이벤트 발생 시 `UserData.choiceEventId` HiveField(21)에 저장하고 `_triggerChoiceRecall()`이 `pendingTravelChoiceProvider`에 `TravelChoiceRecallData` publish. `home_screen.dart` ref.listen → `TravelChoiceRecallDialog` 팝업(barrierDismissible: false). 다이얼로그 1단계: 상황 서사 + 일반 선택지(Row) + 숨겨진 선택지(Column, ✦ prefix). 2단계: 결과 서사 + 효과 요약. 효과 8종: `gold_gain`/`gold_loss`/`xp_gain`/`reputation_gain`/`reputation_loss`/`trait_learning_boost`/`item_drop`/`trait_innate`/`nothing`. `applyTravelChoiceEffect`는 `MovementNotifier`에 위임(레이어 경계 준수). `TravelChoiceService`는 Ref 직접 의존 없는 순수 서비스 (5개 static 메서드: rollChoiceEvent / selectProtagonist / filterVisibleOptions / resolveResult / summarizeEffect)
 - **세력 가입/관리**: `FactionJoinService.canJoin()`으로 가입 조건 판정. 가입 조건: 평판 > 0 / `joinNeedsClue`이면 clueLevel 3 필요 / `joinRankMin`이면 현재 랭크 충족 필요 / 충돌 세력 제외 후 실효 가입 수 < 3. 평판은 `clampReputation()`으로 미가입 시 최대 10 / 가입 시 최대 100 / 최소 -100. 가입 시 충돌 세력(`conflict_faction_ids`)은 자동 탈퇴 + 평판 -20 패널티(`applyConflictPenalty`). 세력별 `passive_bonus_json`으로 패시브 혜택 기술(현재 표시만, 실제 효과 stub). `visibilityType` = 'public' 세력은 이름 항상 노출(clueLevel 1 보장), 'secret'/'regional' 세력은 발견 전 '???' 표시. 세력 도감(`FactionCodexScreen`): 공개 → 발견 비밀/지역(clueLevel 내림차순) → 미발견 순 정렬. 세력 상세(`FactionDetailScreen`): 평판 바, 가입 조건, 패시브, 가입/탈퇴 버튼
 
 ## 테스트 구조

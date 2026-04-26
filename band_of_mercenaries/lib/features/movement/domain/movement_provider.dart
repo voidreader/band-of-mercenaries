@@ -20,6 +20,12 @@ import 'package:band_of_mercenaries/core/models/trait_conflict.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
+import 'package:band_of_mercenaries/features/movement/domain/travel_choice_service.dart';
+import 'package:band_of_mercenaries/features/movement/domain/travel_choice_recall_provider.dart';
+import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
+import 'package:band_of_mercenaries/core/domain/template_context.dart';
+import 'package:band_of_mercenaries/core/models/travel_choice_result_data.dart';
+import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
 
 final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
@@ -106,6 +112,21 @@ class MovementNotifier extends StateNotifier<MovementState?> {
       events: staticData.travelEvents,
       random: random,
     );
+
+    // 선택지 이벤트 롤 (자동 이벤트와 독립)
+    final rosterIdle = ref.read(mercenaryListProvider)
+        .where((m) => m.isAvailable)
+        .toList();
+    final choiceEvent = TravelChoiceService.rollChoiceEvent(
+      distance: distance,
+      regionTier: currentRegionData.regionTier,
+      rosterIdle: rosterIdle,
+      events: staticData.travelChoiceEvents,
+      random: random,
+    );
+    if (choiceEvent != null) {
+      await _repo.setChoiceEventId(choiceEvent.id);
+    }
 
     if (travelEvent != null && travelEvent.effectType == 'trait_innate') {
       final mercs = ref.read(mercenaryListProvider);
@@ -199,6 +220,80 @@ class MovementNotifier extends StateNotifier<MovementState?> {
     ref.read(lastTravelEventProvider.notifier).state = null;
 
     await ref.read(questListProvider.notifier).generateQuests();
+
+    await _triggerChoiceRecall();
+  }
+
+  Future<void> _triggerChoiceRecall() async {
+    final eventId = _repo.choiceEventId;
+    if (eventId == null) return;
+
+    final staticData = ref.read(staticDataProvider).value;
+    if (staticData == null) return;
+
+    final event = staticData.travelChoiceEvents
+        .where((e) => e.id == eventId)
+        .firstOrNull;
+    if (event == null) {
+      await _repo.setChoiceEventId(null);
+      return;
+    }
+
+    // 중복 방지 — publish 전에 클리어
+    await _repo.setChoiceEventId(null);
+
+    final userData = ref.read(userDataProvider);
+    if (userData == null) return;
+
+    final rosterIdle = ref.read(mercenaryListProvider)
+        .where((m) => m.isAvailable)
+        .toList();
+
+    if (rosterIdle.isEmpty) return;
+
+    final protagonist = TravelChoiceService.selectProtagonist(
+      rosterIdle: rosterIdle,
+      preferredTraitsCsv: event.preferredTraits,
+      traits: staticData.traits,
+    );
+
+    final engine = ref.read(templateEngineProvider);
+
+    final teamCtx = TemplateContext(
+      user: userData,
+      merc: protagonist,
+      rosterForTeam: rosterIdle,
+      evaluationScope: EvaluationScope.team,
+    );
+
+    final allOptions = staticData.travelChoiceOptions
+        .where((o) => o.eventId == event.id)
+        .toList();
+
+    final visibleOptions = TravelChoiceService.filterVisibleOptions(
+      options: allOptions,
+      engine: engine,
+      teamContext: teamCtx,
+    );
+
+    if (visibleOptions.isEmpty) return;
+
+    final hiddenOptions = visibleOptions
+        .where((o) => o.riskLevel == 'hidden')
+        .toList();
+    final nonHiddenVisible = visibleOptions
+        .where((o) => o.riskLevel != 'hidden')
+        .toList();
+
+    final renderedSituation = engine.render(event.situation, teamCtx);
+
+    ref.read(pendingTravelChoiceProvider.notifier).state = TravelChoiceRecallData(
+      event: event,
+      visibleOptions: nonHiddenVisible,
+      hiddenOptions: hiddenOptions,
+      protagonist: protagonist,
+      renderedSituation: renderedSituation,
+    );
   }
 
   Future<void> _applyEventEffect(TravelEvent event) async {
@@ -306,6 +401,105 @@ class MovementNotifier extends StateNotifier<MovementState?> {
           traitKey: selectedTrait.key,
         );
     }
+  }
+
+  /// view 계층이 data 계층을 직접 접근하지 않도록 선택지 이벤트 효과 적용을 위임받는 메서드.
+  Future<void> applyTravelChoiceEffect(
+    TravelChoiceResultData result,
+    Mercenary protagonist,
+  ) async {
+    final speedMult = ref.read(speedMultiplierProvider);
+
+    switch (result.effectType) {
+      case 'gold':
+        if (result.effectMagnitude >= 0) {
+          await ref.read(userDataProvider.notifier).addGold(result.effectMagnitude.toInt());
+        } else {
+          await ref.read(userDataProvider.notifier).spendGold(result.effectMagnitude.abs().toInt());
+        }
+      case 'reputation':
+        await ref.read(userDataProvider.notifier).addReputation(result.effectMagnitude.toInt());
+      case 'injury':
+        final recoverySeconds = (10 * 60 / speedMult).round();
+        final recoveryTime = DateTime.now().add(Duration(seconds: recoverySeconds));
+        await ref.read(mercenaryRepositoryProvider).updateStatus(
+          protagonist.id, MercenaryStatus.injured, endTime: recoveryTime,
+        );
+        ref.read(mercenaryListProvider.notifier).refresh();
+      case 'heal_tired':
+        if (result.effectMagnitude > 0) {
+          await ref.read(mercenaryRepositoryProvider).updateStatus(
+            protagonist.id, MercenaryStatus.normal,
+          );
+        } else {
+          await ref.read(mercenaryRepositoryProvider).updateStatus(
+            protagonist.id, MercenaryStatus.tired,
+            endTime: DateTime.now().add(const Duration(minutes: 5)),
+          );
+        }
+        ref.read(mercenaryListProvider.notifier).refresh();
+      case 'trait_innate':
+        await _applyTravelTraitInnate(protagonist, result.effectTarget);
+      case 'trait_acquired':
+        final boostUntil = DateTime.now()
+            .add(TravelChoiceService.traitLearningBoostDuration);
+        await ref.read(mercenaryRepositoryProvider).setTraitLearningBoost(
+          protagonist.id, boostUntil,
+        );
+        ref.read(mercenaryListProvider.notifier).refresh();
+      case 'item':
+        final itemId = result.effectTarget;
+        if (itemId != null) {
+          final staticData = ref.read(staticDataProvider).value;
+          if (staticData != null) {
+            await ref.read(inventoryRepositoryProvider).addItem(
+              itemId: itemId,
+              quantity: result.effectMagnitude.toInt().clamp(1, 99),
+              items: staticData.items,
+            );
+          }
+        }
+      case 'nothing':
+      default:
+        break;
+    }
+  }
+
+  /// protagonist의 빈 선천 슬롯(innateCount < 3)에만 트레잇을 부여하는 helper.
+  /// effectTarget이 null이면 skip.
+  Future<void> _applyTravelTraitInnate(
+    Mercenary protagonist,
+    String? effectTarget,
+  ) async {
+    final staticData = ref.read(staticDataProvider).value;
+    if (staticData == null) return;
+    if (effectTarget == null) return;
+
+    final allTraits = staticData.traits;
+    final conflicts = staticData.traitConflicts;
+
+    final innateCount = protagonist.allTraitIds.where((id) {
+      final t = allTraits.where((t) => t.key == id).firstOrNull;
+      return t != null && t.type == 'innate';
+    }).length;
+    if (innateCount >= 3) return;
+
+    final candidates = allTraits
+        .where((t) =>
+            t.key == effectTarget &&
+            t.type == 'innate' &&
+            !protagonist.allTraitIds.contains(t.key) &&
+            !TraitAcquisitionService.hasConflict(
+                t.key, protagonist.allTraitIds, conflicts))
+        .toList();
+
+    if (candidates.isEmpty) return;
+
+    final selected = candidates[Random().nextInt(candidates.length)];
+    await ref.read(mercenaryRepositoryProvider).addTrait(
+      protagonist.id, selected.key,
+    );
+    ref.read(mercenaryListProvider.notifier).refresh();
   }
 
   bool _isTraitInnateEventValid(

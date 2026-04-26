@@ -28,4 +28,15 @@ class MovementRepository {
     user.moveEndTime = null;
     await user.save();
   }
+
+  // UserData.choiceEventId를 Hive에 저장 (null이면 초기화)
+  Future<void> setChoiceEventId(String? id) async {
+    final user = userData;
+    if (user == null) return;
+    user.choiceEventId = id;
+    await user.save();
+  }
+
+  // 현재 저장된 choiceEventId 반환
+  String? get choiceEventId => userData?.choiceEventId;
 }

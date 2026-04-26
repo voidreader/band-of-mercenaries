@@ -39,6 +39,9 @@ class SyncService {
     'elite_loot_tables', // 21. 엘리트 드랍 테이블 (M2b 추가)
     'chain_quests', // 22. 연쇄 퀘스트 (M3 추가)
     'quest_narratives', // 23. 퀘스트 서술 (M3 추가)
+    'travel_choice_events', // 24. 이동 선택지 이벤트 (M3 추가)
+    'travel_choice_options', // 25. 이동 선택지 옵션 (M3 추가)
+    'travel_choice_results', // 26. 이동 선택지 결과 (M3 추가)
   ];
 
   SyncService({
