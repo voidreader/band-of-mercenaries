@@ -3,7 +3,7 @@ name: implement-agent
 description: 사용자로부터 전달된 명세서를 기반으로 git 충돌 감지 후, 서브에이전트 파이프라인(planner → coder → dart-build-resolver → verifier + flutter-reviewer 병렬)을 직접 조율하여 구현을 진행하고 완료 후 산출물 문서를 생성한다. TASK 수가 적을 경우 verifier 대신 main이 경량 검증을 수행한다.
 ---
 
-Recommended Model : Claude Sonnet
+Recommended Model : Claude Opus
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?

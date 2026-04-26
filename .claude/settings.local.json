@@ -109,7 +109,12 @@
       "Bash(sort -t: -k2 -n)",
       "Bash(cp /Users/radiogaga/git/band-of-mercenaries/Docs/content-design/\\\\[content\\\\]20260423_chain_quests.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_chain-quest-system/design.md)",
       "Bash(cp /Users/radiogaga/git/band-of-mercenaries/Docs/spec/M3/\\\\[spec\\\\]20260424_chain-quest-system.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_chain-quest-system/spec.md)",
-      "Bash(cp /Users/radiogaga/git/band-of-mercenaries/Docs/spec/M3/\\\\[spec\\\\]20260424_chain-quest-system_plan.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_chain-quest-system/plan.md)"
+      "Bash(cp /Users/radiogaga/git/band-of-mercenaries/Docs/spec/M3/\\\\[spec\\\\]20260424_chain-quest-system_plan.md /Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_chain-quest-system/plan.md)",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/content-design/[content]20260423_region_transform.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_region-transform-system/design.md\")",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/spec/M3/[spec]20260424_region-transform-system.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_region-transform-system/spec.md\")",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/spec/M3/[spec]20260424_region-transform-system_plan.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260424_region-transform-system/plan.md\")",
+      "Bash(awk NR>=60 && NR<=482 {count++} END {print \"build\\(\\) 줄 수:\", count} *)",
+      "Bash(awk 'NR>=62' /Users/radiogaga/git/band-of-mercenaries/band_of_mercenaries/lib/features/home/view/home_screen.dart)"
     ]
   },
   "enabledPlugins": {

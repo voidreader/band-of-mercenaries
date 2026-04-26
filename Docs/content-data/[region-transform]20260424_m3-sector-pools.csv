@@ -1,0 +1,35 @@
+id,name,type,difficulty,min_region_diff,max_region_diff,type_id,faction_tag,is_faction_exclusive,min_reputation,sector_type,special_flags
+qp_sector_village_01,장터 호위,0,2.0,1,10,escort,,false,0,village,{}
+qp_sector_village_02,식량 호송,0,2.0,1,10,escort,,false,0,village,{}
+qp_sector_village_03,혼례 행렬,0,2.0,1,10,escort,,false,0,village,{}
+qp_sector_village_04,대상 호위,0,3.0,1,10,escort,,false,0,village,{}
+qp_sector_village_05,개척민 분쟁,0,2.0,1,10,explore,,false,0,village,{}
+qp_sector_village_06,잃어버린 양,0,2.0,1,10,explore,,false,0,village,{}
+qp_sector_village_07,정착지 측량,0,3.0,1,10,explore,,false,0,village,{}
+qp_sector_village_08,창고 정리,0,2.0,1,10,labor,,false,0,village,{}
+qp_sector_village_09,좌판 설치,0,2.0,1,10,labor,,false,0,village,{}
+qp_sector_village_10,우편 배달,0,3.0,1,10,labor,,false,0,village,{}
+qp_sector_village_11,도둑고양이 소탕,0,3.0,1,10,raid,,false,0,village,{}
+qp_sector_village_12,장터 순찰,0,3.0,1,10,hunt,,false,0,village,{}
+qp_sector_ruins_01,유적 문지기 처치,0,4.0,3,10,hunt,,false,0,ruins,{}
+qp_sector_ruins_02,녹슨 파수병 파괴,0,4.0,3,10,hunt,,false,0,ruins,{}
+qp_sector_ruins_03,유적 심층 진입,0,4.0,3,10,explore,,false,0,ruins,"{""essence_drop_bonus"":{""essence_tier"":3,""drop_rate"":0.08,""quantity"":[1,2]}}"
+qp_sector_ruins_04,무너진 복도 탐사,0,4.0,3,10,explore,,false,0,ruins,{}
+qp_sector_ruins_05,잠든 수호 기계 파괴,0,5.0,3,10,hunt,,false,0,ruins,"{""equipment_drop_bonus"":{""category"":""personal_equipment"",""tier_range"":[3,4],""drop_rate"":0.05}}"
+qp_sector_ruins_06,부활한 경비병 토벌,0,5.0,3,10,hunt,,false,0,ruins,{}
+qp_sector_ruins_07,석판 해독,0,4.0,3,10,explore,,false,0,ruins,{}
+qp_sector_ruins_08,깊은 제단 수호자,0,5.0,3,10,hunt,,false,0,ruins,"{""essence_drop_bonus"":{""essence_tier"":4,""drop_rate"":0.12,""quantity"":[1,1]}}"
+qp_sector_ruins_09,고대 기계 재가동 추적,0,5.0,3,10,explore,,false,0,ruins,{}
+qp_sector_ruins_10,유적 성소 약탈,0,5.0,3,10,raid,,false,0,ruins,{}
+qp_sector_ruins_11,은닉된 보물실 약탈,0,4.0,3,10,raid,,false,0,ruins,"{""guild_drop_ultra_rare"":{""item_id"":""guild_artifact_guardian_emblem"",""drop_rate"":0.01}}"
+qp_sector_ruins_12,금단 제단 파괴,0,5.0,3,10,raid,,false,0,ruins,{}
+qp_sector_hidden_01,은둔자의 가르침,0,3.0,2,10,explore,,false,0,hidden,"{""trait_learning_boost"":{""multiplier"":1.5,""duration_hours"":24}}"
+qp_sector_hidden_02,기묘한 문양 해석,0,3.0,2,10,explore,,false,0,hidden,{}
+qp_sector_hidden_03,망각의 의식 관람,0,4.0,2,10,explore,,false,0,hidden,"{""trait_learning_boost"":{""multiplier"":1.5,""duration_hours"":24}}"
+qp_sector_hidden_04,기억의 파편 회수,0,4.0,2,10,explore,,false,0,hidden,"{""guild_drop_rare"":{""item_id"":""guild_banner_standard"",""drop_rate"":0.03}}"
+qp_sector_hidden_05,망각의 서고 탐사,0,4.0,2,10,explore,,false,0,hidden,"{""guild_drop_rare"":{""item_id"":""guild_artifact_honor_horn"",""drop_rate"":0.02}}"
+qp_sector_hidden_06,별의 조각 채집,0,5.0,2,10,explore,,false,0,hidden,"{""trait_learning_boost"":{""multiplier"":1.5,""duration_hours"":24}}"
+qp_sector_hidden_07,금기된 의식 중단,0,4.0,2,10,hunt,,false,0,hidden,"{""reputation_penalty"":{""amount"":-5}}"
+qp_sector_hidden_08,별이 떨어진 자리,0,5.0,2,10,hunt,,false,0,hidden,"{""guild_drop_rare"":{""item_id"":""guild_artifact_guardian_emblem"",""drop_rate"":0.01}}"
+qp_sector_hidden_09,결계의 수호,0,3.0,2,10,escort,,false,0,hidden,{}
+qp_sector_hidden_10,숨은 거래 포착,0,4.0,2,10,raid,,false,0,hidden,{}
