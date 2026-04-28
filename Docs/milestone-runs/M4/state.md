@@ -1,7 +1,7 @@
 # M4 실행 상태
 
 > 시작: 2026-04-28
-> 마지막 업데이트: 2026-04-28
+> 마지막 업데이트: 2026-04-29 (#3 완료 반영)
 > 현재 페이즈: 1
 > 상태: in_progress
 
@@ -19,15 +19,18 @@
 **상태**: in_progress
 
 계획된 산출물:
-- [ ] 1. 세력 전용 시설 14종 컨셉
+- [x] 1. 세력 전용 시설 14종 컨셉
   - 참고 문서: `Docs/roadmap/master_roadmap.md` (M4 섹션) / `Docs/content-design/[content]20260416_faction_system.md` / `Docs/content-design/[content]20260417_faction_passive_mapping.md`
-  - 산출물: (미생성)
-- [ ] 2. 세력 거점 지정 + 방문 UX
+  - 산출물: `Docs/content-design/[content]20260428_faction-facilities.md`
+  - 완료: 2026-04-28
+- [x] 2. 세력 거점 지정 + 방문 UX
   - 참고 문서: `Docs/content-design/[content]20260416_faction_system.md` / `Docs/proto_design.md`
-  - 산출물: (미생성)
-- [ ] 3. 세력 상점 컨셉
+  - 산출물: `Docs/content-design/[content]20260429_faction_strongholds.md`
+  - 완료: 2026-04-29
+- [x] 3. 세력 상점 컨셉
   - 참고 문서: `Docs/content-design/[content]20260418_initial_item_set.md` / `Docs/content-design/[content]20260418_item_taxonomy.md`
-  - 산출물: (미생성)
+  - 산출물: `Docs/content-design/[content]20260429_faction_shop.md`
+  - 완료: 2026-04-29
 - [ ] 4. 세력 전용 트레잇 컨셉
   - 참고 문서: `Docs/content-design/20260412_trait_system_design.md` / `Docs/content-design/20260413_phase_a_trait_lifecycle.md`
   - 산출물: (미생성)
@@ -93,3 +96,9 @@
 - 2026-04-28: 마일스톤 시작
 - 2026-04-28: 4개 페이즈 산출물 계획 승인 (페이즈 1: 5개 / 페이즈 2: 3개 / 페이즈 3: 3개 / 페이즈 4: 4개)
 - 2026-04-28: 페이즈 1 시작
+- 2026-04-28: 페이즈 1 #1 "세력 전용 시설 14종 컨셉" 완료 (`Docs/content-design/[content]20260428_faction-facilities.md`)
+- 2026-04-29: `--resume`으로 재진입, 페이즈 1 #2 안내
+- 2026-04-29: 페이즈 1 #2 "세력 거점 지정 + 방문 UX" 완료 (`Docs/content-design/[content]20260429_faction_strongholds.md`)
+- 2026-04-29: `--resume`으로 재진입, 페이즈 1 #3 안내
+- 2026-04-29: 페이즈 1 #3 "세력 상점 컨셉" 완료 (`Docs/content-design/[content]20260429_faction_shop.md`)
+- 2026-04-29: `--resume`으로 재진입, 페이즈 1 #4 안내
