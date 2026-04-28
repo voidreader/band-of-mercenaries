@@ -1,5 +1,78 @@
 # CHANGELOG
 
+## 2026-04-26
+
+### M3 공존 정책 — 파견 화면 정렬 + 도착 팝업 큐 통합
+
+- 전역 다이얼로그 큐 도입 (`DialogQueueNotifier`): priority(critical/high/medium/low) + FIFO + id dedup. Hive `dialogQueue` 박스로 24h 영속화, 만료/실패 시 ActivityLog "알림 일부 유실됨" 기록
+- 5개 독립 팝업 채널(건설·조사·랭크업·체인 완주·지역 변형) + 이동 도착 팝업 2종(자동 이벤트·선택지 회상) 모두 단일 큐로 통합. critical은 `barrierDismissible: false`
+- 파견 화면 5계층 정렬 (`QuestSortService.sort`): Tier 0 체인 → Tier 1 세력 전용 → Tier 2 엘리트(유니크 우선) → Tier 3 변형 섹터 → Tier 4 일반. 같은 tier는 추정 보상↓ → 난이도↑ → id 사전순
+- 체인 다음 단계 카드를 `ChainTopSection`(최대 3장, 활성/비활성 분기, 비활성은 "이동 화면으로" 버튼)으로 분리. 인라인 `ChainStepCard` 호출 제거
+- `LayerSidebar`(8단계 우선순위 fold) + `QuestCardBadges`(체인/엘리트/섹터/세력 4종 배지) 공유 위젯 도입. 퀘스트 카드 시각 통합
+- 이동 화면 체인 하이라이트: 체인 대상 리전 모든 섹터에 금색 2px 테두리 + "체인" 마이크로 배지
+- ActivityLog 4종 신규 아이콘 매핑: 🗺️ regionTransform / ⛓️ chainProgressed / ⛓️(굵음) chainCompleted / 🛤️ travelChoiceCompleted
+- AppTheme `chainGold`(`#D4AF37`) 신규, `transformVillage/Ruins/Hidden` + `eliteAccent/UniqueAccent` 명세 색상으로 갱신
+- 신규 Hive 박스 `dialogQueue`(typeId 15) — 빌드 후 첫 실행 시 자동 생성
+
+### M3 공존 정책 후속 정리 — 트레잇 진화 domain 이전 / 정렬 메모이제이션 / 다이얼로그 dismiss 일관성
+
+- 트레잇 진화 적용 로직(Repository 호출/트레잇 이름 lookup/ActivityLog 기록/refresh)을 view에서 `MercenaryListNotifier.applyEvolution()`으로 이전. dispatch_screen은 위젯 위임 한 줄로 단순화
+- `EvolutionChoice` 데이터 클래스를 view → domain 레이어로 이동 (`features/mercenary/domain/evolution_choice.dart`)
+- 파견 화면 정렬을 `sortedPendingQuestsProvider`(derived Provider)로 메모이제이션. 1초 주기 `gameTickProvider`로 매 tick 정렬 재계산되던 비용 제거. 세력 가입/탈퇴(`factionRefreshProvider`) + 지역 변형(`currentRegionSectorChangesProvider`) 시 자동 무효화
+- 다이얼로그 큐 5개 채널(건설·조사·랭크업·체인 완주·지역 변형) dismiss 책임 일원화: `enqueue` 직후 즉시 `state = null` 호출, builder/onDismiss 콜백은 `dismiss` 단순 참조만 수행
+- `InvestigationResultDialog`의 누락된 state 리셋 보완 (재발화 위험 제거)
+- 동작 변경 없음 (사용자 시각 동일성 보장 — 정렬 결과·진화 메시지·다이얼로그 표시 시퀀스 모두 동일)
+
+### 퀘스트 서사 통합 (M3 페이즈 4-4)
+
+- 퀘스트 완료 시 `quest_narratives` 88행에서 서사 템플릿을 weight 기반 가중 랜덤 선택 후 TemplateEngine으로 렌더링
+- 렌더된 서사를 `ActiveQuest.renderedNarrative`에 저장, `QuestResultDialog` 완료 팝업에 이탤릭 텍스트로 표시
+- 활동 로그 메시지에 서사 포함 (`'퀘스트 "이름" 결과! — 서사'` 포맷)
+- `{quest.enemy}` 변수 지원 — 일반 퀘스트: `quest_pools.enemy_name` 필드, 엘리트: 몬스터 이름, null 시 `"적"` fallback
+- 엘리트 퀘스트 전용 서사 8행 분리 적용 (`is_elite` 매트릭스)
+- `AppTheme.elite*` 색상 상수 6개 추가 — `dispatch_screen`, `dispatch_detail_page`, `quest_result_dialog` 색상 리터럴 통일
+- `QuestResultDialog` `_build*` 헬퍼 메서드 → `_EliteLootSection`, `_MercStatusRow`, `_RewardRow` StatelessWidget 추출
+
+### 이동 선택지 시스템 (M3 페이즈 4-5)
+
+- 이동 완료 시 확률 기반으로 선택지 이벤트 발생 — `P = min(base + coeff × distance, 0.30)`, 리전 티어별 coeff 조정
+- `TravelChoiceRecallDialog` 2단계 팝업: 상황 서사 + 선택지 → 결과 서사 + 효과 요약
+- 선택지 3종 risk_level (safe/risky/hidden) + `visibility_expr` TemplateEngine 평가로 숨겨진 선택지 조건부 노출
+- 결과 8종 효과: gold_gain/gold_loss/xp_gain/reputation_gain/reputation_loss/trait_learning_boost/item_drop/trait_innate
+- `UserData.choiceEventId` HiveField(21) — 앱 재시작 시에도 미표시 선택지 이벤트 보존
+- `travel_choice_events` / `travel_choice_options` / `travel_choice_results` 정적 테이블 3개 Supabase 동기화 추가
+- `TravelChoiceService` 순수 서비스 (5개 static 메서드) + 단위 테스트 19개
+
+### M3 체인 퀘스트 섹터 단위 하이라이트 — chain_quests.target_sector_id 추가
+
+- Supabase `chain_quests` 테이블에 `target_sector_id INTEGER NULL` 컬럼 추가 (1-based 1..10). `data_versions.chain_quests` version 1→2 갱신
+- `ChainQuestData` freezed 모델에 `targetSectorId` 필드 추가, build_runner 재생성
+- MovementScreen이 `chainTargetRegionIds`(Set) → `chainTargetSectors`(`Map<int, Set<int?>>`)로 자료구조 확장. `null in set` 시 region 전체 fallback, `sector in set` 시 해당 섹터 타일만 금색 테두리/배지 표시
+- 기존 24개 chain_quest 단계는 모두 `targetSectorId == null` 상태이므로 region 단위 하이라이트로 동작 동일 (시각적 변경 없음)
+- CSV(`Docs/content-data/[chain-quest]20260424_m3-chains.csv`) 헤더에 `target_sector_id` 컬럼 추가, 24행은 빈 값 유지 (콘텐츠 입력은 후속 sprint)
+
+---
+
+## 2026-04-25
+
+### 연계 퀘스트 시스템 (M3)
+
+- 지역 조사 완료 시 숨겨진 퀘스트 발견으로 체인 퀘스트 활성화 (7체인 24단계)
+- 파견 화면 최상단에 현재 연계 단계 카드 고정 표시 (이동/대기/휴면 상태 오버레이)
+- 주인공 용병 선정 및 체인 내 추적 — 주인공 사망률 50% 감소
+- 단계 완료 시 다음 단계 지연 후 활성화, 14일 비활동 시 휴면 전환
+- 체인 완주 시 명성 보너스 지급 + 완주 팝업 (서사 텍스트 템플릿 치환)
+- 템플릿 엔진 구현: 변수 치환/조건 분기/랜덤 변주를 이동 이벤트·퀘스트 서사에 적용
+
+### 지역 변형 시스템 (M3)
+
+- 지역 조사 완료 시 섹터가 village/ruins/hidden 3종 중 하나로 영구 변형 — 변형 팝업(TemplateEngine 렌더)
+- 변형 섹터에서 전용 퀘스트 34개 생성 (`quest_pools.sector_type` 필터 기반)
+- 특수 플래그 6종: 트레잇 학습 부스트 / 길드 장비 드랍(희귀·초희귀) / 정수 드랍 / 장비 드랍 / 평판 패널티
+- 이동 화면에서 변형 섹터 시각 구분 (아이콘 🏘️/🏛️/✨ + 색상 테두리)
+
+---
+
 ## 2026-04-23
 
 ### 코드 품질 전수 점검 (flutter-reviewer)
