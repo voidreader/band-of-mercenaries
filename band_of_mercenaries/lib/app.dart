@@ -43,37 +43,13 @@ import 'package:band_of_mercenaries/features/investigation/view/region_transform
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
 
-  // 모바일과 유사한 해상도로 웹에서도 동작하도록 최대 너비 제한
-  static const double _maxMobileWidth = 430;
-  static const double _maxMobileHeight = 932;
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Band of Mercenaries',
       theme: AppTheme.theme,
       debugShowCheckedModeBanner: false,
-      home: const _MobileFrame(),
-    );
-  }
-}
-
-class _MobileFrame extends StatelessWidget {
-  const _MobileFrame();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: BandOfMercenariesApp._maxMobileWidth,
-            maxHeight: BandOfMercenariesApp._maxMobileHeight,
-          ),
-          child: const MainShell(),
-        ),
-      ),
+      home: const MainShell(),
     );
   }
 }

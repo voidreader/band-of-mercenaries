@@ -265,7 +265,7 @@ cd band_of_mercenaries && flutter test test/features/mercenary/
 - Material 3 다크 프라이머리 테마
 - 티어별 색상: 회색(1) → 초록(2) → 파랑(3) → 보라(4) → 빨강(5)
 - 하단 6탭: 이동 / 파견 / 홈 / 모집 / 시설 / 정보
-- 웹: `_MobileFrame`에서 `ConstrainedBox(maxWidth: 430)`으로 모바일 해상도 제한. 새 화면 전환 시 `Navigator.push` 대신 상태 기반 렌더링 사용 (Navigator가 ConstrainedBox 바깥으로 빠져나가는 문제 방지)
+- 새 화면 전환 시 `Navigator.push` 대신 상태 기반 렌더링 사용
 - 파견 화면: 퀘스트 선택 시 전체화면 `DispatchDetailPage`를 상태 기반으로 렌더링 (3단 구조: 상단 퀘스트 정보/중앙 용병 목록/하단 버튼). 퀘스트 카드에 세력 태그 배지(세력명 + `FactionData.color`) 표시, 전용 퀘스트는 좌측 3px 세로 막대 + 테두리 강조 + "전용" 레이블. `DispatchDetailPage` 상단에 전용 → "세력명 · 고급/기본 트랙" 텍스트, 태그 → 원형 세력 컬러 + 세력명 조건부 렌더링. 퀘스트 카드에 추천 role Chip×2(`RoleSynergyMatrix.topRolesForQuest`) 추가, 용병 카드는 `singleBonus >= 5.0`일 때 `primary.withValues(alpha: 0.10)` tint + `+X.X` 배지. 성공률 옆 `?` IconButton → `showModalBottomSheet` → `SuccessRateBreakdownSheet`로 레이어별 분해 표시
 - 퀘스트 완료 팝업: 보상 상세 내역 (골드, 파견비, 인건비, 순수익, XP, 명성) 표시. `ActiveQuest` 모델에 HiveField 12-16으로 보상 데이터 저장. 이후 트레잇 획득 알림 → 진화 선택 팝업 순서로 체이닝. 엘리트 퀘스트 완료 시 `QuestResultDialog`에 `EliteLootResult?` 전달 → 보통 `🔥 엘리트 드랍` / 유니크 `★ 유니크 드랍` 섹션 조건부 표시
 - 파견 화면 엘리트 UI: 엘리트 퀘스트 카드에 좌측 사이드바 색상 강조(보통: `#e65100` / 유니크: `#7b1fa2`) + 상단 배지(🔥 엘리트 / ★ 유니크) + 이름 색상 강조. 퀘스트 상세 페이지(`DispatchDetailPage`)에 엘리트 서사 카드(이름·설명/로어, 그라디언트 배경) 삽입
