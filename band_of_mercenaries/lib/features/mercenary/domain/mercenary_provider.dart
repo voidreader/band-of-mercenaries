@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/features/mercenary/data/mercenary_repository.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
@@ -28,12 +29,16 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     ref.listen(gameTickProvider, (prev, next) => _checkTimers());
     // 첫 실행 시 initializeNewGame() 완료 후 용병 목록 다시 로드
     ref.listen(userDataProvider, (prev, next) {
-      if (prev == null && next != null) _load();
+      if (prev == null && next != null) {
+        debugPrint('[BOM][Merc] userDataProvider null→non-null 감지 → _load 재실행');
+        _load();
+      }
     });
   }
 
   void _load() {
     state = _repo.getAll();
+    debugPrint('[BOM][Merc] _load: ${state.length}명');
   }
 
   void refresh() => _load();
@@ -169,7 +174,10 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
       final barracksLevel = userData.facilities['barracks'] ?? 0;
       final maxMercs = FacilityService.getMaxMercenaries(barracksData, barracksLevel);
       final aliveCount = state.where((m) => m.status != MercenaryStatus.dead).length;
-      if (aliveCount >= maxMercs) return null;
+      if (aliveCount >= maxMercs) {
+      debugPrint('[BOM][Merc] 모집 실패: 용량 초과 ($aliveCount/$maxMercs)');
+      return null;
+    }
     }
 
     // 주점 시설 보너스 계산
@@ -201,6 +209,7 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
       recruitBonus: recruitBonus,
       extraHighTierBoost: extraHighTierBoost,
     );
+    debugPrint('[BOM][Merc] 모집 성공: ${merc.name} (job: ${merc.jobId})');
     ref.read(activityLogProvider.notifier).addLog(
       '용병 "${merc.name}" 모집 완료',
       ActivityLogType.mercenaryRecruit,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/features/quest/data/quest_repository.dart';
@@ -94,6 +95,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
   void _load() {
     state = _repo.getAll();
+    final pending = state.where((q) => q.status == QuestStatus.pending).length;
+    final inProgress = state.where((q) => q.status == QuestStatus.inProgress).length;
+    debugPrint('[BOM][Quest] _load: 총 ${state.length}개 (대기 $pending / 진행 $inProgress)');
   }
 
   void refresh() => _load();
@@ -124,7 +128,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   Future<void> generateQuests() async {
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
-    if (staticData == null || userData == null) return;
+    if (staticData == null || userData == null) {
+      debugPrint('[BOM][Quest] generateQuests 중단: staticData=${staticData != null}, userData=${userData != null}');
+      return;
+    }
+    debugPrint('[BOM][Quest] generateQuests 시작 (region: ${userData.region})');
 
     final region = staticData.regions.firstWhere((r) => r.region == userData.region);
 
@@ -160,6 +168,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           ?.sectorChanges,
     );
     await _repo.addQuests(quests);
+    debugPrint('[BOM][Quest] generateQuests 완료: ${quests.length}개 생성');
     _load();
   }
 
@@ -397,6 +406,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   }
 
   Future<void> _completeQuest(ActiveQuest quest) async {
+    debugPrint('[BOM][Quest] 퀘스트 완료 처리: "${quest.questName}" (난이도 ${quest.difficulty})');
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
     if (staticData == null || userData == null) return;
@@ -500,6 +510,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       QuestResult.failure: '실패',
       QuestResult.criticalFailure: '대실패',
     }[result.resultType] ?? '완료';
+    debugPrint('[BOM][Quest] 결과: "$resultText" 순수익 ${result.netReward}G, XP ${result.xpGain}, 명성 ${result.repGain}');
     ref.read(activityLogProvider.notifier).addLog(
       '퀘스트 "${quest.questName}" $resultText!${result.renderedNarrative != null ? " — ${result.renderedNarrative}" : ""}',
       ActivityLogType.questResult,

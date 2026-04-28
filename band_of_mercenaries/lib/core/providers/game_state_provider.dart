@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
@@ -14,6 +15,8 @@ import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_service.dart';
 import 'package:band_of_mercenaries/features/facility/domain/construction_completion_provider.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
 
 final userDataProvider = StateNotifierProvider<UserDataNotifier, UserData?>((ref) {
   return UserDataNotifier(ref);
@@ -55,8 +58,12 @@ class UserDataNotifier extends StateNotifier<UserData?> {
   void refresh() => _load();
 
   Future<void> initializeNewGame() async {
+    debugPrint('[BOM][GameState] initializeNewGame 시작');
     final staticData = ref.read(staticDataProvider).value;
-    if (staticData == null) return;
+    if (staticData == null) {
+      debugPrint('[BOM][GameState] initializeNewGame 중단: staticData null');
+      return;
+    }
 
     final random = Random();
     final tier1Regions = staticData.regions.where((r) => r.regionTier == 1).toList();
@@ -74,9 +81,8 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     final box = Hive.box<UserData>(HiveInitializer.userBoxName);
     await box.clear();
     await box.add(userData);
-    state = userData;
 
-    // Generate starting mercenaries
+    // 시작 용병 생성 — state 갱신 전에 완료해야 mercenaryListProvider._load()가 정상 데이터를 읽음
     final mercBox = Hive.box<Mercenary>(HiveInitializer.mercenaryBoxName);
     await mercBox.clear();
     final startingMercs = RecruitmentService.generateStartingMercenaries(
@@ -90,6 +96,35 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     for (final merc in startingMercs) {
       await mercBox.add(merc);
     }
+    debugPrint('[BOM][GameState] 시작 용병 ${startingMercs.length}명 Hive 저장 완료');
+
+    // 초기 퀘스트 생성 — state 갱신 전에 완료해야 questListProvider._load()가 비어있지 않음
+    final questBox = Hive.box<ActiveQuest>(HiveInitializer.questBoxName);
+    await questBox.clear();
+    final initialQuests = QuestGenerator.generateQuests(
+      regionTier: startRegion.regionTier,
+      regionId: startRegion.region,
+      questPools: staticData.questPools,
+      questTypes: staticData.questTypes,
+      count: GameConstants.baseQuestCount,
+      random: random,
+      joinedFactionIds: const [],
+      factionReputations: const {},
+      clueLevelsInRegion: const {},
+      cooldownExclusiveQuestIds: const {},
+      activeSlotCount: GameConstants.baseQuestCount,
+      eliteMonsters: staticData.eliteMonsters,
+      regionEnvironmentTags: startRegion.environmentTags,
+      currentSectorIndex: startSector - 1,
+    );
+    for (final quest in initialQuests) {
+      await questBox.add(quest);
+    }
+    debugPrint('[BOM][GameState] 초기 퀘스트 ${initialQuests.length}개 Hive 저장 완료');
+
+    // 모든 Hive 데이터 준비 완료 후 state 갱신 → _PostSyncApp 리빌드 트리거
+    debugPrint('[BOM][GameState] initializeNewGame 완료 → state 갱신 (region: ${startRegion.region}, sector: $startSector)');
+    state = userData;
   }
 
   Future<void> addGold(int amount) async {
@@ -178,6 +213,7 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     _isCompletingConstruction = true;
     try {
       final facilityId = state!.constructionFacilityId!;
+      debugPrint('[BOM][GameState] 건설 완료: $facilityId Lv.${(state!.facilities[facilityId] ?? 0) + 1}');
       state!.facilities[facilityId] = (state!.facilities[facilityId] ?? 0) + 1;
       state!.constructionFacilityId = null;
       state!.constructionStartTime = null;

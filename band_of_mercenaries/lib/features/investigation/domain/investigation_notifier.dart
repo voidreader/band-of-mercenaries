@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
@@ -61,7 +62,9 @@ class InvestigationNotifier extends StateNotifier<void> {
     final duration = InvestigationService.getInvestigationDuration(region.regionTier, speedMult);
     final endTime = DateTime.now().add(duration);
 
-    return await _ref.read(userDataProvider.notifier).startInvestigation(mercId, endTime, regionId);
+    final ok = await _ref.read(userDataProvider.notifier).startInvestigation(mercId, endTime, regionId);
+    debugPrint('[BOM][Invest] 조사 시작: merc=$mercId, region=$regionId, 종료=$endTime → $ok');
+    return ok;
   }
 
   void checkCompletion() {
@@ -80,6 +83,7 @@ class InvestigationNotifier extends StateNotifier<void> {
 
     final mercId = userData.investigatingMercId!;
     final regionId = userData.investigationRegionId!;
+    debugPrint('[BOM][Invest] 조사 완료 처리: merc=$mercId, region=$regionId');
 
     final staticData = _ref.read(staticDataProvider).value;
     if (staticData == null) return;
@@ -106,6 +110,7 @@ class InvestigationNotifier extends StateNotifier<void> {
     final investBonus = PassiveBonusService.getInvestigationSuccessRateBonus(effects);
     successRate = (successRate + investBonus).clamp(5.0, 95.0);
     final success = Random().nextDouble() * 100 < successRate;
+    debugPrint('[BOM][Invest] 결과: ${success ? "성공" : "실패"} (성공률 ${successRate.toStringAsFixed(1)}%)');
 
     final repo = _ref.read(regionStateRepositoryProvider);
     InvestigationResult result;
