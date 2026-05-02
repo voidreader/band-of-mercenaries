@@ -108,6 +108,11 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
 
         // Tier 0(체인 단계)는 ChainTopSection이 별도 처리, sortedRest만 목록에 사용
         final pendingQuests = sortResult.sortedRest;
+        debugPrint('[BOM][Dispatch] build: quests=${quests.length}, '
+            'pending=${quests.where((q) => q.status == QuestStatus.pending).length}, '
+            'sortedRest=${pendingQuests.length}, '
+            'questTypeIds=${quests.map((q) => q.questTypeId).toSet()}, '
+            'staticTypeIds=${data.questTypes.map((t) => t.id).toSet()}');
 
         return Column(
           children: [
@@ -122,8 +127,10 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('💰 ${userData.gold}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  Text('${data.regions.firstWhere((r) => r.region == userData.region).regionName} (지역 ${userData.region})',
-                      style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary)),
+                  Text(() {
+                    final r = data.regions.where((r) => r.region == userData.region).firstOrNull;
+                    return r != null ? '${r.regionName} (지역 ${userData.region})' : '지역 ${userData.region}';
+                  }(), style: const TextStyle(fontSize: 14, color: AppTheme.textTertiary)),
                 ],
               ),
             ),
@@ -405,7 +412,11 @@ class _QuestCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
+    final questType = data.questTypes.where((t) => t.id == quest.questTypeId).firstOrNull;
+    if (questType == null) {
+      debugPrint('[BOM][Dispatch] questTypeId 누락: ${quest.questTypeId} — 카드 skip');
+      return const SizedBox.shrink();
+    }
     final layerInfo = _buildLayerInfo();
     final nameColor = _nameColor(layerInfo);
     final borderColor = _borderColor(layerInfo, isSelected);
@@ -420,7 +431,8 @@ class _QuestCard extends ConsumerWidget {
           border: Border.all(color: borderColor),
           boxShadow: isSelected ? [const BoxShadow(color: Colors.black12, blurRadius: 4)] : null,
         ),
-        child: Row(
+        child: IntrinsicHeight(
+          child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 좌측 사이드바 (계층 색상)
@@ -520,6 +532,7 @@ class _QuestCard extends ConsumerWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

@@ -6,15 +6,9 @@ import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/supabase_initializer.dart';
 import 'package:band_of_mercenaries/core/data/sync_service.dart';
-import 'package:band_of_mercenaries/core/data/settings_keys.dart';
-import 'package:band_of_mercenaries/core/constants/game_constants.dart';
-import 'package:band_of_mercenaries/core/domain/idle_reward_service.dart';
-import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
-import 'package:band_of_mercenaries/features/facility/domain/construction_service.dart';
-import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/app.dart';
 
 void main() async {
@@ -135,7 +129,7 @@ class _PostSyncApp extends ConsumerWidget {
             home: Scaffold(body: Center(child: CircularProgressIndicator())),
           );
         }
-        return _IdleRewardWrapper(child: const BandOfMercenariesApp());
+        return const BandOfMercenariesApp();
       },
       loading: () => const MaterialApp(
         home: Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -147,87 +141,3 @@ class _PostSyncApp extends ConsumerWidget {
   }
 }
 
-class _IdleRewardWrapper extends ConsumerStatefulWidget {
-  final Widget child;
-  const _IdleRewardWrapper({required this.child});
-
-  @override
-  ConsumerState<_IdleRewardWrapper> createState() => _IdleRewardWrapperState();
-}
-
-class _IdleRewardWrapperState extends ConsumerState<_IdleRewardWrapper> {
-  bool _checked = false;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_checked) {
-      _checked = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _checkIdleReward());
-    }
-    return widget.child;
-  }
-
-  void _checkIdleReward() {
-    final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
-    final lastActiveMs = settingsBox.get(SettingsKeys.lastActiveTime) as int?;
-    if (lastActiveMs == null) return;
-
-    final lastActive = DateTime.fromMillisecondsSinceEpoch(lastActiveMs);
-
-    double idleBonusAmount = 0.0;
-    final staticData = ref.read(staticDataProvider).value;
-    final userData = ref.read(userDataProvider);
-    if (staticData != null && userData != null) {
-      final vaultFacility = staticData.facilities.where((f) => f.id == 'vault').firstOrNull;
-      if (vaultFacility != null) {
-        final vaultLevel = userData.facilities['vault'] ?? 0;
-        idleBonusAmount = ConstructionService.getEffectValue(vaultFacility, vaultLevel);
-      }
-    }
-
-    final joinedIds = ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
-    final effects = staticData != null
-        ? PassiveBonusService.collect(
-            reputation: userData?.reputation ?? 0,
-            allRanks: staticData.ranks,
-            joinedFactions: staticData.factions
-                .where((f) => joinedIds.contains(f.id))
-                .toList(),
-          )
-        : const CollectedEffects.empty();
-    final idle = PassiveBonusService.getIdleRewardBonus(effects);
-
-    final reward = IdleRewardService.calculateReward(
-      lastActive,
-      idleBonusAmount: idleBonusAmount,
-      rateBonus: idle.rate,
-      capBonus: idle.cap,
-    );
-
-    if (reward <= 0) return;
-
-    ref.read(userDataProvider.notifier).addGold(reward);
-
-    final absentMinutes = DateTime.now().difference(lastActive).inMinutes;
-    if (mounted) {
-      showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('부재 보상'),
-          content: Text(
-            '${absentMinutes > GameConstants.maxIdleRewardMinutes ? "8시간 이상" : "$absentMinutes분"} 동안 부재하셨습니다.\n'
-            '${reward}G를 획득했습니다!',
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('확인'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    settingsBox.put(SettingsKeys.lastActiveTime, DateTime.now().millisecondsSinceEpoch);
-  }
-}

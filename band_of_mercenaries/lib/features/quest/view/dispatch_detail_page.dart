@@ -238,74 +238,111 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
 
                             return Opacity(
                               opacity: canSelect ? 1.0 : 0.5,
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 6),
-                                decoration: BoxDecoration(
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Material(
                                   color: cardColor,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isSelected ? AppTheme.primary : AppTheme.borderLight,
-                                  ),
-                                ),
-                                child: ListTile(
-                                  dense: true,
-                                  enabled: canSelect,
-                                  leading: Checkbox(
-                                    value: isSelected,
-                                    onChanged: canSelect
-                                        ? (val) {
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(8),
+                                    onTap: canSelect
+                                        ? () {
                                             setState(() {
-                                              if (val == true) {
-                                                _selectedMercIds.add(merc.id);
-                                              } else {
+                                              if (isSelected) {
                                                 _selectedMercIds.remove(merc.id);
+                                              } else {
+                                                _selectedMercIds.add(merc.id);
                                               }
                                             });
                                           }
                                         : null,
-                                  ),
-                                  title: Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          '${merc.name} (${job.name})',
-                                          style: const TextStyle(fontSize: 14),
-                                          overflow: TextOverflow.ellipsis,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isSelected ? AppTheme.primary : AppTheme.borderLight,
                                         ),
                                       ),
-                                      if (showBadge) ...[
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          badgeText,
-                                          style: TextStyle(
-                                            color: roleBonus > 0
-                                                ? Theme.of(context).colorScheme.primary
-                                                : Theme.of(context).colorScheme.error,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            isSelected
+                                                ? Icons.check_box
+                                                : Icons.check_box_outline_blank,
+                                            size: 22,
+                                            color: isSelected
+                                                ? AppTheme.primary
+                                                : AppTheme.textSecondary,
                                           ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  subtitle: Text(
-                                    '전투력: ${merc.effectiveStr}',
-                                    style: const TextStyle(fontSize: 12, color: AppTheme.textHint),
-                                  ),
-                                  trailing: merc.status == MercenaryStatus.injured
-                                      ? Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.failureBg,
-                                            borderRadius: BorderRadius.circular(4),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        '${merc.name} (${job.name})',
+                                                        style: const TextStyle(fontSize: 14),
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                    if (showBadge) ...[
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        badgeText,
+                                                        style: TextStyle(
+                                                          color: roleBonus > 0
+                                                              ? Theme.of(context).colorScheme.primary
+                                                              : Theme.of(context).colorScheme.error,
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  '전투력: ${merc.effectiveStr}',
+                                                  style: const TextStyle(
+                                                      fontSize: 12, color: AppTheme.textHint),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                          child: Text('부상',
-                                            style: TextStyle(fontSize: 11, color: AppTheme.failure, fontWeight: FontWeight.w600)),
-                                        )
-                                      : Text(
-                                          merc.status == MercenaryStatus.tired ? '피곤함' : '정상',
-                                          style: const TextStyle(fontSize: 12, color: AppTheme.textHint),
-                                        ),
+                                          const SizedBox(width: 8),
+                                          merc.status == MercenaryStatus.injured
+                                              ? Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      horizontal: 8, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: AppTheme.failureBg,
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    '부상',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: AppTheme.failure,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                )
+                                              : Text(
+                                                  merc.status == MercenaryStatus.tired
+                                                      ? '피곤함'
+                                                      : '정상',
+                                                  style: const TextStyle(
+                                                      fontSize: 12, color: AppTheme.textHint),
+                                                ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             );

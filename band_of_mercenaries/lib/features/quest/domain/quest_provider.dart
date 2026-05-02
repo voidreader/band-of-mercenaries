@@ -87,6 +87,14 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     if (state.isEmpty) {
       generateQuests();
     }
+    // 첫 실행 시 initializeNewGame() 완료 후 퀘스트 목록 다시 로드 (mercenary_provider와 동일 패턴)
+    ref.listen(userDataProvider, (prev, next) {
+      if (prev == null && next != null) {
+        debugPrint('[BOM][Quest] userDataProvider null→non-null 감지 → _load 재실행');
+        _load();
+        if (state.isEmpty) generateQuests();
+      }
+    });
     ref.listen(gameTickProvider, (prev, next) {
       _checkCompletions();
       _checkQuestRefresh();
