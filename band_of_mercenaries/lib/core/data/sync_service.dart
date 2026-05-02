@@ -68,6 +68,14 @@ class SyncService {
       final localVersions = _getLocalVersions();
       final changedTables = _findChangedTables(serverVersions, localVersions);
 
+      // 자가치유: 빈 배열로 캐시된 테이블이 있으면 재다운로드 대상에 포함.
+      // 과거에 sync 시점 supabase가 비어있어 '[]'로 저장된 케이스 복구용.
+      for (final table in serverVersions.keys) {
+        if (_dataLoader.isCacheEmpty(table) && !changedTables.contains(table)) {
+          changedTables.add(table);
+        }
+      }
+
       if (changedTables.isEmpty) {
         return SyncStatus.noChanges;
       }

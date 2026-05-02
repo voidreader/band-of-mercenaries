@@ -12,6 +12,15 @@ class DataLoader {
   /// 특정 테이블의 캐시 존재 여부
   bool hasCacheFor(String tableName) => _cacheBox.containsKey(tableName);
 
+  /// 캐시는 있으나 내용이 비어있는지 검사 (`null`/공백/`'[]'`).
+  /// SyncService 자가치유에 사용.
+  bool isCacheEmpty(String tableName) {
+    final raw = _cacheBox.get(tableName);
+    if (raw == null) return true;
+    final trimmed = raw.trim();
+    return trimmed.isEmpty || trimmed == '[]';
+  }
+
   /// Supabase 응답을 캐시에 저장
   Future<void> saveToCache(String tableName, List<Map<String, dynamic>> data) async {
     await _cacheBox.put(tableName, jsonEncode(data));
