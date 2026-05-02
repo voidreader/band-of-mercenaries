@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
@@ -40,9 +40,8 @@ class DialogTypeRegistry {
 /// 정렬 기준: [DialogPriority] 오름차순(critical 최우선) → enqueuedAt 오름차순(FIFO).
 ///
 /// **영속 복원 전략 (MVP)**:
-/// 복원된 [DialogRequest]의 builder는 [SizedBox.shrink] placeholder로 설정한다.
-/// 실제 위젯 생성은 app.dart가 dialogType + payload를 보고 분기 처리한다.
-/// 이는 각 도메인 Provider의 startup hook에서 재 enqueue를 허용하는 방식과 병용한다.
+/// builder 클로저는 직렬화 불가능하여 영속 복원이 무의미하다. 시작 시 박스를
+/// 클리어하고, 도메인 Provider의 startup hook에서 필요한 다이얼로그를 재 enqueue한다.
 class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
   final DialogQueuePersistence _persistence;
 
@@ -53,21 +52,19 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
     _restore();
   }
 
-  /// 앱 시작 시 Hive에서 유효 항목을 복원하여 큐를 초기화한다.
+  /// 앱 시작 시 Hive 박스를 정리하고 빈 큐로 시작한다.
+  ///
+  /// builder 클로저는 직렬화 불가능하여 복원 시 placeholder([SizedBox.shrink])로
+  /// 대체되는데, app.dart의 listen이 그 placeholder를 그대로 [showDialog]에 전달하면
+  /// 빈/투명 다이얼로그가 화면을 막아버린다(critical priority면 dismiss 불가 → 화면 먹통).
+  /// 따라서 시작 시 박스를 클리어하고, 필요한 다이얼로그는 도메인 Provider의
+  /// startup hook이 재 enqueue하도록 위임한다.
   Future<void> _restore() async {
-    final entries = await _persistence.loadValid(
-      registeredDialogTypes: DialogTypeRegistry.keys,
-      onLoss: onLoss,
-    );
-    if (entries.isEmpty) return;
-
-    // 복원된 항목을 DialogRequest로 변환하고 priority 기준으로 정렬한다.
-    final restored = entries
-        .map(_persistedToRequest)
-        .whereType<DialogRequest>()
-        .toList();
-    restored.sort(_compare);
-    state = restored;
+    final stale = _persistence.all().length;
+    if (stale > 0) {
+      debugPrint('[BOM][DialogQueue] 시작 시 박스에 남아있던 $stale건 클리어');
+    }
+    await _persistence.clear();
   }
 
   /// 큐에 다이얼로그 요청을 추가한다.
@@ -114,33 +111,6 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
       payloadJson: payloadJson,
       enqueuedAt: r.enqueuedAt,
     );
-  }
-
-  /// [PersistedDialogEntry] → [DialogRequest] 변환.
-  ///
-  /// 등록되지 않은 dialogType은 null을 반환하여 복원 목록에서 제외된다.
-  /// builder는 [SizedBox.shrink] placeholder로 설정한다.
-  /// app.dart가 [dialogType] + [payload]를 참조하여 실제 위젯으로 대체한다.
-  DialogRequest? _persistedToRequest(PersistedDialogEntry e) {
-    if (!DialogTypeRegistry.keys.contains(e.dialogType)) return null;
-    return DialogRequest(
-      id: e.id,
-      priority: DialogPriority.values[e.priority],
-      dialogType: e.dialogType,
-      payload: _safeDecode(e.payloadJson),
-      enqueuedAt: e.enqueuedAt,
-      // MVP: builder는 placeholder. app.dart가 dialogType + payload 기반으로 실제 다이얼로그 생성.
-      builder: (ctx, dismiss) => const SizedBox.shrink(),
-    );
-  }
-
-  /// JSON 디코딩 실패 시 빈 맵을 반환한다.
-  dynamic _safeDecode(String json) {
-    try {
-      return jsonDecode(json);
-    } catch (_) {
-      return <String, dynamic>{};
-    }
   }
 }
 
