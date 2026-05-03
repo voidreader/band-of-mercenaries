@@ -18,6 +18,7 @@ class SyncService {
   static const List<String> allTables = [
     'jobs',
     'regions',
+    'region_sectors', // 27. region_sectors (M4 페이즈 4 #2 추가)
     'trait_categories',
     'traits',
     'trait_conflicts',

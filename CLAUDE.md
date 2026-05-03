@@ -133,8 +133,8 @@ UI 리팩토링 정책은 `Docs/flutter-ui-refactor.md` 참조. 주요 규칙:
 - 서버 연결 실패 시: 로컬 캐시로 오프라인 플레이 가능 (캐시 있는 경우)
 - 싱크 타이밍: 앱 시작 + 포그라운드 복귀
 
-**정적 데이터 테이블 (24개):**
-- regions: 199개 리전 (5단계 티어). `environment_tags` JSONB 컬럼 추가 (엘리트 몬스터 스폰 환경 필터 — 예: `["forest","dungeon"]`)
+**정적 데이터 테이블 (25개):**
+- regions: 40개 리전 (M4 페이즈 4 #1에서 199→40 축소, 5단계 티어). `environment_tags` JSONB 컬럼 (엘리트 몬스터 스폰 환경 필터 — 예: `["forest","dungeon"]`). `sector_count` INT NOT NULL DEFAULT 4 CHECK 1..6 컬럼(M4 페이즈 4 #2): 동적 섹터 개수, 4개 region(1·23·127·146) = 5, 나머지 36 = 4. `Region.sectorCount` 필드(@JsonKey 'sector_count', @Default 4)로 매핑. MovementScreen이 `List.generate(targetRegion.sectorCount, ...)`로 동적 그리드 렌더링.
 - jobs: 5티어 85개 직업. `role` 컬럼(text NOT NULL DEFAULT 'specialist')으로 파견 상성 매트릭스 조회 키 보유 — warrior 26 / specialist 16 / mage 16 / support 10 / ranger 9 / rogue 8
 - trait_categories: 8개 트레잇 카테고리 (Physical, Background, Talent, CombatStyle, Survival, Behavior, Mental, Experience)
 - traits: 106개 트레잇 (선천 35 + 후천 acquired 40 + 후천 evolved 31). key/name/categoryKey/type/description/effectText/acquisitionCondition/effectJson
@@ -149,7 +149,8 @@ UI 리팩토링 정책은 `Docs/flutter-ui-refactor.md` 참조. 주요 규칙:
 - facilities: 시설 종류 및 레벨별 비용/효과 (훈련소, 의무실, 주둔지, 정보망)
 - ranks: 명성 등급 (F~A) 및 티어 잠금 해제 조건
 - mercenary_wages: 티어별 용병 인건비
-- region_discoveries: 리전별 발견 데이터 (id TEXT PK, region_id INTEGER, knowledge_threshold INTEGER, discovery_type TEXT, discovery_data JSONB, description TEXT)
+- region_discoveries: 리전별 발견 데이터 (id TEXT PK, region_id INTEGER, knowledge_threshold INTEGER, discovery_type TEXT, discovery_data JSONB, description TEXT). M4 페이즈 4 #2에서 region 18·23·146 transform 행 sector_index 재매핑(0-based 한도 외 행 보존용 — region 18: ≥4 → 1 / region 23·146: ≥4 → 4)
+- region_sectors: 섹터 정규화 테이블 (id TEXT PK 명명규칙 `r{region_id}_s{sector_index}`, region_id INT FK→regions(region) ON DELETE CASCADE, sector_index INT CHECK 1..6 — **1-based**, name TEXT, sector_type TEXT CHECK IN ('village','ruins','hidden','dungeon','field'), environment_tags JSONB DEFAULT '[]', description TEXT, UNIQUE(region_id, sector_index)). M4 페이즈 4 #2 시점 0행 — 시드 ~164행은 후속 페이즈 위임. 더스트플레인(region 3) 4섹터는 `RegionSectorFallback.dustplainSectors` 코드 상수로 인라인. `RegionSectorFallback.lookupSector(regionId, sectorIndex, regionSectors)`가 staticData → fallback(region 3 한정) → null 우선순위 조회. MovementScreen `_SectorTile`이 sectorChanges(M3 변형 0-based) → lookupSector(데이터/fallback)?.sectorType 우선순위로 sector_type 결정. dungeon/field는 MovementScreen 그리드 한정 시각(LayerSidebar/QuestCardBadges 미반영) — `AppTheme.sectorDungeon`(0xFFB71C1C) ⛏️ / `AppTheme.sectorField`(0xFF558B2F) 🌾
 - factions: 세력 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, philosophy TEXT, tier_range JSONB, color TEXT, visibility_type TEXT DEFAULT 'public', join_rank_min TEXT nullable, join_needs_clue BOOLEAN DEFAULT false, passive_bonus_json JSONB DEFAULT '{}', conflict_faction_ids JSONB DEFAULT '[]'). 14개: 공개 6 / 비밀 4 / 지역 4
 - elite_monsters: 엘리트 몬스터 마스터 데이터 (id TEXT PK, name TEXT, description TEXT, tier INT, environment_tags JSONB, combat_power INT, is_unique BOOL, title TEXT nullable, lore TEXT nullable, min_region_tier INT, max_region_tier INT). 보통 31종 + 유니크 8종 = 39종
 - elite_loot_tables: 엘리트 드랍 테이블 (id TEXT PK, elite_id TEXT FK, item_id TEXT nullable, bonus_gold INT, drop_weight INT, min_difficulty INT). 209행

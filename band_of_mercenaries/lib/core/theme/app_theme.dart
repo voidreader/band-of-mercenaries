@@ -46,6 +46,10 @@ class AppTheme {
   static const Color transformHidden = Color(0xFFB8860B);     // 숨겨진 섹터 (어두운 금)
   static const Color transformFallback = Color(0xFF9E9E9E);   // 알 수 없는 변형 (회색)
 
+  // M4 섹터 타입 색상 (MovementScreen 그리드 한정 — LayerSidebar/QuestCardBadges에는 미반영)
+  static const Color sectorDungeon = Color(0xFFB71C1C); // dungeon (위험 적갈색)
+  static const Color sectorField = Color(0xFF558B2F);   // field (평온 녹색)
+
   // Chain quest colors
   static const Color chainGold = Color(0xFFD4AF37);           // 연계 퀘스트 금색
 

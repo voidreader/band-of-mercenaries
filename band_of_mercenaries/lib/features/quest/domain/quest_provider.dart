@@ -170,6 +170,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       eliteMonsters: staticData.eliteMonsters,
       regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
+      // user.sector(1-based 1..sectorCount) → quest_generator/sectorChanges key(0-based) 변환 위해 -1.
       currentSectorIndex: (userData.sector - 1),
       sectorChanges: ref.read(regionStateRepositoryProvider)
           .getState(userData.region)
@@ -259,6 +260,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       eliteMonsters: staticData.eliteMonsters,
       regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
+      // user.sector → 0-based 변환 (위 generateQuests 호출 정책 참조).
       currentSectorIndex: (userData.sector - 1),
       sectorChanges: ref.read(regionStateRepositoryProvider)
           .getState(userData.region)
@@ -392,6 +394,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       eliteMonsters: staticData.eliteMonsters,
       regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
+      // user.sector → 0-based 변환 (위 generateQuests 호출 정책 참조).
       currentSectorIndex: (userData.sector - 1),
       sectorChanges: ref.read(regionStateRepositoryProvider)
           .getState(userData.region)

@@ -17,6 +17,7 @@ _$RegionImpl _$$RegionImplFromJson(Map<String, dynamic> json) => _$RegionImpl(
               ?.map((e) => e as String)
               .toList() ??
           const <String>[],
+      sectorCount: (json['sector_count'] as num?)?.toInt() ?? 4,
     );
 
 Map<String, dynamic> _$$RegionImplToJson(_$RegionImpl instance) =>
@@ -28,4 +29,5 @@ Map<String, dynamic> _$$RegionImplToJson(_$RegionImpl instance) =>
       'recommend_power': instance.recommendPower,
       'description': instance.description,
       'environment_tags': instance.environmentTags,
+      'sector_count': instance.sectorCount,
     };

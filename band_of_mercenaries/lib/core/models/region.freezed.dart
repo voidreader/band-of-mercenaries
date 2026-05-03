@@ -31,6 +31,8 @@ mixin _$Region {
   String get description => throw _privateConstructorUsedError;
   @JsonKey(name: 'environment_tags')
   List<String> get environmentTags => throw _privateConstructorUsedError;
+  @JsonKey(name: 'sector_count')
+  int get sectorCount => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -49,7 +51,8 @@ abstract class $RegionCopyWith<$Res> {
       @JsonKey(name: 'region_tier') int regionTier,
       @JsonKey(name: 'recommend_power') int recommendPower,
       String description,
-      @JsonKey(name: 'environment_tags') List<String> environmentTags});
+      @JsonKey(name: 'environment_tags') List<String> environmentTags,
+      @JsonKey(name: 'sector_count') int sectorCount});
 }
 
 /// @nodoc
@@ -72,6 +75,7 @@ class _$RegionCopyWithImpl<$Res, $Val extends Region>
     Object? recommendPower = null,
     Object? description = null,
     Object? environmentTags = null,
+    Object? sectorCount = null,
   }) {
     return _then(_value.copyWith(
       continent: null == continent
@@ -102,6 +106,10 @@ class _$RegionCopyWithImpl<$Res, $Val extends Region>
           ? _value.environmentTags
           : environmentTags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      sectorCount: null == sectorCount
+          ? _value.sectorCount
+          : sectorCount // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -120,7 +128,8 @@ abstract class _$$RegionImplCopyWith<$Res> implements $RegionCopyWith<$Res> {
       @JsonKey(name: 'region_tier') int regionTier,
       @JsonKey(name: 'recommend_power') int recommendPower,
       String description,
-      @JsonKey(name: 'environment_tags') List<String> environmentTags});
+      @JsonKey(name: 'environment_tags') List<String> environmentTags,
+      @JsonKey(name: 'sector_count') int sectorCount});
 }
 
 /// @nodoc
@@ -141,6 +150,7 @@ class __$$RegionImplCopyWithImpl<$Res>
     Object? recommendPower = null,
     Object? description = null,
     Object? environmentTags = null,
+    Object? sectorCount = null,
   }) {
     return _then(_$RegionImpl(
       continent: null == continent
@@ -171,6 +181,10 @@ class __$$RegionImplCopyWithImpl<$Res>
           ? _value._environmentTags
           : environmentTags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      sectorCount: null == sectorCount
+          ? _value.sectorCount
+          : sectorCount // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -186,7 +200,8 @@ class _$RegionImpl implements _Region {
       @JsonKey(name: 'recommend_power') required this.recommendPower,
       required this.description,
       @JsonKey(name: 'environment_tags')
-      final List<String> environmentTags = const <String>[]})
+      final List<String> environmentTags = const <String>[],
+      @JsonKey(name: 'sector_count') this.sectorCount = 4})
       : _environmentTags = environmentTags;
 
   factory _$RegionImpl.fromJson(Map<String, dynamic> json) =>
@@ -217,8 +232,12 @@ class _$RegionImpl implements _Region {
   }
 
   @override
+  @JsonKey(name: 'sector_count')
+  final int sectorCount;
+
+  @override
   String toString() {
-    return 'Region(continent: $continent, region: $region, regionName: $regionName, regionTier: $regionTier, recommendPower: $recommendPower, description: $description, environmentTags: $environmentTags)';
+    return 'Region(continent: $continent, region: $region, regionName: $regionName, regionTier: $regionTier, recommendPower: $recommendPower, description: $description, environmentTags: $environmentTags, sectorCount: $sectorCount)';
   }
 
   @override
@@ -238,7 +257,9 @@ class _$RegionImpl implements _Region {
             (identical(other.description, description) ||
                 other.description == description) &&
             const DeepCollectionEquality()
-                .equals(other._environmentTags, _environmentTags));
+                .equals(other._environmentTags, _environmentTags) &&
+            (identical(other.sectorCount, sectorCount) ||
+                other.sectorCount == sectorCount));
   }
 
   @JsonKey(ignore: true)
@@ -251,7 +272,8 @@ class _$RegionImpl implements _Region {
       regionTier,
       recommendPower,
       description,
-      const DeepCollectionEquality().hash(_environmentTags));
+      const DeepCollectionEquality().hash(_environmentTags),
+      sectorCount);
 
   @JsonKey(ignore: true)
   @override
@@ -275,8 +297,8 @@ abstract class _Region implements Region {
       @JsonKey(name: 'region_tier') required final int regionTier,
       @JsonKey(name: 'recommend_power') required final int recommendPower,
       required final String description,
-      @JsonKey(name: 'environment_tags')
-      final List<String> environmentTags}) = _$RegionImpl;
+      @JsonKey(name: 'environment_tags') final List<String> environmentTags,
+      @JsonKey(name: 'sector_count') final int sectorCount}) = _$RegionImpl;
 
   factory _Region.fromJson(Map<String, dynamic> json) = _$RegionImpl.fromJson;
 
@@ -298,6 +320,9 @@ abstract class _Region implements Region {
   @override
   @JsonKey(name: 'environment_tags')
   List<String> get environmentTags;
+  @override
+  @JsonKey(name: 'sector_count')
+  int get sectorCount;
   @override
   @JsonKey(ignore: true)
   _$$RegionImplCopyWith<_$RegionImpl> get copyWith =>

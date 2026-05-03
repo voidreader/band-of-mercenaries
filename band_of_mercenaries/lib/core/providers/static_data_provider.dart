@@ -11,6 +11,7 @@ import 'package:band_of_mercenaries/core/models/trait_transition.dart';
 import 'package:band_of_mercenaries/core/models/trait_combo_evolution.dart';
 import 'package:band_of_mercenaries/core/models/trait_synergy.dart';
 import 'package:band_of_mercenaries/core/models/region.dart';
+import 'package:band_of_mercenaries/core/models/region_sector.dart';
 import 'package:band_of_mercenaries/core/models/quest_type.dart';
 import 'package:band_of_mercenaries/core/models/quest_pool.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
@@ -39,6 +40,7 @@ class StaticGameData {
   final List<TraitComboEvolution> traitComboEvolutions;
   final List<TraitSynergy> traitSynergies;
   final List<Region> regions;
+  final List<RegionSector> regionSectors;
   final List<QuestType> questTypes;
   final List<QuestPool> questPools;
   final List<PersonName> personNames;
@@ -67,6 +69,7 @@ class StaticGameData {
     required this.traitComboEvolutions,
     required this.traitSynergies,
     required this.regions,
+    required this.regionSectors,
     required this.questTypes,
     required this.questPools,
     required this.personNames,
@@ -101,6 +104,7 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     traitComboEvolutions: dataLoader.loadFromCache('trait_combo_evolutions', TraitComboEvolution.fromJson),
     traitSynergies: dataLoader.loadFromCache('trait_synergies', TraitSynergy.fromJson),
     regions: dataLoader.loadFromCache('regions', Region.fromJson),
+    regionSectors: dataLoader.loadFromCache('region_sectors', RegionSector.fromJson),
     questTypes: dataLoader.loadFromCache('quest_types', QuestType.fromJson),
     questPools: dataLoader.loadFromCache('quest_pools', QuestPool.fromJson),
     personNames: dataLoader.loadFromCache('person_names', PersonName.fromJson),

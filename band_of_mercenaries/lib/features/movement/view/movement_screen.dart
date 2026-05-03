@@ -15,6 +15,7 @@ import 'package:band_of_mercenaries/features/facility/domain/construction_servic
 import 'package:band_of_mercenaries/features/investigation/domain/region_transformed_provider.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
+import 'package:band_of_mercenaries/core/data/region_sector_fallback.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
   const MovementScreen({super.key});
@@ -79,8 +80,10 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
           (r) => r.region == _selectedRegion,
           orElse: () => currentRegion,
         );
+        // region 변경 시 sectorCount 초과 보정. 직접 변이 대신 로컬 변수로 안전하게 처리.
+        final effectiveSelectedSector = _selectedSector.clamp(1, targetRegion.sectorCount);
         final distance = UserData.calculateDistance(
-          userData.region, userData.sector, _selectedRegion, _selectedSector,
+          userData.region, userData.sector, _selectedRegion, effectiveSelectedSector,
         );
         final speedMult = ref.watch(speedMultiplierProvider);
         double travelReduction = 0.0;
@@ -165,6 +168,12 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                                 onPressed: userData.isMoving ? null : () {
                                   setState(() {
                                     if (_selectedRegion > 1) _selectedRegion--;
+                                    final newRegion = data.regions
+                                        .where((r) => r.region == _selectedRegion)
+                                        .firstOrNull;
+                                    if (newRegion != null && _selectedSector > newRegion.sectorCount) {
+                                      _selectedSector = 1;
+                                    }
                                   });
                                 },
                                 icon: const Text('◀', style: TextStyle(fontSize: 16)),
@@ -208,6 +217,12 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                                 onPressed: userData.isMoving ? null : () {
                                   setState(() {
                                     if (_selectedRegion < 199) _selectedRegion++;
+                                    final newRegion = data.regions
+                                        .where((r) => r.region == _selectedRegion)
+                                        .firstOrNull;
+                                    if (newRegion != null && _selectedSector > newRegion.sectorCount) {
+                                      _selectedSector = 1;
+                                    }
                                   });
                                 },
                                 icon: const Text('▶', style: TextStyle(fontSize: 16)),
@@ -235,11 +250,13 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                             spacing: 6,
                             runSpacing: 6,
                             alignment: WrapAlignment.center,
-                            children: List.generate(10, (i) {
+                            children: List.generate(targetRegion.sectorCount, (i) {
                               final sector = i + 1;
                               final sectorKey = i.toString(); // 저장 키는 0-based
-                              final transformType = sectorChanges[sectorKey];
-                              final isSelected = sector == _selectedSector;
+                              // 우선순위: sectorChanges(M3 변형) > regionSectors(시드 또는 fallback) > null
+                              final transformType = sectorChanges[sectorKey]
+                                  ?? RegionSectorFallback.lookupSector(_selectedRegion, sector, data.regionSectors)?.sectorType;
+                              final isSelected = sector == effectiveSelectedSector;
                               // 체인 매칭: targetSectorId 일치 또는 섹터 미지정(null=region 전체) fallback
                               final targets = chainTargetSectors[_selectedRegion];
                               final isChainTarget = targets != null &&
@@ -326,7 +343,7 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                             ? null
                             : () {
                                 ref.read(movementProvider.notifier)
-                                    .startMovement(_selectedRegion, _selectedSector);
+                                    .startMovement(_selectedRegion, effectiveSelectedSector);
                               },
                         child: Text(
                           isInvestigating
@@ -370,6 +387,8 @@ class _SectorTile extends StatelessWidget {
     'village' => AppTheme.transformVillage,
     'ruins' => AppTheme.transformRuins,
     'hidden' => AppTheme.transformHidden,
+    'dungeon' => AppTheme.sectorDungeon,
+    'field' => AppTheme.sectorField,
     _ => AppTheme.transformFallback,
   };
 
@@ -377,6 +396,8 @@ class _SectorTile extends StatelessWidget {
     'village' => '🏘️',
     'ruins' => '🏛️',
     'hidden' => '✨',
+    'dungeon' => '⛏️',
+    'field' => '🌾',
     _ => '',
   };
 

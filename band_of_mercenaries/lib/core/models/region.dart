@@ -15,6 +15,7 @@ class Region with _$Region {
     @JsonKey(name: 'environment_tags')
     @Default(<String>[])
     List<String> environmentTags,
+    @JsonKey(name: 'sector_count') @Default(4) int sectorCount,
   }) = _Region;
 
   factory Region.fromJson(Map<String, dynamic> json) =>

@@ -4,4 +4,5 @@ class SettingsKeys {
   static const String dataVersions = 'dataVersions';
   static const String factionQuestCooldowns = 'factionQuestCooldowns';
   static const String regionMigrationV1 = 'region_migration_v1';
+  static const String regionSectorCountV1 = 'region_sector_count_v1';
 }

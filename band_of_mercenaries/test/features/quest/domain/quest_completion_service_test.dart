@@ -67,6 +67,7 @@ StaticGameData _makeStaticData({
     travelChoiceEvents: const [],
     travelChoiceOptions: const [],
     travelChoiceResults: const [],
+    regionSectors: const [],
   );
 }
 

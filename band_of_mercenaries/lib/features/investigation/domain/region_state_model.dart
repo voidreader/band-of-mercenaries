@@ -14,7 +14,7 @@ class RegionState extends HiveObject {
   List<String> triggeredDiscoveries; // 트리거된 discovery ID 목록
 
   @HiveField(3)
-  Map<String, String> sectorChanges; // 섹터 변환 상태 (key: "0"~"9", value: "village"|"ruins"|"hidden")
+  Map<String, String> sectorChanges; // 섹터 변환 상태 (key는 0-based('0'~'9'), region_sectors.sector_index는 1-based(1..6) — 변환 시 -1/+1. value: "village"|"ruins"|"hidden")
 
   RegionState({
     required this.regionId,

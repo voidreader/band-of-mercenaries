@@ -62,6 +62,7 @@ StaticGameData _minimalStaticData({List<ItemData> items = const []}) {
     travelChoiceEvents: const [],
     travelChoiceOptions: const [],
     travelChoiceResults: const [],
+    regionSectors: const [],
   );
 }
 
