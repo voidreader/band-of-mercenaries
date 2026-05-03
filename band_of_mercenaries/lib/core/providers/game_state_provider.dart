@@ -66,9 +66,14 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     }
 
     final random = Random();
-    final tier1Regions = staticData.regions.where((r) => r.regionTier == 1).toList();
-    final startRegion = tier1Regions[random.nextInt(tier1Regions.length)];
-    final startSector = random.nextInt(GameConstants.sectorCount) + 1;
+    // 시작 거점 고정: region 3 (더스트플레인) / sector 1
+    final startRegion = staticData.regions.firstWhere(
+      (r) => r.region == GameConstants.startingRegionId,
+      orElse: () => throw StateError(
+        'region ${GameConstants.startingRegionId} 누락 — 마이그레이션 미적용',
+      ),
+    );
+    final startSector = GameConstants.startingSector;
 
     final userData = UserData(
       gold: GameConstants.startingGold,
@@ -99,6 +104,12 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     debugPrint('[BOM][GameState] 시작 용병 ${startingMercs.length}명 Hive 저장 완료');
 
     // 초기 퀘스트 생성 — state 갱신 전에 완료해야 questListProvider._load()가 비어있지 않음
+    // 시작 풀 6슬롯 분포 (페이즈 4 #3 데이터 의존):
+    // - 슬롯 1: 활성 체인 step 1 (region 3 활성화 시 ChainQuestService.tryActivate → injectChainStep)
+    //   chain_quests 데이터 미반영 시 일반 풀 난이도 1 1건으로 fallback
+    // - 슬롯 2~5: 더스트빌 허드렛일 4건 (난이도 1 / region 3 매칭 풀)
+    // - 슬롯 6: 난이도 2 1건 (region 3 매칭 풀)
+    // 페이즈 4 #3 미반영 환경에서는 QuestGenerator 기존 알고리즘으로 채움
     final questBox = Hive.box<ActiveQuest>(HiveInitializer.questBoxName);
     await questBox.clear();
     final initialQuests = QuestGenerator.generateQuests(
@@ -123,7 +134,7 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     debugPrint('[BOM][GameState] 초기 퀘스트 ${initialQuests.length}개 Hive 저장 완료');
 
     // 모든 Hive 데이터 준비 완료 후 state 갱신 → _PostSyncApp 리빌드 트리거
-    debugPrint('[BOM][GameState] initializeNewGame 완료 → state 갱신 (region: ${startRegion.region}, sector: $startSector)');
+    debugPrint('[BOM][GameState] initializeNewGame 완료 → state 갱신 (고정 region ${GameConstants.startingRegionId} 더스트플레인, sector: $startSector)');
     state = userData;
   }
 

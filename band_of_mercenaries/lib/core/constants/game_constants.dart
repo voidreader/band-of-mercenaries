@@ -1,7 +1,10 @@
 class GameConstants {
-  static const int startingGold = 500;
+  static const int startingGold = 200;
+  static const int startingRegionId = 3;
+  static const int startingSector = 1;
+  @Deprecated('M4 페이즈 4 #2: region_sectors.sector_count로 대체')
   static const int sectorCount = 10;
-  static const int baseQuestCount = 5;
+  static const int baseQuestCount = 6;
   static const int maxIdleRewardMinutes = 480;
   static const int idleRewardPerMinute = 1;
   static const int paidRecruitCost = 100;

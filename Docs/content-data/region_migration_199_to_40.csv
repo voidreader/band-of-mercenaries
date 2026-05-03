@@ -1,0 +1,201 @@
+region_id,status,note
+1,survive,T5 전쟁터 (disc info+elite+hidden)
+3,survive,재태깅: 더스트플레인 (plains→mountain, 시작 거점)
+4,survive,T8 마계경계 (disc transform)
+5,survive,T3 숲 (disc elite, 환경 다양성)
+7,survive,T10 심연 (disc transform)
+9,survive,T2 숲 (disc)
+10,survive,T2 숲 (chain+disc)
+11,survive,T10 심연
+13,survive,T4 산악 (disc transform)
+16,survive,T4 산악 (chain)
+17,survive,T6 고대유적 (disc)
+18,survive,T8 마계경계 (disc transform)
+20,survive,T2 숲 (disc)
+21,survive,T4 산악 (chain)
+23,survive,T2 숲 (disc)
+24,survive,T4 산악 (chain)
+25,survive,T5 전쟁터
+28,survive,T4 산악 (chain)
+31,survive,T1 초원 (chain+disc)
+35,survive,T4 산악 (chain)
+36,survive,T6 고대유적 (disc)
+38,survive,T3 폐허 (chain)
+44,survive,T7 황무지 (disc elite)
+47,survive,T8 마계경계 (chain target)
+49,survive,T3 폐허 (chain)
+50,survive,T3 폐허 (chain)
+51,survive,T3 폐허 (chain)
+52,survive,T3 폐허 (disc elite)
+56,survive,T7 황무지
+62,survive,T6 고대유적 (disc)
+65,survive,T3 폐허 (chain)
+67,survive,T5 전쟁터
+84,survive,T6 고대유적 (disc)
+90,survive,T5 전쟁터
+105,survive,T5 전쟁터
+115,survive,T7 황무지 (disc elite)
+127,survive,T1 해안 (faction_clue+hidden_quest+info)
+146,survive,T2 늪 (disc transform)
+154,survive,T7 황무지
+200,new,T9 망각의 수면 (신규)
+2,delete,postponed_regions_dump.json 보관
+6,delete,postponed_regions_dump.json 보관
+8,delete,postponed_regions_dump.json 보관
+12,delete,postponed_regions_dump.json 보관
+14,delete,postponed_regions_dump.json 보관
+15,delete,postponed_regions_dump.json 보관
+19,delete,postponed_regions_dump.json 보관
+22,delete,postponed_regions_dump.json 보관
+26,delete,postponed_regions_dump.json 보관
+27,delete,postponed_regions_dump.json 보관
+29,delete,postponed_regions_dump.json 보관
+30,delete,postponed_regions_dump.json 보관
+32,delete,postponed_regions_dump.json 보관
+33,delete,postponed_regions_dump.json 보관
+34,delete,postponed_regions_dump.json 보관
+37,delete,postponed_regions_dump.json 보관
+39,delete,postponed_regions_dump.json 보관
+40,delete,postponed_regions_dump.json 보관
+41,delete,postponed_regions_dump.json 보관
+42,delete,postponed_regions_dump.json 보관
+43,delete,postponed_regions_dump.json 보관
+45,delete,postponed_regions_dump.json 보관
+46,delete,postponed_regions_dump.json 보관
+48,delete,postponed_regions_dump.json 보관
+53,delete,postponed_regions_dump.json 보관
+54,delete,postponed_regions_dump.json 보관
+55,delete,postponed_regions_dump.json 보관
+57,delete,postponed_regions_dump.json 보관
+58,delete,postponed_regions_dump.json 보관
+59,delete,postponed_regions_dump.json 보관
+60,delete,postponed_regions_dump.json 보관
+61,delete,postponed_regions_dump.json 보관
+63,delete,postponed_regions_dump.json 보관
+64,delete,postponed_regions_dump.json 보관
+66,delete,postponed_regions_dump.json 보관
+68,delete,postponed_regions_dump.json 보관
+69,delete,postponed_regions_dump.json 보관
+70,delete,postponed_regions_dump.json 보관
+71,delete,postponed_regions_dump.json 보관
+72,delete,postponed_regions_dump.json 보관
+73,delete,postponed_regions_dump.json 보관
+74,delete,postponed_regions_dump.json 보관
+75,delete,postponed_regions_dump.json 보관
+76,delete,postponed_regions_dump.json 보관
+77,delete,postponed_regions_dump.json 보관
+78,delete,postponed_regions_dump.json 보관
+79,delete,postponed_regions_dump.json 보관
+80,delete,postponed_regions_dump.json 보관
+81,delete,postponed_regions_dump.json 보관
+82,delete,postponed_regions_dump.json 보관
+83,delete,postponed_regions_dump.json 보관
+85,delete,postponed_regions_dump.json 보관
+86,delete,postponed_regions_dump.json 보관
+87,delete,postponed_regions_dump.json 보관
+88,delete,postponed_regions_dump.json 보관
+89,delete,postponed_regions_dump.json 보관
+91,delete,postponed_regions_dump.json 보관
+92,delete,postponed_regions_dump.json 보관
+93,delete,postponed_regions_dump.json 보관
+94,delete,postponed_regions_dump.json 보관
+95,delete,postponed_regions_dump.json 보관
+96,delete,postponed_regions_dump.json 보관
+97,delete,postponed_regions_dump.json 보관
+98,delete,postponed_regions_dump.json 보관
+99,delete,postponed_regions_dump.json 보관
+100,delete,postponed_regions_dump.json 보관
+101,delete,postponed_regions_dump.json 보관
+102,delete,postponed_regions_dump.json 보관
+103,delete,postponed_regions_dump.json 보관
+104,delete,postponed_regions_dump.json 보관
+106,delete,postponed_regions_dump.json 보관
+107,delete,postponed_regions_dump.json 보관
+108,delete,postponed_regions_dump.json 보관
+109,delete,postponed_regions_dump.json 보관
+110,delete,postponed_regions_dump.json 보관
+111,delete,postponed_regions_dump.json 보관
+112,delete,postponed_regions_dump.json 보관
+113,delete,postponed_regions_dump.json 보관
+114,delete,postponed_regions_dump.json 보관
+116,delete,postponed_regions_dump.json 보관
+117,delete,postponed_regions_dump.json 보관
+118,delete,postponed_regions_dump.json 보관
+119,delete,postponed_regions_dump.json 보관
+120,delete,postponed_regions_dump.json 보관
+121,delete,postponed_regions_dump.json 보관
+122,delete,postponed_regions_dump.json 보관
+123,delete,postponed_regions_dump.json 보관
+124,delete,postponed_regions_dump.json 보관
+125,delete,postponed_regions_dump.json 보관
+126,delete,postponed_regions_dump.json 보관
+128,delete,postponed_regions_dump.json 보관
+129,delete,postponed_regions_dump.json 보관
+130,delete,postponed_regions_dump.json 보관
+131,delete,postponed_regions_dump.json 보관
+132,delete,postponed_regions_dump.json 보관
+133,delete,postponed_regions_dump.json 보관
+134,delete,postponed_regions_dump.json 보관
+135,delete,postponed_regions_dump.json 보관
+136,delete,postponed_regions_dump.json 보관
+137,delete,postponed_regions_dump.json 보관
+138,delete,postponed_regions_dump.json 보관
+139,delete,postponed_regions_dump.json 보관
+140,delete,postponed_regions_dump.json 보관
+141,delete,postponed_regions_dump.json 보관
+142,delete,postponed_regions_dump.json 보관
+143,delete,postponed_regions_dump.json 보관
+144,delete,postponed_regions_dump.json 보관
+145,delete,postponed_regions_dump.json 보관
+147,delete,postponed_regions_dump.json 보관
+148,delete,postponed_regions_dump.json 보관
+149,delete,postponed_regions_dump.json 보관
+150,delete,postponed_regions_dump.json 보관
+151,delete,postponed_regions_dump.json 보관
+152,delete,postponed_regions_dump.json 보관
+153,delete,postponed_regions_dump.json 보관
+155,delete,postponed_regions_dump.json 보관
+156,delete,postponed_regions_dump.json 보관
+157,delete,postponed_regions_dump.json 보관
+158,delete,postponed_regions_dump.json 보관
+159,delete,postponed_regions_dump.json 보관
+160,delete,postponed_regions_dump.json 보관
+161,delete,postponed_regions_dump.json 보관
+162,delete,postponed_regions_dump.json 보관
+163,delete,postponed_regions_dump.json 보관
+164,delete,postponed_regions_dump.json 보관
+165,delete,postponed_regions_dump.json 보관
+166,delete,postponed_regions_dump.json 보관
+167,delete,postponed_regions_dump.json 보관
+168,delete,postponed_regions_dump.json 보관
+169,delete,postponed_regions_dump.json 보관
+170,delete,postponed_regions_dump.json 보관
+171,delete,postponed_regions_dump.json 보관
+172,delete,postponed_regions_dump.json 보관
+173,delete,postponed_regions_dump.json 보관
+174,delete,postponed_regions_dump.json 보관
+175,delete,postponed_regions_dump.json 보관
+176,delete,postponed_regions_dump.json 보관
+177,delete,postponed_regions_dump.json 보관
+178,delete,postponed_regions_dump.json 보관
+179,delete,postponed_regions_dump.json 보관
+180,delete,postponed_regions_dump.json 보관
+181,delete,postponed_regions_dump.json 보관
+182,delete,postponed_regions_dump.json 보관
+183,delete,postponed_regions_dump.json 보관
+184,delete,postponed_regions_dump.json 보관
+185,delete,postponed_regions_dump.json 보관
+186,delete,postponed_regions_dump.json 보관
+187,delete,postponed_regions_dump.json 보관
+188,delete,postponed_regions_dump.json 보관
+189,delete,postponed_regions_dump.json 보관
+190,delete,postponed_regions_dump.json 보관
+191,delete,postponed_regions_dump.json 보관
+192,delete,postponed_regions_dump.json 보관
+193,delete,postponed_regions_dump.json 보관
+194,delete,postponed_regions_dump.json 보관
+195,delete,postponed_regions_dump.json 보관
+196,delete,postponed_regions_dump.json 보관
+197,delete,postponed_regions_dump.json 보관
+198,delete,postponed_regions_dump.json 보관
+199,delete,postponed_regions_dump.json 보관
