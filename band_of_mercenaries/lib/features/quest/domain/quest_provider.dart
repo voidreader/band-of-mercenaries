@@ -31,6 +31,8 @@ import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.d
 import 'package:band_of_mercenaries/core/models/passive_effect.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
+import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
 import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
 import 'package:band_of_mercenaries/features/quest/domain/special_flag_processor.dart';
 import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
@@ -128,6 +130,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     );
   }
 
+  /// 현재 거점 신뢰도 단계 조회 (페이즈 4 #5 stub).
+  ///
+  /// 페이즈 4 #5에서 `RegionStateRepository.getSettlementTrust(regionId).level`로 교체 예정.
+  /// stub 동안은 0을 반환하여 trust_threshold 조건이 만족되지 않아 고정 의뢰가 미노출됨.
+  int _getCurrentTrustLevel() {
+    // 페이즈 4 #5: RegionStateRepository.getSettlementTrust(userData.region).level
+    return 0;
+  }
+
   Future<void> clearCompleted(String questId) async {
     await _repo.removeQuest(questId);
     _load();
@@ -175,9 +186,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       sectorChanges: ref.read(regionStateRepositoryProvider)
           .getState(userData.region)
           ?.sectorChanges,
+      currentTrustLevel: _getCurrentTrustLevel(),
     );
     await _repo.addQuests(quests);
     debugPrint('[BOM][Quest] generateQuests 완료: ${quests.length}개 생성');
+    await _injectFixedSettlementQuest();
     _load();
   }
 
@@ -224,6 +237,78 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     _load();
   }
 
+  /// 고정 사건 의뢰를 현재 진행 상태에 따라 ActiveQuest로 생성한다.
+  ///
+  /// 호출 시점:
+  /// - generateQuests() 완료 직후
+  /// - refreshAvailableQuests() 호출 시 (단계 완료·신뢰도 단계 진입 후)
+  ///
+  /// 의사 코드:
+  /// 1. chainQuestRepositoryProvider에서 settlement_3_pyegwang_reopen 진행 조회
+  /// 2. progress null 또는 status==completed면 return
+  /// 3. quest_pools에서 is_fixed=true AND fixed_chain_id='settlement_3_pyegwang_reopen'
+  ///    AND fixed_step=currentStep AND trust_threshold <= currentTrustLevel 검색
+  /// 4. 이미 ActiveQuest(pending/inProgress)로 존재하는 경우 skip
+  /// 5. 조건 만족 시 ActiveQuest 생성 (isChainStep=true, chainId=..., chainStep=currentStep)
+  Future<void> _injectFixedSettlementQuest() async {
+    final staticData = ref.read(staticDataProvider).valueOrNull;
+    final userData = ref.read(userDataProvider);
+    if (staticData == null || userData == null) return;
+
+    const chainId = 'settlement_3_pyegwang_reopen';
+    final progress = ref.read(chainQuestRepositoryProvider).get(chainId);
+    if (progress == null || progress.status == ChainQuestStatus.completed) return;
+
+    final currentStep = progress.currentStep;
+    final currentTrustLevel = _getCurrentTrustLevel();
+
+    final fixedPool = staticData.questPools
+        .where((p) =>
+            p.isFixed &&
+            p.fixedChainId == chainId &&
+            p.fixedStep == currentStep &&
+            (p.trustThreshold ?? 1) <= currentTrustLevel)
+        .firstOrNull;
+
+    if (fixedPool == null) return;
+
+    // 이미 pending/inProgress인 고정 의뢰가 존재하면 skip (중복 방지)
+    final alreadyActive = state.any((q) =>
+        q.isChainQuest &&
+        q.chainId == chainId &&
+        q.chainStep == currentStep &&
+        (q.status == QuestStatus.pending || q.status == QuestStatus.inProgress));
+    if (alreadyActive) return;
+
+    final quest = ActiveQuest(
+      id: 'fixed_${chainId}_step${currentStep}_${DateTime.now().millisecondsSinceEpoch}',
+      questPoolId: fixedPool.id,
+      questTypeId: fixedPool.typeId,
+      difficulty: fixedPool.difficulty.round(),
+      region: userData.region,
+      questName: fixedPool.name,
+      createdAt: DateTime.now(),
+      isChainStep: true,
+      chainId: chainId,
+      chainStep: currentStep,
+    );
+    await _repo.addQuests([quest]);
+    _load();
+  }
+
+  /// 단계 진입 또는 사건 step 완료 후 고정 의뢰 재노출을 트리거한다.
+  ///
+  /// 페이즈 4 #5 호출 시점:
+  /// - RegionStateRepository.addSettlementTrust() 내에서 levelUp 발생 시
+  /// - QuestCompletionService 내 settlement_ 사건 step 완료 후
+  ///
+  /// 본 명세(페이즈 4 #3)에서는 메서드 시그니처와 내부 로직 정의만 수행.
+  /// 실제 호출은 페이즈 4 #5에서 연결.
+  Future<void> refreshAvailableQuests() async {
+    await _injectFixedSettlementQuest();
+    await fillQuests();
+  }
+
   Future<void> fillQuests() async {
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
@@ -265,6 +350,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       sectorChanges: ref.read(regionStateRepositoryProvider)
           .getState(userData.region)
           ?.sectorChanges,
+      currentTrustLevel: _getCurrentTrustLevel(),
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -345,6 +431,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     final expiredQuests = <ActiveQuest>[];
     for (final quest in state) {
+      // 거점 사건(settlement_ prefix) 의뢰는 자동 갱신 주기에서 제외 (REQ-06)
+      if (quest.isSettlementStep) continue;
       if (quest.status == QuestStatus.pending && quest.createdAt != null) {
         final realElapsed = now.difference(quest.createdAt!);
         final gameElapsedMs = (realElapsed.inMilliseconds * speedMult).round();
@@ -367,9 +455,14 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     final region = staticData.regions.firstWhere((r) => r.region == userData.region);
 
-    for (final quest in expired) {
+    // 거점 사건(settlement_ prefix) 의뢰는 만료 목록에서 제외 (REQ-06)
+    final filteredExpired = expired.where((q) => !q.isSettlementStep).toList();
+
+    for (final quest in filteredExpired) {
       await _repo.removeQuest(quest.id);
     }
+
+    if (filteredExpired.isEmpty) return;
 
     final factionRepo = ref.read(factionStateRepositoryProvider);
     final joinedFactionIds = factionRepo.getJoinedFactionIds();
@@ -384,7 +477,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       regionId: userData.region,
       questPools: staticData.questPools,
       questTypes: staticData.questTypes,
-      count: expired.length,
+      count: filteredExpired.length,
       random: Random(),
       joinedFactionIds: joinedFactionIds,
       factionReputations: factionReputations,
@@ -399,6 +492,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       sectorChanges: ref.read(regionStateRepositoryProvider)
           .getState(userData.region)
           ?.sectorChanges,
+      currentTrustLevel: _getCurrentTrustLevel(),
     );
     await _repo.addQuests(newQuests);
     _load();

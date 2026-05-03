@@ -148,4 +148,8 @@ class ActiveQuest extends HiveObject {
 
   // 체인 퀘스트 여부
   bool get isChainQuest => isChainStep ?? false;
+
+  /// 거점 사건 step 여부: chainId가 settlement_ prefix인 체인 퀘스트
+  bool get isSettlementStep =>
+      isChainQuest && (chainId?.startsWith('settlement_') ?? false);
 }

@@ -8,10 +8,12 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 /// 파견 화면 퀘스트 정렬 결과
 class QuestSortResult {
   final List<ActiveQuest> chainTier0; // ChainTopSection이 별도 렌더 (일반 목록에서 제거)
-  final List<ActiveQuest> sortedRest; // Tier 1~4 정렬된 결과
+  final List<ActiveQuest> settlementTier; // 거점 사건 (settlement_ prefix, sortedRest 최상단 포함)
+  final List<ActiveQuest> sortedRest; // settlementTier + Tier 1~4 정렬된 결과
 
   const QuestSortResult({
     required this.chainTier0,
+    required this.settlementTier,
     required this.sortedRest,
   });
 }
@@ -53,6 +55,7 @@ class QuestSortService {
         regionState?.sectorChanges[currentSector.toString()];
 
     final chainTier0 = <ActiveQuest>[];
+    final settlementTier = <ActiveQuest>[];
     final tier1 = <ActiveQuest>[];
     final tier2 = <ActiveQuest>[];
     final tier3 = <ActiveQuest>[];
@@ -62,8 +65,13 @@ class QuestSortService {
       if (q.isChainQuest &&
           q.chainId != null &&
           activeChainIds.contains(q.chainId)) {
-        // Tier 0: 현재 active 단계의 체인 퀘스트
-        chainTier0.add(q);
+        if (q.isSettlementStep) {
+          // 거점 사건(settlement_ prefix)은 일반 목록 최상단으로 분리
+          settlementTier.add(q);
+        } else {
+          // Tier 0: 현재 active 단계의 체인 퀘스트 (ChainTopSection 렌더)
+          chainTier0.add(q);
+        }
       } else if (q.isFactionExclusive &&
           q.factionTag != null &&
           joinedFactionIds.contains(q.factionTag)) {
@@ -82,6 +90,7 @@ class QuestSortService {
     }
 
     // 각 Tier 내 정렬 적용
+    _sortByEstimatedReward(settlementTier, poolMap, typeMap);
     _sortByEstimatedReward(tier1, poolMap, typeMap);
     _sortTier2(tier2, poolMap, typeMap, eliteMap);
     _sortByEstimatedReward(tier3, poolMap, typeMap);
@@ -89,7 +98,8 @@ class QuestSortService {
 
     return QuestSortResult(
       chainTier0: chainTier0,
-      sortedRest: [...tier1, ...tier2, ...tier3, ...tier4],
+      settlementTier: settlementTier,
+      sortedRest: [...settlementTier, ...tier1, ...tier2, ...tier3, ...tier4],
     );
   }
 

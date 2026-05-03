@@ -28,6 +28,7 @@ class QuestGenerator {
     Set<String> triggeredDiscoveries = const {},
     int? currentSectorIndex,
     Map<String, String>? sectorChanges,
+    int currentTrustLevel = 0, // 신규 — 거점 신뢰도 단계 (페이즈 4 #5에서 RegionStateRepository.getSettlementTrust(regionId).level로 주입 예정)
   }) {
     // 1. 기본 티어 필터
     final filtered = questPools
@@ -44,6 +45,8 @@ class QuestGenerator {
     final exclusivePools = filtered.where((p) => p.isFactionExclusive).toList();
     final generalPools = filtered
         .where((p) => !p.isFactionExclusive)
+        .where((p) => !p.isFixed)                           // REQ-03: 고정 의뢰 제외
+        .where((p) => p.minTrustLevel <= currentTrustLevel) // REQ-04: 신뢰도 단계 필터
         .where((p) => sectorType != null
             ? p.sectorType == sectorType
             : p.sectorType == null)

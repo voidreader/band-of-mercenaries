@@ -20,6 +20,21 @@ class QuestPool with _$QuestPool {
     @JsonKey(name: 'sector_type') String? sectorType,
     @JsonKey(name: 'special_flags') @Default(<String, dynamic>{}) Map<String, dynamic> specialFlags,
     @JsonKey(name: 'enemy_name') String? enemyName,
+
+    // 고정 의뢰 컬럼 (페이즈 1 #4)
+    @Default(false) @JsonKey(name: 'is_fixed') bool isFixed,
+    @JsonKey(name: 'fixed_chain_id') String? fixedChainId,
+    @JsonKey(name: 'fixed_step') int? fixedStep,
+    @JsonKey(name: 'trust_threshold') int? trustThreshold,
+
+    // 보상/시간 override 컬럼 (페이즈 2 #4)
+    @JsonKey(name: 'reward_gold_override') int? rewardGoldOverride,
+    @JsonKey(name: 'reward_xp_bonus_override') int? rewardXpBonusOverride,
+    @JsonKey(name: 'duration_override_seconds') int? durationOverrideSeconds,
+    @JsonKey(name: 'trust_reward_override') int? trustRewardOverride,
+
+    // 단계별 노출 제어 컬럼 (페이즈 2 #3)
+    @Default(0) @JsonKey(name: 'min_trust_level') int minTrustLevel,
   }) = _QuestPool;
 
   factory QuestPool.fromJson(Map<String, dynamic> json) =>

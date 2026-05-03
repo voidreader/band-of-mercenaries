@@ -470,6 +470,27 @@ class _QuestCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     // 계층 배지 (체인/엘리트/변형섹터/세력)
                     QuestCardBadges(info: layerInfo),
+                    // REQ-13: 거점 사건 배지 (settlement_ prefix 체인 퀘스트 한정)
+                    if (quest.isSettlementStep)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.settlementAccent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppTheme.settlementAccent, width: 1),
+                          ),
+                          child: const Text(
+                            '📜 마을 사건',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.settlementAccent,
+                            ),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 4),
                     Text(
                         '난이도 ${quest.difficulty} · 보상 ${questType.baseReward}G · 소요 ${questType.baseDuration}초',

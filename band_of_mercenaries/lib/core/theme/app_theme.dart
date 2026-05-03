@@ -50,6 +50,11 @@ class AppTheme {
   static const Color sectorDungeon = Color(0xFFB71C1C); // dungeon (위험 적갈색)
   static const Color sectorField = Color(0xFF558B2F);   // field (평온 녹색)
 
+  // 거점 사건 색상 (M4 더스트빌 폐광길 재개방 등)
+  /// 거점 사건(M4 더스트빌 폐광길 재개방 등) 카드 강조 색
+  /// 변형 섹터 색상(transformVillage)과 의미 충돌 회피를 위해 별도 상수
+  static const Color settlementAccent = Color(0xFFFFA000);
+
   // Chain quest colors
   static const Color chainGold = Color(0xFFD4AF37);           // 연계 퀘스트 금색
 
