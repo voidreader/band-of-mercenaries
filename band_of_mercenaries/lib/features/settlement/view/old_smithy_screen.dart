@@ -42,55 +42,71 @@ class OldSmithyScreen extends ConsumerWidget {
     final greeting = SettlementNpcData.greetingFor(VillageFacility.oldSmithy, level);
     final reward = _repairReward(level);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('낡은 대장간'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: onClose,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          color: AppTheme.surface,
+          padding: const EdgeInsets.fromLTRB(4, 8, 16, 8),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, size: 20),
+                onPressed: onClose,
+                color: AppTheme.textPrimary,
+              ),
+              const Text(
+                '낡은 대장간',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary),
+              ),
+            ],
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _NpcHeader(greeting: greeting),
-            const SizedBox(height: 16),
-            _CraftGoalTile(unlocked: level >= 2),
-            const SizedBox(height: 8),
-            _RepairMissionTile(
-              unlocked: level >= 3,
-              cooldownExpired: repairCooldownExpired,
-              remainingCooldown: remainingCooldown,
-              reward: reward,
-              onClaim: () async {
-                await ref.read(userDataProvider.notifier).addGold(reward);
-                await ref.read(userDataProvider.notifier).setSmithyRepairAt(DateTime.now());
-                ref.read(activityLogProvider.notifier).addLog(
-                  '낡은 대장간 수리 의뢰 완료 (+${reward}G)',
-                  ActivityLogType.smithyRepairCompleted,
-                );
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('+${reward}G 획득'),
-                      duration: const Duration(seconds: 1),
-                    ),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _NpcHeader(greeting: greeting),
+              const SizedBox(height: 16),
+              _CraftGoalTile(unlocked: level >= 2),
+              const SizedBox(height: 8),
+              _RepairMissionTile(
+                unlocked: level >= 3,
+                cooldownExpired: repairCooldownExpired,
+                remainingCooldown: remainingCooldown,
+                reward: reward,
+                onClaim: () async {
+                  await ref.read(userDataProvider.notifier).addGold(reward);
+                  await ref.read(userDataProvider.notifier).setSmithyRepairAt(DateTime.now());
+                  ref.read(activityLogProvider.notifier).addLog(
+                    '낡은 대장간 수리 의뢰 완료 (+${reward}G)',
+                    ActivityLogType.smithyRepairCompleted,
                   );
-                }
-              },
-            ),
-            const SizedBox(height: 8),
-            _MaterialHintTile(unlocked: level >= 2),
-            const SizedBox(height: 24),
-            OutlinedButton(
-              onPressed: onClose,
-              child: const Text('닫기'),
-            ),
-          ],
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('+${reward}G 획득'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              _MaterialHintTile(unlocked: level >= 2),
+              const SizedBox(height: 24),
+              OutlinedButton(
+                onPressed: onClose,
+                child: const Text('닫기'),
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

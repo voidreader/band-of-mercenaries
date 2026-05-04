@@ -55,6 +55,7 @@ class QuestSortService {
         regionState?.sectorChanges[currentSector.toString()];
 
     final chainTier0 = <ActiveQuest>[];
+    final fixedTier = <ActiveQuest>[];
     final settlementTier = <ActiveQuest>[];
     final tier1 = <ActiveQuest>[];
     final tier2 = <ActiveQuest>[];
@@ -62,6 +63,11 @@ class QuestSortService {
     final tier4 = <ActiveQuest>[];
 
     for (final q in quests) {
+      // 고정 임무: 갱신되지 않으며 목록 최상단에 위치
+      if (poolMap[q.questPoolId]?.isFixed == true) {
+        fixedTier.add(q);
+        continue;
+      }
       if (q.isChainQuest &&
           q.chainId != null &&
           activeChainIds.contains(q.chainId)) {
@@ -90,6 +96,7 @@ class QuestSortService {
     }
 
     // 각 Tier 내 정렬 적용
+    _sortByEstimatedReward(fixedTier, poolMap, typeMap);
     _sortByEstimatedReward(settlementTier, poolMap, typeMap);
     _sortByEstimatedReward(tier1, poolMap, typeMap);
     _sortTier2(tier2, poolMap, typeMap, eliteMap);
@@ -99,7 +106,7 @@ class QuestSortService {
     return QuestSortResult(
       chainTier0: chainTier0,
       settlementTier: settlementTier,
-      sortedRest: [...settlementTier, ...tier1, ...tier2, ...tier3, ...tier4],
+      sortedRest: [...fixedTier, ...settlementTier, ...tier1, ...tier2, ...tier3, ...tier4],
     );
   }
 

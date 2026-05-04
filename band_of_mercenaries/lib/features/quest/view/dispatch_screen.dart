@@ -399,8 +399,10 @@ class _QuestCard extends ConsumerWidget {
   }
 
   /// 테두리 색상을 계층 우선순위에 따라 결정한다.
-  Color _borderColor(QuestLayerInfo layerInfo, bool isSelected) {
+  Color _borderColor(QuestLayerInfo layerInfo, bool isSelected, {bool isFixed = false}) {
     if (isSelected) return AppTheme.primary;
+    // 고정 임무 → 청록색
+    if (isFixed) return const Color(0xFF00ACC1);
     // 체인 → 금색 우선 (세력 전용과 중첩 시도 금색)
     if (layerInfo.chain != null) return AppTheme.chainGold;
     // 세력 전용 → 세력 컬러
@@ -417,9 +419,11 @@ class _QuestCard extends ConsumerWidget {
       debugPrint('[BOM][Dispatch] questTypeId 누락: ${quest.questTypeId} — 카드 skip');
       return const SizedBox.shrink();
     }
+    final pool = data.questPools.where((p) => p.id == quest.questPoolId).firstOrNull;
+    final isFixed = pool?.isFixed ?? false;
     final layerInfo = _buildLayerInfo();
     final nameColor = _nameColor(layerInfo);
-    final borderColor = _borderColor(layerInfo, isSelected);
+    final borderColor = _borderColor(layerInfo, isSelected, isFixed: isFixed);
 
     return GestureDetector(
       onTap: onTap,
@@ -470,25 +474,49 @@ class _QuestCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     // 계층 배지 (체인/엘리트/변형섹터/세력)
                     QuestCardBadges(info: layerInfo),
-                    // REQ-13: 거점 사건 배지 (settlement_ prefix 체인 퀘스트 한정)
-                    if (quest.isSettlementStep)
+                    // 고정 임무 / 거점 사건 배지 (같은 줄)
+                    if (isFixed || quest.isSettlementStep)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppTheme.settlementAccent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: AppTheme.settlementAccent, width: 1),
-                          ),
-                          child: const Text(
-                            '📜 마을 사건',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.settlementAccent,
-                            ),
-                          ),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            if (isFixed)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00ACC1).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: const Color(0xFF00ACC1), width: 1),
+                                ),
+                                child: const Text(
+                                  '📌 고정 임무',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF00ACC1),
+                                  ),
+                                ),
+                              ),
+                            if (quest.isSettlementStep)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.settlementAccent.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: AppTheme.settlementAccent, width: 1),
+                                ),
+                                child: const Text(
+                                  '📜 마을 사건',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.settlementAccent,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     const SizedBox(height: 4),
@@ -529,8 +557,8 @@ class _QuestCard extends ConsumerWidget {
                         );
                       }),
                     ),
-                    // 자동 갱신까지 남은 시간 표시
-                    if (quest.status == QuestStatus.pending && quest.createdAt != null)
+                    // 자동 갱신까지 남은 시간 표시 (고정 임무는 갱신되지 않으므로 제외)
+                    if (!isFixed && quest.status == QuestStatus.pending && quest.createdAt != null)
                       Builder(builder: (_) {
                         final speedMult = ref.watch(speedMultiplierProvider);
                         final realElapsed = DateTime.now().difference(quest.createdAt!);

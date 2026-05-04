@@ -22,6 +22,13 @@ class VillageVisitSection extends ConsumerWidget {
     required this.onClose,
   });
 
+  static String _levelName(int level) => switch (level) {
+    2 => '인지',
+    3 => '친근',
+    4 => '소속',
+    _ => '의심',
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = selectedFacility;
@@ -41,16 +48,42 @@ class VillageVisitSection extends ConsumerWidget {
       children: [
         CardContainer(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Text(
-            '💬 ${SettlementNpcData.squareGossip[level] ?? ''}',
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppTheme.textTertiary,
-              fontStyle: FontStyle.italic,
-              height: 1.4,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '💬 ${SettlementNpcData.squareGossip[level] ?? ''}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textTertiary,
+                    fontStyle: FontStyle.italic,
+                    height: 1.4,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppTheme.settlementAccent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: AppTheme.settlementAccent.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  '${_levelName(level)} Lv.$level',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.settlementAccent,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),

@@ -56,50 +56,48 @@ class HerbalistScreen extends ConsumerWidget {
       disabledReason = '다음 사용까지 $remainingMin분';
     }
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _NpcHeader(greeting: greeting, level: level),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              children: [
-                _HealButton(
-                  cost: cost,
-                  cooldownMinutes: cooldownMinutes,
-                  canHeal: canHeal,
-                  disabledReason: disabledReason,
-                  onTap: () => showDialog<void>(
-                    context: context,
-                    builder: (ctx) => HerbalistHealDialog(trustLevel: level),
-                  ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _NpcHeader(greeting: greeting, level: level),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _HealButton(
+                cost: cost,
+                cooldownMinutes: cooldownMinutes,
+                canHeal: canHeal,
+                disabledReason: disabledReason,
+                onTap: () => showDialog<void>(
+                  context: context,
+                  builder: (ctx) => HerbalistHealDialog(trustLevel: level),
                 ),
-                const SizedBox(height: 8),
-                _GatheringInfoTile(enabled: level >= 2),
-                const SizedBox(height: 8),
-                _MaterialHintTile(enabled: level >= 2),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: onClose,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textSecondary,
-                      side: const BorderSide(color: AppTheme.border),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('닫기', style: TextStyle(fontSize: 15)),
+              ),
+              const SizedBox(height: 8),
+              _GatheringInfoTile(enabled: level >= 2),
+              const SizedBox(height: 8),
+              _MaterialHintTile(enabled: level >= 2),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onClose,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.textSecondary,
+                    side: const BorderSide(color: AppTheme.border),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
+                  child: const Text('닫기', style: TextStyle(fontSize: 15)),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

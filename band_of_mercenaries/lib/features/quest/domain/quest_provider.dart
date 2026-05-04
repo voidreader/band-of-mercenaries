@@ -94,7 +94,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       if (prev == null && next != null) {
         debugPrint('[BOM][Quest] userDataProvider null→non-null 감지 → _load 재실행');
         _load();
-        if (state.isEmpty) generateQuests();
+        if (state.isEmpty) {
+          generateQuests();
+        } else {
+          // initializeNewGame이 퀘스트를 Hive에 미리 저장한 경우:
+          // generateQuests()가 호출되지 않으므로 고정 사건 의뢰를 별도 주입.
+          // tryActivateSettlement()는 state=userData 설정 전에 await 완료되므로
+          // 이 시점에 chain progress가 이미 존재한다.
+          _injectFixedSettlementQuest();
+        }
       }
     });
     ref.listen(gameTickProvider, (prev, next) {

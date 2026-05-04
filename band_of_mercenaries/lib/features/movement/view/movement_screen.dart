@@ -152,8 +152,6 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                     ],
 
                     // Current location
-                    Text('현재 위치', style: TextStyle(fontSize: 13, color: AppTheme.textHint)),
-                    const SizedBox(height: 4),
                     Text('${currentRegion.regionName} (지역 ${userData.region} : 섹터 ${userData.sector})',
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),

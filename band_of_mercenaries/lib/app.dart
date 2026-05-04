@@ -121,28 +121,28 @@ class _IdleRewardWrapperState extends ConsumerState<_IdleRewardWrapper> {
     if (reward <= 0) return;
 
     ref.read(userDataProvider.notifier).addGold(reward);
+    settingsBox.put(SettingsKeys.lastActiveTime, DateTime.now().millisecondsSinceEpoch);
 
     final absentMinutes = DateTime.now().difference(lastActive).inMinutes;
-    if (mounted) {
-      showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('부재 보상'),
-          content: Text(
-            '${absentMinutes > GameConstants.maxIdleRewardMinutes ? "8시간 이상" : "$absentMinutes분"} 동안 부재하셨습니다.\n'
-            '${reward}G를 획득했습니다!',
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('확인'),
-            ),
-          ],
+    final label = absentMinutes > GameConstants.maxIdleRewardMinutes ? '8시간 이상' : '$absentMinutes분';
+    ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+      id: 'idleReward_${DateTime.now().millisecondsSinceEpoch}',
+      priority: DialogPriority.medium,
+      dialogType: DialogTypeRegistry.idleReward,
+      payload: {'reward': reward, 'absentMinutes': absentMinutes},
+      builder: (ctx, dismiss) => AlertDialog(
+        title: const Text('부재 보상'),
+        content: Text(
+          '$label 동안 부재하셨습니다.\n${reward}G를 획득했습니다!',
         ),
-      );
-    }
-
-    settingsBox.put(SettingsKeys.lastActiveTime, DateTime.now().millisecondsSinceEpoch);
+        actions: [
+          ElevatedButton(
+            onPressed: dismiss,
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    ));
   }
 }
 
@@ -360,8 +360,8 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
             _isShowingDialog = false;
             return;
           }
-          ref.read(dialogQueueProvider.notifier).dequeue();
           _isShowingDialog = false;
+          ref.read(dialogQueueProvider.notifier).dequeue();
         });
       });
     });

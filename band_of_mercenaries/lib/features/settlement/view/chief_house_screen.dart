@@ -25,53 +25,51 @@ class ChiefHouseScreen extends ConsumerWidget {
     final level = trust.level;
     final greeting = SettlementNpcData.greetingFor(VillageFacility.chiefHouse, level);
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _NpcHeader(greeting: greeting, level: level),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              children: [
-                if (recentlyCompleted) ...[
-                  _EventCompletedBanner(),
-                  const SizedBox(height: 8),
-                ],
-                _TrustProgressCard(trust: trust.trust, level: level),
-                const SizedBox(height: 16),
-                _ActionButton(
-                  label: '상황 듣기',
-                  onTap: () => _showSituationDialog(context, ref),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _NpcHeader(greeting: greeting, level: level),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (recentlyCompleted) ...[
+                _EventCompletedBanner(),
                 const SizedBox(height: 8),
-                _ActionButton(
-                  label: '신뢰도 확인',
-                  onTap: () => _showTrustDialog(context, trust.trust, level),
-                ),
-                const SizedBox(height: 8),
-                _DisabledRewardButton(),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: onClose,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textSecondary,
-                      side: const BorderSide(color: AppTheme.border),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('닫기', style: TextStyle(fontSize: 15)),
-                  ),
-                ),
               ],
-            ),
+              _TrustProgressCard(trust: trust.trust, level: level),
+              const SizedBox(height: 16),
+              _ActionButton(
+                label: '상황 듣기',
+                onTap: () => _showSituationDialog(context, ref),
+              ),
+              const SizedBox(height: 8),
+              _ActionButton(
+                label: '신뢰도 확인',
+                onTap: () => _showTrustDialog(context, trust.trust, level),
+              ),
+              const SizedBox(height: 8),
+              _DisabledRewardButton(),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onClose,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.textSecondary,
+                    side: const BorderSide(color: AppTheme.border),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('닫기', style: TextStyle(fontSize: 15)),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
