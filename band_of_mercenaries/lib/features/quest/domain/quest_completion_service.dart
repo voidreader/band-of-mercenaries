@@ -68,6 +68,8 @@ class QuestCompletionResult {
   final int factionRepGain;
   final EliteLootResult? eliteLoot;
   final String? renderedNarrative;
+  // region 3 한정 일반 의뢰 신뢰도 점수 (호출측 > 0 체크로 누적 여부 결정)
+  final int settlementTrustGain;
 
   const QuestCompletionResult({
     required this.resultType,
@@ -81,6 +83,7 @@ class QuestCompletionResult {
     this.factionRepGain = 0,
     this.eliteLoot,
     this.renderedNarrative,
+    this.settlementTrustGain = 0,
   });
 }
 
@@ -109,6 +112,9 @@ class QuestCompletionService {
     List<FactionState> factionStates = const [],
     Map<String, String>? sectorChanges,
   }) {
+    // quest_pools에서 pool 조회 — is_fixed override 적용 여부 판정에 사용
+    final pool = staticData.questPools.where((p) => p.id == quest.questPoolId).firstOrNull;
+
     final partyPower = QuestCalculator.calculatePartyPower(
       mercs,
       quest.questTypeId,
@@ -185,6 +191,8 @@ class QuestCompletionService {
         isGreatSuccess: resultType == QuestResult.greatSuccess,
         trackBonus: trackBonus,
         passiveRewardBonus: passiveRewardBonus,
+        // is_fixed=true 행은 기존 보상 경로(baseReward 등) 우회 (REQ-14)
+        rewardGoldOverride: pool?.isFixed == true ? pool?.rewardGoldOverride : null,
       );
       final mercTiers = mercs.map((merc) {
         final job = staticData.jobs.firstWhere(
@@ -214,6 +222,8 @@ class QuestCompletionService {
       resultMultiplier: xpMultiplier,
       facilityBonus: trainingBonus,
       passiveXpBonus: PassiveBonusService.getMercenaryXpBonus(passiveEffects),
+      // is_fixed=true 행은 기본 XP 계산에 bonus 가산 (REQ-14)
+      rewardXpBonusOverride: pool?.isFixed == true ? pool?.rewardXpBonusOverride : null,
     );
 
     // 명성 계산 (용병단 장비 reputation_gain_modifier 반영)
@@ -347,6 +357,18 @@ class QuestCompletionService {
       );
     }
 
+    // region 3 한정 일반 의뢰 신뢰도 점수 계산 (REQ-32, D-5)
+    // 체인/거점사건 step, 외부 세력 태그, 외부 리전, 실패 시 0 유지
+    const questTrustReward = {1: 2, 2: 3, 3: 5, 4: 0, 5: 0};
+    int settlementTrustGain = 0;
+    if (quest.region == 3 &&
+        !quest.isChainQuest &&
+        quest.factionTag == null &&
+        (resultType == QuestResult.success ||
+            resultType == QuestResult.greatSuccess)) {
+      settlementTrustGain = questTrustReward[quest.difficulty] ?? 0;
+    }
+
     return QuestCompletionResult(
       resultType: resultType,
       rewardGold: rewardGold,
@@ -359,6 +381,7 @@ class QuestCompletionService {
       factionRepGain: factionRepGain,
       eliteLoot: eliteLoot,
       renderedNarrative: renderedNarrative,
+      settlementTrustGain: settlementTrustGain,
     );
   }
 }

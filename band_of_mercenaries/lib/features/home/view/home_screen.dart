@@ -567,6 +567,12 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '⛓️', color: AppTheme.chainGold, bold: true);
       case ActivityLogType.travelChoiceCompleted:
         return (icon: '🛤️', color: AppTheme.textSecondary, bold: false);
+      case ActivityLogType.settlementTrustUp:
+        return (icon: '🏘️', color: AppTheme.chainGold, bold: true);
+      case ActivityLogType.settlementEventStep:
+        return (icon: '📜', color: AppTheme.primary, bold: false);
+      case ActivityLogType.settlementEventCompleted:
+        return (icon: '📜', color: AppTheme.chainGold, bold: true);
     }
   }
 

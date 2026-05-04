@@ -21,6 +21,7 @@ class DialogTypeRegistry {
   static const String travelChoiceRecall = 'travelChoiceRecall';
   static const String chainCompleted = 'chainCompleted';
   static const String regionTransform = 'regionTransform';
+  static const String settlementTrustUp = 'settlementTrustUp';
 
   /// 등록된 전체 dialogType 키 집합. 영속 복원 시 필터링 기준으로 사용.
   static Set<String> get keys => {
@@ -31,6 +32,7 @@ class DialogTypeRegistry {
         travelChoiceRecall,
         chainCompleted,
         regionTransform,
+        settlementTrustUp,
       };
 }
 

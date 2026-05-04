@@ -130,13 +130,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     );
   }
 
-  /// 현재 거점 신뢰도 단계 조회 (페이즈 4 #5 stub).
-  ///
-  /// 페이즈 4 #5에서 `RegionStateRepository.getSettlementTrust(regionId).level`로 교체 예정.
-  /// stub 동안은 0을 반환하여 trust_threshold 조건이 만족되지 않아 고정 의뢰가 미노출됨.
+  /// 현재 거점 신뢰도 단계 조회.
   int _getCurrentTrustLevel() {
-    // 페이즈 4 #5: RegionStateRepository.getSettlementTrust(userData.region).level
-    return 0;
+    final userData = ref.read(userDataProvider);
+    if (userData == null) return 0;
+    return ref.read(regionStateRepositoryProvider).getSettlementTrust(userData.region).level;
   }
 
   Future<void> clearCompleted(String questId) async {
@@ -272,6 +270,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     if (fixedPool == null) return;
 
+    // state 최신화 후 중복 체크 (비동기 흐름에서 state가 stale할 수 있으므로)
+    _load();
     // 이미 pending/inProgress인 고정 의뢰가 존재하면 skip (중복 방지)
     final alreadyActive = state.any((q) =>
         q.isChainQuest &&
@@ -364,6 +364,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final quest = state.firstWhere((q) => q.id == questId);
     final questType = staticData.questTypes.firstWhere((t) => t.id == quest.questTypeId);
 
+    // 고정 의뢰 override 적용을 위해 pool 조회
+    final pool = staticData.questPools.where((p) => p.id == quest.questPoolId).firstOrNull;
+
     // Check dispatch cost
     final difficulty = staticData.difficulties.firstWhere(
       (d) => d.level == quest.difficulty.clamp(1, 5),
@@ -374,6 +377,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       difficulty: quest.difficulty,
       minCost: difficulty.minDispatchCost,
       maxCost: difficulty.maxDispatchCost,
+      isFixedWithDurationOverride: pool?.isFixed == true && pool?.durationOverrideSeconds != null,
     );
     final userData = ref.read(userDataProvider);
     if (userData == null || userData.gold < dispatchCost) {
@@ -394,6 +398,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       difficulty: quest.difficulty,
       speedMultiplier: speedMult,
       partyAverageAgi: avgAgi,
+      durationOverrideSeconds: pool?.isFixed == true ? pool?.durationOverrideSeconds : null,
     );
 
     final endTime = DateTime.now().add(duration);
@@ -455,14 +460,12 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     final region = staticData.regions.firstWhere((r) => r.region == userData.region);
 
-    // 거점 사건(settlement_ prefix) 의뢰는 만료 목록에서 제외 (REQ-06)
-    final filteredExpired = expired.where((q) => !q.isSettlementStep).toList();
-
-    for (final quest in filteredExpired) {
+    // _checkQuestRefresh의 isSettlementStep continue로 이미 차단되므로 별도 필터 불필요
+    for (final quest in expired) {
       await _repo.removeQuest(quest.id);
     }
 
-    if (filteredExpired.isEmpty) return;
+    if (expired.isEmpty) return;
 
     final factionRepo = ref.read(factionStateRepositoryProvider);
     final joinedFactionIds = factionRepo.getJoinedFactionIds();
@@ -477,7 +480,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       regionId: userData.region,
       questPools: staticData.questPools,
       questTypes: staticData.questTypes,
-      count: filteredExpired.length,
+      count: expired.length,
       random: Random(),
       joinedFactionIds: joinedFactionIds,
       factionReputations: factionReputations,
@@ -880,6 +883,45 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           },
         );
       }
+    }
+
+    // 거점 사건 step 완료 처리 (성공/대성공 한정)
+    if (quest.isSettlementStep &&
+        (result.resultType == QuestResult.greatSuccess ||
+            result.resultType == QuestResult.success)) {
+      final pool = staticData.questPools
+          .where((p) => p.id == quest.questPoolId)
+          .firstOrNull;
+      final trustReward = pool?.trustRewardOverride ?? 0;
+      if (trustReward > 0) {
+        await ref.read(regionStateRepositoryProvider).addSettlementTrust(
+          regionId: quest.region,
+          amount: trustReward,
+          source: 'settlement_step_${quest.chainStep}',
+          ref: ref,
+        );
+        ref.read(activityLogProvider.notifier).addLog(
+          '사건 진행: ${quest.questName} 완료 (${quest.chainStep}/6)',
+          ActivityLogType.settlementEventStep,
+        );
+      }
+      // 6단계 완료 시 거점 사건 완료 로그 (M4 MVP 1개 사건 6단계 고정)
+      if (quest.chainStep == 6) {
+        ref.read(activityLogProvider.notifier).addLog(
+          '거점 사건 완료: ${quest.questName}',
+          ActivityLogType.settlementEventCompleted,
+        );
+      }
+    }
+
+    // 일반 의뢰 신뢰도 점수 (region == 3 + 일반 의뢰 한정)
+    if (!quest.isChainQuest && quest.region == 3 && result.settlementTrustGain > 0) {
+      await ref.read(regionStateRepositoryProvider).addSettlementTrust(
+        regionId: quest.region,
+        amount: result.settlementTrustGain,
+        source: 'quest_d${quest.difficulty}',
+        ref: ref,
+      );
     }
 
     ref.read(mercenaryListProvider.notifier).refresh();

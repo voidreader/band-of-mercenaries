@@ -44,6 +44,8 @@ import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_serv
 import 'package:band_of_mercenaries/features/chain_quest/view/chain_completed_dialog.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_transformed_provider.dart';
 import 'package:band_of_mercenaries/features/investigation/view/region_transform_dialog.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/trust_level_up_event.dart';
+import 'package:band_of_mercenaries/core/widgets/settlement_trust_up_dialog.dart';
 
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
@@ -323,6 +325,20 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         ),
       ));
       ref.read(regionTransformedProvider.notifier).state = null;
+    });
+
+    // 마을 신뢰도 단계 승급 (high)
+    ref.listen<TrustLevelUpEvent?>(settlementTrustLevelUpProvider, (_, next) {
+      if (next == null) return;
+      final captured = next;
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'settlementTrustUp_${next.regionId}_${next.toLevel}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.high,
+        dialogType: DialogTypeRegistry.settlementTrustUp,
+        payload: {'regionId': next.regionId, 'toLevel': next.toLevel},
+        builder: (ctx, dismiss) => SettlementTrustUpDialog(event: captured, onDismiss: dismiss),
+      ));
+      ref.read(settlementTrustLevelUpProvider.notifier).state = null;
     });
 
     // ── 큐 → 단일 표시 listen ────────────────────────────────────────────────

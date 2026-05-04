@@ -74,24 +74,27 @@ class ChainQuestService {
         questResultType == 'success' || questResultType == 'greatSuccess';
 
     if (isSuccess) {
-      final resolvedProtagonist =
-          resolveProtagonist(progress: progress, allMercs: allMercs);
-      if (resolvedProtagonist == null) {
-        final hadProtagonist = progress.protagonistMercId != null;
-        if (partyMercs.isNotEmpty) {
-          progress.protagonistMercId =
-              _pickProtagonist(partyMercs, questTypeId);
-        } else {
-          final living = allMercs
-              .where((m) => m.status != MercenaryStatus.dead)
-              .toList();
-          progress.protagonistMercId = _pickProtagonist(living, questTypeId);
-        }
-        if (hadProtagonist && progress.protagonistMercId != null) {
-          logActivity(
-            '이야기의 주인공이 새로운 용병으로 이어졌다',
-            ActivityLogType.chainProgressed,
-          );
+      // 거점 사건은 protagonist 무시 (페이즈 1 #4 4.2절)
+      if (!chainId.startsWith('settlement_')) {
+        final resolvedProtagonist =
+            resolveProtagonist(progress: progress, allMercs: allMercs);
+        if (resolvedProtagonist == null) {
+          final hadProtagonist = progress.protagonistMercId != null;
+          if (partyMercs.isNotEmpty) {
+            progress.protagonistMercId =
+                _pickProtagonist(partyMercs, questTypeId);
+          } else {
+            final living = allMercs
+                .where((m) => m.status != MercenaryStatus.dead)
+                .toList();
+            progress.protagonistMercId = _pickProtagonist(living, questTypeId);
+          }
+          if (hadProtagonist && progress.protagonistMercId != null) {
+            logActivity(
+              '이야기의 주인공이 새로운 용병으로 이어졌다',
+              ActivityLogType.chainProgressed,
+            );
+          }
         }
       }
 
@@ -184,6 +187,8 @@ class ChainQuestService {
     required List<ChainQuestProgress> progresses,
   }) async {
     for (final progress in progresses) {
+      // 거점 사건은 14일 dormant 정책 미적용 (페이즈 1 #4 4.2절)
+      if (progress.chainId.startsWith('settlement_')) continue;
       if (progress.status != ChainQuestStatus.active) continue;
       final availableAt = progress.currentStepAvailableAt;
       if (availableAt == null) continue;
@@ -192,6 +197,15 @@ class ChainQuestService {
         await _repo.save(progress);
       }
     }
+  }
+
+  Future<bool> tryActivateSettlement({
+    required int regionId,
+    required String eventName,
+    required UserData user,
+  }) async {
+    final chainId = 'settlement_${regionId}_$eventName';
+    return tryActivate(chainId: chainId, user: user);
   }
 
   Future<void> reactivateIfDormant({required String chainId}) async {

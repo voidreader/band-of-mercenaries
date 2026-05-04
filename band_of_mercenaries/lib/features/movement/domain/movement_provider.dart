@@ -26,6 +26,10 @@ import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart
 import 'package:band_of_mercenaries/core/domain/template_context.dart';
 import 'package:band_of_mercenaries/core/models/travel_choice_result_data.dart';
 import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 
 final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
@@ -218,6 +222,36 @@ class MovementNotifier extends StateNotifier<MovementState?> {
     }
 
     ref.read(lastTravelEventProvider.notifier).state = null;
+
+    // 기존 세이브 호환 — 더스트빌 진입 시 자동 활성화
+    final newUser = ref.read(userDataProvider);
+    if (newUser != null && newUser.region == GameConstants.startingRegionId) {
+      final regionRepo = ref.read(regionStateRepositoryProvider);
+      final regionState = regionRepo.getState(newUser.region);
+      // saveState는 existing 존재 시 신규 인자를 버리고 existing.save()만 호출하므로,
+      // 기존 객체에 settlementTrust가 없으면 객체를 직접 수정 후 save()해야 한다.
+      if (regionState == null) {
+        await regionRepo.saveState(RegionState(
+          regionId: newUser.region,
+          settlementTrust: 0,
+          settlementTrustLevel: 1,
+        ));
+        await ref.read(chainQuestServiceProvider).tryActivateSettlement(
+          regionId: newUser.region,
+          eventName: 'pyegwang_reopen',
+          user: newUser,
+        );
+      } else if (regionState.settlementTrust == null) {
+        regionState.settlementTrust = 0;
+        regionState.settlementTrustLevel ??= 1;
+        await regionState.save();
+        await ref.read(chainQuestServiceProvider).tryActivateSettlement(
+          regionId: newUser.region,
+          eventName: 'pyegwang_reopen',
+          user: newUser,
+        );
+      }
+    }
 
     await ref.read(questListProvider.notifier).generateQuests();
 

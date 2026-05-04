@@ -17,6 +17,9 @@ import 'package:band_of_mercenaries/features/mercenary/domain/recruitment_servic
 import 'package:band_of_mercenaries/features/facility/domain/construction_completion_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
+import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
+import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 
 final userDataProvider = StateNotifierProvider<UserDataNotifier, UserData?>((ref) {
   return UserDataNotifier(ref);
@@ -132,6 +135,21 @@ class UserDataNotifier extends StateNotifier<UserData?> {
       await questBox.add(quest);
     }
     debugPrint('[BOM][GameState] 초기 퀘스트 ${initialQuests.length}개 Hive 저장 완료');
+
+    // M4 MVP 더스트빌 거점 사건 자동 활성화
+    final regionRepo = ref.read(regionStateRepositoryProvider);
+    if (regionRepo.getState(GameConstants.startingRegionId) == null) {
+      await regionRepo.saveState(RegionState(
+        regionId: GameConstants.startingRegionId,
+        settlementTrust: 0,
+        settlementTrustLevel: 1,
+      ));
+    }
+    await ref.read(chainQuestServiceProvider).tryActivateSettlement(
+      regionId: GameConstants.startingRegionId,
+      eventName: 'pyegwang_reopen',
+      user: userData,
+    );
 
     // 모든 Hive 데이터 준비 완료 후 state 갱신 → _PostSyncApp 리빌드 트리거
     debugPrint('[BOM][GameState] initializeNewGame 완료 → state 갱신 (고정 region ${GameConstants.startingRegionId} 더스트플레인, sector: $startSector)');

@@ -20,8 +20,11 @@ class ChainTopSection extends ConsumerWidget {
     final progressAsync = ref.watch(chainQuestProgressProvider);
     final progresses = progressAsync.valueOrNull ?? const <ChainQuestProgress>[];
 
+    // settlement_ prefix 체인은 settlementTier로 일반 목록에 표시되므로 여기서 제외
     final actives = progresses
-        .where((p) => p.status == ChainQuestStatus.active)
+        .where((p) =>
+            p.status == ChainQuestStatus.active &&
+            !p.chainId.startsWith('settlement_'))
         .toList();
     if (actives.isEmpty) return const SizedBox.shrink();
 

@@ -48,6 +48,12 @@ enum ActivityLogType {
   chainCompleted,
   @HiveField(21)
   travelChoiceCompleted,
+  @HiveField(22)
+  settlementTrustUp,
+  @HiveField(23)
+  settlementEventStep,
+  @HiveField(24)
+  settlementEventCompleted,
 }
 
 @HiveType(typeId: 7)

@@ -206,7 +206,13 @@ class QuestCalculator {
     double trackBonus = 0.0,
     // PassiveBonusService 결과에서 변환한 가산값 (랭크 quest_reward_multiplier 포함)
     double passiveRewardBonus = 0.0,
+    // is_fixed=true 행은 기존 보상 경로(baseReward·rewardMultiplier·trackBonus 등) 우회
+    int? rewardGoldOverride,
   }) {
+    // 고정 의뢰 보상 override: non-null이면 대성공 ×2만 적용 후 반환
+    if (rewardGoldOverride != null) {
+      return isGreatSuccess ? rewardGoldOverride * 2 : rewardGoldOverride;
+    }
     // 가산 보너스 합산, 최대 +0.80 상한 적용
     final stackedBonus = (trackBonus + passiveRewardBonus).clamp(0.0, 0.80);
     final reward = (baseReward * rewardMultiplier * (1 + stackedBonus)).round();
@@ -249,7 +255,13 @@ class QuestCalculator {
     required int difficulty,
     required double speedMultiplier,
     int partyAverageAgi = 50,
+    // is_fixed=true 행: non-null이면 speedMultiplier·partyAverageAgi 무시하고 지정 시간 그대로 반환
+    int? durationOverrideSeconds,
   }) {
+    // 고정 의뢰 시간 override: non-null이면 기존 계산 경로 우회
+    if (durationOverrideSeconds != null) {
+      return Duration(seconds: durationOverrideSeconds);
+    }
     final multiplier = 1.0 + (difficulty - 1) * 0.2;
     final agiMultiplier = partyAverageAgi.clamp(1, 999) / 50.0;
     final seconds = (baseDuration * multiplier / (speedMultiplier * agiMultiplier)).round();
@@ -272,7 +284,13 @@ class QuestCalculator {
     required int difficulty,
     required int minCost,
     required int maxCost,
+    // is_fixed=true + durationOverride 행: true이면 minCost만 반환 (maxCost 미사용)
+    bool isFixedWithDurationOverride = false,
   }) {
+    // 고정 의뢰 파견 비용 override: duration_override_seconds 사용 시 minCost 고정 반환
+    if (isFixedWithDurationOverride) {
+      return minCost;
+    }
     final multiplier = 1.0 + (difficulty - 1) * 0.2;
     final duration = baseDuration * multiplier;
     final ratio = (duration / _maxDuration).clamp(0.0, 1.0);

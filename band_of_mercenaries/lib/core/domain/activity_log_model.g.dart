@@ -97,6 +97,12 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.chainCompleted;
       case 21:
         return ActivityLogType.travelChoiceCompleted;
+      case 22:
+        return ActivityLogType.settlementTrustUp;
+      case 23:
+        return ActivityLogType.settlementEventStep;
+      case 24:
+        return ActivityLogType.settlementEventCompleted;
       default:
         return ActivityLogType.questResult;
     }
@@ -170,6 +176,15 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.travelChoiceCompleted:
         writer.writeByte(21);
+        break;
+      case ActivityLogType.settlementTrustUp:
+        writer.writeByte(22);
+        break;
+      case ActivityLogType.settlementEventStep:
+        writer.writeByte(23);
+        break;
+      case ActivityLogType.settlementEventCompleted:
+        writer.writeByte(24);
         break;
     }
   }

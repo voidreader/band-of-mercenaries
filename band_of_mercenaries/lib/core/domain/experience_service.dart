@@ -5,9 +5,14 @@ class ExperienceService {
   static const int maxLevel = 5;
   static const List<int> levelThresholds = [0, 100, 350, 850, 1850];
 
-  static int calculateXpGain({required int difficulty, required double resultMultiplier, required double facilityBonus, double passiveXpBonus = 0.0}) {
+  static int calculateXpGain({required int difficulty, required double resultMultiplier, required double facilityBonus, double passiveXpBonus = 0.0, int? rewardXpBonusOverride}) {
     final base = difficulty * baseXp * resultMultiplier;
-    return (base * (1.0 + facilityBonus + passiveXpBonus)).round();
+    final result = (base * (1.0 + facilityBonus + passiveXpBonus)).round();
+    // 고정 의뢰 XP 보너스 override 가산 (quest_pools.reward_xp_bonus_override)
+    if (rewardXpBonusOverride != null) {
+      return result + rewardXpBonusOverride;
+    }
+    return result;
   }
 
   static int checkLevelUp({required int currentLevel, required int currentXp}) {
