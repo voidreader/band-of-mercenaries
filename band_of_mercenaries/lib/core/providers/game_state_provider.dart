@@ -224,6 +224,20 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     state = state;
   }
 
+  Future<void> setHerbalistCooldown(DateTime? until) async {
+    if (state == null) return;
+    state!.herbalistCooldownEndTime = until;
+    await state!.save();
+    state = state;
+  }
+
+  Future<void> setSmithyRepairAt(DateTime? at) async {
+    if (state == null) return;
+    state!.lastSmithyRepairAt = at;
+    await state!.save();
+    state = state;
+  }
+
   Future<bool> startConstruction(String facilityId, int cost, Duration buildDuration) async {
     if (state == null || state!.constructionFacilityId != null) return false;
     if (state!.gold < cost) return false;

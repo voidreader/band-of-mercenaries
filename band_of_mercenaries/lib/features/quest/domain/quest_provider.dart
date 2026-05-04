@@ -581,6 +581,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       sectorChanges: ref.read(regionStateRepositoryProvider)
           .getState(userData.region)
           ?.sectorChanges,
+      currentTrustLevel: ref.read(regionStateRepositoryProvider)
+          .getSettlementTrust(quest.region).level,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
@@ -907,6 +909,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       }
       // 6단계 완료 시 거점 사건 완료 로그 (M4 MVP 1개 사건 6단계 고정)
       if (quest.chainStep == 6) {
+        await ref.read(regionStateRepositoryProvider).setEventCompleted(quest.region);
         ref.read(activityLogProvider.notifier).addLog(
           '거점 사건 완료: ${quest.questName}',
           ActivityLogType.settlementEventCompleted,

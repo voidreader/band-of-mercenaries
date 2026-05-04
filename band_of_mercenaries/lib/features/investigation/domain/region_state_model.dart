@@ -22,8 +22,15 @@ class RegionState extends HiveObject {
   @HiveField(5)
   int? settlementTrustLevel; // 마을 신뢰도 단계(1~4) 캐시. null=1 fallback
 
+  @HiveField(6)
+  DateTime? lastEventCompletedAt;
+
   int get currentTrust => settlementTrust ?? 0;
   int get currentTrustLevel => settlementTrustLevel ?? 1;
+
+  bool get eventCompletedRecently =>
+      lastEventCompletedAt != null &&
+      DateTime.now().difference(lastEventCompletedAt!) <= const Duration(hours: 24);
 
   RegionState({
     required this.regionId,
@@ -32,6 +39,7 @@ class RegionState extends HiveObject {
     Map<String, String>? sectorChanges,
     this.settlementTrust,
     this.settlementTrustLevel,
+    this.lastEventCompletedAt,
   })  : triggeredDiscoveries = triggeredDiscoveries ?? [],
         sectorChanges = sectorChanges ?? {};
 }

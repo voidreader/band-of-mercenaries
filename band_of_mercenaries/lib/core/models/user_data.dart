@@ -74,6 +74,12 @@ class UserData extends HiveObject {
   @HiveField(21)
   String? choiceEventId;
 
+  @HiveField(22)
+  DateTime? herbalistCooldownEndTime;
+
+  @HiveField(23)
+  DateTime? lastSmithyRepairAt;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -97,6 +103,8 @@ class UserData extends HiveObject {
     List<String>? artifactItemIds,
     List<String>? completedChains,
     this.choiceEventId,
+    this.herbalistCooldownEndTime,
+    this.lastSmithyRepairAt,
   })  : facilities = facilities ?? {},
         artifactItemIds = artifactItemIds ?? <String>[],
         completedChains = completedChains ?? <String>[];

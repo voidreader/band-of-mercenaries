@@ -18,6 +18,7 @@ import 'package:band_of_mercenaries/features/inventory/domain/equipment_stat_bon
 import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
 import 'package:band_of_mercenaries/core/models/elite_loot_entry.dart';
 import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/herbalist_service.dart';
 
 class TraitEventResult {
   final String? acquiredTraitKey;
@@ -111,6 +112,7 @@ class QuestCompletionService {
     UserData? userData,
     List<FactionState> factionStates = const [],
     Map<String, String>? sectorChanges,
+    int currentTrustLevel = 1,
   }) {
     // quest_pools에서 pool 조회 — is_fixed override 적용 여부 판정에 사용
     final pool = staticData.questPools.where((p) => p.id == quest.questPoolId).firstOrNull;
@@ -194,6 +196,11 @@ class QuestCompletionService {
         // is_fixed=true 행은 기존 보상 경로(baseReward 등) 우회 (REQ-14)
         rewardGoldOverride: pool?.isFixed == true ? pool?.rewardGoldOverride : null,
       );
+      // REQ-13: 채집 의뢰 골드 보상 단계별 배수
+      if (quest.questPoolId == 'dustvile_chore_03' &&
+          (resultType == QuestResult.greatSuccess || resultType == QuestResult.success)) {
+        rewardGold = (rewardGold * HerbalistService.gatheringMultiplier(currentTrustLevel)).round();
+      }
       final mercTiers = mercs.map((merc) {
         final job = staticData.jobs.firstWhere(
           (j) => j.id == merc.jobId,

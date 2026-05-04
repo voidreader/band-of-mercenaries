@@ -54,6 +54,10 @@ enum ActivityLogType {
   settlementEventStep,
   @HiveField(24)
   settlementEventCompleted,
+  @HiveField(25)
+  herbalistHeal,
+  @HiveField(26)
+  smithyRepairCompleted,
 }
 
 @HiveType(typeId: 7)

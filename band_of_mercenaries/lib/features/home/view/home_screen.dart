@@ -573,6 +573,10 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '📜', color: AppTheme.primary, bold: false);
       case ActivityLogType.settlementEventCompleted:
         return (icon: '📜', color: AppTheme.chainGold, bold: true);
+      case ActivityLogType.herbalistHeal:
+        return (icon: '🌿', color: d, bold: false);
+      case ActivityLogType.smithyRepairCompleted:
+        return (icon: '⚒️', color: d, bold: false);
     }
   }
 

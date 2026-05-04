@@ -42,6 +42,14 @@ class MercenaryRepository {
     return merc;
   }
 
+  Future<void> healInstant(String mercId) async {
+    final merc = _box.values.firstWhere((m) => m.id == mercId);
+    merc.status = MercenaryStatus.normal;
+    merc.injuryEndTime = null;
+    merc.tiredEndTime = null;
+    await merc.save();
+  }
+
   Future<void> updateStatus(String mercId, MercenaryStatus status, {DateTime? endTime}) async {
     final merc = _box.values.firstWhere((m) => m.id == mercId);
     merc.status = status;

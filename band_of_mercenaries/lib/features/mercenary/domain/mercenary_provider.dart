@@ -43,6 +43,28 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
 
   void refresh() => _load();
 
+  Future<void> healInstant({
+    required String mercId,
+    required int cost,
+    required int cooldownMinutes,
+  }) async {
+    final merc = state.where((m) => m.id == mercId).firstOrNull;
+    if (merc == null) return;
+
+    await _repo.healInstant(mercId);
+    await ref.read(userDataProvider.notifier).spendGold(cost);
+    await ref.read(userDataProvider.notifier).setHerbalistCooldown(
+      DateTime.now().add(Duration(minutes: cooldownMinutes)),
+    );
+
+    ref.read(activityLogProvider.notifier).addLog(
+      '약초상이 ${merc.name}을(를) 즉시 회복시켰다 (-${cost}G)',
+      ActivityLogType.herbalistHeal,
+    );
+
+    refresh();
+  }
+
   /// 트레잇 진화 선택 결과를 적용한다.
   /// view(`_showTraitEvents`)가 EvolutionChoice를 받아 본 메서드에 위임한다.
   ///

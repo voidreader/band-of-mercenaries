@@ -16,6 +16,8 @@ import 'package:band_of_mercenaries/features/investigation/domain/region_transfo
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
 import 'package:band_of_mercenaries/core/data/region_sector_fallback.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/village_facility.dart';
+import 'package:band_of_mercenaries/features/settlement/view/village_visit_section.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
   const MovementScreen({super.key});
@@ -27,6 +29,7 @@ class MovementScreen extends ConsumerStatefulWidget {
 class _MovementScreenState extends ConsumerState<MovementScreen> {
   int _selectedRegion = 1;
   int _selectedSector = 1;
+  VillageFacility? _selectedFacility;
 
   @override
   void initState() {
@@ -45,6 +48,11 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
   @override
   Widget build(BuildContext context) {
     final userData = ref.watch(userDataProvider);
+    ref.listen<UserData?>(userDataProvider, (prev, next) {
+      if (prev != null && next != null && prev.region != next.region) {
+        setState(() => _selectedFacility = null);
+      }
+    });
     final staticData = ref.watch(staticDataProvider);
     final quests = ref.watch(questListProvider);
     final hasDispatchedQuests = quests.any((q) => q.status == QuestStatus.inProgress);
@@ -278,6 +286,22 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
+
+                    // REQ-1: 마을 내 방문 영역 (현재 sector가 village 타입일 때만)
+                    if (!userData.isMoving) ...[
+                      Builder(builder: (context) {
+                        final currentSectorData = RegionSectorFallback.lookupSector(
+                          userData.region, userData.sector, data.regionSectors,
+                        );
+                        if (currentSectorData?.sectorType != 'village') return const SizedBox.shrink();
+                        return VillageVisitSection(
+                          selectedFacility: _selectedFacility,
+                          onSelect: (f) => setState(() => _selectedFacility = f),
+                          onClose: () => setState(() => _selectedFacility = null),
+                        );
+                      }),
+                      const SizedBox(height: 14),
+                    ],
 
                     // Travel time & button
                     if (distance > 0)

@@ -111,6 +111,12 @@ class RegionStateRepository {
     await saveState(state);
   }
 
+  Future<void> setEventCompleted(int regionId) async {
+    var state = getState(regionId) ?? RegionState(regionId: regionId);
+    state.lastEventCompletedAt = DateTime.now();
+    await saveState(state);
+  }
+
   // ─── 마을 신뢰도 증가 (핵심 메서드) ──────────────────────────────────────
 
   /// 신뢰도 점수를 [amount]만큼 증가시킨다.
