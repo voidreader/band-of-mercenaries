@@ -107,6 +107,8 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.herbalistHeal;
       case 26:
         return ActivityLogType.smithyRepairCompleted;
+      case 27:
+        return ActivityLogType.craftCompleted;
       default:
         return ActivityLogType.questResult;
     }
@@ -195,6 +197,9 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.smithyRepairCompleted:
         writer.writeByte(26);
+        break;
+      case ActivityLogType.craftCompleted:
+        writer.writeByte(27);
         break;
     }
   }

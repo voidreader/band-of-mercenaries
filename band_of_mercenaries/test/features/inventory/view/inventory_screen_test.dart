@@ -123,6 +123,8 @@ StaticGameData _makeStaticData({List<ItemData> items = const []}) {
     travelChoiceOptions: const [],
     travelChoiceResults: const [],
     regionSectors: const [],
+    craftingRecipes: const [],
+    questPoolMaterialDrops: const [],
   );
 }
 

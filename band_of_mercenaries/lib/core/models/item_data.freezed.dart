@@ -28,6 +28,8 @@ mixin _$ItemData {
   String get category => throw _privateConstructorUsedError;
   String get slot => throw _privateConstructorUsedError;
   int get tier => throw _privateConstructorUsedError;
+  @JsonKey(name: 'region_exclusive')
+  int? get regionExclusive => throw _privateConstructorUsedError;
   @JsonKey(name: 'effect_json')
   Map<String, dynamic> get effectJson => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -52,6 +54,7 @@ abstract class $ItemDataCopyWith<$Res> {
       String category,
       String slot,
       int tier,
+      @JsonKey(name: 'region_exclusive') int? regionExclusive,
       @JsonKey(name: 'effect_json') Map<String, dynamic> effectJson,
       @JsonKey(name: 'created_at') DateTime? createdAt});
 }
@@ -76,6 +79,7 @@ class _$ItemDataCopyWithImpl<$Res, $Val extends ItemData>
     Object? category = null,
     Object? slot = null,
     Object? tier = null,
+    Object? regionExclusive = freezed,
     Object? effectJson = null,
     Object? createdAt = freezed,
   }) {
@@ -108,6 +112,10 @@ class _$ItemDataCopyWithImpl<$Res, $Val extends ItemData>
           ? _value.tier
           : tier // ignore: cast_nullable_to_non_nullable
               as int,
+      regionExclusive: freezed == regionExclusive
+          ? _value.regionExclusive
+          : regionExclusive // ignore: cast_nullable_to_non_nullable
+              as int?,
       effectJson: null == effectJson
           ? _value.effectJson
           : effectJson // ignore: cast_nullable_to_non_nullable
@@ -136,6 +144,7 @@ abstract class _$$ItemDataImplCopyWith<$Res>
       String category,
       String slot,
       int tier,
+      @JsonKey(name: 'region_exclusive') int? regionExclusive,
       @JsonKey(name: 'effect_json') Map<String, dynamic> effectJson,
       @JsonKey(name: 'created_at') DateTime? createdAt});
 }
@@ -158,6 +167,7 @@ class __$$ItemDataImplCopyWithImpl<$Res>
     Object? category = null,
     Object? slot = null,
     Object? tier = null,
+    Object? regionExclusive = freezed,
     Object? effectJson = null,
     Object? createdAt = freezed,
   }) {
@@ -190,6 +200,10 @@ class __$$ItemDataImplCopyWithImpl<$Res>
           ? _value.tier
           : tier // ignore: cast_nullable_to_non_nullable
               as int,
+      regionExclusive: freezed == regionExclusive
+          ? _value.regionExclusive
+          : regionExclusive // ignore: cast_nullable_to_non_nullable
+              as int?,
       effectJson: null == effectJson
           ? _value._effectJson
           : effectJson // ignore: cast_nullable_to_non_nullable
@@ -213,6 +227,7 @@ class _$ItemDataImpl implements _ItemData {
       required this.category,
       required this.slot,
       required this.tier,
+      @JsonKey(name: 'region_exclusive') this.regionExclusive,
       @JsonKey(name: 'effect_json')
       final Map<String, dynamic> effectJson = const <String, dynamic>{},
       @JsonKey(name: 'created_at') this.createdAt})
@@ -237,6 +252,9 @@ class _$ItemDataImpl implements _ItemData {
   final String slot;
   @override
   final int tier;
+  @override
+  @JsonKey(name: 'region_exclusive')
+  final int? regionExclusive;
   final Map<String, dynamic> _effectJson;
   @override
   @JsonKey(name: 'effect_json')
@@ -252,7 +270,7 @@ class _$ItemDataImpl implements _ItemData {
 
   @override
   String toString() {
-    return 'ItemData(id: $id, name: $name, description: $description, flavorText: $flavorText, category: $category, slot: $slot, tier: $tier, effectJson: $effectJson, createdAt: $createdAt)';
+    return 'ItemData(id: $id, name: $name, description: $description, flavorText: $flavorText, category: $category, slot: $slot, tier: $tier, regionExclusive: $regionExclusive, effectJson: $effectJson, createdAt: $createdAt)';
   }
 
   @override
@@ -270,6 +288,8 @@ class _$ItemDataImpl implements _ItemData {
                 other.category == category) &&
             (identical(other.slot, slot) || other.slot == slot) &&
             (identical(other.tier, tier) || other.tier == tier) &&
+            (identical(other.regionExclusive, regionExclusive) ||
+                other.regionExclusive == regionExclusive) &&
             const DeepCollectionEquality()
                 .equals(other._effectJson, _effectJson) &&
             (identical(other.createdAt, createdAt) ||
@@ -287,6 +307,7 @@ class _$ItemDataImpl implements _ItemData {
       category,
       slot,
       tier,
+      regionExclusive,
       const DeepCollectionEquality().hash(_effectJson),
       createdAt);
 
@@ -313,6 +334,7 @@ abstract class _ItemData implements ItemData {
       required final String category,
       required final String slot,
       required final int tier,
+      @JsonKey(name: 'region_exclusive') final int? regionExclusive,
       @JsonKey(name: 'effect_json') final Map<String, dynamic> effectJson,
       @JsonKey(name: 'created_at') final DateTime? createdAt}) = _$ItemDataImpl;
 
@@ -334,6 +356,9 @@ abstract class _ItemData implements ItemData {
   String get slot;
   @override
   int get tier;
+  @override
+  @JsonKey(name: 'region_exclusive')
+  int? get regionExclusive;
   @override
   @JsonKey(name: 'effect_json')
   Map<String, dynamic> get effectJson;

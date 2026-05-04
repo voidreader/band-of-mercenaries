@@ -577,6 +577,8 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '🌿', color: d, bold: false);
       case ActivityLogType.smithyRepairCompleted:
         return (icon: '⚒️', color: d, bold: false);
+      case ActivityLogType.craftCompleted:
+        return (icon: '⚒️', color: d, bold: false);
     }
   }
 

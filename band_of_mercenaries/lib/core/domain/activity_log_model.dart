@@ -58,6 +58,8 @@ enum ActivityLogType {
   herbalistHeal,
   @HiveField(26)
   smithyRepairCompleted,
+  @HiveField(27)
+  craftCompleted,
 }
 
 @HiveType(typeId: 7)

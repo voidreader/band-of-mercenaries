@@ -15,6 +15,7 @@ _$ItemDataImpl _$$ItemDataImplFromJson(Map<String, dynamic> json) =>
       category: json['category'] as String,
       slot: json['slot'] as String,
       tier: (json['tier'] as num).toInt(),
+      regionExclusive: (json['region_exclusive'] as num?)?.toInt(),
       effectJson: json['effect_json'] as Map<String, dynamic>? ??
           const <String, dynamic>{},
       createdAt: json['created_at'] == null
@@ -31,6 +32,7 @@ Map<String, dynamic> _$$ItemDataImplToJson(_$ItemDataImpl instance) =>
       'category': instance.category,
       'slot': instance.slot,
       'tier': instance.tier,
+      'region_exclusive': instance.regionExclusive,
       'effect_json': instance.effectJson,
       'created_at': instance.createdAt?.toIso8601String(),
     };

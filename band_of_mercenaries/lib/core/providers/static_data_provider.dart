@@ -29,6 +29,8 @@ import 'package:band_of_mercenaries/core/models/quest_narrative_data.dart';
 import 'package:band_of_mercenaries/core/models/travel_choice_event_data.dart';
 import 'package:band_of_mercenaries/core/models/travel_choice_option_data.dart';
 import 'package:band_of_mercenaries/core/models/travel_choice_result_data.dart';
+import 'package:band_of_mercenaries/core/models/crafting_recipe_data.dart'; // M5 추가
+import 'package:band_of_mercenaries/core/models/quest_pool_material_drop_data.dart'; // M5 추가
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -58,6 +60,8 @@ class StaticGameData {
   final List<TravelChoiceEventData> travelChoiceEvents;
   final List<TravelChoiceOptionData> travelChoiceOptions;
   final List<TravelChoiceResultData> travelChoiceResults;
+  final List<CraftingRecipeData> craftingRecipes; // M5 추가
+  final List<QuestPoolMaterialDropData> questPoolMaterialDrops; // M5 추가
 
   const StaticGameData({
     required this.difficulties,
@@ -87,6 +91,8 @@ class StaticGameData {
     required this.travelChoiceEvents,
     required this.travelChoiceOptions,
     required this.travelChoiceResults,
+    required this.craftingRecipes, // M5 추가
+    required this.questPoolMaterialDrops, // M5 추가
   });
 }
 
@@ -122,5 +128,7 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     travelChoiceEvents: dataLoader.loadFromCache('travel_choice_events', TravelChoiceEventData.fromJson),
     travelChoiceOptions: dataLoader.loadFromCache('travel_choice_options', TravelChoiceOptionData.fromJson),
     travelChoiceResults: dataLoader.loadFromCache('travel_choice_results', TravelChoiceResultData.fromJson),
+    craftingRecipes: dataLoader.loadFromCache('crafting_recipes', CraftingRecipeData.fromJson), // M5 추가
+    questPoolMaterialDrops: dataLoader.loadFromCache('quest_pool_material_drops', QuestPoolMaterialDropData.fromJson), // M5 추가
   );
 });

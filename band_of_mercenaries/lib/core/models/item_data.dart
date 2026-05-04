@@ -14,6 +14,7 @@ class ItemData with _$ItemData {
     required String category,
     required String slot,
     required int tier,
+    @JsonKey(name: 'region_exclusive') int? regionExclusive,
     @JsonKey(name: 'effect_json')
     @Default(<String, dynamic>{})
     Map<String, dynamic> effectJson,

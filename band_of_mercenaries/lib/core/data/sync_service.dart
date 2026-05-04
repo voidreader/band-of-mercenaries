@@ -43,6 +43,8 @@ class SyncService {
     'travel_choice_events', // 24. 이동 선택지 이벤트 (M3 추가)
     'travel_choice_options', // 25. 이동 선택지 옵션 (M3 추가)
     'travel_choice_results', // 26. 이동 선택지 결과 (M3 추가)
+    'crafting_recipes', // 28. 제작 레시피 (M5 추가)
+    'quest_pool_material_drops', // 29. 의뢰 풀 재료 드랍 (M5 추가)
   ];
 
   SyncService({

@@ -102,7 +102,9 @@ band_of_mercenaries/lib/
 
 앱 문서 디렉토리 `cache/*.json`에 로컬 캐시. `data_versions` 테이블로 변경분만 갱신. 모든 모델은 snake_case `@JsonKey` (Dart 필드명과 동일하면 생략).
 
-**테이블 (25개):** regions(40개·5티어·sector_count 동적) · jobs(85개·5티어·role 컬럼) · trait_categories(8개) · traits(106개·선천35/acquired40/evolved31) · trait_conflicts(16쌍) · trait_transitions(16개) · trait_combo_evolutions(15개) · trait_synergies(39개) · difficulties(5단계) · quest_types · quest_pools(298행·is_fixed 고정의뢰 포함) · person_names(~500개) · travel_events · facilities · ranks · mercenary_wages · region_discoveries · region_sectors(1-based sector_index) · factions(14개·공개6/비밀4/지역4) · elite_monsters(39종) · elite_loot_tables(209행) · chain_quests(7체인 24단계) · quest_narratives(88행) · travel_choice_events(12행) · travel_choice_options(30행) · travel_choice_results(72행)
+**테이블 (27개):** regions(40개·5티어·sector_count 동적) · jobs(85개·5티어·role 컬럼) · trait_categories(8개) · traits(106개·선천35/acquired40/evolved31) · trait_conflicts(16쌍) · trait_transitions(16개) · trait_combo_evolutions(15개) · trait_synergies(39개) · difficulties(5단계) · quest_types · quest_pools(298행·is_fixed 고정의뢰 포함) · person_names(~500개) · travel_events · facilities · ranks · mercenary_wages · region_discoveries(discovery_type 6종 — info/elite/hidden_quest/faction_clue/transform/normal) · region_sectors(1-based sector_index) · factions(14개·공개6/비밀4/지역4) · elite_monsters(40종·거대 박쥐 포함) · elite_loot_tables(210행·material drop_type 포함) · chain_quests(7체인 24단계·settlement_3_pyegwang_reopen reward_items 5단계) · quest_narratives(88행) · travel_choice_events(12행) · travel_choice_options(30행) · travel_choice_results(72행) · crafting_recipes(10행·단일 트랜잭션 적용·old_smithy 한정) · quest_pool_material_drops(스키마 only·INSERT는 페이즈 4 #3)
+
+**items 테이블 확장 (M5):** category 4종(personal_equipment/guild_equipment/consumable/material) · slot 16종(기존 11 + material_ore/material_hide/material_herb/material_relic_fragment/material_monster_part) · region_exclusive INTEGER NULL REFERENCES regions(id)
 
 ### Supabase 연결
 
@@ -119,7 +121,7 @@ band_of_mercenaries/lib/
 | UserData | — | 24 |
 | Mercenary | — | 24 |
 | ActiveQuest | — | 26 |
-| ActivityLogType (enum) | 6 | 27 |
+| ActivityLogType (enum) | 6 | 28 |
 | RegionState | 8 | 7 |
 | FactionState | 9 | 6 |
 | FactionClueRecord | 10 | — |
