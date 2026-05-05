@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
@@ -26,16 +26,16 @@ class DialogTypeRegistry {
 
   /// 등록된 전체 dialogType 키 집합. 영속 복원 시 필터링 기준으로 사용.
   static Set<String> get keys => {
-        constructionComplete,
-        investigationResult,
-        rankUp,
-        autoTravelEvent,
-        travelChoiceRecall,
-        chainCompleted,
-        regionTransform,
-        settlementTrustUp,
-        idleReward,
-      };
+    constructionComplete,
+    investigationResult,
+    rankUp,
+    autoTravelEvent,
+    travelChoiceRecall,
+    chainCompleted,
+    regionTransform,
+    settlementTrustUp,
+    idleReward,
+  };
 }
 
 /// 전역 다이얼로그 큐 Notifier.
@@ -43,9 +43,9 @@ class DialogTypeRegistry {
 /// 인메모리 큐([DialogRequest] 리스트)를 관리하며, Hive persistence와 동기화한다.
 /// 정렬 기준: [DialogPriority] 오름차순(critical 최우선) → enqueuedAt 오름차순(FIFO).
 ///
-/// **영속 복원 전략 (MVP)**:
-/// builder 클로저는 직렬화 불가능하여 영속 복원이 무의미하다. 시작 시 박스를
-/// 클리어하고, 도메인 Provider의 startup hook에서 필요한 다이얼로그를 재 enqueue한다.
+/// **영속 복원 전략**:
+/// builder 클로저는 직렬화하지 않고, 저장된 dialogType + payload로 닫을 수 있는
+/// 요약 다이얼로그를 재구성한다.
 class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
   final DialogQueuePersistence _persistence;
 
@@ -56,19 +56,17 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
     _restore();
   }
 
-  /// 앱 시작 시 Hive 박스를 정리하고 빈 큐로 시작한다.
-  ///
-  /// builder 클로저는 직렬화 불가능하여 복원 시 placeholder([SizedBox.shrink])로
-  /// 대체되는데, app.dart의 listen이 그 placeholder를 그대로 [showDialog]에 전달하면
-  /// 빈/투명 다이얼로그가 화면을 막아버린다(critical priority면 dismiss 불가 → 화면 먹통).
-  /// 따라서 시작 시 박스를 클리어하고, 필요한 다이얼로그는 도메인 Provider의
-  /// startup hook이 재 enqueue하도록 위임한다.
+  /// 앱 시작 시 Hive 박스에서 유효한 항목을 복원한다.
   Future<void> _restore() async {
-    final stale = _persistence.all().length;
-    if (stale > 0) {
-      debugPrint('[BOM][DialogQueue] 시작 시 박스에 남아있던 $stale건 클리어');
-    }
-    await _persistence.clear();
+    final entries = await _persistence.loadValid(
+      registeredDialogTypes: DialogTypeRegistry.keys,
+      onLoss: onLoss,
+    );
+    if (entries.isEmpty) return;
+
+    final restored = entries.map(_persistedToRequest).toList()..sort(_compare);
+    state = restored;
+    debugPrint('[BOM][DialogQueue] 시작 시 ${restored.length}건 복원');
   }
 
   /// 큐에 다이얼로그 요청을 추가한다.
@@ -116,6 +114,77 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
       enqueuedAt: r.enqueuedAt,
     );
   }
+
+  DialogRequest _persistedToRequest(PersistedDialogEntry entry) {
+    final priority =
+        entry.priority >= 0 && entry.priority < DialogPriority.values.length
+        ? DialogPriority.values[entry.priority]
+        : DialogPriority.low;
+    final payload = _decodePayload(entry.payloadJson);
+
+    return DialogRequest(
+      id: entry.id,
+      priority: priority,
+      dialogType: entry.dialogType,
+      payload: payload,
+      enqueuedAt: entry.enqueuedAt,
+      builder: (ctx, dismiss) => AlertDialog(
+        title: const Text('놓친 알림'),
+        content: Text(_restoredMessage(entry.dialogType, payload)),
+        actions: [ElevatedButton(onPressed: dismiss, child: const Text('확인'))],
+      ),
+    );
+  }
+
+  dynamic _decodePayload(String payloadJson) {
+    try {
+      return jsonDecode(payloadJson);
+    } catch (_) {
+      onLoss?.call('deserialize_error');
+      return <String, dynamic>{};
+    }
+  }
+
+  String _restoredMessage(String dialogType, dynamic payload) {
+    final map = payload is Map ? payload : const <String, dynamic>{};
+    switch (dialogType) {
+      case DialogTypeRegistry.constructionComplete:
+        final name = map['facilityName'] ?? map['facilityId'] ?? '시설';
+        final level = map['newLevel'];
+        return level == null
+            ? '$name 건설이 완료되었습니다.'
+            : '$name이(가) Lv.$level(으)로 업그레이드되었습니다.';
+      case DialogTypeRegistry.investigationResult:
+        final mercName = map['mercName'] ?? '용병';
+        return '$mercName의 지역 조사 결과가 도착했습니다.';
+      case DialogTypeRegistry.rankUp:
+        final toGrade = map['toGrade'];
+        return toGrade == null
+            ? '명성 랭크가 상승했습니다.'
+            : '명성 랭크가 $toGrade 등급으로 상승했습니다.';
+      case DialogTypeRegistry.autoTravelEvent:
+        return '이동 중 발생한 이벤트 알림이 있습니다.';
+      case DialogTypeRegistry.travelChoiceRecall:
+        return '이동 중 선택지 결과 알림이 있습니다.';
+      case DialogTypeRegistry.chainCompleted:
+        return '연계 퀘스트가 완료되었습니다.';
+      case DialogTypeRegistry.regionTransform:
+        final regionId = map['regionId'];
+        return regionId == null
+            ? '지역 변화가 발생했습니다.'
+            : '지역 $regionId에 변화가 발생했습니다.';
+      case DialogTypeRegistry.settlementTrustUp:
+        final toLevel = map['toLevel'];
+        return toLevel == null
+            ? '마을 신뢰도가 상승했습니다.'
+            : '마을 신뢰도가 $toLevel단계로 상승했습니다.';
+      case DialogTypeRegistry.idleReward:
+        final reward = map['reward'];
+        return reward == null ? '부재 보상이 도착했습니다.' : '부재 보상 ${reward}G를 획득했습니다.';
+      default:
+        return '표시되지 않은 알림이 있습니다.';
+    }
+  }
 }
 
 /// 앱 전역 다이얼로그 큐 Provider.
@@ -125,8 +194,9 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
 /// ref.listen 후 ActivityLogNotifier로 별도 처리한다.
 final dialogQueueProvider =
     StateNotifierProvider<DialogQueueNotifier, List<DialogRequest>>((ref) {
-  final box =
-      Hive.box<PersistedDialogEntry>(HiveInitializer.dialogQueueBoxName);
-  final persistence = DialogQueuePersistence(box);
-  return DialogQueueNotifier(persistence);
-});
+      final box = Hive.box<PersistedDialogEntry>(
+        HiveInitializer.dialogQueueBoxName,
+      );
+      final persistence = DialogQueuePersistence(box);
+      return DialogQueueNotifier(persistence);
+    });

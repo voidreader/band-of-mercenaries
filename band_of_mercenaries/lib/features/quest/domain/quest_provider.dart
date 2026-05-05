@@ -7,8 +7,10 @@ import 'package:band_of_mercenaries/features/quest/data/quest_repository.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
-import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart' show QuestCompletionService, QuestCompletionResult, TraitEventResult;
-import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart' show EliteLootResult;
+import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart'
+    show QuestCompletionService, QuestCompletionResult, TraitEventResult;
+import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart'
+    show EliteLootResult;
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/facility_service.dart';
@@ -35,6 +37,7 @@ import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_prog
 import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
 import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
 import 'package:band_of_mercenaries/features/quest/domain/special_flag_processor.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_completion_side_effects.dart';
 import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
@@ -50,7 +53,8 @@ Map<String, DateTime> _loadActiveCooldowns(Box settingsBox) {
     final result = <String, DateTime>{};
     decoded.forEach((key, value) {
       final ts = DateTime.tryParse(value as String);
-      if (ts != null && now.difference(ts) < GameConstants.factionQuestCooldown) {
+      if (ts != null &&
+          now.difference(ts) < GameConstants.factionQuestCooldown) {
         result[key] = ts;
       }
     });
@@ -69,14 +73,18 @@ void _saveCooldowns(Box settingsBox, Map<String, DateTime> map) {
 }
 
 // key: questId, value: { mercId: TraitEventResult }
-final pendingTraitEventsProvider = StateProvider<Map<String, Map<String, TraitEventResult>>>((ref) => {});
+final pendingTraitEventsProvider =
+    StateProvider<Map<String, Map<String, TraitEventResult>>>((ref) => {});
 
 // key: questId, value: EliteLootResult
-final pendingEliteLootProvider = StateProvider<Map<String, EliteLootResult>>((ref) => {});
+final pendingEliteLootProvider = StateProvider<Map<String, EliteLootResult>>(
+  (ref) => {},
+);
 
-final questListProvider = StateNotifierProvider<QuestListNotifier, List<ActiveQuest>>((ref) {
-  return QuestListNotifier(ref);
-});
+final questListProvider =
+    StateNotifierProvider<QuestListNotifier, List<ActiveQuest>>((ref) {
+      return QuestListNotifier(ref);
+    });
 
 class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   final Ref ref;
@@ -92,7 +100,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     // 첫 실행 시 initializeNewGame() 완료 후 퀘스트 목록 다시 로드 (mercenary_provider와 동일 패턴)
     ref.listen(userDataProvider, (prev, next) {
       if (prev == null && next != null) {
-        debugPrint('[BOM][Quest] userDataProvider null→non-null 감지 → _load 재실행');
+        debugPrint(
+          '[BOM][Quest] userDataProvider null→non-null 감지 → _load 재실행',
+        );
         _load();
         if (state.isEmpty) {
           generateQuests();
@@ -114,8 +124,12 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   void _load() {
     state = _repo.getAll();
     final pending = state.where((q) => q.status == QuestStatus.pending).length;
-    final inProgress = state.where((q) => q.status == QuestStatus.inProgress).length;
-    debugPrint('[BOM][Quest] _load: 총 ${state.length}개 (대기 $pending / 진행 $inProgress)');
+    final inProgress = state
+        .where((q) => q.status == QuestStatus.inProgress)
+        .length;
+    debugPrint(
+      '[BOM][Quest] _load: 총 ${state.length}개 (대기 $pending / 진행 $inProgress)',
+    );
   }
 
   void refresh() => _load();
@@ -125,9 +139,13 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   CollectedEffects _collectPassiveEffects() {
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
-    if (staticData == null || userData == null) return const CollectedEffects.empty();
+    if (staticData == null || userData == null) {
+      return const CollectedEffects.empty();
+    }
 
-    final joinedIds = ref.read(factionStateRepositoryProvider).getJoinedFactionIds();
+    final joinedIds = ref
+        .read(factionStateRepositoryProvider)
+        .getJoinedFactionIds();
     final joinedFactions = staticData.factions
         .where((f) => joinedIds.contains(f.id))
         .toList();
@@ -142,7 +160,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   int _getCurrentTrustLevel() {
     final userData = ref.read(userDataProvider);
     if (userData == null) return 0;
-    return ref.read(regionStateRepositoryProvider).getSettlementTrust(userData.region).level;
+    return ref
+        .read(regionStateRepositoryProvider)
+        .getSettlementTrust(userData.region)
+        .level;
   }
 
   Future<void> clearCompleted(String questId) async {
@@ -154,12 +175,16 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
     if (staticData == null || userData == null) {
-      debugPrint('[BOM][Quest] generateQuests 중단: staticData=${staticData != null}, userData=${userData != null}');
+      debugPrint(
+        '[BOM][Quest] generateQuests 중단: staticData=${staticData != null}, userData=${userData != null}',
+      );
       return;
     }
     debugPrint('[BOM][Quest] generateQuests 시작 (region: ${userData.region})');
 
-    final region = staticData.regions.firstWhere((r) => r.region == userData.region);
+    final region = staticData.regions.firstWhere(
+      (r) => r.region == userData.region,
+    );
 
     // 정보망 시설 + 패시브 슬롯 보너스를 통합 계산
     final questCount = getMaxQuestCount();
@@ -167,12 +192,16 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final factionRepo = ref.read(factionStateRepositoryProvider);
     final joinedFactionIds = factionRepo.getJoinedFactionIds();
     final factionReputations = factionRepo.getAllReputations();
-    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(userData.region);
+    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(
+      userData.region,
+    );
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
     final cooldownMap = _loadActiveCooldowns(settingsBox);
 
     await _repo.clearPending();
-    final pyegwangProgress = ref.read(chainQuestRepositoryProvider).get('settlement_3_pyegwang_reopen');
+    final pyegwangProgress = ref
+        .read(chainQuestRepositoryProvider)
+        .get('settlement_3_pyegwang_reopen');
     final chainIdForSpawn = pyegwangProgress?.status == ChainQuestStatus.active
         ? 'settlement_3_pyegwang_reopen'
         : null;
@@ -189,11 +218,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
       activeSlotCount: questCount,
       eliteMonsters: staticData.eliteMonsters,
-      regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
+      regionEnvironmentTags: _currentRegionEnvironmentTags(
+        userData.region,
+        staticData,
+      ),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
       // user.sector(1-based 1..sectorCount) → quest_generator/sectorChanges key(0-based) 변환 위해 -1.
       currentSectorIndex: (userData.sector - 1),
-      sectorChanges: ref.read(regionStateRepositoryProvider)
+      sectorChanges: ref
+          .read(regionStateRepositoryProvider)
           .getState(userData.region)
           ?.sectorChanges,
       currentTrustLevel: _getCurrentTrustLevel(),
@@ -209,7 +242,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   int getMaxQuestCount() {
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
-    if (staticData == null || userData == null) return GameConstants.baseQuestCount;
+    if (staticData == null || userData == null) {
+      return GameConstants.baseQuestCount;
+    }
 
     int count = GameConstants.baseQuestCount;
 
@@ -220,11 +255,16 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         (f) => f.id == 'intelligence',
         orElse: () => staticData.facilities.first,
       );
-      count += FacilityService.getExtraQuestCount(intelligenceFacility, intelligenceLevel);
+      count += FacilityService.getExtraQuestCount(
+        intelligenceFacility,
+        intelligenceLevel,
+      );
     }
 
     // 세력 패시브 + 명성 랭크 dispatch_slot_bonus 가산 (상한 +10은 PassiveBonusService 내부 클램프)
-    final passiveSlots = PassiveBonusService.getDispatchSlotBonus(_collectPassiveEffects());
+    final passiveSlots = PassiveBonusService.getDispatchSlotBonus(
+      _collectPassiveEffects(),
+    );
     count += passiveSlots;
 
     return count;
@@ -269,17 +309,21 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     const chainId = 'settlement_3_pyegwang_reopen';
     final progress = ref.read(chainQuestRepositoryProvider).get(chainId);
-    if (progress == null || progress.status == ChainQuestStatus.completed) return;
+    if (progress == null || progress.status == ChainQuestStatus.completed) {
+      return;
+    }
 
     final currentStep = progress.currentStep;
     final currentTrustLevel = _getCurrentTrustLevel();
 
     final fixedPool = staticData.questPools
-        .where((p) =>
-            p.isFixed &&
-            p.fixedChainId == chainId &&
-            p.fixedStep == currentStep &&
-            (p.trustThreshold ?? 1) <= currentTrustLevel)
+        .where(
+          (p) =>
+              p.isFixed &&
+              p.fixedChainId == chainId &&
+              p.fixedStep == currentStep &&
+              (p.trustThreshold ?? 1) <= currentTrustLevel,
+        )
         .firstOrNull;
 
     if (fixedPool == null) return;
@@ -287,11 +331,14 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     // state 최신화 후 중복 체크 (비동기 흐름에서 state가 stale할 수 있으므로)
     _load();
     // 이미 pending/inProgress인 고정 의뢰가 존재하면 skip (중복 방지)
-    final alreadyActive = state.any((q) =>
-        q.isChainQuest &&
-        q.chainId == chainId &&
-        q.chainStep == currentStep &&
-        (q.status == QuestStatus.pending || q.status == QuestStatus.inProgress));
+    final alreadyActive = state.any(
+      (q) =>
+          q.isChainQuest &&
+          q.chainId == chainId &&
+          q.chainStep == currentStep &&
+          (q.status == QuestStatus.pending ||
+              q.status == QuestStatus.inProgress),
+    );
     if (alreadyActive) return;
 
     final quest = ActiveQuest(
@@ -329,23 +376,34 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     if (staticData == null || userData == null) return;
 
     final maxCount = getMaxQuestCount();
-    final activeCount = state.where(
-      (q) => q.status == QuestStatus.pending || q.status == QuestStatus.inProgress,
-    ).length;
+    final activeCount = state
+        .where(
+          (q) =>
+              q.status == QuestStatus.pending ||
+              q.status == QuestStatus.inProgress,
+        )
+        .length;
     final deficit = maxCount - activeCount;
     if (deficit <= 0) return;
 
-    final region = staticData.regions.firstWhere((r) => r.region == userData.region);
+    final region = staticData.regions.firstWhere(
+      (r) => r.region == userData.region,
+    );
 
     final factionRepo = ref.read(factionStateRepositoryProvider);
     final joinedFactionIds = factionRepo.getJoinedFactionIds();
     final factionReputations = factionRepo.getAllReputations();
-    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(userData.region);
+    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(
+      userData.region,
+    );
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
     final cooldownMap = _loadActiveCooldowns(settingsBox);
 
-    final fillPyegwangProgress = ref.read(chainQuestRepositoryProvider).get('settlement_3_pyegwang_reopen');
-    final fillChainIdForSpawn = fillPyegwangProgress?.status == ChainQuestStatus.active
+    final fillPyegwangProgress = ref
+        .read(chainQuestRepositoryProvider)
+        .get('settlement_3_pyegwang_reopen');
+    final fillChainIdForSpawn =
+        fillPyegwangProgress?.status == ChainQuestStatus.active
         ? 'settlement_3_pyegwang_reopen'
         : null;
     final newQuests = QuestGenerator.generateQuests(
@@ -361,11 +419,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
       activeSlotCount: maxCount,
       eliteMonsters: staticData.eliteMonsters,
-      regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
+      regionEnvironmentTags: _currentRegionEnvironmentTags(
+        userData.region,
+        staticData,
+      ),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
       // user.sector → 0-based 변환 (위 generateQuests 호출 정책 참조).
       currentSectorIndex: (userData.sector - 1),
-      sectorChanges: ref.read(regionStateRepositoryProvider)
+      sectorChanges: ref
+          .read(regionStateRepositoryProvider)
           .getState(userData.region)
           ?.sectorChanges,
       currentTrustLevel: _getCurrentTrustLevel(),
@@ -382,10 +444,14 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     if (staticData == null) return false;
 
     final quest = state.firstWhere((q) => q.id == questId);
-    final questType = staticData.questTypes.firstWhere((t) => t.id == quest.questTypeId);
+    final questType = staticData.questTypes.firstWhere(
+      (t) => t.id == quest.questTypeId,
+    );
 
     // 고정 의뢰 override 적용을 위해 pool 조회
-    final pool = staticData.questPools.where((p) => p.id == quest.questPoolId).firstOrNull;
+    final pool = staticData.questPools
+        .where((p) => p.id == quest.questPoolId)
+        .firstOrNull;
 
     // Check dispatch cost
     final difficulty = staticData.difficulties.firstWhere(
@@ -397,7 +463,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       difficulty: quest.difficulty,
       minCost: difficulty.minDispatchCost,
       maxCost: difficulty.maxDispatchCost,
-      isFixedWithDurationOverride: pool?.isFixed == true && pool?.durationOverrideSeconds != null,
+      isFixedWithDurationOverride:
+          pool?.isFixed == true && pool?.durationOverrideSeconds != null,
     );
     final userData = ref.read(userDataProvider);
     if (userData == null || userData.gold < dispatchCost) {
@@ -407,22 +474,32 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     // Deduct dispatch cost
     await ref.read(userDataProvider.notifier).spendGold(dispatchCost);
 
-    final dispatchedMercs = ref.read(mercenaryListProvider)
+    final dispatchedMercs = ref
+        .read(mercenaryListProvider)
         .where((m) => mercIds.contains(m.id))
         .toList();
     final avgAgi = dispatchedMercs.isEmpty
         ? 50
-        : (dispatchedMercs.fold<int>(0, (s, m) => s + m.effectiveAgi) / dispatchedMercs.length).round();
+        : (dispatchedMercs.fold<int>(0, (s, m) => s + m.effectiveAgi) /
+                  dispatchedMercs.length)
+              .round();
     final duration = QuestCalculator.calculateDispatchDuration(
       baseDuration: questType.baseDuration,
       difficulty: quest.difficulty,
       speedMultiplier: speedMult,
       partyAverageAgi: avgAgi,
-      durationOverrideSeconds: pool?.isFixed == true ? pool?.durationOverrideSeconds : null,
+      durationOverrideSeconds: pool?.isFixed == true
+          ? pool?.durationOverrideSeconds
+          : null,
     );
 
     final endTime = DateTime.now().add(duration);
-    await _repo.startQuest(questId, mercIds, endTime, dispatchCost: dispatchCost);
+    await _repo.startQuest(
+      questId,
+      mercIds,
+      endTime,
+      dispatchCost: dispatchCost,
+    );
 
     final mercNotifier = ref.read(mercenaryListProvider.notifier);
     for (final mercId in mercIds) {
@@ -436,8 +513,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   void recalculateTimers(double oldSpeed, double newSpeed) {
     bool changed = false;
     for (final quest in state) {
-      if (quest.status == QuestStatus.inProgress && quest.endTime != null && quest.startTime != null) {
-        final newEndTime = recalculateEndTime(quest.endTime, quest.startTime, oldSpeed, newSpeed);
+      if (quest.status == QuestStatus.inProgress &&
+          quest.endTime != null &&
+          quest.startTime != null) {
+        final newEndTime = recalculateEndTime(
+          quest.endTime,
+          quest.startTime,
+          oldSpeed,
+          newSpeed,
+        );
         if (newEndTime != quest.endTime) {
           quest.endTime = newEndTime;
           quest.save();
@@ -478,7 +562,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final userData = ref.read(userDataProvider);
     if (staticData == null || userData == null) return;
 
-    final region = staticData.regions.firstWhere((r) => r.region == userData.region);
+    final region = staticData.regions.firstWhere(
+      (r) => r.region == userData.region,
+    );
 
     // _checkQuestRefresh의 isSettlementStep continue로 이미 차단되므로 별도 필터 불필요
     for (final quest in expired) {
@@ -490,13 +576,18 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final factionRepo = ref.read(factionStateRepositoryProvider);
     final joinedFactionIds = factionRepo.getJoinedFactionIds();
     final factionReputations = factionRepo.getAllReputations();
-    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(userData.region);
+    final clueLevelsInRegion = factionRepo.getClueLevelsByRegion(
+      userData.region,
+    );
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
     final cooldownMap = _loadActiveCooldowns(settingsBox);
     final totalSlotCount = getMaxQuestCount();
 
-    final refreshPyegwangProgress = ref.read(chainQuestRepositoryProvider).get('settlement_3_pyegwang_reopen');
-    final refreshChainIdForSpawn = refreshPyegwangProgress?.status == ChainQuestStatus.active
+    final refreshPyegwangProgress = ref
+        .read(chainQuestRepositoryProvider)
+        .get('settlement_3_pyegwang_reopen');
+    final refreshChainIdForSpawn =
+        refreshPyegwangProgress?.status == ChainQuestStatus.active
         ? 'settlement_3_pyegwang_reopen'
         : null;
     final newQuests = QuestGenerator.generateQuests(
@@ -512,11 +603,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       cooldownExclusiveQuestIds: cooldownMap.keys.toSet(),
       activeSlotCount: totalSlotCount,
       eliteMonsters: staticData.eliteMonsters,
-      regionEnvironmentTags: _currentRegionEnvironmentTags(userData.region, staticData),
+      regionEnvironmentTags: _currentRegionEnvironmentTags(
+        userData.region,
+        staticData,
+      ),
       triggeredDiscoveries: _currentTriggeredDiscoveries(userData.region),
       // user.sector → 0-based 변환 (위 generateQuests 호출 정책 참조).
       currentSectorIndex: (userData.sector - 1),
-      sectorChanges: ref.read(regionStateRepositoryProvider)
+      sectorChanges: ref
+          .read(regionStateRepositoryProvider)
           .getState(userData.region)
           ?.sectorChanges,
       currentTrustLevel: _getCurrentTrustLevel(),
@@ -531,21 +626,27 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final now = DateTime.now();
     for (final quest in state) {
       if (quest.status == QuestStatus.inProgress && quest.endTime != null) {
-        if (now.isAfter(quest.endTime!) && !_completingQuestIds.contains(quest.id)) {
+        if (now.isAfter(quest.endTime!) &&
+            !_completingQuestIds.contains(quest.id)) {
           _completingQuestIds.add(quest.id);
-          _completeQuest(quest).whenComplete(() => _completingQuestIds.remove(quest.id));
+          _completeQuest(
+            quest,
+          ).whenComplete(() => _completingQuestIds.remove(quest.id));
         }
       }
     }
   }
 
   Future<void> _completeQuest(ActiveQuest quest) async {
-    debugPrint('[BOM][Quest] 퀘스트 완료 처리: "${quest.questName}" (난이도 ${quest.difficulty})');
+    debugPrint(
+      '[BOM][Quest] 퀘스트 완료 처리: "${quest.questName}" (난이도 ${quest.difficulty})',
+    );
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
     if (staticData == null || userData == null) return;
 
-    final mercs = ref.read(mercenaryListProvider)
+    final mercs = ref
+        .read(mercenaryListProvider)
         .where((m) => quest.dispatchedMercIds.contains(m.id))
         .toList();
 
@@ -558,18 +659,25 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     // 파티 전설 유니크 효과 수집
     final legendaryEffects = <LegendaryEffect>[];
     for (final m in mercs) {
-      legendaryEffects.addAll(await EquipmentEffectContext.legendariesFor(ref, m.id));
+      legendaryEffects.addAll(
+        await EquipmentEffectContext.legendariesFor(ref, m.id),
+      );
     }
 
     // 용병단 장비 패시브 효과 수집
-    final guildEquipments = await EquipmentEffectContext.guildEquipmentEffects(ref);
+    final guildEquipments = await EquipmentEffectContext.guildEquipmentEffects(
+      ref,
+    );
 
     // 전설 ④ reward_bonus → PassiveEffect로 변환하여 패시브 경로에 편입
     final personalEquipmentLegendaries = <PassiveEffect>[];
     for (final leg in legendaryEffects) {
       if (leg is LegendaryRewardBonus) {
         personalEquipmentLegendaries.add(
-          PassiveEffect.questRewardMultiplier(questType: 'all', value: leg.multiplier),
+          PassiveEffect.questRewardMultiplier(
+            questType: 'all',
+            value: leg.multiplier,
+          ),
         );
       }
     }
@@ -604,18 +712,27 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       templateEngine: ref.read(templateEngineProvider),
       userData: userData,
       factionStates: ref.read(factionStateRepositoryProvider).getAll(),
-      sectorChanges: ref.read(regionStateRepositoryProvider)
+      sectorChanges: ref
+          .read(regionStateRepositoryProvider)
           .getState(userData.region)
           ?.sectorChanges,
-      currentTrustLevel: ref.read(regionStateRepositoryProvider)
-          .getSettlementTrust(quest.region).level,
+      currentTrustLevel: ref
+          .read(regionStateRepositoryProvider)
+          .getSettlementTrust(quest.region)
+          .level,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
       (d) => d.level == quest.difficulty.clamp(1, 5),
       orElse: () => staticData.difficulties.first,
     );
-    await _applyCompletionResult(quest, result, mercs, staticData: staticData, deathRate: difficulty.deathRate);
+    await _applyCompletionResult(
+      quest,
+      result,
+      mercs,
+      staticData: staticData,
+      deathRate: difficulty.deathRate,
+    );
   }
 
   Future<void> _applyCompletionResult(
@@ -640,17 +757,23 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       await quest.save();
     }
 
-    final resultText = {
-      QuestResult.greatSuccess: '대성공',
-      QuestResult.success: '성공',
-      QuestResult.failure: '실패',
-      QuestResult.criticalFailure: '대실패',
-    }[result.resultType] ?? '완료';
-    debugPrint('[BOM][Quest] 결과: "$resultText" 순수익 ${result.netReward}G, XP ${result.xpGain}, 명성 ${result.repGain}');
-    ref.read(activityLogProvider.notifier).addLog(
-      '퀘스트 "${quest.questName}" $resultText!${result.renderedNarrative != null ? " — ${result.renderedNarrative}" : ""}',
-      ActivityLogType.questResult,
+    final resultText =
+        {
+          QuestResult.greatSuccess: '대성공',
+          QuestResult.success: '성공',
+          QuestResult.failure: '실패',
+          QuestResult.criticalFailure: '대실패',
+        }[result.resultType] ??
+        '완료';
+    debugPrint(
+      '[BOM][Quest] 결과: "$resultText" 순수익 ${result.netReward}G, XP ${result.xpGain}, 명성 ${result.repGain}',
     );
+    ref
+        .read(activityLogProvider.notifier)
+        .addLog(
+          '퀘스트 "${quest.questName}" $resultText!${result.renderedNarrative != null ? " — ${result.renderedNarrative}" : ""}',
+          ActivityLogType.questResult,
+        );
 
     if (result.netReward > 0) {
       await ref.read(userDataProvider.notifier).addGold(result.netReward);
@@ -667,7 +790,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         await inventory.addItem(itemId: itemId, items: items);
       }
       final currentLoot = ref.read(pendingEliteLootProvider);
-      ref.read(pendingEliteLootProvider.notifier).state = {...currentLoot, quest.id: eliteLoot};
+      ref.read(pendingEliteLootProvider.notifier).state = {
+        ...currentLoot,
+        quest.id: eliteLoot,
+      };
     }
 
     // M5 페이즈 4 #3 — quest_pool_material_drops: 퀘스트 풀에 연결된 재료를 확률 드롭
@@ -685,7 +811,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             ? drop.qtyMin + random.nextInt(drop.qtyMax - drop.qtyMin + 1)
             : drop.qtyMin;
         if (inventory.getQuantityForItemId(drop.itemId) >= 999) {
-          final itemData = staticData.items.where((i) => i.id == drop.itemId).firstOrNull;
+          final itemData = staticData.items
+              .where((i) => i.id == drop.itemId)
+              .firstOrNull;
           if (itemData == null) continue; // 데이터 불일치 silent skip
           await logger.addLog(
             '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
@@ -693,7 +821,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           );
           continue;
         }
-        await inventory.addItem(itemId: drop.itemId, quantity: qty, items: staticData.items);
+        await inventory.addItem(
+          itemId: drop.itemId,
+          quantity: qty,
+          items: staticData.items,
+        );
         await regionRepo.addAcquiredMaterial(quest.region, drop.itemId);
       }
     }
@@ -705,24 +837,34 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       if (damage.newStatus == MercenaryStatus.dead) {
         final deadMerc = mercs.where((m) => m.id == damage.mercId).firstOrNull;
         if (deadMerc != null) {
-          final totalPermanent = deadMerc.permanentStr
-              + deadMerc.permanentIntelligence
-              + deadMerc.permanentVit
-              + deadMerc.permanentAgi;
+          final totalPermanent =
+              deadMerc.permanentStr +
+              deadMerc.permanentIntelligence +
+              deadMerc.permanentVit +
+              deadMerc.permanentAgi;
           if (totalPermanent > 0) {
-            ref.read(activityLogProvider.notifier).addLog(
-              '${deadMerc.name}이(가) 사망했다. 투입 정수 누적 +$totalPermanent 소실',
-              ActivityLogType.essenceLostOnDeath,
-            );
+            ref
+                .read(activityLogProvider.notifier)
+                .addLog(
+                  '${deadMerc.name}이(가) 사망했다. 투입 정수 누적 +$totalPermanent 소실',
+                  ActivityLogType.essenceLostOnDeath,
+                );
           }
         }
       }
       if (damage.newStatus != MercenaryStatus.normal) {
-        await mercRepo.updateStatus(damage.mercId, damage.newStatus, endTime: damage.recoveryEndTime);
+        await mercRepo.updateStatus(
+          damage.mercId,
+          damage.newStatus,
+          endTime: damage.recoveryEndTime,
+        );
       }
       // 전설 ⑤ 사망 방지 발동 시 쿨다운 기록
       if (damage.legendaryPreventedDeath && damage.newCooldownUntil != null) {
-        await mercRepo.setLegendaryCooldown(damage.mercId, damage.newCooldownUntil);
+        await mercRepo.setLegendaryCooldown(
+          damage.mercId,
+          damage.newCooldownUntil,
+        );
       }
     }
 
@@ -730,7 +872,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       final damage = result.mercDamages.firstWhere((d) => d.mercId == merc.id);
       if (damage.newStatus != MercenaryStatus.dead) {
         await mercRepo.addXpAndCheckLevel(merc.id, result.xpGain);
-        final traitLearningBoost = merc.traitLearningBoostUntil != null &&
+        final traitLearningBoost =
+            merc.traitLearningBoostUntil != null &&
             DateTime.now().isBefore(merc.traitLearningBoostUntil!);
         final newStats = MercenaryStatService.updateStatsAfterQuest(
           merc.stats,
@@ -749,7 +892,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         final finalStats = MercenaryStatService.updateStatsForFacilityBenefit(
           newStats,
           facilities: userData?.facilities ?? {},
-          isFailure: result.resultType == QuestResult.failure ||
+          isFailure:
+              result.resultType == QuestResult.failure ||
               result.resultType == QuestResult.criticalFailure,
           damageStatus: damage.newStatus,
           traitLearningBoost: traitLearningBoost,
@@ -759,8 +903,11 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         final staticData = ref.read(staticDataProvider).value;
         if (staticData != null) {
           final passiveEffects = _collectPassiveEffects();
-          final acquisitionRelief = PassiveBonusService.getTraitAcquisitionRelief(passiveEffects);
-          final evolutionRelief = PassiveBonusService.getTraitEvolutionRelief(passiveEffects);
+          final acquisitionRelief =
+              PassiveBonusService.getTraitAcquisitionRelief(passiveEffects);
+          final evolutionRelief = PassiveBonusService.getTraitEvolutionRelief(
+            passiveEffects,
+          );
 
           final candidates = TraitAcquisitionService.checkAcquisitionCandidates(
             stats: finalStats,
@@ -774,17 +921,23 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           );
           if (candidates.isNotEmpty) {
             await mercRepo.addTrait(merc.id, candidates.first);
-            final traitData = staticData.traits.where((t) => t.key == candidates.first).firstOrNull;
+            final traitData = staticData.traits
+                .where((t) => t.key == candidates.first)
+                .firstOrNull;
             if (traitData != null) {
-              ref.read(activityLogProvider.notifier).addLog(
-                '${merc.name}이(가) "${traitData.name}" 트레잇을 획득!',
-                ActivityLogType.traitAcquired,
-              );
+              ref
+                  .read(activityLogProvider.notifier)
+                  .addLog(
+                    '${merc.name}이(가) "${traitData.name}" 트레잇을 획득!',
+                    ActivityLogType.traitAcquired,
+                  );
             }
           }
 
           // Refresh traitIds after potential acquisition
-          final updatedMerc = mercRepo.getAll().firstWhere((m) => m.id == merc.id);
+          final updatedMerc = mercRepo.getAll().firstWhere(
+            (m) => m.id == merc.id,
+          );
           final currentTraitIds = updatedMerc.allTraitIds;
 
           // Single evolution: collect candidates only (no auto-apply)
@@ -839,7 +992,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
         // 추가 명성 (음수 포함)
         if (flagResult.extraReputation != 0) {
-          await ref.read(userDataProvider.notifier).addReputation(flagResult.extraReputation);
+          await ref
+              .read(userDataProvider.notifier)
+              .addReputation(flagResult.extraReputation);
         }
 
         // trait_learning_boost 갱신
@@ -858,17 +1013,17 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     // 세력 평판 지급
     if (result.factionTag != null && result.factionRepGain > 0) {
-      ref.read(factionStateRepositoryProvider).addReputation(
-        result.factionTag!,
-        result.factionRepGain,
-      );
+      ref
+          .read(factionStateRepositoryProvider)
+          .addReputation(result.factionTag!, result.factionRepGain);
     }
 
     // 전용 퀘스트 완료 시 쿨다운 기록
     if (quest.isFactionExclusive) {
       final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
       final cooldowns = _loadActiveCooldowns(settingsBox);
-      cooldowns[quest.id] = DateTime.now();
+      cooldowns[QuestCompletionSideEffects.factionCooldownKey(quest)] =
+          DateTime.now();
       _saveCooldowns(settingsBox, cooldowns);
     }
 
@@ -881,18 +1036,22 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     }
 
     // 체인 퀘스트 단계 완료 후크
-    if (quest.isChainQuest && quest.chainId != null && quest.chainStep != null) {
+    if (quest.isChainQuest &&
+        quest.chainId != null &&
+        quest.chainStep != null) {
       final chainStepData = staticData.chainQuests
           .where((c) => c.chainId == quest.chainId && c.step == quest.chainStep)
           .firstOrNull;
       if (chainStepData != null) {
         final chainQuestService = ref.read(chainQuestServiceProvider);
-        final questResultType = {
-          QuestResult.greatSuccess: 'greatSuccess',
-          QuestResult.success: 'success',
-          QuestResult.failure: 'failure',
-          QuestResult.criticalFailure: 'criticalFailure',
-        }[result.resultType] ?? 'failure';
+        final questResultType =
+            {
+              QuestResult.greatSuccess: 'greatSuccess',
+              QuestResult.success: 'success',
+              QuestResult.failure: 'failure',
+              QuestResult.criticalFailure: 'criticalFailure',
+            }[result.resultType] ??
+            'failure';
 
         await chainQuestService.onStepCompleted(
           chainId: quest.chainId!,
@@ -911,7 +1070,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             final inv = ref.read(inventoryRepositoryProvider);
             final logger = ref.read(activityLogProvider.notifier);
             if (inv.getQuantityForItemId(itemId) >= 999) {
-              final itemData = staticData.items.where((i) => i.id == itemId).firstOrNull;
+              final itemData = staticData.items
+                  .where((i) => i.id == itemId)
+                  .firstOrNull;
               if (itemData == null) return; // 데이터 불일치 silent skip
               await logger.addLog(
                 '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
@@ -920,20 +1081,30 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
               return;
             }
             await inv.addItem(
-                itemId: itemId, quantity: quantity, items: staticData.items);
+              itemId: itemId,
+              quantity: quantity,
+              items: staticData.items,
+            );
             await ref
                 .read(regionStateRepositoryProvider)
-                .addAcquiredMaterial(GameConstants.startingRegionId, itemId);
+                .addAcquiredMaterial(
+                  QuestCompletionSideEffects.materialAcquiredRegion(quest),
+                  itemId,
+                );
           },
           onChainCompleted: (chainId, finalStep) async {
             final userData = ref.read(userDataProvider);
             if (userData != null &&
                 !chainQuestService.canAdvanceToFinal(
-                    finalStep: finalStep, user: userData)) {
-              ref.read(activityLogProvider.notifier).addLog(
-                '연계 최종 단계 진입 불가: 길드 장비 슬롯 부족',
-                ActivityLogType.chainProgressed,
-              );
+                  finalStep: finalStep,
+                  user: userData,
+                )) {
+              ref
+                  .read(activityLogProvider.notifier)
+                  .addLog(
+                    '연계 최종 단계 진입 불가: 길드 장비 슬롯 부족',
+                    ActivityLogType.chainProgressed,
+                  );
               return;
             }
             await chainQuestService.completeChain(
@@ -948,9 +1119,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
                     .addReputation(reputation);
               },
               addCompletedChain: (id) async {
-                await ref
-                    .read(userDataProvider.notifier)
-                    .addCompletedChain(id);
+                await ref.read(userDataProvider.notifier).addCompletedChain(id);
               },
               publishCompleted: (event) {
                 ref.read(chainCompletedProvider.notifier).state = event;
@@ -970,43 +1139,60 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           .firstOrNull;
       final trustReward = pool?.trustRewardOverride ?? 0;
       if (trustReward > 0) {
-        await ref.read(regionStateRepositoryProvider).addSettlementTrust(
-          regionId: quest.region,
-          amount: trustReward,
-          source: 'settlement_step_${quest.chainStep}',
-          ref: ref,
-        );
-        ref.read(activityLogProvider.notifier).addLog(
-          '사건 진행: ${quest.questName} 완료 (${quest.chainStep}/6)',
-          ActivityLogType.settlementEventStep,
-        );
+        await ref
+            .read(regionStateRepositoryProvider)
+            .addSettlementTrust(
+              regionId: quest.region,
+              amount: trustReward,
+              source: 'settlement_step_${quest.chainStep}',
+              ref: ref,
+            );
+        ref
+            .read(activityLogProvider.notifier)
+            .addLog(
+              '사건 진행: ${quest.questName} 완료 (${quest.chainStep}/6)',
+              ActivityLogType.settlementEventStep,
+            );
       }
       // 6단계 완료 시 거점 사건 완료 로그 (M4 MVP 1개 사건 6단계 고정)
       if (quest.chainStep == 6) {
-        await ref.read(regionStateRepositoryProvider).setEventCompleted(quest.region);
-        ref.read(activityLogProvider.notifier).addLog(
-          '거점 사건 완료: ${quest.questName}',
-          ActivityLogType.settlementEventCompleted,
-        );
+        await ref
+            .read(regionStateRepositoryProvider)
+            .setEventCompleted(quest.region);
+        ref
+            .read(activityLogProvider.notifier)
+            .addLog(
+              '거점 사건 완료: ${quest.questName}',
+              ActivityLogType.settlementEventCompleted,
+            );
       }
     }
 
     // 일반 의뢰 신뢰도 점수 (region == 3 + 일반 의뢰 한정)
-    if (!quest.isChainQuest && quest.region == 3 && result.settlementTrustGain > 0) {
-      await ref.read(regionStateRepositoryProvider).addSettlementTrust(
-        regionId: quest.region,
-        amount: result.settlementTrustGain,
-        source: 'quest_d${quest.difficulty}',
-        ref: ref,
-      );
+    if (!quest.isChainQuest &&
+        quest.region == 3 &&
+        result.settlementTrustGain > 0) {
+      await ref
+          .read(regionStateRepositoryProvider)
+          .addSettlementTrust(
+            regionId: quest.region,
+            amount: result.settlementTrustGain,
+            source: 'quest_d${quest.difficulty}',
+            ref: ref,
+          );
     }
 
     ref.read(mercenaryListProvider.notifier).refresh();
     _load();
   }
 
-  List<String> _currentRegionEnvironmentTags(int regionId, StaticGameData staticData) {
-    final region = staticData.regions.where((r) => r.region == regionId).firstOrNull;
+  List<String> _currentRegionEnvironmentTags(
+    int regionId,
+    StaticGameData staticData,
+  ) {
+    final region = staticData.regions
+        .where((r) => r.region == regionId)
+        .firstOrNull;
     return region?.environmentTags ?? const [];
   }
 
