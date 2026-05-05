@@ -60,6 +60,8 @@ enum ActivityLogType {
   smithyRepairCompleted,
   @HiveField(27)
   craftCompleted,
+  @HiveField(28)
+  inventoryStackCapped,
 }
 
 @HiveType(typeId: 7)

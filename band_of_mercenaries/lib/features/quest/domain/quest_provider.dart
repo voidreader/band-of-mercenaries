@@ -172,6 +172,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final cooldownMap = _loadActiveCooldowns(settingsBox);
 
     await _repo.clearPending();
+    final pyegwangProgress = ref.read(chainQuestRepositoryProvider).get('settlement_3_pyegwang_reopen');
+    final chainIdForSpawn = pyegwangProgress?.status == ChainQuestStatus.active
+        ? 'settlement_3_pyegwang_reopen'
+        : null;
     final quests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -193,6 +197,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           .getState(userData.region)
           ?.sectorChanges,
       currentTrustLevel: _getCurrentTrustLevel(),
+      currentChainId: chainIdForSpawn,
+      currentChainStep: pyegwangProgress?.currentStep,
     );
     await _repo.addQuests(quests);
     debugPrint('[BOM][Quest] generateQuests 완료: ${quests.length}개 생성');
@@ -338,6 +344,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
     final cooldownMap = _loadActiveCooldowns(settingsBox);
 
+    final fillPyegwangProgress = ref.read(chainQuestRepositoryProvider).get('settlement_3_pyegwang_reopen');
+    final fillChainIdForSpawn = fillPyegwangProgress?.status == ChainQuestStatus.active
+        ? 'settlement_3_pyegwang_reopen'
+        : null;
     final newQuests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -359,6 +369,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           .getState(userData.region)
           ?.sectorChanges,
       currentTrustLevel: _getCurrentTrustLevel(),
+      currentChainId: fillChainIdForSpawn,
+      currentChainStep: fillPyegwangProgress?.currentStep,
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -483,6 +495,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final cooldownMap = _loadActiveCooldowns(settingsBox);
     final totalSlotCount = getMaxQuestCount();
 
+    final refreshPyegwangProgress = ref.read(chainQuestRepositoryProvider).get('settlement_3_pyegwang_reopen');
+    final refreshChainIdForSpawn = refreshPyegwangProgress?.status == ChainQuestStatus.active
+        ? 'settlement_3_pyegwang_reopen'
+        : null;
     final newQuests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -504,6 +520,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           .getState(userData.region)
           ?.sectorChanges,
       currentTrustLevel: _getCurrentTrustLevel(),
+      currentChainId: refreshChainIdForSpawn,
+      currentChainStep: refreshPyegwangProgress?.currentStep,
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -650,6 +668,34 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       }
       final currentLoot = ref.read(pendingEliteLootProvider);
       ref.read(pendingEliteLootProvider.notifier).state = {...currentLoot, quest.id: eliteLoot};
+    }
+
+    // M5 페이즈 4 #3 — quest_pool_material_drops: 퀘스트 풀에 연결된 재료를 확률 드롭
+    final materialDrops = staticData.questPoolMaterialDrops
+        .where((d) => d.poolId == quest.questPoolId)
+        .toList();
+    if (materialDrops.isNotEmpty) {
+      final inventory = ref.read(inventoryRepositoryProvider);
+      final regionRepo = ref.read(regionStateRepositoryProvider);
+      final logger = ref.read(activityLogProvider.notifier);
+      final random = Random();
+      for (final drop in materialDrops) {
+        if (random.nextDouble() >= drop.dropRate) continue;
+        final qty = drop.qtyMax > drop.qtyMin
+            ? drop.qtyMin + random.nextInt(drop.qtyMax - drop.qtyMin + 1)
+            : drop.qtyMin;
+        if (inventory.getQuantityForItemId(drop.itemId) >= 999) {
+          final itemData = staticData.items.where((i) => i.id == drop.itemId).firstOrNull;
+          if (itemData == null) continue; // 데이터 불일치 silent skip
+          await logger.addLog(
+            '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
+            ActivityLogType.inventoryStackCapped,
+          );
+          continue;
+        }
+        await inventory.addItem(itemId: drop.itemId, quantity: qty, items: staticData.items);
+        await regionRepo.addAcquiredMaterial(quest.region, drop.itemId);
+      }
     }
 
     final mercRepo = ref.read(mercenaryRepositoryProvider);
@@ -858,6 +904,26 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           chainStepData: chainStepData,
           logActivity: (message, type) {
             ref.read(activityLogProvider.notifier).addLog(message, type);
+          },
+          addRewardItems: (itemId, quantity) async {
+            final staticData = ref.read(staticDataProvider).valueOrNull;
+            if (staticData == null) return;
+            final inv = ref.read(inventoryRepositoryProvider);
+            final logger = ref.read(activityLogProvider.notifier);
+            if (inv.getQuantityForItemId(itemId) >= 999) {
+              final itemData = staticData.items.where((i) => i.id == itemId).firstOrNull;
+              if (itemData == null) return; // 데이터 불일치 silent skip
+              await logger.addLog(
+                '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
+                ActivityLogType.inventoryStackCapped,
+              );
+              return;
+            }
+            await inv.addItem(
+                itemId: itemId, quantity: quantity, items: staticData.items);
+            await ref
+                .read(regionStateRepositoryProvider)
+                .addAcquiredMaterial(GameConstants.startingRegionId, itemId);
           },
           onChainCompleted: (chainId, finalStep) async {
             final userData = ref.read(userDataProvider);

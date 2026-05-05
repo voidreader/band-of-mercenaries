@@ -29,6 +29,8 @@ class QuestGenerator {
     int? currentSectorIndex,
     Map<String, String>? sectorChanges,
     int currentTrustLevel = 0, // 신규 — 거점 신뢰도 단계 (페이즈 4 #5에서 RegionStateRepository.getSettlementTrust(regionId).level로 주입 예정)
+    String? currentChainId, // M5 페이즈 4 #3 — 강제 spawn 분기용 현재 활성 체인 ID
+    int? currentChainStep,  // M5 페이즈 4 #3 — 강제 spawn 분기용 현재 체인 단계
   }) {
     // 1. 기본 티어 필터
     final filtered = questPools
@@ -139,7 +141,11 @@ class QuestGenerator {
     int eliteGenerated = 0;
     for (final monster in eliteCandidates) {
       if (eliteGenerated >= maxEliteCount) break;
-      if (random.nextDouble() < monster.spawnRate) {
+      // M5 페이즈 4 #3 — settlement_3_pyegwang_reopen step 3에서 거대 박쥐 강제 spawn
+      // TODO(M6+): elite_monsters에 fixed_chain_id/fixed_step 컬럼 또는 매핑 테이블 도입 시 하드코딩 제거
+      final isSettlement3Step3 = currentChainId == 'settlement_3_pyegwang_reopen' && currentChainStep == 3;
+      final shouldForceSpawn = isSettlement3Step3 && monster.id == 'elite_giant_bat';
+      if (shouldForceSpawn || random.nextDouble() < monster.spawnRate) {
         final questName = monster.isUnique
             ? '[유니크] ${monster.name}'
             : '[엘리트] ${monster.name}';

@@ -157,6 +157,8 @@ class TravelChoiceService {
         return '트레잇 학습 가속 24h';
       case 'item':
         return '아이템 획득';
+      case 'material_drop':
+        return '재료 획득';
       case 'nothing':
         return '아무 일 없음';
       default:

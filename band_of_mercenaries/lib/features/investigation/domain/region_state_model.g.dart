@@ -24,13 +24,14 @@ class RegionStateAdapter extends TypeAdapter<RegionState> {
       settlementTrust: fields[4] as int?,
       settlementTrustLevel: fields[5] as int?,
       lastEventCompletedAt: fields[6] as DateTime?,
+      firstAcquiredMaterialIds: (fields[7] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, RegionState obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.regionId)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class RegionStateAdapter extends TypeAdapter<RegionState> {
       ..writeByte(5)
       ..write(obj.settlementTrustLevel)
       ..writeByte(6)
-      ..write(obj.lastEventCompletedAt);
+      ..write(obj.lastEventCompletedAt)
+      ..writeByte(7)
+      ..write(obj.firstAcquiredMaterialIds);
   }
 
   @override

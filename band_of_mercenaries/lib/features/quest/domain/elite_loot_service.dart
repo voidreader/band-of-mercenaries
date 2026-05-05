@@ -39,6 +39,7 @@ class EliteLootService {
         case 'essence':
         case 'equipment':
         case 'guild_item':
+        case 'material':
           if (entry.itemId != null) {
             for (var i = 0; i < entry.quantity; i++) {
               itemDrops.add(entry.itemId!);

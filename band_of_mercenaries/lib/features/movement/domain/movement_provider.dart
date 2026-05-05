@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/features/movement/data/movement_repository.dart';
 import 'package:band_of_mercenaries/core/models/user_data.dart';
@@ -492,6 +493,31 @@ class MovementNotifier extends StateNotifier<MovementState?> {
               items: staticData.items,
             );
           }
+        }
+      case 'material_drop':
+        final itemId = result.effectTarget;
+        if (itemId == null) break;
+        final staticData = ref.read(staticDataProvider).valueOrNull;
+        if (staticData == null) break;
+        final qty = result.effectMagnitude.toInt().clamp(1, 99);
+        final inv = ref.read(inventoryRepositoryProvider);
+        final logger = ref.read(activityLogProvider.notifier);
+        if (inv.getQuantityForItemId(itemId) >= 999) {
+          final itemData = staticData.items.firstWhereOrNull((i) => i.id == itemId);
+          if (itemData != null) {
+            await logger.addLog(
+              '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
+              ActivityLogType.inventoryStackCapped,
+            );
+          }
+          break;
+        }
+        await inv.addItem(itemId: itemId, quantity: qty, items: staticData.items);
+        final userData = ref.read(userDataProvider);
+        final currentRegion = userData?.region;
+        if (currentRegion != null && currentRegion == GameConstants.startingRegionId) {
+          await ref.read(regionStateRepositoryProvider)
+              .addAcquiredMaterial(currentRegion, itemId);
         }
       case 'nothing':
       default:

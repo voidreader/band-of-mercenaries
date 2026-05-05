@@ -70,12 +70,14 @@ class CraftingService {
         if (!unlocked) return RecipeState.locked;
       }
 
-      // 특정 아이템 최초 입수 조건 임시 평가
+      // 특정 아이템 최초 입수 조건 영속 평가
       if (condition.firstAcquiredItem != null) {
-        // TODO(M5 페이즈 4 #3): 첫 입수 영속 추적 도입
-        final qty = inventoryRepository
-            .getQuantityForItemId(condition.firstAcquiredItem!);
-        if (qty <= 0) return RecipeState.locked;
+        final regionState =
+            regionStateRepository.getState(GameConstants.startingRegionId);
+        final acquired = regionState?.firstAcquiredMaterialIds
+                .contains(condition.firstAcquiredItem!) ??
+            false;
+        if (!acquired) return RecipeState.locked;
       }
     }
 

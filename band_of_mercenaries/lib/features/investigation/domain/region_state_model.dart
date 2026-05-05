@@ -25,6 +25,10 @@ class RegionState extends HiveObject {
   @HiveField(6)
   DateTime? lastEventCompletedAt;
 
+  /// M5 페이즈 4 #3 - 재료 첫 입수 영속 추적
+  @HiveField(7)
+  List<String> firstAcquiredMaterialIds;
+
   int get currentTrust => settlementTrust ?? 0;
   int get currentTrustLevel => settlementTrustLevel ?? 1;
 
@@ -40,6 +44,8 @@ class RegionState extends HiveObject {
     this.settlementTrust,
     this.settlementTrustLevel,
     this.lastEventCompletedAt,
+    List<String>? firstAcquiredMaterialIds,
   })  : triggeredDiscoveries = triggeredDiscoveries ?? [],
-        sectorChanges = sectorChanges ?? {};
+        sectorChanges = sectorChanges ?? {},
+        firstAcquiredMaterialIds = firstAcquiredMaterialIds ?? [];
 }

@@ -1,10 +1,13 @@
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/trust_level_up_event.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
@@ -67,6 +70,20 @@ class RegionStateRepository {
       state.triggeredDiscoveries.add(discoveryId);
       await state.save();
     }
+  }
+
+  /// region별 재료 첫 입수 영속 추적 (M5 페이즈 4 #3 — CraftingService.firstAcquiredItem 영속 평가용)
+  Future<void> addAcquiredMaterial(int regionId, String itemId) async {
+    var state = getState(regionId);
+    if (state == null) {
+      state = RegionState(regionId: regionId);
+      await _box.add(state);
+    }
+    if (state.firstAcquiredMaterialIds.contains(itemId)) {
+      return; // 멱등 — 이미 추적됨
+    }
+    state.firstAcquiredMaterialIds.add(itemId);
+    await state.save();
   }
 
   // 섹터 변환을 적용한다. MVP: 리전당 최대 1섹터 변형 제약. 성공 시 true 반환
@@ -173,9 +190,50 @@ class RegionStateRepository {
         await _grantXpEvenly(ref, rewardXp);
       }
 
+      /// M5 페이즈 4 #3 — 신뢰도 단계 진입 일회성 재료 보너스
+      if (regionId == GameConstants.startingRegionId) {
+        final staticData = ref.read(staticDataProvider).valueOrNull;
+        if (staticData != null) {
+          final inv = ref.read(inventoryRepositoryProvider);
+          final logger = ref.read(activityLogProvider.notifier);
+          // 2단계 진입: 빛바랜 천 조각 ×1
+          if (newLevel >= 2 && oldLevel < 2) {
+            const itemId = 'mat_hide_faded_cloth';
+            if (inv.getQuantityForItemId(itemId) >= 999) {
+              final itemData = staticData.items.firstWhereOrNull((i) => i.id == itemId);
+              if (itemData != null) {
+                await logger.addLog(
+                  '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
+                  ActivityLogType.inventoryStackCapped,
+                );
+              }
+            } else {
+              await inv.addItem(itemId: itemId, quantity: 1, items: staticData.items);
+              await addAcquiredMaterial(regionId, itemId);
+            }
+          }
+          // 3단계 진입: 녹슨 쇳조각 ×3
+          if (newLevel >= 3 && oldLevel < 3) {
+            const itemId = 'mat_ore_rusty_scrap';
+            if (inv.getQuantityForItemId(itemId) >= 999) {
+              final itemData = staticData.items.firstWhereOrNull((i) => i.id == itemId);
+              if (itemData != null) {
+                await logger.addLog(
+                  '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
+                  ActivityLogType.inventoryStackCapped,
+                );
+              }
+            } else {
+              await inv.addItem(itemId: itemId, quantity: 3, items: staticData.items);
+              await addAcquiredMaterial(regionId, itemId);
+            }
+          }
+        }
+      }
+
       // 거점명 동적 조회 — 미발견 시 '시작 거점' fallback
-      final staticData = ref.read(staticDataProvider).valueOrNull;
-      final settlementName = staticData?.regions
+      final regionStaticData = ref.read(staticDataProvider).valueOrNull;
+      final settlementName = regionStaticData?.regions
               .where((r) => r.region == regionId)
               .map((r) => r.regionName)
               .firstOrNull ??

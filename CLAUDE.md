@@ -124,8 +124,8 @@ band_of_mercenaries/lib/
 | UserData | — | 24 |
 | Mercenary | — | 24 |
 | ActiveQuest | — | 26 |
-| ActivityLogType (enum) | 6 | 28 |
-| RegionState | 8 | 7 |
+| ActivityLogType (enum) | 6 | 29 |
+| RegionState | 8 | 8 |
 | FactionState | 9 | 6 |
 | FactionClueRecord | 10 | — |
 | InventoryItem | 11 | — |
@@ -158,7 +158,7 @@ freezed · json_serializable · hive_generator · riverpod_generator — `build_
 - **엘리트 몬스터**: `EliteSpawnService.trySpawn()` 확률 배정, 보통/유니크 2계층. 완료 시 `EliteLootService.roll()`
 - **마을 신뢰도**: region 3 기준, 4단계(의심1·인지2·친근3·소속4), 임계값 {1:0·2:30·3:80·4:200}. 단계 승급 시 일회성 보상 지급 + `settlementTrustLevelUpProvider` publish
 - **마을 방문**: region 3 sector 1(village) 진입 시 `VillageVisitSection` 인라인 노출. 약초상(즉시 회복·쿨다운)·촌장 집·낡은 대장간. 게임 시간 미소모
-- **제작 시스템**: `CraftingService` 콜백 DI — `evaluateState(recipe)` 4상태 평가(잠김/부족/충족, M5 MVP는 crafted 미적용) + `craft(recipeId)` 실행(consumeMaterial × N → addItem → ActivityLog `craftCompleted`). `unlock_condition_json`은 trustLevel/chainStep/firstAcquiredItem 3종 분기 (firstAcquiredItem은 M5 MVP에서 InventoryRepository 보유량 임시 평가 — 페이즈 4 #3 영속화 위임). `InventoryRepository`는 `stackMaxByCategory > 1` 일반화 분기로 material/consumable stack 누적 + 999 클램프 + `consumeMaterial`/`getQuantityForItemId` 메서드 제공. 낡은 대장간(region 3 신뢰도 2단계+) RecipeListSection 4계층 정렬(상태→slot→tier→id) + banner/artifact 양자택일 그룹 헤더. 인벤토리 4탭째 MaterialTab(slot 6칩 + region_exclusive 시각 차별화) + 양방향 점프(🔨 ×N → 자동 필터 / 부족 재료 → 인벤토리 자동 진입)
+- **제작 시스템**: `CraftingService` 콜백 DI — `evaluateState(recipe)` 4상태 평가(잠김/부족/충족, M5 MVP는 crafted 미적용) + `craft(recipeId)` 실행(consumeMaterial × N → addItem → ActivityLog `craftCompleted`). `unlock_condition_json`은 trustLevel/chainStep/firstAcquiredItem 3종 분기 (firstAcquiredItem은 `RegionState.firstAcquiredMaterialIds` HiveField 7 영속 추적 — 첫 입수 후 모두 소비해도 해금 유지). `InventoryRepository`는 `stackMaxByCategory > 1` 일반화 분기로 material/consumable stack 누적 + 999 클램프 + `consumeMaterial`/`getQuantityForItemId` 메서드 제공. 5종 드랍 출처 hook 모두 활성 — 의뢰(`quest_pool_material_drops`)·조사(`region_discoveries.discovery_data.items`)·엘리트(`elite_loot_tables` drop_type='material')·이동선택지(`travel_choice_results.effect_type='material_drop'`)·체인(`chain_quests.reward_items` JSONB). `RegionStateRepository.addAcquiredMaterial(regionId, itemId)` 멱등 메서드로 hook마다 영속 추적. 신뢰도 2/3단계 진입 시 일회성 재료 보너스(#6 ×1 / #1 ×3) 자동 지급. `QuestGenerator`는 `currentChainId/currentChainStep` 인자로 거대 박쥐 step 3 강제 spawn(M6+ 데이터 모델 마이그레이션 위임 TODO). 999 도달 시 `ActivityLogType.inventoryStackCapped` HiveField 28 활동 로그. 낡은 대장간(region 3 신뢰도 2단계+) RecipeListSection 4계층 정렬(상태→slot→tier→id) + banner/artifact 양자택일 그룹 헤더. 인벤토리 4탭째 MaterialTab(slot 6칩 + region_exclusive 시각 차별화) + 양방향 점프(🔨 ×N → 자동 필터 / 부족 재료 → 인벤토리 자동 진입)
 - **퀘스트 서사**: `QuestNarrativeService` — quest_type×result_type×is_elite 3중 필터 + weight 가중 랜덤 → `TemplateEngine` 렌더 → `renderedNarrative` 1회 저장 (재렌더 금지)
 - **방치형 보상**: 분당 1G, 최대 480G + 금고 보너스
 - **다이얼로그 큐**: 5계층 컨텐츠 공존 보장. priority: critical(rankUp) > high(chain/transform/trustUp) > medium(construction/investigation/travelChoice). critical은 `barrierDismissible: false`

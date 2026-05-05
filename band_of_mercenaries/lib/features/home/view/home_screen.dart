@@ -579,6 +579,8 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '⚒️', color: d, bold: false);
       case ActivityLogType.craftCompleted:
         return (icon: '⚒️', color: d, bold: false);
+      case ActivityLogType.inventoryStackCapped:
+        return (icon: '⚠️', color: AppTheme.settlementAccent, bold: false);
     }
   }
 

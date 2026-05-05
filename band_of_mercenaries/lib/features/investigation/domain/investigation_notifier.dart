@@ -21,6 +21,8 @@ import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_prov
 import 'package:band_of_mercenaries/features/investigation/domain/region_transformed_provider.dart';
 import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
 import 'package:band_of_mercenaries/core/domain/template_context.dart';
+import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_discovery_data.dart';
 
 final investigationNotifierProvider = StateNotifierProvider<InvestigationNotifier, void>(
   (ref) => InvestigationNotifier(ref),
@@ -187,6 +189,7 @@ class InvestigationNotifier extends StateNotifier<void> {
               ActivityLogType.discoveryFound,
             );
           }
+          await _applyDiscoveryItems(d, regionId, staticData);
           continue;
         } else if (d.discoveryType == 'elite') {
           final eliteId = d.discoveryData?['elite_id'] as String?;
@@ -197,6 +200,7 @@ class InvestigationNotifier extends StateNotifier<void> {
             revealText ?? '엘리트 발견: ${d.description}',
             ActivityLogType.discoveryFound,
           );
+          await _applyDiscoveryItems(d, regionId, staticData);
           continue;
         } else if (d.discoveryType == 'hidden_quest') {
           final chainId = d.discoveryData?['chain_id'] as String?;
@@ -209,6 +213,7 @@ class InvestigationNotifier extends StateNotifier<void> {
               );
             }
           }
+          await _applyDiscoveryItems(d, regionId, staticData);
           continue;
         } else if (d.discoveryType == 'transform') {
           final data = d.discoveryData;
@@ -228,6 +233,8 @@ class InvestigationNotifier extends StateNotifier<void> {
             transformType: transformType,
           );
           if (!transformed) continue;
+
+          await _applyDiscoveryItems(d, regionId, staticData);
 
           // TemplateEngine으로 서사 텍스트 렌더
           String narrativeRendered = narrativeTemplate;
@@ -279,6 +286,8 @@ class InvestigationNotifier extends StateNotifier<void> {
           continue;
         }
 
+        // 4분기 어디에도 해당 안 됨 (normal 등) — items 보상 적용 후 기본 로그
+        await _applyDiscoveryItems(d, regionId, staticData);
         _ref.read(activityLogProvider.notifier).addLog(
           '발견: ${d.description}',
           ActivityLogType.discoveryFound,
@@ -340,5 +349,38 @@ class InvestigationNotifier extends StateNotifier<void> {
 
   Future<void> cancelInvestigation() async {
     await _ref.read(userDataProvider.notifier).clearInvestigation();
+  }
+
+  /// 발견 보상 아이템 지급 — drop_rate 확률 및 999 스택 상한 적용
+  Future<void> _applyDiscoveryItems(
+    RegionDiscoveryData d,
+    int regionId,
+    StaticGameData staticData,
+  ) async {
+    final items = d.discoveryData?['items'];
+    if (items is! List) return;
+    final inv = _ref.read(inventoryRepositoryProvider);
+    final regionRepo = _ref.read(regionStateRepositoryProvider);
+    final logger = _ref.read(activityLogProvider.notifier);
+    final random = Random();
+    for (final entry in items) {
+      if (entry is! Map) continue;
+      final itemId = entry['item_id'] as String?;
+      if (itemId == null) continue;
+      final quantity = (entry['quantity'] as num?)?.toInt() ?? 1;
+      final dropRate = (entry['drop_rate'] as num?)?.toDouble() ?? 1.0;
+      if (random.nextDouble() >= dropRate) continue;
+      final itemData = staticData.items.where((i) => i.id == itemId).firstOrNull;
+      if (itemData == null) continue; // 데이터 불일치 — silent skip
+      if (inv.getQuantityForItemId(itemId) >= 999) {
+        await logger.addLog(
+          '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
+          ActivityLogType.inventoryStackCapped,
+        );
+        continue;
+      }
+      await inv.addItem(itemId: itemId, quantity: quantity, items: staticData.items);
+      await regionRepo.addAcquiredMaterial(regionId, itemId);
+    }
   }
 }

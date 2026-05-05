@@ -21,6 +21,7 @@ dependencies:
   uuid: ^4.4.2
   supabase_flutter: ^2.8.4
   flutter_dotenv: ^5.2.1
+  collection: ^1.18.0
 
 dev_dependencies:
   flutter_test:

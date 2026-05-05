@@ -66,6 +66,8 @@ class ChainQuestService {
     required void Function(String message, ActivityLogType type) logActivity,
     required Future<void> Function(String chainId, ChainQuestData finalStep)
         onChainCompleted,
+    /// step 완료 시 지급할 아이템 처리 콜백
+    required Future<void> Function(String itemId, int quantity) addRewardItems,
   }) async {
     final progress = _repo.get(chainId);
     if (progress == null) return;
@@ -96,6 +98,10 @@ class ChainQuestService {
             );
           }
         }
+      }
+
+      for (final entry in chainStepData.rewardItems.entries) {
+        await addRewardItems(entry.key, entry.value);
       }
 
       if (step == chainStepData.totalSteps) {
