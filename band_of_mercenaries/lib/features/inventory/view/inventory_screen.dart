@@ -10,8 +10,10 @@ import 'package:band_of_mercenaries/features/inventory/view/item_detail_sheet.da
 import 'package:band_of_mercenaries/shared/widgets/empty_state_widget.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
+import 'package:band_of_mercenaries/features/crafting/view/material_tab_content.dart';
+import 'package:band_of_mercenaries/features/crafting/domain/material_jump_provider.dart';
 
-enum InventoryCategoryFilter { all, personalEquipment, guildEquipment, consumable }
+enum InventoryCategoryFilter { all, personalEquipment, guildEquipment, consumable, material }
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key, required this.onBack});
@@ -26,6 +28,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(materialJumpTargetItemIdProvider, (prev, next) {
+      if (next != null && _categoryFilter != InventoryCategoryFilter.material) {
+        setState(() => _categoryFilter = InventoryCategoryFilter.material);
+      }
+    });
     final staticData = ref.watch(staticDataProvider);
     return staticData.when(
       data: (data) => _buildContent(data.items),
@@ -46,7 +53,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         _buildCategoryFilter(allRows, allItems),
         const Divider(height: 1, color: AppTheme.border),
         Expanded(
-          child: filtered.isEmpty
+          child: (filtered.isEmpty && _categoryFilter != InventoryCategoryFilter.material)
               ? const EmptyStateWidget(message: '보유한 아이템이 없습니다')
               : _buildList(filtered, allItems),
         ),
@@ -142,6 +149,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           filterTab(InventoryCategoryFilter.personalEquipment, '개인장비'),
           filterTab(InventoryCategoryFilter.guildEquipment, '용병단장비'),
           filterTab(InventoryCategoryFilter.consumable, '소모품'),
+          filterTab(InventoryCategoryFilter.material, '재료'),
         ],
       ),
     );
@@ -157,6 +165,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         return 'guild_equipment';
       case InventoryCategoryFilter.consumable:
         return 'consumable';
+      case InventoryCategoryFilter.material:
+        return 'material';
     }
   }
 
@@ -182,6 +192,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   Widget _buildList(List<InventoryItem> rows, List<ItemData> items) {
+    if (_categoryFilter == InventoryCategoryFilter.material) {
+      return MaterialTabContent(materialRows: rows, allItems: items);
+    }
     final itemMap = {for (final i in items) i.id: i};
     final mercs = ref.watch(mercenaryListProvider);
     final mercMap = {for (final m in mercs) m.id: m};

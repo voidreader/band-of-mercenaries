@@ -58,6 +58,9 @@ class AppTheme {
   // Chain quest colors
   static const Color chainGold = Color(0xFFD4AF37);           // 연계 퀘스트 금색
 
+  // Crafting / RecipeCard insufficient 색상 (M5 페이즈 4 #2)
+  static const Color dangerRed = Color(0xFFC62828);
+
   // Elite monster colors
   static const Color eliteAccent = Color(0xFFFB923C);         // 엘리트 보통 이름색 (주황)
   static const Color eliteUniqueAccent = Color(0xFFC084FC);   // 엘리트 유니크 이름색 (보라)

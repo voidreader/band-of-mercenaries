@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
+import 'package:band_of_mercenaries/features/crafting/domain/material_jump_provider.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_codex_screen.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_detail_screen.dart';
@@ -24,6 +25,12 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(materialJumpTargetItemIdProvider, (prev, next) {
+      if (next != null && !_showInventory) {
+        setState(() => _showInventory = true);
+      }
+    });
+
     // factionCodexScrollTargetProvider가 non-null이면 자동으로 도감 화면으로 전환
     final scrollTarget = ref.watch(factionCodexScrollTargetProvider);
     if (scrollTarget != null && !_showCodex && _selectedFactionId == null) {

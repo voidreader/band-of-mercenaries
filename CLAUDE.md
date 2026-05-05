@@ -50,6 +50,7 @@ band_of_mercenaries/lib/
 │   ├── chain_quest/       # 연계 퀘스트·ChainQuestService·ChainQuestRepository
 │   ├── info/              # 정보 탭·FactionCodexScreen·FactionDetailScreen·FactionJoinService
 │   ├── settlement/        # 마을 방문·HerbalistService·거점 화면 3종·NPC 데이터
+│   ├── crafting/          # 제작 시스템·CraftingService·MaterialTab·RecipeListSection·낡은 대장간 화면
 │   └── settings/          # 설정 (시간 가속)
 └── shared/widgets/        # 공용 위젯 (BottomNavBar, TimerDisplay, StatusBadge, TierBadge 등)
 ```
@@ -87,6 +88,8 @@ band_of_mercenaries/lib/
 - `settlementTrustProvider`: `family<({trust, level}), int>` — region 신뢰도 동기 조회 (`features/investigation/domain/`)
 - `currentRegionSectorChangesProvider`: 현재 리전 변형 섹터 반응형 제공 (`features/investigation/domain/region_transformed_provider.dart`)
 - `templateEngineProvider`: TemplateEngine — `{ns.field}` / `[if]` / `[pick A|B]` (`core/providers/template_engine_provider.dart`)
+- `craftingServiceProvider` · `craftingRecipesProvider` · `recipeStateProvider`(family, gameTickProvider watch — 1초 재평가) · `materialUsageCountProvider`(family) (`features/crafting/domain/crafting_provider.dart`)
+- `recipeFilterMaterialIdProvider` · `materialJumpTargetItemIdProvider`: StateProvider<String?> 일회성 컨텍스트, 양방향 점프 (인벤토리↔대장간) — 큐 미사용, 단순 publish/consume 패턴 (`features/crafting/domain/recipe_filter_provider.dart` / `material_jump_provider.dart`)
 
 ### 데이터 흐름
 
@@ -155,6 +158,7 @@ freezed · json_serializable · hive_generator · riverpod_generator — `build_
 - **엘리트 몬스터**: `EliteSpawnService.trySpawn()` 확률 배정, 보통/유니크 2계층. 완료 시 `EliteLootService.roll()`
 - **마을 신뢰도**: region 3 기준, 4단계(의심1·인지2·친근3·소속4), 임계값 {1:0·2:30·3:80·4:200}. 단계 승급 시 일회성 보상 지급 + `settlementTrustLevelUpProvider` publish
 - **마을 방문**: region 3 sector 1(village) 진입 시 `VillageVisitSection` 인라인 노출. 약초상(즉시 회복·쿨다운)·촌장 집·낡은 대장간. 게임 시간 미소모
+- **제작 시스템**: `CraftingService` 콜백 DI — `evaluateState(recipe)` 4상태 평가(잠김/부족/충족, M5 MVP는 crafted 미적용) + `craft(recipeId)` 실행(consumeMaterial × N → addItem → ActivityLog `craftCompleted`). `unlock_condition_json`은 trustLevel/chainStep/firstAcquiredItem 3종 분기 (firstAcquiredItem은 M5 MVP에서 InventoryRepository 보유량 임시 평가 — 페이즈 4 #3 영속화 위임). `InventoryRepository`는 `stackMaxByCategory > 1` 일반화 분기로 material/consumable stack 누적 + 999 클램프 + `consumeMaterial`/`getQuantityForItemId` 메서드 제공. 낡은 대장간(region 3 신뢰도 2단계+) RecipeListSection 4계층 정렬(상태→slot→tier→id) + banner/artifact 양자택일 그룹 헤더. 인벤토리 4탭째 MaterialTab(slot 6칩 + region_exclusive 시각 차별화) + 양방향 점프(🔨 ×N → 자동 필터 / 부족 재료 → 인벤토리 자동 진입)
 - **퀘스트 서사**: `QuestNarrativeService` — quest_type×result_type×is_elite 3중 필터 + weight 가중 랜덤 → `TemplateEngine` 렌더 → `renderedNarrative` 1회 저장 (재렌더 금지)
 - **방치형 보상**: 분당 1G, 최대 480G + 금고 보너스
 - **다이얼로그 큐**: 5계층 컨텐츠 공존 보장. priority: critical(rankUp) > high(chain/transform/trustUp) > medium(construction/investigation/travelChoice). critical은 `barrierDismissible: false`
@@ -183,4 +187,6 @@ cd band_of_mercenaries && flutter test test/features/mercenary/
 - 화면 전환은 `Navigator.push` 대신 상태 기반 렌더링 (파견 상세, 설정, 마을 방문, 정보 탭 내부 등)
 - 파견 화면: `sortedPendingQuestsProvider` 5계층 정렬. 카드에 `LayerSidebar` + `QuestCardBadges`(체인/엘리트/섹터/세력 배지). `ChainTopSection`(최대 3장) 별도 렌더, 거점 사건(`isSettlementStep`)은 일반 목록 최상단 `settlementTier`로 노출
 - 용병 상세: `selectedMercenaryIdProvider` 앱 레벨 오버레이. 성공률 분해: `SuccessRateBreakdownSheet`
-- AppTheme 주요 색상: `chainGold`(0xFFD4AF37) · `settlementAccent`(0xFFFFA000) · `eliteAccent`(#e65100) · `uniqueAccent`(#7b1fa2)
+- AppTheme 주요 색상: `chainGold`(0xFFD4AF37) · `settlementAccent`(0xFFFFA000) · `eliteAccent`(#e65100) · `uniqueAccent`(#7b1fa2) · `dangerRed`(0xFFC62828, RecipeCard insufficient 부족 재료 텍스트)
+- 인벤토리 화면: 5탭(전체 / 개인 장비 / 길드 장비 / 소비 / 재료). MaterialTab은 slot 6칩 sub-filter + tier desc → 보유량 desc → id asc 정렬, 빈 상태에서 출처 가이드 토글
+- 낡은 대장간: M5 페이즈 4 #2부터 정식 제작 화면. `RecipeListSection` 4계층 정렬 + 그룹 헤더(banner 양자택일·artifact 동시 장착) + RecipeCard 4상태(locked/insufficient/ready) + [제작] 토스트(1.5초)

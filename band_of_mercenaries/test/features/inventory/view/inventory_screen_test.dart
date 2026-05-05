@@ -147,6 +147,8 @@ List<InventoryItem> _filteredRows(
       categoryStr = 'guild_equipment';
     case InventoryCategoryFilter.consumable:
       categoryStr = 'consumable';
+    case InventoryCategoryFilter.material:
+      categoryStr = 'material';
   }
 
   final itemMap = {for (final i in items) i.id: i};
