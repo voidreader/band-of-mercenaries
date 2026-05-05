@@ -1,5 +1,121 @@
 # CHANGELOG
 
+## 2026-05-05
+
+### M5 페이즈 4 #2: CraftingService + 인벤토리 4탭(MaterialTab) + 낡은 대장간 정식 제작 화면
+
+- **CraftingService 도메인 서비스 신설**: `evaluateState(recipe)` 4상태 평가(잠김/부족/충족) + `craft(recipeId)` 실행(재료 차감 → 결과물 추가 → ActivityLog `craftCompleted` 기록). 콜백 DI 패턴(ChainQuestService 정합). `RecipeUnlockCondition` 3종 분기 평가(trustLevel·chainStep·firstAcquiredItem) — firstAcquiredItem은 임시 InventoryRepository 보유량 평가, 페이즈 4 #3 영속화 위임.
+- **InventoryRepository 확장**: `addItem` 분기를 `stackMaxByCategory[category] > 1` 일반화로 교체하여 material/consumable stack 누적 통합 + 999 클램프 + 신규 `consumeMaterial(itemId, qty)` 다중 행 fold + 신규 `getQuantityForItemId(itemId)` 합산 메서드.
+- **인벤토리 4탭째 MaterialTab 신설**: `InventoryCategoryFilter.material` enum 추가로 5탭 확장. `MaterialTabContent`(slot 6칩 가로 sub-filter + 정렬 tier desc → 보유량 desc → id asc) + `MaterialItemCard`(좌측 tier 색 바 + 이름·slot 라벨·tier + 🔨 ×N 점프 배지 + 보유량 3자리 + region_exclusive settlementAccent 테두리 + "더스트빌" 라벨 + 펼침 출처 힌트) + `EmptyMaterialState`(빈 인벤토리에서 5종 slot 출처 가이드 토글).
+- **낡은 대장간 정식 제작 화면**: M4 stub 3 tile(`_CraftGoalTile`/`_RepairMissionTile`/`_MaterialHintTile`) 폐기 → `_NpcHeader` 유지 + `_EmptySmithyMessage`(신뢰도 1단계 잠금) / `RecipeListSection` 4계층 정렬(ready < insufficient < locked → banner < weapon < armor < accessory < artifact → tier desc → id asc) + 그룹 헤더(banner "용병단 깃발 양자택일"·artifact "용병단 아티팩트 동시 장착") + 자동 필터 칩 + 2버튼([인벤토리에서 재료 보기]/[닫기]). 320줄 → 149줄.
+- **RecipeCard 4상태 위젯**: locked(Opacity 0.5 + 🔒 + `???` + 해금 조건 텍스트) / insufficient(Opacity 0.6 + 입력 재료 X/Y `tier2` 초록 ✓ / `dangerRed` 빨강 ✗ + [제작] 비활성 + 카드 클릭 시 부족 재료 한국어 이름 + 출처 힌트 + [인벤토리에서 보기] 링크) / ready(또렷 + 좌상단 "제작 가능" 라벨 + 모두 ✓ + [제작] 활성). [제작] 클릭 → 50ms 비활성 → `craftingService.craft` → 성공 시 `'{결과물 이름} 제작 완료 ✨'` SnackBar 1.5초.
+- **양방향 점프 인터랙션**: `recipeFilterMaterialIdProvider`(인벤토리→대장간 자동 필터 컨텍스트) + `materialJumpTargetItemIdProvider`(대장간→인벤토리 스크롤 타겟). 부족 재료 [인벤토리에서 보기] → `materialJumpTargetItemIdProvider.set` + `currentTabProvider = 5`(정보 탭) + 대장간 onClose → InfoScreen listen으로 `_showInventory = true` → InventoryScreen listen으로 `_categoryFilter = material` → MaterialTabContent listen으로 slot 자동 + scroll → state 즉시 리셋. 마을 진입 상태 자동 대장간 진입은 SnackBar 안내로 통일(InfoScreen 경유 구조 한계 — 향후 작업 위임).
+- **AppTheme `dangerRed`(0xFFC62828) 1상수 추가** — RecipeCard insufficient 부족 재료 텍스트 전용. 페이즈 4 #1 인프라(`CraftingRecipeData`/`ActivityLogType.craftCompleted` HiveField 27/`GameConstants.stackMaxByCategory`/`StaticGameData.craftingRecipes`/`SyncService` 'crafting_recipes' 등록) 그대로 재사용 — 모델·typeId·SyncService 변경 0건.
+- **명세 외 보완 1줄**: `info_screen.dart`에 `materialJumpTargetItemIdProvider` listen 추가 — non-null 감지 시 `_showInventory = true` 자동 전환(`factionCodexScrollTargetProvider` 패턴 차용).
+
+### M5 페이즈 4 #3: 드랍 출처 hook 5종 + 거대 박쥐 step 3 강제 spawn + 신뢰도 단계 진입 보너스 + region_discoveries 발견 hook + firstAcquiredItem 영속 추적 (M5 마일스톤 종결)
+
+- **5종 드랍 출처 hook 활성화**: `QuestListNotifier._applyCompletionResult`(quest_pool_material_drops 매핑) + `EliteLootService.rollDrops`(drop_type='material' fallthrough) + `InvestigationNotifier._completeInvestigation`(`_applyDiscoveryItems` 헬퍼 추출 — 5분기 faction_clue/elite/hidden_quest/transform/normal 모두 호출) + `MovementNotifier.applyTravelChoiceEffect`(material_drop case + region 3 한정 영속 추적) + `ChainQuestService.onStepCompleted`(`addRewardItems` 콜백 DI 추가). 5종 모두 동일 패턴(staticData null 가드 → 999 stack 사전 평가 → addItem → addAcquiredMaterial 멱등 호출).
+- **거대 박쥐 step 3 강제 spawn**: `QuestGenerator.generateQuests` 시그니처에 `currentChainId/currentChainStep` 인자 2개 신규 + elite spawn 루프에 `quest.fixedChainId == 'settlement_3_pyegwang_reopen' && fixedStep == 3 && monster.id == 'elite_giant_bat'` 강제 spawn 분기 추가. `quest_provider.dart` 호출부 3곳(`generateQuests`/`fillQuests`/`_refreshExpiredQuests`) 모두 chain progress 조회 후 인자 전달. M6+ 다중 거점 시 데이터 모델 마이그레이션 위임 TODO 주석.
+- **신뢰도 단계 진입 일회성 재료 보너스**: `RegionStateRepository.addSettlementTrust`에 region 3 한정 분기 추가. 2단계 진입 시 #6 빛바랜 천 조각 ×1 / 3단계 진입 시 #1 녹슨 쇳조각 ×3 자동 지급. 다중 단계 동시 도달(`oldLevel=1 → newLevel=3`) 시 `>=` 비교로 두 보너스 모두 지급. 4단계는 기존 골드/명성 보상만 유지(페이즈 2 #1 §1-6 정합).
+- **firstAcquiredItem 영속 추적**: `RegionState` Hive 모델에 `firstAcquiredMaterialIds: List<String>` HiveField 7 신규 추가(typeId 8 유지, 기존 세이브 호환 default `[]`). `RegionStateRepository.addAcquiredMaterial(regionId, itemId)` 멱등 메서드 신규 — 5종 hook 모두에서 `inv.addItem` 직후 호출. `CraftingService.evaluateState` firstAcquiredItem 분기를 페이즈 4 #2 임시 평가(InventoryRepository 보유량) → RegionState 영속 평가로 교체. `recipe_dustvile_miner_charm` 첫 입수 후 모두 소비해도 해금 유지.
+- **999 stack 도달 활동 로그**: `ActivityLogType.inventoryStackCapped` HiveField 28 신규 enum 값 추가(typeId 6 유지). 5종 hook 모두 addItem 호출 전 `getQuantityForItemId >= 999` 사전 평가 → `'{재료 이름} 보유량이 가득 찼습니다 (999 도달)'` 메시지로 로그 1행. `home_screen.dart` switch에 ⚠️ + settlementAccent 색상 표시 추가.
+- **region_discoveries 발견 hook 통합 패턴**: `_applyDiscoveryItems(d, regionId, staticData)` private helper로 추출. `discoveryData['items']` JSONB 배열을 순회하며 `drop_rate` 확률 평가 + addItem + addAcquiredMaterial 일괄 처리. faction_clue/elite/hidden_quest/transform/normal 5분기 각각 helper 호출 + default 로그 1행만 normal에서 발생(중복 방지).
+- **Supabase 데이터 INSERT 적용**: `quest_pool_material_drops` 16행(UNIQUE(pool_id, item_id) 제약으로 chore_03 #5 두 행 1.0 확정+0.2 보너스를 `qty_max=2` 단일 행으로 병합 — 평균 산출량 1.2→1.5개/회 미세 차이) + `travel_choice_events` 3행(마른 초원 야간 순찰/폐광길 짐 더미/먼지 길 여행자 조우 — 각 1 이벤트당 2 옵션 구조) + `travel_choice_options` 6행 + `travel_choice_results` 6행(effect_type='material_drop' + effect_target=item_id + effect_magnitude=qty) + `travel_choice_results.effect_type` CHECK 제약 DROP/ADD로 'material_drop' 추가. `data_versions` 4 테이블 갱신.
+- **collection 패키지 직접 의존성 추가**: `package:collection/collection.dart`의 `firstWhereOrNull` 활용 — 4개 파일(movement_provider.dart / region_state_repository.dart / 등)에서 firstWhere orElse throw 패턴을 silent skip 패턴으로 교체. async 체인 무음 실패 위험 해소.
+- **M5 마일스톤 종결**: 종료 조건 모두 충족 — 재료 인벤토리 별도 구분 / 제작 레시피 4상태 표시 / 5종 출처 모두 연결 / 첫 제작 목표 3개 달성 가능 / 완제품 vs 제작 공존 / 첫 제작 38분(이상) / 첫 희귀 광부 단검 60분 + 폐광 유물 조각 98분(페이즈 2 #1 시뮬레이션 정합).
+
+### 신규 유저 파견·모집 하향 게이팅
+
+- 명성 등급(F/E/D+)별 신규 유저 보호 게이트 도입.
+  - F 등급(0~299): 모집 T1 100% / 파견 difficulty 1만
+  - E 등급(300~1999): 모집 T1 90%·T2 10% / 파견 d1 + d2(weight 0.25), d3 차단
+  - D 이상(2000+): 기존 분포 유지
+- 시작 4인 파티 사망 기댓값 시간당 1.71명 → 0.24명(F) / 0.32명(E)으로 감소.
+- 사건 step 6 완료(+500 명성)로 자연스러운 D 진입 곡선과 결합.
+- 신규 유저 플로우에서 고정 사건 의뢰(폐광 입구 정찰 step 1)가 등장하지 않던 타이밍 버그 수정.
+
+## 2026-05-04
+
+### M4 페이즈 4 #4: 마을 방문 UI + 거점 3종 + 약초상/의무실 분리
+
+- 더스트빌(region 3, sector_type='village') 진입 시 이동 화면 하단에 "마을 내 방문" 영역 신설. 광장 풍문 1줄 + 거점 3종(촌장 집·낡은 대장간·약초상) 카드 메뉴. 거점 진입은 `_selectedFacility` enum 상태 기반 렌더링(Navigator.push 미사용), region 변경 시 자동 리셋.
+- **촌장 집**: NPC 헤더(파슨) + 24h 사건 완료 배너(조건부) + 신뢰도 4단계 진행 바 + [상황 듣기]/[신뢰도 확인]/[보상 받기] 3개 버튼. 보상 받기는 자동 지급 안내(페이즈 4 #5 흐름 그대로 유지)로 disabled.
+- **낡은 대장간**: NPC 헤더(하겐) + [제작 목표 보기]/[수리 의뢰 확인]/[재료 힌트 보기] 3개 버튼. 단계별 잠금: 1단계 모두 disabled, 2단계 제작 목표·재료 힌트 활성, 3단계 수리 의뢰 활성(50G), 4단계 ×1.2(60G). 수리 의뢰는 `UserData.lastSmithyRepairAt` 24h 쿨다운 stub.
+- **약초상 (1회성 즉시 회복)**: NPC 헤더(네리스) + [즉시 회복]/[채집 정보]/[재료 힌트] 3개 버튼. 비용 75/50/45/40G + 쿨다운 45/30/15/10m 곡선. 부상/피로 용병 1명을 즉시 정상 복귀시키며 의무실 자동 회복 타이머도 함께 종료. 의무실 효과는 변경 없음.
+- 채집 의뢰(`dustvile_chore_03`) 골드 보상 단계별 ×1.0/×1.1/×1.2 배수 — `QuestCompletionService.calculate(currentTrustLevel)` 시그니처 추가, `quest_provider`가 `regionStateRepository.getSettlementTrust(quest.region).level` 주입.
+- 사건 완료(`settlement_3_pyegwang_reopen` step==6) 시 `RegionState.lastEventCompletedAt` 기록 → 24h 동안 모든 거점 화면 상단에 사건 완료 메시지 노출 → 24h 경과 후 4단계 인사말로 복귀.
+- 신규 feature 모듈 `features/settlement/` 신설 — `HerbalistService`(정적 서비스 3개 메서드)/`VillageFacility` enum/`SettlementNpcData`(NPC 5명 + 인사말 17개 + 광장 풍문 + 사건 완료 메시지 const 인라인)/거점 화면 4종 + 즉시 회복 다이얼로그.
+- `MercenaryRepository.healInstant(mercId)` + `MercenaryListNotifier.healInstant({mercId, cost, cooldownMinutes})` wrapper 추가 — Repository는 단일 책임(상태 normal + 두 endTime null + Hive save), Notifier가 spendGold/setHerbalistCooldown/ActivityLog 일괄 처리.
+- `RegionStateRepository.setEventCompleted(regionId)` + `UserDataNotifier.setHerbalistCooldown`/`setSmithyRepairAt` setter 메서드 추가.
+- HiveField 추가: `UserData` 22 `herbalistCooldownEndTime`·23 `lastSmithyRepairAt` / `RegionState` 6 `lastEventCompletedAt` + `eventCompletedRecently` getter / `ActivityLogType` 25 `herbalistHeal`·26 `smithyRepairCompleted` (홈 화면 `_logIcon` 매핑 추가).
+- 단위 테스트 13건 신규 — `HerbalistService` 비용/쿨다운/배수 10케이스 + `MercenaryRepository.healInstant` Hive 인메모리 흐름 3케이스.
+
+### M5 페이즈 4 #1: 데이터 모델 확장 + 시드 마이그레이션 (재료/제작 인프라)
+
+- **신규 Supabase 테이블 2종**: `crafting_recipes`(제작 레시피 — id/result_item_id/result_quantity/inputs_json/unlock_condition_json/craft_location_id 9컬럼·10행 INSERT) + `quest_pool_material_drops`(의뢰 풀 재료 드랍 매핑 — pool_id/item_id/drop_rate/qty_min/qty_max·스키마만, INSERT는 페이즈 4 #3 위임). 인덱스 4종 + UNIQUE(pool_id, item_id) + drop_rate CHECK 제약.
+- **items 테이블 확장**: `region_exclusive INTEGER NULL REFERENCES regions(id)` 컬럼 추가. category CHECK 4종(`material` 추가) + slot CHECK 16종(신규 `material_ore`/`material_hide`/`material_herb`/`material_relic_fragment`/`material_monster_part` 5종 추가) DROP/ADD 갱신. 인덱스 2종 추가.
+- **items 신규 INSERT 20행**: 재료 10종(녹슨 쇳조각·마른 가죽끈·마른 약초·산기슭 버섯·접착 수액·빛바랜 천 조각·녹슨 곡괭이 머리·폐광의 유물 파편·거대 박쥐 송곳니·고대 인장 조각) + 중간재 2종(거친 가죽끈 묶음·연마된 쇳조각) + 결과물 8종(낡은 용병단 깃발·광부의 단검·폐광의 유물 조각·단단한 갑옷 조각·녹슨 곡괭이·약초사 인장·약초 향낭·광부의 부적). region_exclusive로 region 3 한정 6종 마킹.
+- **엘리트 신규 1종**: `elite_giant_bat`(거대 박쥐·tier 2·power 80·spawn_rate 0.15·beast·환경 태그 mountain/dungeon — fixed_region_environments 환경 태그 형식 적용) + 시그니처 트로피 1행(`elite_giant_bat_fang_drop` drop_type='material'·drop_rate 1.0·rarity 'rare').
+- **region_discoveries 신규 3행**: region 3 폐광 발견 (knowledge 25/50/80 — `disc_dustvile_pyegwang_normal`/`hidden`/`deepest`). discovery_type CHECK에 'normal' 추가하여 6종(info/elite/hidden_quest/faction_clue/transform/normal) 갱신.
+- **chain_quests UPDATE 6행**: `settlement_3_pyegwang_reopen` step 1·2·4·5·6 reward_items에 mat_xxx 보상 부여. step 3은 elite_loot_tables(거대 박쥐)·quest_pool drop hook으로 처리하므로 빈 맵 유지.
+- **신규 Freezed 모델 2종**: `CraftingRecipeData`(+ `RecipeInput`/`RecipeUnlockCondition`/`ChainStepCondition` 4 클래스 단일 파일·JSONB inputs_json/unlock_condition_json 매핑·trustLevel/chainStep/firstAcquiredItem 3 옵션 nullable 단순 매핑) + `QuestPoolMaterialDropData`. `ItemData.regionExclusive: int?` 필드 1개 추가.
+- **`ActivityLogType.craftCompleted` HiveField 27 추가** (typeId 6 유지·실제 사용은 페이즈 4 #2 `CraftingService.craft()` 위임). `GameConstants.stackMaxByCategory` Map 상수(개인/길드 1, 소모품/재료 999) 사전 등록.
+- **`StaticGameData` 확장**: craftingRecipes/questPoolMaterialDrops 2 필드 추가 + `SyncService.allTables`에 신규 2 테이블 등록 + `data_versions` INSERT 2행. `DataLoader` 분기 추가 0건(제네릭 진입점 활용).
+- **`mcp__plugin_supabase_supabase__apply_migration`로 단일 트랜잭션 적용**. 적용 중 명세서 가정 위반 2건(`items_slot_check`/`region_discoveries_discovery_type_check` CHECK 제약 존재) 발견 → 사용자 승인 후 DROP/ADD로 처리.
+
+## 2026-05-03
+
+### M4 페이즈 4 #3: 고정 의뢰 시스템 + 더스트빌 허드렛일 풀 (페이즈 4 #5 stub 상태)
+
+- `quest_pools` 테이블에 9개 컬럼 추가 — `is_fixed`/`fixed_chain_id`/`fixed_step`/`trust_threshold` (페이즈 1 #4) + `reward_gold_override`/`reward_xp_bonus_override`/`duration_override_seconds`/`trust_reward_override` (페이즈 2 #4 보상·시간 override) + `min_trust_level` (페이즈 2 #3 단계별 노출 제어). Partial UNIQUE 인덱스 `(fixed_chain_id, fixed_step) WHERE is_fixed = true`.
+- "폐광길 재개방" 6단계 거점 사건 라인 데이터 추가 (`settlement_3_pyegwang_reopen`). explore → hunt → raid → escort → raid → survey 순, `trust_threshold` 1·1·2·2·3·3, `duration_override_seconds` 300·300·360·300·600·600, `trust_reward_override` 10·15·20·25·30·100, `reward_gold_override` step3 이후 200·185·270·500G, step6 `reward_xp_bonus_override` +50.
+- 더스트빌 허드렛일 10건 (`dustvile_chore_NN`) 추가 — labor 6 + escort 1 + explore 2 + hunt 1, 모두 난이도 1, `min_region_diff=1`/`max_region_diff=1` (T1 한정). `dustvile_chore_03` 약초 채집 의뢰만 `min_trust_level=2`.
+- `QuestPool` Freezed 모델 9개 필드 확장 + build_runner 재생성.
+- `QuestGenerator.generateQuests`에 `currentTrustLevel` 파라미터 + `!isFixed` / `minTrustLevel <= currentTrustLevel` 필터 2개 추가.
+- `QuestListNotifier`에 `_getCurrentTrustLevel` stub (페이즈 4 #5 연결용 0 fallback) + `_injectFixedSettlementQuest` (settlement_3_pyegwang_reopen 진행 조회 후 ActiveQuest 생성) + `refreshAvailableQuests` 공개 메서드 추가. `_checkQuestRefresh` / `_refreshExpiredQuests`에 `settlement_` prefix 만료 제외 분기.
+- `ActiveQuest.isSettlementStep` getter 추가 (chainId? startsWith settlement_).
+- `QuestSortService.QuestSortResult`에 `settlementTier` 신규 필드 + `chainTier0` 분류에서 settlement_ prefix 분리 + `sortedRest`는 `[...settlementTier, ...tier1~4]` 순서로 일반 목록 최상단 배치.
+- `AppTheme.settlementAccent`(0xFFFFA000) 신규 색상 상수 — 변형 섹터 `transformVillage` 0xFF2E7D32 와 의미 충돌 회피.
+- 파견 화면 `_QuestCard`에 "📜 마을 사건" 인라인 배지 추가 (`AppTheme.settlementAccent` 알파 0.15 배경 + 1px 테두리).
+- Supabase 마이그레이션 SQL은 페이즈 4 #1·#2와 동일하게 보류 (옵션 B 연장, 페이즈 4 #4·#5 완료 후 일괄 적용). `_getCurrentTrustLevel() = 0` stub이라 `trust_threshold ≥ 1` 조건 실패 → 고정 의뢰 미노출 안전 fallback. 페이즈 4 #5에서 `RegionStateRepository.getSettlementTrust(regionId).level` 한 줄 교체로 활성화.
+
+### M4 데이터 마이그레이션 + 시작 거점 고정
+
+- 199개 리전을 40개로 축소(보존 39 + T9 신규 region 200). 삭제 160개 리전과 종속 region_discoveries 15행은 dump JSON으로 rollback 가능 보관.
+- 시작 거점을 더스트플레인(region 3) sector 1로 고정. 기존 random Tier 1 부여 로직 제거.
+- 시작 골드 500G → 200G 하향. baseQuestCount 5 → 6 상향(시작 의뢰 슬롯 6개 정책 정합).
+- 살아남지 못한 리전을 참조하는 기존 세이브는 자동 복구 — `regionStates` 박스 정리, `UserData.region`을 region 3으로 강제 이동, `factionStates.clueRecords`에서 무효 단서 삭제.
+- `GameConstants.sectorCount`를 `@Deprecated` 마킹(M4 페이즈 4 #2에서 region_sectors.sector_count 동적 조회로 대체 예정).
+
+### M4 region_sectors 신규 테이블 + 섹터 데이터 기반 렌더링
+
+- regions.sector_count 컬럼 신설(1~6 가변, 기본 4). 4개 거점급 region(1·23·127·146)은 5섹터로 승격. 기존 하드코딩된 10섹터 그리드 제거 + region별 동적 렌더링.
+- region_sectors 정규화 테이블 신설(sector_index 1-based, sector_type 5종 — village/ruins/hidden/dungeon/field). 데이터 시드는 후속 페이즈 위임.
+- 더스트플레인(시작 거점) 4섹터를 코드 fallback 상수로 인라인 — 더스트빌(village)·폐광(dungeon)·마른 초원(field)·먼지로 덮인 길(field). 시드 미배포 상태에서도 시작 거점 진입 보장.
+- MovementScreen 그리드에 dungeon ⛏️ / field 🌾 신규 시각 마커 추가(LayerSidebar·QuestCardBadges는 기존 변형 3종 정책 보존).
+- region_discoveries 3행 sector_index 재매핑 SQL — region 18·23·146의 transform hidden 데이터 정합성 확보.
+- GameConstants.sectorCount stub 상수 완전 제거 — region.sectorCount 동적 조회로 일괄 마이그레이션.
+- 기존 세이브 자동 복구 — RegionMigrationService에 sectorCount 초과 sectorChanges 키 정리 단계 추가(별도 멱등성 플래그 `region_sector_count_v1`로 1회 실행).
+
+### M4 페이즈 4 #5: 마을 신뢰도 시스템 + 거점 사건 활성화 + 페이즈 4 #3 stub 해제
+
+- 더스트빌(region 3) 마을 신뢰도 시스템 도입 — 의뢰 완료로 신뢰도가 누적되며 4단계(의심/인지/친근/소속)로 승급. 임계값 30/80/200점, 단계 진입 시 일회성 보상(2단계 +100G+50XP / 3단계 +200G+100XP / 4단계 +500G+200XP+100명성). XP는 살아있는 용병에 균등 분배.
+- 일반 의뢰 신뢰도 점수 — region 3 + 일반 의뢰(체인/세력 태그 제외) + 성공/대성공 시 난이도별 2/3/5/0/0점 누적.
+- 거점 사건 라인 "폐광길 재개방" 6단계 활성화 (`settlement_3_pyegwang_reopen`) — `trust_threshold` 단계별 노출, `duration_override_seconds`(300~600s)/`reward_gold_override`/`trust_reward_override`(10~100점)로 일반 의뢰 보상 곡선과 분리.
+- 단계 승급 시 단계별 색상 + 일회성 보상 요약 다이얼로그(`SettlementTrustUpDialog`) 표시. 4단계 진입 시 명성 +100으로 인한 랭크업 발생 시 critical(rankUp) → high(trustUp) → high(chainCompleted) 순으로 dialog 큐 직렬화.
+- `RegionState` HiveField 4·5 (`settlementTrust`/`settlementTrustLevel`) 추가 + null fallback getter — 기존 세이브 호환 보장.
+- `RegionStateRepository`에 `addSettlementTrust`/`getSettlementTrust`/`setSettlementTrust` 3개 메서드 + 임계값/보상/단계명 상수 맵.
+- `TrustLevelUpEvent` + `settlementTrustLevelUpProvider` StateProvider + `settlementTrustProvider` Provider.family 신규.
+- `ChainQuestService.tryActivateSettlement` 메서드 추가 + `checkDormant` settlement_ prefix skip(14일 미적용) + `onStepCompleted` protagonist resolution skip.
+- `QuestCalculator`(`rewardGoldOverride`/`durationOverrideSeconds`/`isFixedWithDurationOverride`) + `ExperienceService`(`rewardXpBonusOverride`) 시그니처 확장 — `is_fixed=true` 행은 baseReward·rewardMultiplier·trackBonus 등 기존 보상 경로 우회.
+- `QuestCompletionService.calculate`에 pool 조회 + override 인자 전달 + `QuestCompletionResult.settlementTrustGain` 필드 추가.
+- `QuestListNotifier`: `_getCurrentTrustLevel` stub 해제(`getSettlementTrust(region).level`로 교체) + `dispatch` override 적용 + `_injectFixedSettlementQuest` 중복 방어(`_load()` 선행) + `_refreshExpiredQuests` 가독성 개선(이중 필터 제거) + `_applyCompletionResult`에 settlement_ step 신뢰도 누적 + 일반 의뢰 신뢰도 점수 분기 추가.
+- `ActivityLogType` HiveField 22~24 (`settlementTrustUp`/`settlementEventStep`/`settlementEventCompleted`) + 홈 화면 `_logIcon` 매핑 추가.
+- `DialogTypeRegistry.settlementTrustUp` 키 추가(8종) + `app.dart`에 listen 블록 + dialogQueue high priority enqueue.
+- `ChainTopSection` `actives` 필터에 `!chainId.startsWith('settlement_')` 추가 — 거점 사건은 일반 목록의 settlementTier로만 노출(페이즈 4 #3 후속 권고 #1).
+- 게임 시작(`UserDataNotifier.initializeNewGame`) + region 3 진입(`MovementNotifier._completeMovement`) 시 자동 RegionState 초기화 + `tryActivateSettlement` 호출. 기존 세이브에서 `settlementTrust=null`인 경우 기존 객체 직접 수정 패턴(`saveState` 우회)으로 마이그레이션.
+
 ## 2026-04-26
 
 ### M3 공존 정책 — 파견 화면 정렬 + 도착 팝업 큐 통합
