@@ -82,9 +82,12 @@ class ChiefHouseScreen extends ConsumerWidget {
     String title;
     String body;
 
-    if (progress == null || progress.status == ChainQuestStatus.completed) {
+    if (progress == null) {
       title = '파슨의 이야기';
-      body = '마을은 평온하다.';
+      body = '마을이 이렇게 된 건 10년도 넘은 일이지. 광산이 닫히면서 떠나는 사람이 늘었어. 이제 남은 사람들이라도 먹고 살아야 하는데...';
+    } else if (progress.status == ChainQuestStatus.completed) {
+      title = '파슨의 이야기';
+      body = '자네 덕분에 이제 마을이 다시 움직이기 시작했어. 광산에서 일하려는 사람도 돌아오고 있고. 고마워.';
     } else if (progress.status == ChainQuestStatus.active) {
       final step = progress.currentStep;
       title = '현재 사건: 폐광길 재개방 ($step/6 단계)';
@@ -98,7 +101,7 @@ class ChiefHouseScreen extends ConsumerWidget {
       body = chainData?.description ?? '사건이 진행 중입니다.';
     } else {
       title = '파슨의 이야기';
-      body = '마을은 평온하다.';
+      body = '마을이 이렇게 된 건 10년도 넘은 일이지. 광산이 닫히면서 떠나는 사람이 늘었어. 이제 남은 사람들이라도 먹고 살아야 하는데...';
     }
 
     showDialog(
