@@ -5,6 +5,7 @@ import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/trait_category.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
+import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 
 void main() {
   final jobs = [
@@ -30,7 +31,7 @@ void main() {
 
   group('RecruitmentService', () {
     test('selectTier returns a valid tier between 1-5', () {
-      final tier = RecruitmentService.selectTier(Random(42));
+      final tier = RecruitmentService.selectTier(Random(42), gate: NewbieGate.normal);
       expect(tier, greaterThanOrEqualTo(1));
       expect(tier, lessThanOrEqualTo(5));
     });
@@ -38,7 +39,7 @@ void main() {
     test('tier distribution favors lower tiers', () {
       final counts = <int, int>{1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
       for (var i = 0; i < 10000; i++) {
-        final tier = RecruitmentService.selectTier(Random(i));
+        final tier = RecruitmentService.selectTier(Random(i), gate: NewbieGate.normal);
         counts[tier] = counts[tier]! + 1;
       }
       expect(counts[1]!, greaterThan(counts[2]!));
@@ -50,6 +51,7 @@ void main() {
     test('generateMercenary creates merc with 1-3 innate traits', () {
       final merc = RecruitmentService.generateMercenary(
         jobs: jobs, traits: traits, categories: categories, names: names, random: Random(42),
+        gate: NewbieGate.normal,
       );
       expect(merc.name, isNotEmpty);
       expect(merc.jobId, isNotEmpty);
@@ -63,6 +65,7 @@ void main() {
       for (int seed = 0; seed < 100; seed++) {
         final merc = RecruitmentService.generateMercenary(
           jobs: jobs, traits: traits, categories: categories, names: names, random: Random(seed), forceTier: 1,
+          gate: NewbieGate.normal,
         );
         for (final traitKey in merc.traitIds) {
           final trait = traits.firstWhere((t) => t.key == traitKey);
@@ -75,6 +78,7 @@ void main() {
       for (int seed = 0; seed < 100; seed++) {
         final merc = RecruitmentService.generateMercenary(
           jobs: jobs, traits: traits, categories: categories, names: names, random: Random(seed), forceTier: 1,
+          gate: NewbieGate.normal,
         );
         final cats = merc.traitIds.map((key) => traits.firstWhere((t) => t.key == key).categoryKey).toSet();
         expect(cats.length, merc.traitIds.length);

@@ -6,6 +6,7 @@ import 'package:band_of_mercenaries/core/models/trait_category.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 
 class RecruitmentService {
   static bool canFreeRecruit(DateTime lastFreeRecruit, double speedMultiplier) {
@@ -24,8 +25,23 @@ class RecruitmentService {
   static const _tierProbabilities = <int, double>{1: 0.45, 2: 0.30, 3: 0.15, 4: 0.08, 5: 0.02};
   static const _uuid = Uuid();
 
-  static int selectTier(Random random, {double recruitBonus = 0.0, double extraHighTierBoost = 0.0}) {
-    // 주점 시설 보너스와 세력 패시브 고티어 확률 보너스를 합산, 최대 0.5 제한
+  static int selectTier(
+    Random random, {
+    required NewbieGate gate,
+    double recruitBonus = 0.0,
+    double extraHighTierBoost = 0.0,
+  }) {
+    // F 단계: 보너스 무시, T1 고정
+    if (gate == NewbieGate.newbieF) return 1;
+
+    // E 단계: 기본 T1 90% / T2 10%, 보너스는 T2 비율로만 흡수 (cap 0.5)
+    if (gate == NewbieGate.newbieE) {
+      final t2Boost = (recruitBonus + extraHighTierBoost).clamp(0.0, 0.5);
+      final t2Prob = 0.10 + t2Boost * 0.5;
+      return random.nextDouble() < t2Prob ? 2 : 1;
+    }
+
+    // normal 단계: 기존 분포
     final totalBonus = (recruitBonus + extraHighTierBoost).clamp(0.0, 0.5);
 
     if (totalBonus <= 0.0) {
@@ -94,11 +110,17 @@ class RecruitmentService {
     required List<TraitCategory> categories,
     required List<PersonName> names,
     required Random random,
+    required NewbieGate gate,
     int? forceTier,
     double recruitBonus = 0.0,
     double extraHighTierBoost = 0.0,
   }) {
-    final tier = forceTier ?? selectTier(random, recruitBonus: recruitBonus, extraHighTierBoost: extraHighTierBoost);
+    final tier = forceTier ?? selectTier(
+          random,
+          gate: gate,
+          recruitBonus: recruitBonus,
+          extraHighTierBoost: extraHighTierBoost,
+        );
     final tierJobs = jobs.where((j) => j.tier == tier).toList();
     final job = tierJobs[random.nextInt(tierJobs.length)];
     final name = names[random.nextInt(names.length)];
@@ -133,6 +155,7 @@ class RecruitmentService {
     return List.generate(count, (_) => generateMercenary(
       jobs: jobs, traits: traits, categories: categories, names: names, random: random,
       forceTier: random.nextBool() ? 1 : 2,
+      gate: NewbieGate.normal,
     ));
   }
 }

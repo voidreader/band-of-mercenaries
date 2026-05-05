@@ -39,6 +39,7 @@ import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
 import 'package:band_of_mercenaries/features/quest/domain/special_flag_processor.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_side_effects.dart';
 import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
+import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -96,8 +97,14 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     _load();
     if (state.isEmpty) {
       generateQuests();
+    } else {
+      // _PostSyncApp이 userData != null이 된 후에야 BandOfMercenariesApp을 빌드하므로,
+      // questListProvider 첫 생성 시점에는 아래 ref.listen의 prev null→non-null 트랜지션이
+      // 이미 종료되어 발화하지 않는다. initializeNewGame이 일반 퀘스트를 Hive에 미리
+      // 저장한 신규 유저 플로우에서 고정 사건 의뢰가 누락되는 문제를 보강.
+      Future.microtask(_injectFixedSettlementQuest);
     }
-    // 첫 실행 시 initializeNewGame() 완료 후 퀘스트 목록 다시 로드 (mercenary_provider와 동일 패턴)
+    // 핫 리스타트·중간 재진입 등 prev=null인 경로 보조 안전망
     ref.listen(userDataProvider, (prev, next) {
       if (prev == null && next != null) {
         debugPrint(
@@ -205,6 +212,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final chainIdForSpawn = pyegwangProgress?.status == ChainQuestStatus.active
         ? 'settlement_3_pyegwang_reopen'
         : null;
+    final newbieGate = NewbieGateResolver.resolve(
+      reputation: userData.reputation,
+      ranks: staticData.ranks,
+    );
     final quests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -232,6 +243,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       currentTrustLevel: _getCurrentTrustLevel(),
       currentChainId: chainIdForSpawn,
       currentChainStep: pyegwangProgress?.currentStep,
+      gate: newbieGate,
     );
     await _repo.addQuests(quests);
     debugPrint('[BOM][Quest] generateQuests 완료: ${quests.length}개 생성');
@@ -406,6 +418,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         fillPyegwangProgress?.status == ChainQuestStatus.active
         ? 'settlement_3_pyegwang_reopen'
         : null;
+    final newbieGate = NewbieGateResolver.resolve(
+      reputation: userData.reputation,
+      ranks: staticData.ranks,
+    );
     final newQuests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -433,6 +449,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       currentTrustLevel: _getCurrentTrustLevel(),
       currentChainId: fillChainIdForSpawn,
       currentChainStep: fillPyegwangProgress?.currentStep,
+      gate: newbieGate,
     );
     await _repo.addQuests(newQuests);
     _load();
@@ -590,6 +607,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
         refreshPyegwangProgress?.status == ChainQuestStatus.active
         ? 'settlement_3_pyegwang_reopen'
         : null;
+    final newbieGate = NewbieGateResolver.resolve(
+      reputation: userData.reputation,
+      ranks: staticData.ranks,
+    );
     final newQuests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -617,6 +638,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       currentTrustLevel: _getCurrentTrustLevel(),
       currentChainId: refreshChainIdForSpawn,
       currentChainStep: refreshPyegwangProgress?.currentStep,
+      gate: newbieGate,
     );
     await _repo.addQuests(newQuests);
     _load();

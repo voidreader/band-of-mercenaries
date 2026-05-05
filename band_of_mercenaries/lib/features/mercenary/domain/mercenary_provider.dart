@@ -12,6 +12,7 @@ import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/evolution_choice.dart';
+import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 
 final mercenaryRepositoryProvider = Provider((ref) => MercenaryRepository());
 
@@ -223,11 +224,16 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
       extraHighTierBoost = PassiveBonusService.getRecruitmentTierBoost(effects);
     }
 
+    final gate = NewbieGateResolver.resolve(
+      reputation: userData?.reputation ?? 0,
+      ranks: staticData.ranks,
+    );
     final merc = await _repo.recruit(
       jobs: staticData.jobs,
       traits: staticData.traits,
       categories: staticData.traitCategories,
       names: staticData.personNames,
+      gate: gate,
       recruitBonus: recruitBonus,
       extraHighTierBoost: extraHighTierBoost,
     );

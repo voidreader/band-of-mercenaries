@@ -20,6 +20,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
+import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 
 final userDataProvider = StateNotifierProvider<UserDataNotifier, UserData?>((ref) {
   return UserDataNotifier(ref);
@@ -130,6 +131,7 @@ class UserDataNotifier extends StateNotifier<UserData?> {
       eliteMonsters: staticData.eliteMonsters,
       regionEnvironmentTags: startRegion.environmentTags,
       currentSectorIndex: startSector - 1,
+      gate: NewbieGate.newbieF, // 신규 시작 — 명성 0이므로 F 등급 고정
     );
     for (final quest in initialQuests) {
       await questBox.add(quest);

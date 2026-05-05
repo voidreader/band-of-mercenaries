@@ -150,7 +150,7 @@ freezed · json_serializable · hive_generator · riverpod_generator — `build_
 - **모집**: 티어별 가중 확률(T1 45%~T5 2%), 선천 트레잇 1~3개, 주둔지 용량 제한
 - **트레잇**: 선천 3 + 후천 4. 23개 행동 지표 추적 → 자동 획득. 단일/조합 진화, `TraitDeletionService`로 삭제. `traitHistory`로 재획득 방지
 - **시설**: 12종 Lv25, 건설 큐 1개. `ConstructionService`로 비용/시간 계산. 건설 완료는 gameTickProvider에서 체크
-- **명성/랭크**: F~A 등급. 랭크업 시 `reputationRankUpProvider` publish. `PassiveBonusService.collect`로 누적 패시브 적용
+- **명성/랭크**: F~A 등급. 랭크업 시 `reputationRankUpProvider` publish. `PassiveBonusService.collect`로 누적 패시브 적용. 신규 유저 보호 게이트 `NewbieGate` (F/E/normal) — `RecruitmentService.selectTier` 모집 cap (F=T1 only, E=T1·T2) + `QuestGenerator.generateQuests` 파견 weight (F=d1 only, E=d1+d2 0.25). 판정은 `NewbieGateResolver.resolve(reputation, ranks)` (`core/domain/newbie_gate.dart`)
 - **파견 상성**: `RoleSynergyMatrix` 6role × 4type, ±10%p 독립 상한. 트레잇 보너스도 별도 ±10%p 독립 상한
 - **세력**: `FactionTagResolver`로 일반 퀘스트에 태그 부여. `FactionJoinService.canJoin()` 가입 조건 판정. 충돌 세력 가입 시 자동 탈퇴 + 평판 -20
 - **지역 조사**: knowledge 0~100, 임계값 도달 시 `region_discoveries` 발견 트리거 → faction_clue/hidden_quest/transform 3종 분기

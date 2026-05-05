@@ -9,6 +9,7 @@ import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/trait_category.dart';
 import 'package:band_of_mercenaries/core/models/person_name.dart';
+import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 
 class MercenaryRepository {
   Box<Mercenary> get _box => Hive.box<Mercenary>(HiveInitializer.mercenaryBoxName);
@@ -26,6 +27,7 @@ class MercenaryRepository {
     required List<TraitData> traits,
     required List<TraitCategory> categories,
     required List<PersonName> names,
+    required NewbieGate gate,
     double recruitBonus = 0.0,
     double extraHighTierBoost = 0.0,
   }) async {
@@ -35,6 +37,7 @@ class MercenaryRepository {
       categories: categories,
       names: names,
       random: Random(),
+      gate: gate,
       recruitBonus: recruitBonus,
       extraHighTierBoost: extraHighTierBoost,
     );
