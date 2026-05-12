@@ -56,6 +56,17 @@ model: opus
 - 각 태스크는 coder가 추가 질문 없이 바로 구현 가능한 수준으로 상세히 작성한다.
 - 태스크 간 의존 관계를 명시하고 병렬 실행 가능 여부를 표시한다.
 - 시그니처는 Dart 타입 시스템에 맞춰 작성한다.
+- **각 태스크의 복잡도와 추천 모델을 분류한다.** (superpowers의 model selection 방식과 동일하게 비용/속도 최적화)
+
+### 태스크 복잡도 분류 기준
+
+| 복잡도 | 추천 모델 | 신호 |
+|--------|----------|------|
+| `mechanical` | `haiku` | 1-2 파일, 시그니처가 명세에 완전히 명시됨, 새 패턴 없음, 기존 코드를 직접 미러링하는 수준 (예: 단순 데이터 모델 추가, JSON 직렬화, 단순 위젯, 기존 enum에 케이스 추가, 상수 추가, 기계적 데이터 매핑) |
+| `integration` | `sonnet` | 여러 파일 간 협력, Provider 등록·연결, Notifier 로직 추가, 기존 Repository 메서드 호출, 일반 비즈니스 로직, 기존 패턴 매칭 + 약간의 판단 (대부분의 implementation 태스크가 여기 해당) |
+| `architecture` | `opus` | 새 도메인 모델·Service 설계, 복잡한 비즈니스 로직, 동시성/race condition 가능성, 여러 시스템 간 동기화, 새로운 아키텍처 패턴 도입, 광범위한 코드베이스 이해가 필요한 디버깅·리팩토링 |
+
+판단이 애매하면 **한 단계 위(더 capable한 쪽)**를 선택한다. 단순한 task에 capable 모델을 쓰는 비용은 작지만, 어려운 task에 약한 모델을 쓰면 재작업 비용이 더 크다.
 
 # 출력 형식
 
@@ -105,6 +116,9 @@ model: opus
 - 의존성: 없음 | TASK-n
 - 병렬 가능: 예 | 아니오
 - 관련 요구사항: REQ-n
+- 복잡도: mechanical | integration | architecture
+- 추천 모델: haiku | sonnet | opus
+- 복잡도 사유: (한 줄로 — 왜 그 분류인지)
 - 상세:
   - 생성/수정할 항목:
     - 클래스/함수/Provider명
@@ -118,8 +132,8 @@ model: opus
 #### [TASK-2] ...
 
 ### 7. 실행 순서
-1단계: TASK-1, TASK-2 (병렬)
-2단계: TASK-3 (TASK-1 완료 후)
+1단계: TASK-1 [haiku], TASK-2 [sonnet] (병렬)
+2단계: TASK-3 [opus] (TASK-1 완료 후)
 ```
 
 # 규칙
