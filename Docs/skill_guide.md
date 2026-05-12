@@ -90,7 +90,7 @@
 | 스킬 | 호출 | 역할 | 적합한 규모 |
 |------|------|------|------------|
 | `implement-spec` | `/implement-spec` | 올인원 구현 | 수정 파일 5개 이하, 소규모 |
-| `implement-agent` | `/implement-agent` | 파이프라인 구현 (planner → coder → dart-build-resolver → verifier + flutter-reviewer 병렬) | 수정 파일 6개 이상, 대규모 |
+| `implement-agent` | `/implement-agent` | 파이프라인 구현 (planner → coder → dart-build-resolver → verifier) | 수정 파일 6개 이상, 대규모 |
 
 ### implement-spec
 
@@ -107,7 +107,7 @@
 1. **planner** — 요구사항 분해 + 영향 범위 + 설계 + 태스크 분할
 2. **coder** — 각 태스크별 기능 구현 (병렬 가능)
 3. **dart-build-resolver** — 빌드 게이트 실패 시 외과적 에러 해결 (조건부)
-4. **verifier + flutter-reviewer** — 명세 검증과 코드 품질 리뷰 병렬 실행 (TASK ≥ 3) 또는 main + flutter-reviewer 경량 검증 (TASK ≤ 2)
+4. **verifier** — 명세 준수·호환성·코드 품질을 단일 패스로 검증 (TASK ≥ 3에서 호출, TASK ≤ 2는 main이 verifier 체크리스트로 직접 검증)
 
 ```bash
 /implement-agent @Docs/spec/20260414_travel-choice.md

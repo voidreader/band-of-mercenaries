@@ -1,6 +1,6 @@
 ---
 name: implement-agent
-description: 사용자로부터 전달된 명세서를 기반으로 git 충돌 감지 후, 서브에이전트 파이프라인(planner → coder → dart-build-resolver → verifier + flutter-reviewer 병렬)을 직접 조율하여 구현을 진행하고 완료 후 산출물 문서를 생성한다. TASK 수가 적을 경우 verifier 대신 main이 경량 검증을 수행한다.
+description: 사용자로부터 전달된 명세서를 기반으로 git 충돌 감지 후, 서브에이전트 파이프라인(planner → coder → dart-build-resolver → verifier)을 직접 조율하여 구현을 진행하고 완료 후 산출물 문서를 생성한다. TASK 수가 적을 경우 verifier 대신 main이 경량 검증을 수행한다.
 ---
 
 Recommended Model : Claude Opus
@@ -105,7 +105,7 @@ Recommended Model : Claude Opus
      - 의존성을 되도록 줄이는 방향을 고려한다.
      - CLAUDE.md 코멘트 정책 준수
      - CLAUDE.md 금지사항을 준수하고, 부득이하게 위반해야하는 경우는 사유를 반드시 완료 보고에 포함한다.
-   - (재작업인 경우) verifier 또는 flutter-reviewer의 해당 태스크 수정 지시사항
+   - (재작업인 경우) verifier의 해당 태스크 수정 지시사항
 
    실행 규칙:
    - 실행 순서의 같은 단계에 있는 태스크는 병렬로 호출할 수 있다.
@@ -139,16 +139,9 @@ Recommended Model : Claude Opus
    - PARTIAL/FAILED → 잔여 에러를 사용자에게 보고하고 판단 요청 (계속 진행 / 수동 수정 / 중단)
    - 수정한 파일이 추가로 발생하면 변경 파일 목록에 합산하여 PHASE 3에 전달
 
-   ### PHASE 3: 검증 (명세 검증 + 품질 리뷰 병렬 실행)
+   ### PHASE 3: 검증
 
-   PHASE 2.5 빌드 게이트를 통과한 후 진행한다. 이 프로젝트는 두 검증자를 **역할 분리된 병렬 구조**로 운영한다:
-
-   | 에이전트 | 검증 대상 |
-   |---------|----------|
-   | `verifier` | 명세 요구사항(REQ-n) 충족 + 구현 계획 시그니처 준수 + 기존 프로젝트 호환성 |
-   | `flutter-reviewer` | Flutter/Dart 코드 품질 (Riverpod 관용구, widget rebuild, 성능, 접근성, 보안) |
-
-   두 에이전트의 관심사는 겹치지 않는다. verifier는 "명세대로 만들었는가"를, flutter-reviewer는 "Flutter답게 잘 만들었는가"를 본다.
+   PHASE 2.5 빌드 게이트를 통과한 후 진행한다. verifier가 명세 준수·프로젝트 호환성·Flutter/Dart 코드 품질을 단일 패스로 검증한다.
 
    #### PHASE 3 진입 전: 검증 가이드 생성 (필수)
 
@@ -185,62 +178,39 @@ Recommended Model : Claude Opus
 
    계획 리포트의 TASK 개수에 따라 검증 깊이를 분기한다:
 
-   - **경량 검증** (TASK 수 ≤ 2): main이 명세 검증 수행 + flutter-reviewer 1회 호출
-   - **풀 검증** (TASK 수 ≥ 3): verifier와 flutter-reviewer를 **병렬로** Agent() 호출
+   - **경량 검증** (TASK 수 ≤ 2): main이 직접 검증 수행
+   - **풀 검증** (TASK 수 ≥ 3): verifier를 Agent()로 호출
 
    #### 3-A. 경량 검증
 
-   TASK 수가 2개 이하일 때 적용한다. 다음을 순서대로 수행한다:
+   TASK 수가 2개 이하일 때 적용한다. main이 직접 수행한다:
 
-   1. **main 직접 명세 검증**
-      - 검증 가이드의 "직접 변경 파일" 목록만 Read로 읽어 실제 내용을 확인한다.
-      - 검증 가이드의 "REQ별 확인 포인트"를 기준으로 각 요구사항이 구현되었는지 대조한다.
-      - 검증 가이드의 "시그니처 확인" 항목을 기준으로 계획 시그니처 준수 여부를 확인한다.
-      - 검증 가이드의 "호환성 체크 포인트"에 명시된 범위 내에서만 grep을 수행한다.
-      - (정적 분석은 PHASE 2.5 빌드 게이트에서 이미 검증됨 — 중복 실행 금지)
-
-   2. **flutter-reviewer 호출** (품질 리뷰)
-      - 프롬프트에 변경 파일 목록과 원본 명세서를 전달한다.
-      - 결과(APPROVE/BLOCK + 이슈 목록)를 수집한다.
+   - 검증 가이드의 "직접 변경 파일" 목록을 Read로 읽어 실제 내용을 확인한다.
+   - "REQ별 확인 포인트"를 기준으로 각 요구사항 구현 여부를 대조한다.
+   - "시그니처 확인" 항목을 기준으로 계획 시그니처 준수 여부를 확인한다.
+   - "호환성 체크 포인트"에 명시된 범위 내에서만 grep을 수행한다.
+   - verifier 에이전트의 5단계 체크리스트 기준(보안·아키텍처·Riverpod·성능·라이프사이클·에러·테스트·접근성)으로 Flutter/Dart 패턴 위반 여부를 확인한다.
+   - (정적 분석은 PHASE 2.5 빌드 게이트에서 이미 검증됨 — 중복 실행 금지)
 
    **판정:**
-   - main 명세 검증 PASS + flutter-reviewer APPROVE → 5단계(산출물 생성)로 진행
-   - 한쪽이라도 이슈 발생 시 → FAIL로 처리 → 이슈를 통합 정리 후 해당 TASK의 coder 재호출 (최대 2회 반복)
+   - PASS → 5단계(산출물 생성)로 진행
+   - 이슈 발생 → FAIL → 해당 TASK의 coder 재호출 (최대 2회 반복)
    - 2회 반복 후에도 FAIL → 사용자에게 보고 후 판단 요청
 
-   #### 3-B. 풀 검증 (병렬 리뷰)
+   #### 3-B. 풀 검증
 
-   TASK 수가 3개 이상일 때 적용한다. verifier와 flutter-reviewer를 단일 메시지에서 **병렬로** Agent() 호출한다.
+   TASK 수가 3개 이상일 때 적용한다. verifier를 Agent()로 호출한다.
 
-   각 에이전트에 전달할 내용:
-   - **verifier**: 검증 가이드 + 탐색 지시 ("검증 가이드에 명시된 파일과 포인트만 탐색. 가이드 외 파일의 광범위한 grep은 금지")
-   - **flutter-reviewer**: 변경 파일 목록 + 원본 명세서(참조용) + 역할 경계 명시 ("명세 준수 판정은 verifier 담당. Flutter/Dart 품질만 검증")
+   전달 내용:
+   - 검증 가이드 + 탐색 지시 ("검증 가이드에 명시된 파일과 포인트만 탐색. 가이드 외 파일의 광범위한 grep은 금지")
 
-   **결과 취합:**
-
-   두 결과를 main이 다음 규칙으로 통합한다:
-
-   1. verifier가 FAIL → FAIL (명세 미충족은 차단 사유)
-   2. verifier PASS + flutter-reviewer BLOCK → FAIL (품질 이슈도 차단 사유)
-   3. verifier PASS + flutter-reviewer APPROVE → PASS
-   4. verifier PASS (with warnings, minor만) + flutter-reviewer APPROVE → PASS (이슈 기록)
-
-   **이슈 중복 병합:**
-   - 두 에이전트가 같은 파일·같은 문제를 지적하면 하나로 통합한다 (출처는 `[verifier]` / `[flutter-reviewer]` / `[both]`로 태그).
-   - 이슈 내용이 충돌할 경우(예: verifier는 "명세의 X 구현 필요" vs flutter-reviewer는 "해당 패턴 안티패턴") 사용자에게 판단 요청.
-
-   **검증 결과가 PASS인 경우:**
-   - 5단계(산출물 생성)로 진행한다.
-
-   **검증 결과가 FAIL인 경우:**
-   - 통합된 이슈 목록의 각 이슈에 대해 해당 TASK-n의 coder를 재호출한다.
-   - 재호출 시 프롬프트에 어떤 에이전트가 지적한 이슈인지 출처와 수정 지시사항을 함께 포함한다.
-   - 수정 완료 후 빌드 게이트(PHASE 2.5) → 병렬 리뷰를 재실행한다.
-   - 이 루프는 최대 2회까지 반복한다.
-
-   **2회 반복 후에도 FAIL인 경우:**
-   - 남은 이슈 목록을 사용자에게 보고한다.
-   - 사용자의 판단을 기다린다 (계속 진행 / 수동 수정 / 중단).
+   **결과 처리:**
+   - PASS → 5단계(산출물 생성)로 진행
+   - PASS (with warnings, minor만) → 5단계로 진행 (이슈 기록)
+   - FAIL → 이슈 목록의 각 항목에 대해 해당 TASK-n의 coder 재호출
+     - 수정 완료 후 빌드 게이트(PHASE 2.5) → verifier 재실행
+     - 이 루프는 최대 2회까지 반복
+   - 2회 반복 후에도 FAIL → 사용자에게 보고 후 판단 요청 (계속 진행 / 수동 수정 / 중단)
 
    ### 파이프라인 규칙
 
@@ -281,7 +251,7 @@ Recommended Model : Claude Opus
 
    **피드백 반영**: 사용자 테스트 중 피드백이 있으면:
    - 피드백 내용을 포함하여 해당 TASK의 coder를 Agent()로 재호출한다.
-   - 수정 완료 후 PHASE 3 검증 모드에 맞춰 재검증한다 (경량이면 main 직접, 풀이면 verifier 호출).
+   - 수정 완료 후 PHASE 3 검증 모드에 맞춰 재검증한다 (경량이면 main 직접 검증, 풀이면 verifier 호출).
    - 해당 산출물 문서를 업데이트한다.
 
    ** 생성, 변경되는 모든 마크다운 문서는 기술적인 용어를 유지하며, 한국어 스타일을 유지한다. **
