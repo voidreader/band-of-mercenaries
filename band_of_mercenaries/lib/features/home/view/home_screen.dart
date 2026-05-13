@@ -27,6 +27,8 @@ import 'package:band_of_mercenaries/features/movement/domain/travel_choice_recal
 import 'package:band_of_mercenaries/features/movement/view/travel_choice_recall_dialog.dart';
 import 'package:band_of_mercenaries/core/providers/dialog_queue_provider.dart';
 import 'package:band_of_mercenaries/core/models/dialog_request.dart';
+import 'package:band_of_mercenaries/features/achievement/view/chronicle_home_card.dart';
+import 'package:band_of_mercenaries/features/achievement/view/chronicle_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -39,6 +41,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isShowingQuestResult = false;
   final Set<String> _shownQuestResultIds = {};
   bool _showSettings = false;
+  bool _showChronicle = false;
 
   Future<void> _showQuestResult(ActiveQuest quest) async {
     await showDialog<void>(
@@ -149,6 +152,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     if (userData == null) return const Center(child: CircularProgressIndicator());
+
+    if (_showChronicle) {
+      return ChronicleScreen(onBack: () => setState(() => _showChronicle = false));
+    }
 
     if (_showSettings) {
       return Column(
@@ -359,6 +366,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         const Text('진행 중인 활동이 없습니다',
                             style: TextStyle(fontSize: 14, color: AppTheme.textHint)),
                     ],
+                  ),
+                ),
+
+                // 연대기 카드
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  child: ChronicleHomeCard(
+                    onTap: () => setState(() => _showChronicle = true),
                   ),
                 ),
 
@@ -581,6 +596,8 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '⚒️', color: d, bold: false);
       case ActivityLogType.inventoryStackCapped:
         return (icon: '⚠️', color: AppTheme.settlementAccent, bold: false);
+      case ActivityLogType.achievementUnlocked:
+        return (icon: '★', color: AppTheme.chainGold, bold: true);
     }
   }
 

@@ -8,6 +8,7 @@ import 'package:band_of_mercenaries/features/info/view/faction_detail_screen.dar
 import 'package:band_of_mercenaries/features/info/view/guild_equipment_screen.dart';
 import 'package:band_of_mercenaries/features/info/view/rank_info_screen.dart';
 import 'package:band_of_mercenaries/features/inventory/view/inventory_screen.dart';
+import 'package:band_of_mercenaries/features/achievement/view/chronicle_screen.dart';
 
 class InfoScreen extends ConsumerStatefulWidget {
   const InfoScreen({super.key});
@@ -21,6 +22,7 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
   bool _showRank = false;
   bool _showGuildEquipment = false;
   bool _showInventory = false;
+  bool _showChronicle = false;
   String? _selectedFactionId;
 
   @override
@@ -65,6 +67,10 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
 
     if (_showInventory) {
       return InventoryScreen(onBack: () => setState(() => _showInventory = false));
+    }
+
+    if (_showChronicle) {
+      return ChronicleScreen(onBack: () => setState(() => _showChronicle = false));
     }
 
     final repo = ref.read(factionStateRepositoryProvider);
@@ -186,6 +192,15 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                   color: AppTheme.textHint,
                 ),
                 onTap: () => setState(() => _showInventory = true),
+              ),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.auto_awesome, color: AppTheme.chainGold),
+                  title: const Text('용병단 연대기'),
+                  subtitle: const Text('우리 용병단의 영구 기록'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => setState(() => _showChronicle = true),
+                ),
               ),
             ],
           ),

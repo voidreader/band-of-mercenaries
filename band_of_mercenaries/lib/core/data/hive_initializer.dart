@@ -9,6 +9,9 @@ import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dar
 import 'package:band_of_mercenaries/features/inventory/domain/inventory_item_model.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
 import 'package:band_of_mercenaries/core/models/persisted_dialog_entry.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
 
 class HiveInitializer {
   static const String userBoxName = 'user';
@@ -21,6 +24,7 @@ class HiveInitializer {
   static const String inventoryBoxName = 'inventory';
   static const String chainQuestProgressBoxName = 'chainQuestProgress';
   static const String dialogQueueBoxName = 'dialogQueue';
+  static const String bandAchievementBoxName = 'bandAchievements';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -40,6 +44,11 @@ class HiveInitializer {
     Hive.registerAdapter(ChainQuestStatusAdapter());
     Hive.registerAdapter(ChainQuestProgressAdapter());
     Hive.registerAdapter(PersistedDialogEntryAdapter());
+    // 위업·연대기 모델 어댑터: enum 먼저, 그 후 클래스
+    Hive.registerAdapter(BandAchievementTypeAdapter());
+    Hive.registerAdapter(MemorialCauseAdapter());
+    Hive.registerAdapter(MercenarySnapshotAdapter());
+    Hive.registerAdapter(BandAchievementAdapter());
 
     await Hive.openBox(settingsBoxName);
     final settingsBox = Hive.box(settingsBoxName);
@@ -59,5 +68,6 @@ class HiveInitializer {
     await Hive.openBox<InventoryItem>(inventoryBoxName);
     await Hive.openBox<ChainQuestProgress>(chainQuestProgressBoxName);
     await Hive.openBox<PersistedDialogEntry>(dialogQueueBoxName);
+    await Hive.openBox<BandAchievement>(bandAchievementBoxName);
   }
 }

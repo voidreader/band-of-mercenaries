@@ -65,6 +65,7 @@ StaticGameData _minimalStaticData({List<ItemData> items = const []}) {
     regionSectors: const [],
     craftingRecipes: const [],
     questPoolMaterialDrops: const [],
+    bandAchievementTemplates: const [],
   );
 }
 

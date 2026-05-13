@@ -40,6 +40,9 @@ import 'package:band_of_mercenaries/features/quest/domain/special_flag_processor
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_side_effects.dart';
 import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
 import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -818,6 +821,54 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       };
     }
 
+    // M6 페이즈 4 #1 — 엘리트 유니크 첫 처치 hook
+    if (quest.eliteId != null) {
+      final eliteData = staticData.eliteMonsters
+          .where((e) => e.id == quest.eliteId)
+          .firstOrNull;
+      if (eliteData != null && eliteData.isUnique) {
+        final achievementService = ref.read(achievementServiceProvider);
+        if (!achievementService.hasAchievement(
+          'elite_unique_first_kill:${quest.eliteId}',
+        )) {
+          try {
+            // top contributor: dispatchedMercIds 첫 번째 용병 스냅샷 구성
+            final topMercId = quest.dispatchedMercIds.isNotEmpty
+                ? quest.dispatchedMercIds.first
+                : null;
+            MercenarySnapshot? snapshot;
+            if (topMercId != null) {
+              final merc =
+                  mercs.where((m) => m.id == topMercId).firstOrNull;
+              final job = merc == null
+                  ? null
+                  : staticData.jobs
+                      .where((j) => j.id == merc.jobId)
+                      .firstOrNull;
+              if (merc != null && job != null) {
+                snapshot = MercenarySnapshot.fromMercenary(
+                  merc,
+                  jobName: job.name,
+                  tier: job.tier,
+                );
+              }
+            }
+            await achievementService.grant(
+              'elite_unique_first_kill:${quest.eliteId}',
+              mercSnapshot: snapshot,
+              regionId: quest.region,
+              payload: {
+                'eliteId': quest.eliteId,
+                'questId': quest.id,
+              },
+            );
+          } on Exception catch (e) {
+            debugPrint('[BOM][Achievement] elite hook 실패: $e');
+          }
+        }
+      }
+    }
+
     // M5 페이즈 4 #3 — quest_pool_material_drops: 퀘스트 풀에 연결된 재료를 확률 드롭
     final materialDrops = staticData.questPoolMaterialDrops
         .where((d) => d.poolId == quest.questPoolId)
@@ -871,6 +922,31 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
                   '${deadMerc.name}이(가) 사망했다. 투입 정수 누적 +$totalPermanent 소실',
                   ActivityLogType.essenceLostOnDeath,
                 );
+          }
+        }
+      }
+      // 사망 memorial hook — updateStatus 직전 snapshot 구성 (정보 손실 방지)
+      if (damage.newStatus == MercenaryStatus.dead) {
+        final deadMerc = mercs.where((m) => m.id == damage.mercId).firstOrNull;
+        if (deadMerc != null) {
+          try {
+            final job = staticData.jobs
+                .where((j) => j.id == deadMerc.jobId)
+                .firstOrNull;
+            if (job != null) {
+              final snapshot = MercenarySnapshot.fromMercenary(
+                deadMerc,
+                jobName: job.name,
+                tier: job.tier,
+              );
+              await ref.read(achievementServiceProvider).recordMemorial(
+                MemorialCause.diedQuest,
+                snapshot,
+                payload: {'questId': quest.id, 'regionId': quest.region},
+              );
+            }
+          } on Exception catch (e) {
+            debugPrint('[BOM][Achievement] memorial diedQuest 실패: $e');
           }
         }
       }

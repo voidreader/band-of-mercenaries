@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/models/crafting_recipe_data.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/achievement_service.dart';
 import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
 import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
@@ -39,6 +41,7 @@ class CraftingService {
     required this.chainQuestRepository,
     required this.userDataNotifier,
     required this.activityLogNotifier,
+    required this.achievementService,
   });
 
   final StaticGameData staticData;
@@ -47,6 +50,7 @@ class CraftingService {
   final ChainQuestRepository chainQuestRepository;
   final UserDataNotifier userDataNotifier;
   final ActivityLogNotifier activityLogNotifier;
+  final AchievementService achievementService;
 
   /// 레시피의 해금 조건과 재료 보유량을 평가하여 RecipeState를 반환한다.
   RecipeState evaluateState(CraftingRecipeData recipe) {
@@ -124,6 +128,23 @@ class CraftingService {
       '${resultItemData.name} 제작 완료',
       ActivityLogType.craftCompleted,
     );
+
+    // 희귀 등급(tier >= 3) 아이템 최초 제작 위업 hook
+    try {
+      if (resultItemData.tier >= 3 &&
+          !achievementService.hasAchievement('craft_first_rare:$recipeId')) {
+        await achievementService.grant(
+          'craft_first_rare:$recipeId',
+          payload: {
+            'recipeId': recipeId,
+            'itemId': recipe.resultItemId,
+            'tier': resultItemData.tier,
+          },
+        );
+      }
+    } on Exception catch (e) {
+      debugPrint('[BOM][Achievement] craft_first_rare 실패: $e');
+    }
 
     return CraftingSuccess(newItem);
   }

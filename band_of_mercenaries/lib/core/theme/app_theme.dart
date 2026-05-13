@@ -58,6 +58,9 @@ class AppTheme {
   // Chain quest colors
   static const Color chainGold = Color(0xFFD4AF37);           // 연계 퀘스트 금색
 
+  // Memorial / Achievement colors
+  static const Color memorialGray = Color(0xFF6E6E6E);        // 위업·연대기 회색
+
   // Crafting / RecipeCard insufficient 색상 (M5 페이즈 4 #2)
   static const Color dangerRed = Color(0xFFC62828);
 

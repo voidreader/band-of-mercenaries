@@ -62,6 +62,8 @@ enum ActivityLogType {
   craftCompleted,
   @HiveField(28)
   inventoryStackCapped,
+  @HiveField(29)
+  achievementUnlocked,
 }
 
 @HiveType(typeId: 7)

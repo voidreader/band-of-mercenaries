@@ -70,6 +70,7 @@ StaticGameData _makeStaticData({
     regionSectors: const [],
     craftingRecipes: const [],
     questPoolMaterialDrops: const [],
+    bandAchievementTemplates: const [],
   );
 }
 

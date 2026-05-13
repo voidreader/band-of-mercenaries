@@ -21,6 +21,7 @@ import 'package:band_of_mercenaries/features/investigation/data/region_state_rep
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
 
 final userDataProvider = StateNotifierProvider<UserDataNotifier, UserData?>((ref) {
   return UserDataNotifier(ref);
@@ -196,6 +197,17 @@ class UserDataNotifier extends StateNotifier<UserData?> {
       final newEffects = PassiveEffect.parseEffects(newRank.bonusJson);
       ref.read(reputationRankUpProvider.notifier).state =
           RankUpEvent(from: oldRank, to: newRank, newEffects: newEffects);
+      // F는 시작 등급이므로 제외
+      if (newRank.grade != 'F') {
+        try {
+          await ref.read(achievementServiceProvider).grant(
+            'reputation_rank:${newRank.grade}',
+            payload: {'fromGrade': oldRank.grade, 'toGrade': newRank.grade},
+          );
+        } on Exception catch (e) {
+          debugPrint('[BOM][Achievement] reputation_rank grant 실패: $e');
+        }
+      }
       ref.read(activityLogProvider.notifier).addLog(
         '명성 상승: ${oldRank.grade} → ${newRank.grade} (${newRank.name})',
         ActivityLogType.reputationRankUp,

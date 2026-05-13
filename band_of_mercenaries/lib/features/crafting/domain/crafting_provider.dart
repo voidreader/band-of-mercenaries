@@ -4,6 +4,7 @@ import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/models/crafting_recipe_data.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
 import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
 import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
@@ -19,6 +20,7 @@ final craftingServiceProvider = Provider<CraftingService>((ref) {
     chainQuestRepository: ref.watch(chainQuestRepositoryProvider),
     userDataNotifier: ref.read(userDataProvider.notifier),
     activityLogNotifier: ref.read(activityLogProvider.notifier),
+    achievementService: ref.read(achievementServiceProvider),
   );
 });
 

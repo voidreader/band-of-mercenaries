@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
@@ -7,6 +8,7 @@ import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
 import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/trust_level_up_event.dart';
@@ -256,6 +258,19 @@ class RegionStateRepository {
 
       // 신뢰도 단계 승급 이벤트 발행
       ref.read(settlementTrustLevelUpProvider.notifier).state = event;
+
+      // [FR-6] 거점 신뢰도 4단계(소속) 진입 시 위업 발급
+      if (newLevel == 4) {
+        try {
+          await ref.read(achievementServiceProvider).grant(
+            'settlement_trust_belonging:region_$regionId',
+            regionId: regionId,
+            payload: {'oldLevel': oldLevel, 'newLevel': newLevel},
+          );
+        } on Exception catch (e) {
+          debugPrint('[BOM][Achievement] settlement_trust_belonging grant 실패: $e');
+        }
+      }
 
       // 단계 승급 후 퀘스트 풀 갱신 (min_trust_level 조건 재평가)
       await ref.read(questListProvider.notifier).refreshAvailableQuests();

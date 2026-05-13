@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:band_of_mercenaries/core/providers/reputation_rank_up_provider.dart';
 import 'package:band_of_mercenaries/core/domain/passive_bonus_formatter.dart';
+import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 
 /// 랭크업 축하 다이얼로그.
 ///
@@ -76,6 +77,15 @@ class RankUpOverlay extends StatelessWidget {
                 ),
               ),
           ],
+          const SizedBox(height: 12),
+          const Divider(),
+          const Text(
+            '✨ 이 순간은 연대기에 새겨졌다',
+            style: TextStyle(
+              fontStyle: FontStyle.italic,
+              color: AppTheme.chainGold,
+            ),
+          ),
         ],
       ),
       actions: [

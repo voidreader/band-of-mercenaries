@@ -45,6 +45,7 @@ class SyncService {
     'travel_choice_results', // 26. 이동 선택지 결과 (M3 추가)
     'crafting_recipes', // 28. 제작 레시피 (M5 추가)
     'quest_pool_material_drops', // 29. 의뢰 풀 재료 드랍 (M5 추가)
+    'band_achievement_templates', // 30. 위업 템플릿 (M6 페이즈 4 #1 추가)
   ];
 
   SyncService({

@@ -23,6 +23,7 @@ class DialogTypeRegistry {
   static const String regionTransform = 'regionTransform';
   static const String settlementTrustUp = 'settlementTrustUp';
   static const String idleReward = 'idleReward';
+  static const String achievementUnlocked = 'achievementUnlocked';
 
   /// 등록된 전체 dialogType 키 집합. 영속 복원 시 필터링 기준으로 사용.
   static Set<String> get keys => {
@@ -35,6 +36,7 @@ class DialogTypeRegistry {
     regionTransform,
     settlementTrustUp,
     idleReward,
+    achievementUnlocked,
   };
 }
 
@@ -181,6 +183,11 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
       case DialogTypeRegistry.idleReward:
         final reward = map['reward'];
         return reward == null ? '부재 보상이 도착했습니다.' : '부재 보상 ${reward}G를 획득했습니다.';
+      case DialogTypeRegistry.achievementUnlocked:
+        final name = map['name'];
+        return name == null
+            ? '용병단의 새 위업이 기록되었습니다.'
+            : '용병단의 새 위업이 기록되었습니다: $name';
       default:
         return '표시되지 않은 알림이 있습니다.';
     }

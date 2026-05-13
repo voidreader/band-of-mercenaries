@@ -13,6 +13,9 @@ import 'package:band_of_mercenaries/core/domain/passive_bonus_service.dart';
 import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/evolution_choice.dart';
 import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
 
 final mercenaryRepositoryProvider = Provider((ref) => MercenaryRepository());
 
@@ -170,6 +173,26 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
         + merc.permanentIntelligence
         + merc.permanentVit
         + merc.permanentAgi;
+
+    // 방출 memorial 기록 — _repo.dismiss 호출 직전에 snapshot 구성
+    try {
+      final staticData = ref.read(staticDataProvider).valueOrNull;
+      final job = staticData?.jobs.where((j) => j.id == merc.jobId).firstOrNull;
+      if (staticData != null && job != null) {
+        final snapshot = MercenarySnapshot.fromMercenary(
+          merc,
+          jobName: job.name,
+          tier: job.tier,
+        );
+        await ref.read(achievementServiceProvider).recordMemorial(
+          MemorialCause.released,
+          snapshot,
+          payload: {'severancePay': severancePay},
+        );
+      }
+    } on Exception catch (e) {
+      debugPrint('[BOM][Achievement] memorial released 실패: $e');
+    }
 
     await ref.read(userDataProvider.notifier).spendGold(severancePay);
     await _repo.dismiss(mercId);

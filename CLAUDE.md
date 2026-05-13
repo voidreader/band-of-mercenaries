@@ -51,6 +51,7 @@ band_of_mercenaries/lib/
 │   ├── info/              # 정보 탭·FactionCodexScreen·FactionDetailScreen·FactionJoinService
 │   ├── settlement/        # 마을 방문·HerbalistService·거점 화면 3종·NPC 데이터
 │   ├── crafting/          # 제작 시스템·CraftingService·MaterialTab·RecipeListSection·낡은 대장간 화면
+│   ├── achievement/       # 위업·연대기·AchievementService·ChronicleScreen·AchievementUnlockedDialog·MercenarySnapshot 영속 보존
 │   └── settings/          # 설정 (시간 가속)
 └── shared/widgets/        # 공용 위젯 (BottomNavBar, TimerDisplay, StatusBadge, TierBadge 등)
 ```
@@ -90,6 +91,7 @@ band_of_mercenaries/lib/
 - `templateEngineProvider`: TemplateEngine — `{ns.field}` / `[if]` / `[pick A|B]` (`core/providers/template_engine_provider.dart`)
 - `craftingServiceProvider` · `craftingRecipesProvider` · `recipeStateProvider`(family, gameTickProvider watch — 1초 재평가) · `materialUsageCountProvider`(family) (`features/crafting/domain/crafting_provider.dart`)
 - `recipeFilterMaterialIdProvider` · `materialJumpTargetItemIdProvider`: StateProvider<String?> 일회성 컨텍스트, 양방향 점프 (인벤토리↔대장간) — 큐 미사용, 단순 publish/consume 패턴 (`features/crafting/domain/recipe_filter_provider.dart` / `material_jump_provider.dart`)
+- `achievementServiceProvider`: AchievementService 콜백 DI (`features/achievement/domain/achievement_service_provider.dart` — 순환 참조 회피로 분리. `achievement_provider.dart`에서 re-export). `bandAchievementsProvider`(StateNotifier, box.watch 구독 — sorted desc) · `renderedAchievementProvider`(family<String, achievementId> — TemplateEngine 렌더 캐싱, user는 read 1회) (`features/achievement/domain/achievement_provider.dart`)
 
 ### 데이터 흐름
 
@@ -105,7 +107,7 @@ band_of_mercenaries/lib/
 
 앱 문서 디렉토리 `cache/*.json`에 로컬 캐시. `data_versions` 테이블로 변경분만 갱신. 모든 모델은 snake_case `@JsonKey` (Dart 필드명과 동일하면 생략).
 
-**테이블 (27개):** regions(40개·5티어·sector_count 동적) · jobs(85개·5티어·role 컬럼) · trait_categories(8개) · traits(106개·선천35/acquired40/evolved31) · trait_conflicts(16쌍) · trait_transitions(16개) · trait_combo_evolutions(15개) · trait_synergies(39개) · difficulties(5단계) · quest_types · quest_pools(298행·is_fixed 고정의뢰 포함) · person_names(~500개) · travel_events · facilities · ranks · mercenary_wages · region_discoveries(discovery_type 6종 — info/elite/hidden_quest/faction_clue/transform/normal) · region_sectors(1-based sector_index) · factions(14개·공개6/비밀4/지역4) · elite_monsters(40종·거대 박쥐 포함) · elite_loot_tables(210행·material drop_type 포함) · chain_quests(7체인 24단계·settlement_3_pyegwang_reopen reward_items 5단계) · quest_narratives(88행) · travel_choice_events(12행) · travel_choice_options(30행) · travel_choice_results(72행) · crafting_recipes(10행·단일 트랜잭션 적용·old_smithy 한정) · quest_pool_material_drops(스키마 only·INSERT는 페이즈 4 #3)
+**테이블 (28개):** regions(40개·5티어·sector_count 동적) · jobs(85개·5티어·role 컬럼) · trait_categories(8개) · traits(106개·선천35/acquired40/evolved31) · trait_conflicts(16쌍) · trait_transitions(16개) · trait_combo_evolutions(15개) · trait_synergies(39개) · difficulties(5단계) · quest_types · quest_pools(298행·is_fixed 고정의뢰 포함) · person_names(~500개) · travel_events · facilities · ranks · mercenary_wages · region_discoveries(discovery_type 6종 — info/elite/hidden_quest/faction_clue/transform/normal) · region_sectors(1-based sector_index) · factions(14개·공개6/비밀4/지역4) · elite_monsters(40종·거대 박쥐 포함) · elite_loot_tables(210행·material drop_type 포함) · chain_quests(7체인 24단계·settlement_3_pyegwang_reopen reward_items 5단계) · quest_narratives(88행) · travel_choice_events(12행) · travel_choice_options(30행) · travel_choice_results(72행) · crafting_recipes(10행·단일 트랜잭션 적용·old_smithy 한정) · quest_pool_material_drops(스키마 only·INSERT는 페이즈 4 #3) · band_achievement_templates(26행·7카테고리·M6 페이즈 4 #1 추가·placeholder 7개는 elite_monsters.is_unique=true 후속 UPDATE 위임)
 
 **items 테이블 확장 (M5):** category 4종(personal_equipment/guild_equipment/consumable/material) · slot 16종(기존 11 + material_ore/material_hide/material_herb/material_relic_fragment/material_monster_part) · region_exclusive INTEGER NULL REFERENCES regions(id)
 
@@ -115,7 +117,7 @@ band_of_mercenaries/lib/
 
 ### 영속성 (Hive)
 
-10개 박스: `settings` · `user` · `mercenaries` · `quests` · `activityLogs` · `staticDataCache` · `regionStates` · `factionStates` · `chainQuestProgress` · `dialogQueue`
+11개 박스: `settings` · `user` · `mercenaries` · `quests` · `activityLogs` · `staticDataCache` · `regionStates` · `factionStates` · `chainQuestProgress` · `dialogQueue` · `bandAchievements`
 
 **typeId 점유 및 다음 HiveField 번호** — 새 모델/필드 추가 시 반드시 확인:
 
@@ -124,7 +126,7 @@ band_of_mercenaries/lib/
 | UserData | — | 24 |
 | Mercenary | — | 24 |
 | ActiveQuest | — | 26 |
-| ActivityLogType (enum) | 6 | 29 |
+| ActivityLogType (enum) | 6 | 30 |
 | RegionState | 8 | 8 |
 | FactionState | 9 | 6 |
 | FactionClueRecord | 10 | — |
@@ -132,8 +134,12 @@ band_of_mercenaries/lib/
 | ChainQuestProgress | 13 | — |
 | ChainQuestStatus | 14 | — |
 | PersistedDialogEntry | 15 | — |
+| BandAchievement | 16 | 7 |
+| BandAchievementType (enum) | 17 | 2 |
+| MercenarySnapshot | 18 | 5 (페이즈 4 #2에서 titleIds HiveField 5 추가 예정) |
+| MemorialCause (enum) | 19 | 3 |
 
-사용 중 typeId: 6·8·9·10·11·13·14·15. 신규 모델은 **16+** 사용.
+사용 중 typeId: 6·8·9·10·11·13·14·15·16·17·18·19. 신규 모델은 **20+** 사용. typeId 12는 여전히 미사용 (보존).
 주요 마이그레이션 플래그: `stat_migration_v2` (settings 박스, 일회성 초기화).
 
 ### 코드 생성
@@ -161,7 +167,8 @@ freezed · json_serializable · hive_generator · riverpod_generator — `build_
 - **제작 시스템**: `CraftingService` 콜백 DI — `evaluateState(recipe)` 4상태 평가(잠김/부족/충족, M5 MVP는 crafted 미적용) + `craft(recipeId)` 실행(consumeMaterial × N → addItem → ActivityLog `craftCompleted`). `unlock_condition_json`은 trustLevel/chainStep/firstAcquiredItem 3종 분기 (firstAcquiredItem은 `RegionState.firstAcquiredMaterialIds` HiveField 7 영속 추적 — 첫 입수 후 모두 소비해도 해금 유지). `InventoryRepository`는 `stackMaxByCategory > 1` 일반화 분기로 material/consumable stack 누적 + 999 클램프 + `consumeMaterial`/`getQuantityForItemId` 메서드 제공. 5종 드랍 출처 hook 모두 활성 — 의뢰(`quest_pool_material_drops`)·조사(`region_discoveries.discovery_data.items`)·엘리트(`elite_loot_tables` drop_type='material')·이동선택지(`travel_choice_results.effect_type='material_drop'`)·체인(`chain_quests.reward_items` JSONB). `RegionStateRepository.addAcquiredMaterial(regionId, itemId)` 멱등 메서드로 hook마다 영속 추적. 신뢰도 2/3단계 진입 시 일회성 재료 보너스(#6 ×1 / #1 ×3) 자동 지급. `QuestGenerator`는 `currentChainId/currentChainStep` 인자로 거대 박쥐 step 3 강제 spawn(M6+ 데이터 모델 마이그레이션 위임 TODO). 999 도달 시 `ActivityLogType.inventoryStackCapped` HiveField 28 활동 로그. 낡은 대장간(region 3 신뢰도 2단계+) RecipeListSection 4계층 정렬(상태→slot→tier→id) + banner/artifact 양자택일 그룹 헤더. 인벤토리 4탭째 MaterialTab(slot 6칩 + region_exclusive 시각 차별화) + 양방향 점프(🔨 ×N → 자동 필터 / 부족 재료 → 인벤토리 자동 진입)
 - **퀘스트 서사**: `QuestNarrativeService` — quest_type×result_type×is_elite 3중 필터 + weight 가중 랜덤 → `TemplateEngine` 렌더 → `renderedNarrative` 1회 저장 (재렌더 금지)
 - **방치형 보상**: 분당 1G, 최대 480G + 금고 보너스
-- **다이얼로그 큐**: 5계층 컨텐츠 공존 보장. priority: critical(rankUp) > high(chain/transform/trustUp) > medium(construction/investigation/travelChoice). critical은 `barrierDismissible: false`
+- **다이얼로그 큐**: 5계층 컨텐츠 공존 보장. priority: critical(rankUp) > high(chain/transform/trustUp/achievementUnlocked) > medium(construction/investigation/travelChoice). critical은 `barrierDismissible: false`
+- **위업·연대기 시스템**: `AchievementService` 콜백 DI — `grant(templateId, mercSnapshot?, regionId?, payload?)` 멱등 보장(hasAchievement 사전 체크) + 4단계 사이드이펙트(bandAchievementsBox.add → activityLog `★ 위업: {name}` → 카테고리 `reputation_rank` 제외 시 dialogQueue.enqueue → return BandAchievement). `recordMemorial(MemorialCause, MercenarySnapshot, payload?)`는 `(mercId, cause)` 중복 검사 후 box.add만(dialog/activityLog 미실행). `hasAchievement(templateId)` 동기 bool, `getAll()` achievedAt desc. 6 hook 통합 fail-soft trailing side effect: 체인(`ChainQuestService.completeChain` chainId prefix 분기 `chain_/settlement_` → `chain_completed:` / `settlement_event_completed:`) · 거점 신뢰도 4단계(`RegionStateRepository.addSettlementTrust` → `settlement_trust_belonging:region_$regionId`) · 명성 진입(`UserDataNotifier.addReputation` toGrade∈{E,D,C,B,A} → `reputation_rank:$grade`, RankUpDialog 본체 1줄 인라인이 dialog 대체) · 엘리트 유니크 첫 처치(`quest_provider` `_applyCompletionResult` 엘리트 분기 isUnique → `elite_unique_first_kill:$eliteId`) · T3+ 첫 제작(`CraftingService.craft` addItem 직후 tier>=3 → `craft_first_rare:$recipeId`) · 사망/방출 memorial(`quest_provider` dead 분기 + `MercenaryRepository.dismiss` 직전 snapshot 구성). `MercenarySnapshot` 5필드(id/name/jobId/jobName/tier)는 발급 시점 영속 보존(본체 삭제 후 참조). `bandAchievementsProvider`(StateNotifier·box.watch 구독) + `renderedAchievementProvider`(family·TemplateEngine 렌더 캐싱). `achievementServiceProvider`는 `achievement_service_provider.dart`에 분리하여 순환 참조 회피, `achievement_provider.dart`에서 re-export. ChronicleScreen은 상태 기반 렌더링(`_showChronicle` + `onBack`) — HomeScreen/InfoScreen 양쪽 진입점. AchievementUnlockedDialog는 high priority + `barrierDismissible: false` (확인 버튼만 dismiss). `band_achievement_templates` 26행 시드(chain 7·settlement_event 1·settlement_trust 1·reputation_rank 5·elite_unique 8·craft_first_rare 1·memorial 3, placeholder 7개는 elite_monsters.is_unique=true 후속 UPDATE 위임). 카테고리 7종 `_categoryOf(templateId)` `:` 앞 부분 추출. `MemorialCause` 3종(diedQuest/diedEvent/released, diedEvent는 travel_event_service 사망 분기 부재로 미적용 대기)
 
 ## 테스트 구조
 
@@ -187,6 +194,6 @@ cd band_of_mercenaries && flutter test test/features/mercenary/
 - 화면 전환은 `Navigator.push` 대신 상태 기반 렌더링 (파견 상세, 설정, 마을 방문, 정보 탭 내부 등)
 - 파견 화면: `sortedPendingQuestsProvider` 5계층 정렬. 카드에 `LayerSidebar` + `QuestCardBadges`(체인/엘리트/섹터/세력 배지). `ChainTopSection`(최대 3장) 별도 렌더, 거점 사건(`isSettlementStep`)은 일반 목록 최상단 `settlementTier`로 노출
 - 용병 상세: `selectedMercenaryIdProvider` 앱 레벨 오버레이. 성공률 분해: `SuccessRateBreakdownSheet`
-- AppTheme 주요 색상: `chainGold`(0xFFD4AF37) · `settlementAccent`(0xFFFFA000) · `eliteAccent`(#e65100) · `uniqueAccent`(#7b1fa2) · `dangerRed`(0xFFC62828, RecipeCard insufficient 부족 재료 텍스트)
+- AppTheme 주요 색상: `chainGold`(0xFFD4AF37) · `settlementAccent`(0xFFFFA000) · `eliteAccent`(#e65100) · `uniqueAccent`(#7b1fa2) · `dangerRed`(0xFFC62828, RecipeCard insufficient 부족 재료 텍스트) · `memorialGray`(0xFF6E6E6E, 추모 카드 카테고리 칩·아이콘·텍스트 강조)
 - 인벤토리 화면: 5탭(전체 / 개인 장비 / 길드 장비 / 소비 / 재료). MaterialTab은 slot 6칩 sub-filter + tier desc → 보유량 desc → id asc 정렬, 빈 상태에서 출처 가이드 토글
 - 낡은 대장간: M5 페이즈 4 #2부터 정식 제작 화면. `RecipeListSection` 4계층 정렬 + 그룹 헤더(banner 양자택일·artifact 동시 장착) + RecipeCard 4상태(locked/insufficient/ready) + [제작] 토스트(1.5초)

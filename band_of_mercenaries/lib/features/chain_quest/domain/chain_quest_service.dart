@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
 import 'package:band_of_mercenaries/core/models/user_data.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
 import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
@@ -27,7 +29,24 @@ class ChainCompletedEvent {
 class ChainQuestService {
   final ChainQuestRepository _repo;
 
-  ChainQuestService(this._repo);
+  /// 위업 발급 콜백 (선택). 주입 시 체인 완주 후 위업 grant 호출.
+  /// 미주입 시 hook skip (fail-soft).
+  final Future<void> Function(
+    String templateId,
+    MercenarySnapshot? snapshot,
+    int? regionId,
+    Map<String, dynamic> payload,
+  )? grantAchievement;
+
+  /// mercId → MercenarySnapshot 변환 콜백 (선택).
+  /// null이거나 mercId를 찾지 못하면 null 반환.
+  final MercenarySnapshot? Function(String? mercId)? buildSnapshot;
+
+  ChainQuestService(
+    this._repo, {
+    this.grantAchievement,
+    this.buildSnapshot,
+  });
 
   Future<bool> tryActivate({
     required String chainId,
@@ -156,6 +175,36 @@ class ChainQuestService {
         protagonistMercId: progress.protagonistMercId,
       ),
     );
+
+    // 체인 완주 위업 hook — grantAchievement 미주입 시 skip (fail-soft)
+    try {
+      if (grantAchievement != null) {
+        final String templateId;
+        MercenarySnapshot? snapshot;
+
+        if (chainId.startsWith('chain_')) {
+          // 일반 체인 7종 — protagonistMercId 기반 snapshot
+          templateId = 'chain_completed:$chainId';
+          snapshot = buildSnapshot?.call(progress.protagonistMercId);
+        } else if (chainId.startsWith('settlement_')) {
+          // 거점 사건 — protagonistMercId 기반 snapshot (null fallback 허용)
+          templateId = 'settlement_event_completed:$chainId';
+          snapshot = buildSnapshot?.call(progress.protagonistMercId);
+        } else {
+          // 알 수 없는 prefix — hook skip
+          return;
+        }
+
+        await grantAchievement!(
+          templateId,
+          snapshot,
+          finalStep.regionId,
+          {'chainId': chainId},
+        );
+      }
+    } on Exception catch (e) {
+      debugPrint('[BOM][Achievement] chain hook 실패 ($chainId): $e');
+    }
   }
 
   bool canAdvanceToFinal({
