@@ -113,6 +113,8 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.inventoryStackCapped;
       case 29:
         return ActivityLogType.achievementUnlocked;
+      case 30:
+        return ActivityLogType.titleUnlocked;
       default:
         return ActivityLogType.questResult;
     }
@@ -210,6 +212,9 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.achievementUnlocked:
         writer.writeByte(29);
+        break;
+      case ActivityLogType.titleUnlocked:
+        writer.writeByte(30);
         break;
     }
   }

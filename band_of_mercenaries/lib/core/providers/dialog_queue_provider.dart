@@ -24,6 +24,8 @@ class DialogTypeRegistry {
   static const String settlementTrustUp = 'settlementTrustUp';
   static const String idleReward = 'idleReward';
   static const String achievementUnlocked = 'achievementUnlocked';
+  // M6 페이즈 4 #2 — 칭호 해금 다이얼로그 (11번째)
+  static const String titleUnlocked = 'titleUnlocked';
 
   /// 등록된 전체 dialogType 키 집합. 영속 복원 시 필터링 기준으로 사용.
   static Set<String> get keys => {
@@ -37,6 +39,7 @@ class DialogTypeRegistry {
     settlementTrustUp,
     idleReward,
     achievementUnlocked,
+    titleUnlocked,
   };
 }
 
@@ -188,6 +191,11 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
         return name == null
             ? '용병단의 새 위업이 기록되었습니다.'
             : '용병단의 새 위업이 기록되었습니다: $name';
+      case DialogTypeRegistry.titleUnlocked:
+        final titleName = map['titleName'];
+        return titleName == null
+            ? '새 칭호가 발급되었습니다.'
+            : '새 칭호가 발급되었습니다: $titleName';
       default:
         return '표시되지 않은 알림이 있습니다.';
     }

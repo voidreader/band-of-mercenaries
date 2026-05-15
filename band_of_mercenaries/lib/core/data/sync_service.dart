@@ -46,6 +46,7 @@ class SyncService {
     'crafting_recipes', // 28. 제작 레시피 (M5 추가)
     'quest_pool_material_drops', // 29. 의뢰 풀 재료 드랍 (M5 추가)
     'band_achievement_templates', // 30. 위업 템플릿 (M6 페이즈 4 #1 추가)
+    'titles', // 31. 칭호 (M6 페이즈 4 #2 추가)
   ];
 
   SyncService({

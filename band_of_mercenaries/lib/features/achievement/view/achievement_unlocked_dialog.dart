@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
+import 'package:band_of_mercenaries/core/models/title_data.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/achievement_provider.dart';
 
 class AchievementUnlockedDialog extends ConsumerWidget {
   final BandAchievement achievement;
+  final List<TitleData> grantedTitles;
   final VoidCallback? onDismiss;
 
   const AchievementUnlockedDialog({
     super.key,
     required this.achievement,
+    this.grantedTitles = const [],
     this.onDismiss,
   });
 
@@ -66,6 +69,19 @@ class AchievementUnlockedDialog extends ConsumerWidget {
               fontStyle: FontStyle.italic,
             ),
           ),
+          // 칭호 획득 1줄 인라인 (FR-35)
+          if (grantedTitles.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              grantedTitles.length <= 2
+                  ? '┝ 칭호 획득: ${grantedTitles.map((t) => t.name).join(", ")}'
+                  : '┝ 칭호 획득: ${grantedTitles.first.name} 외 ${grantedTitles.length - 1}종',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppTheme.chainGold,
+              ),
+            ),
+          ],
         ],
       ),
       actions: [

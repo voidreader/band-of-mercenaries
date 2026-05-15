@@ -32,6 +32,7 @@ import 'package:band_of_mercenaries/core/models/travel_choice_result_data.dart';
 import 'package:band_of_mercenaries/core/models/crafting_recipe_data.dart'; // M5 추가
 import 'package:band_of_mercenaries/core/models/quest_pool_material_drop_data.dart'; // M5 추가
 import 'package:band_of_mercenaries/core/models/band_achievement_template.dart'; // M6 페이즈 4 #1 추가
+import 'package:band_of_mercenaries/core/models/title_data.dart'; // M6 페이즈 4 #2 추가
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -64,6 +65,7 @@ class StaticGameData {
   final List<CraftingRecipeData> craftingRecipes; // M5 추가
   final List<QuestPoolMaterialDropData> questPoolMaterialDrops; // M5 추가
   final List<BandAchievementTemplate> bandAchievementTemplates; // M6 페이즈 4 #1 추가
+  final List<TitleData> titles; // M6 페이즈 4 #2 추가
 
   const StaticGameData({
     required this.difficulties,
@@ -96,6 +98,7 @@ class StaticGameData {
     required this.craftingRecipes, // M5 추가
     required this.questPoolMaterialDrops, // M5 추가
     required this.bandAchievementTemplates, // M6 페이즈 4 #1 추가
+    required this.titles, // M6 페이즈 4 #2 추가
   });
 }
 
@@ -134,5 +137,6 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     craftingRecipes: dataLoader.loadFromCache('crafting_recipes', CraftingRecipeData.fromJson), // M5 추가
     questPoolMaterialDrops: dataLoader.loadFromCache('quest_pool_material_drops', QuestPoolMaterialDropData.fromJson), // M5 추가
     bandAchievementTemplates: dataLoader.loadFromCache('band_achievement_templates', BandAchievementTemplate.fromJson), // M6 페이즈 4 #1 추가
+    titles: dataLoader.loadFromCache('titles', TitleData.fromJson), // M6 페이즈 4 #2 추가
   );
 });

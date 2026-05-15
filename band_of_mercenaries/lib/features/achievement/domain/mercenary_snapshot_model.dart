@@ -20,12 +20,17 @@ class MercenarySnapshot {
   @HiveField(4)
   final int tier;
 
+  /// 직함 ID 목록 (발급 시점 동결)
+  @HiveField(5)
+  final List<String> titleIds;
+
   const MercenarySnapshot({
     required this.id,
     required this.name,
     required this.jobId,
     required this.jobName,
     required this.tier,
+    this.titleIds = const [],
   });
 
   /// Mercenary 객체에서 snapshot 생성. jobName과 tier는 외부에서 주입.
@@ -34,6 +39,7 @@ class MercenarySnapshot {
     Mercenary mercenary, {
     required String jobName,
     required int tier,
+    List<String>? titleIds,
   }) =>
       MercenarySnapshot(
         id: mercenary.id,
@@ -41,5 +47,6 @@ class MercenarySnapshot {
         jobId: mercenary.jobId,
         jobName: jobName,
         tier: tier,
+        titleIds: List<String>.from(titleIds ?? mercenary.titleIds),
       );
 }

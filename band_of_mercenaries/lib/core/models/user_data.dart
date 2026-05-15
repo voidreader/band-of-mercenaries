@@ -80,6 +80,14 @@ class UserData extends HiveObject {
   @HiveField(23)
   DateTime? lastSmithyRepairAt;
 
+  /// 용병단 기함 용병 ID (nullable)
+  @HiveField(24)
+  String? flagshipMercId;
+
+  /// 마지막 파견 주인공 용병 ID (nullable)
+  @HiveField(25)
+  String? lastDispatchProtagonistMercId;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -105,6 +113,8 @@ class UserData extends HiveObject {
     this.choiceEventId,
     this.herbalistCooldownEndTime,
     this.lastSmithyRepairAt,
+    this.flagshipMercId,
+    this.lastDispatchProtagonistMercId,
   })  : facilities = facilities ?? {},
         artifactItemIds = artifactItemIds ?? <String>[],
         completedChains = completedChains ?? <String>[];

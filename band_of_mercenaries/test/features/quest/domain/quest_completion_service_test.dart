@@ -71,6 +71,7 @@ StaticGameData _makeStaticData({
     craftingRecipes: const [],
     questPoolMaterialDrops: const [],
     bandAchievementTemplates: const [],
+    titles: const [],
   );
 }
 

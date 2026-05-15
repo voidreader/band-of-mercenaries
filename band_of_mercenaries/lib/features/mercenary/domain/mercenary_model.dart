@@ -95,6 +95,14 @@ class Mercenary extends HiveObject {
   @HiveField(23)
   DateTime? traitLearningBoostUntil;
 
+  /// 위업 시스템 — 획득한 직함 ID 목록
+  @HiveField(24)
+  List<String> titleIds;
+
+  /// 모집 시각
+  @HiveField(25)
+  DateTime? recruitedAt;
+
   Mercenary({
     required this.id,
     required this.name,
@@ -120,10 +128,13 @@ class Mercenary extends HiveObject {
     this.permanentVit = 0,
     this.permanentAgi = 0,
     this.traitLearningBoostUntil,
+    List<String>? titleIds,
+    this.recruitedAt,
   })  : stats = stats ?? {},
         traitIds = traitIds ?? [],
         traitHistory = traitHistory ?? [],
-        deletedTraitIds = deletedTraitIds ?? [];
+        deletedTraitIds = deletedTraitIds ?? [],
+        titleIds = List<String>.from(titleIds ?? <String>[]);
 
   List<String> get allTraitIds {
     if (traitIds.isNotEmpty) return traitIds;

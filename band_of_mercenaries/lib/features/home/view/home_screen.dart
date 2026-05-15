@@ -29,6 +29,7 @@ import 'package:band_of_mercenaries/core/providers/dialog_queue_provider.dart';
 import 'package:band_of_mercenaries/core/models/dialog_request.dart';
 import 'package:band_of_mercenaries/features/achievement/view/chronicle_home_card.dart';
 import 'package:band_of_mercenaries/features/achievement/view/chronicle_screen.dart';
+import 'package:band_of_mercenaries/features/title/view/flagship_home_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -369,6 +370,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
 
+                // 간판 용병 카드
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  child: FlagshipHomeCard(),
+                ),
+
                 // 연대기 카드
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -598,6 +605,8 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '⚠️', color: AppTheme.settlementAccent, bold: false);
       case ActivityLogType.achievementUnlocked:
         return (icon: '★', color: AppTheme.chainGold, bold: true);
+      case ActivityLogType.titleUnlocked:
+        return (icon: '✩', color: AppTheme.chainGold, bold: true);
     }
   }
 

@@ -392,4 +392,23 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     state!.save();
     state = state;
   }
+
+  /// 간판 용병 ID를 수동 지정. null이면 자동 선정으로 복귀.
+  Future<void> setFlagshipMercId(String? mercId) async {
+    if (state == null) return;
+    state!.flagshipMercId = mercId;
+    await state!.save();
+    state = state;
+  }
+
+  /// 간판 용병 수동 지정 해제 → 자동 선정으로 복귀.
+  Future<void> clearFlagship() => setFlagshipMercId(null);
+
+  /// 마지막 파견 주인공 용병 ID 갱신. 파견 완료 hook에서 호출.
+  Future<void> updateLastDispatchProtagonist(String? mercId) async {
+    if (state == null) return;
+    state!.lastDispatchProtagonistMercId = mercId;
+    await state!.save();
+    state = state;
+  }
 }

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:collection/collection.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/settings_keys.dart';
@@ -154,6 +155,14 @@ class MercenaryRepository {
       orElse: () => throw Exception('Mercenary not found: $mercId'),
     );
     merc.traitLearningBoostUntil = until;
+    await merc.save();
+  }
+
+  /// 칭호 목록을 영속화한다.
+  Future<void> updateTitleIds(String mercId, List<String> titleIds) async {
+    final merc = _box.values.where((m) => m.id == mercId).firstOrNull;
+    if (merc == null) return;  // fail-soft
+    merc.titleIds = List<String>.from(titleIds);
     await merc.save();
   }
 }

@@ -19,6 +19,7 @@ import 'package:band_of_mercenaries/features/mercenary/view/trait_history_sectio
 import 'package:band_of_mercenaries/features/mercenary/view/trait_detail_dialog.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_profile_header.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_role_synergy_section.dart';
+import 'package:band_of_mercenaries/features/title/view/titles_section.dart';
 import 'package:band_of_mercenaries/shared/widgets/status_badge.dart';
 import 'package:band_of_mercenaries/features/inventory/view/essence_select_sheet.dart';
 
@@ -188,6 +189,8 @@ class _MercenaryDetailOverlayState
                       ),
                       const SizedBox(height: 16),
                       MercenarySynergySection(merc: merc, job: job, allTraits: allTraits),
+                      const SizedBox(height: 16),
+                      TitlesSection(mercenary: merc),
                       const SizedBox(height: 16),
                       BehaviorStatsSection(stats: merc.stats),
                       const SizedBox(height: 16),

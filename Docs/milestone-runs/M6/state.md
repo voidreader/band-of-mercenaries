@@ -1,7 +1,7 @@
 # M6 실행 상태
 
 > 시작: 2026-05-05T11:40:25Z
-> 마지막 업데이트: 2026-05-13 (페이즈 2 종료 체크포인트 승인, 페이즈 3 스킵, 페이즈 4 진입)
+> 마지막 업데이트: 2026-05-13 (페이즈 4 #1 명세·구현·커밋 완료, 페이즈 4 #2 진입 대기)
 > 현재 페이즈: 4
 > 상태: in_progress
 
@@ -88,10 +88,12 @@
 **상태**: in_progress
 
 계획된 산출물:
-- [ ] 1. 위업·연대기 시스템 명세 (`achievement_chronicle_spec`)
+- [x] 1. 위업·연대기 시스템 명세 (`achievement_chronicle_spec`)
   - 입력: 페이즈 1 #1 + 페이즈 2 #2
   - 핵심: BandAchievement 모델 + chronicle 신규 Hive 박스(typeId 16+) + AchievementService 5 hook + 홈 카드 + 다이얼로그 큐 통합 + 사망 보존
-  - 산출물: (미생성)
+  - 산출물: `Docs/spec/[spec]20260513_M6_phase4_1_achievement-chronicle.md` (54.9KB)
+  - 완료: 2026-05-13 (spec-writer 산출 + verify-spec PASS + implement-agent 15 TASK 순차 격리 모드 구현 완료 + finalize-feature commit `3f14c34`)
+  - 핵심 결정: AchievementService 4 메서드(grant/recordMemorial/hasAchievement/getAll) 콜백 DI / 6 hook fail-soft trailing(체인·거점신뢰도·명성·엘리트유니크·T3+제작·사망/방출) / Hive 박스 11번째 `bandAchievements` typeId 16~19(BandAchievement·BandAchievementType·MercenarySnapshot·MemorialCause) / Supabase 30번째 테이블 `band_achievement_templates` 26행 시드(placeholder 7개 elite is_unique=true 후속 UPDATE 위임 + craft_first_rare 2행 T3+ 레시피 미존재로 제외) / AchievementUnlockedDialog high priority + reputation_rank 카테고리는 RankUpDialog 본체 인라인 / ChronicleScreen 상태 기반 렌더링(`_showChronicle`+`onBack`) HomeScreen·InfoScreen 양쪽 진입 / MercenarySnapshot 5필드 영속 보존(페이즈 4 #2 titleIds HiveField 5 호환) / 순환 참조 회피로 `achievement_service_provider.dart` 분리·re-export / TravelEventService `diedEvent` hook 미구현(사망 분기 부재, MemorialCause enum만 정의) / 구현 계획서: `Docs/spec/[spec]20260513_M6_phase4_1_achievement-chronicle_plan.md`
 - [ ] 2. 칭호·간판 용병 시스템 명세 (`title_flagship_spec`)
   - 입력: 페이즈 1 #2 + 페이즈 2 #1
   - 핵심: Mercenary.titleIds + flagshipFlag + Supabase titles 테이블 + TitleService + FlagshipMercenaryService + 용병 상세/홈 UI
@@ -118,3 +120,5 @@
 - 2026-05-13: 페이즈 2 #2 "노출 빈도·획득 페이스 밸런스" 완료 (`[balance]20260513_exposure-pacing.md`, 28.4KB) — 시간당 8 파견 가정 ✓ / 3종 페이스 모드(보수/평균/적극) / 통합 페이스 표 확정 / α=3 정량 검증(매 갱신 64% 등장) / 24h 쿨다운 회전 ✓ / 무게감 보존 ✓ / 페이즈 3 스킵 권장 / 페이즈 4 모니터링 지표 6종 / 5개 오픈 질문 / **페이즈 2 전체 완료**
 - 2026-05-13: `--resume` 재호출. 페이즈 2 #2 매칭·체크 완료, 페이즈 2 상태 in_progress → completed. 종료 체크포인트 대기
 - 2026-05-13: 페이즈 2 종료 체크포인트 사용자 `skip` 결정 → 페이즈 3 skipped + 페이즈 4 진입. 페이즈 4 #1 "위업·연대기 시스템 명세" 진행 대기
+- 2026-05-13: 페이즈 4 #1 "위업·연대기 시스템 명세" 완료 (`[spec]20260513_M6_phase4_1_achievement-chronicle.md`, 54.9KB) — spec-writer + verify-spec PASS / implement-agent 15 TASK 순차 격리 모드(planner → coder×15 + verifier×15 + flutter-reviewer×15 → 빌드 게이트 → final integration sanity check) / 28개 파일 변경 + dart-build-resolver 1회(테스트 fixture 4건) + TASK-4 5건 medium 정리 + TASK-14 BLOCK 1건 재작업(Navigator.push → 상태 기반 렌더링) / finalize-feature commit `3f14c34` + CLAUDE.md 갱신(typeId 16~19 + 박스 11 + 테이블 28) + Archive 4 사본 + CHANGELOG fragment + plan 문서
+- 2026-05-13: `--resume` 재호출. 페이즈 4 #1 매칭·체크 완료 → #2 "칭호·간판 용병 시스템 명세" 진입 대기

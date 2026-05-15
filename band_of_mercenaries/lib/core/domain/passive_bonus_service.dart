@@ -26,6 +26,7 @@ class PassiveBonusService {
     required List<FactionData> joinedFactions,
     List<PassiveEffect> personalEquipmentLegendaries = const [],
     List<PassiveEffect> guildEquipments = const [],
+    List<PassiveEffect> titleEffects = const [],  // 신규 (M6 페이즈 4 #2)
   }) {
     final buffer = <PassiveEffect>[];
 
@@ -48,13 +49,15 @@ class PassiveBonusService {
     // 장비 소스 append
     buffer.addAll(personalEquipmentLegendaries);
     buffer.addAll(guildEquipments);
+    // 칭호 효과 append (M6 페이즈 4 #2)
+    buffer.addAll(titleEffects);
 
     return CollectedEffects(buffer);
   }
 
   // ─────────── 가산 스태킹 계열 ────────────
 
-  /// 퀘스트 보상 배수. `all` + 해당 questType 가산 후 `1.0 + sum` 반환.
+  /// 퀘스트 보상 배수. `all` + 해당 questType 가산 후 `1.0 + clamped` 반환.
   static double getQuestRewardMultiplier(CollectedEffects ce, String questType) {
     double sum = 0.0;
     for (final e in ce.effects) {
@@ -64,7 +67,9 @@ class PassiveBonusService {
         }
       }
     }
-    return 1.0 + sum;
+    // M6 페이즈 4 #2: 가산 상한 +0.30 (페이즈 2 #1 Q-1 결정, reputationGainModifier 동일 정책)
+    final clamped = sum.clamp(0.0, 0.30);
+    return 1.0 + clamped;
   }
 
   /// 퀘스트 성공률 보너스 (%p). 공유 상한 +20%p 클램프.
@@ -125,7 +130,8 @@ class PassiveBonusService {
         sum += e.value;
       }
     }
-    return sum;
+    // M6 페이즈 4 #2: 가산 상한 +0.30 (페이즈 2 #1 Q-1 결정, reputationGainModifier 동일 정책)
+    return sum.clamp(0.0, 0.30);
   }
 
   // ─────────── 곱셈 스태킹 계열 (하한 0.10) ────────────

@@ -136,6 +136,8 @@ class RecruitmentService {
       vit: job.baseVit,
       agi: job.baseAgi,
       traitIds: innateTraitKeys,
+      recruitedAt: DateTime.now(), // FR-41
+      titleIds: const [],
     );
   }
 

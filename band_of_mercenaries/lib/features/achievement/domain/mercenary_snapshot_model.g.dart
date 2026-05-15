@@ -22,13 +22,14 @@ class MercenarySnapshotAdapter extends TypeAdapter<MercenarySnapshot> {
       jobId: fields[2] as String,
       jobName: fields[3] as String,
       tier: fields[4] as int,
+      titleIds: (fields[5] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, MercenarySnapshot obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class MercenarySnapshotAdapter extends TypeAdapter<MercenarySnapshot> {
       ..writeByte(3)
       ..write(obj.jobName)
       ..writeByte(4)
-      ..write(obj.tier);
+      ..write(obj.tier)
+      ..writeByte(5)
+      ..write(obj.titleIds);
   }
 
   @override

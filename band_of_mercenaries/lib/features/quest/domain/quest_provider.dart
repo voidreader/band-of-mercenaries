@@ -8,7 +8,7 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart'
-    show QuestCompletionService, QuestCompletionResult, TraitEventResult;
+    show QuestCompletionService, QuestCompletionResult, TraitEventResult, MercDamageResult;
 import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dart'
     show EliteLootResult;
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
@@ -43,6 +43,9 @@ import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
+import 'package:band_of_mercenaries/features/title/domain/title_provider.dart';
+import 'package:band_of_mercenaries/features/title/domain/title_service_provider.dart';
+import 'package:band_of_mercenaries/features/title/domain/mercenary_title_effects.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -713,11 +716,17 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     };
 
     // 세력·명성 패시브 + 장비 소스를 합산한 최종 CollectedEffects
+    // M6 페이즈 4 #2 (Q-10): 파티 첫 번째 mercenary의 칭호 효과만 단독 합산
+    final titles = ref.read(titlesProvider);
+    final titleEffects = mercs.isNotEmpty
+        ? MercenaryTitleEffects.collectFor(mercs.first, titles)
+        : const <PassiveEffect>[];
     final basePassive = _collectPassiveEffects();
     final passiveEffects = CollectedEffects([
       ...basePassive.effects,
       ...guildEquipments,
       ...personalEquipmentLegendaries,
+      ...titleEffects,
     ]);
 
     final result = QuestCompletionService.calculate(
@@ -948,6 +957,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           } on Exception catch (e) {
             debugPrint('[BOM][Achievement] memorial diedQuest 실패: $e');
           }
+          // FR-31: 수동 간판 mercenary 사망 시 자동 복귀
+          try {
+            final userData = ref.read(userDataProvider);
+            if (userData != null && userData.flagshipMercId == deadMerc.id) {
+              await ref.read(userDataProvider.notifier).clearFlagship();
+            }
+          } on Exception catch (e) {
+            debugPrint('[BOM][Title] flagship 해제 실패 (사망): $e');
+          }
         }
       }
       if (damage.newStatus != MercenaryStatus.normal) {
@@ -956,6 +974,27 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           damage.newStatus,
           endTime: damage.recoveryEndTime,
         );
+      }
+      // M6 페이즈 4 #2 (FR-30) — 부상 진입 시 status hook 평가 (legendary 다운그레이드 포함)
+      if (damage.newStatus == MercenaryStatus.injured) {
+        try {
+          final chainProgressList =
+              await ref.read(chainQuestProgressProvider.future);
+          final chainProgressMap = <String, ChainQuestProgress>{
+            for (final p in chainProgressList) p.chainId: p,
+          };
+          await ref.read(titleServiceProvider).evaluateStatusHook(
+            damage.mercId,
+            MercenaryStatus.injured,
+            {
+              'chainProgressMap': chainProgressMap,
+              'questId': quest.id,
+              'regionId': quest.region,
+            },
+          );
+        } on Exception catch (e) {
+          debugPrint('[BOM][Title] status hook 실패: $e');
+        }
       }
       // 전설 ⑤ 사망 방지 발동 시 쿨다운 기록
       if (damage.legendaryPreventedDeath && damage.newCooldownUntil != null) {
@@ -1065,6 +1104,68 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             singleEvoCandidates: singleCandidates,
             comboEvoCandidates: comboCandidates,
           );
+        }
+      }
+    }
+
+    // M6 페이즈 4 #2 (FR-26·FR-29) — region 카운터 갱신 + action_stat hook 평가
+    // 사망/방출 등 newStatus=dead 인 mercenary는 건너뛰고 생존자만 카운트
+    final statKey = 'region_${quest.region}_dispatch_count';
+    for (final merc in mercs) {
+      final damage =
+          result.mercDamages.firstWhere((d) => d.mercId == merc.id);
+      if (damage.newStatus == MercenaryStatus.dead) continue;
+      final latest = mercRepo.getAll().firstWhere(
+        (m) => m.id == merc.id,
+        orElse: () => merc,
+      );
+      final updatedStats = Map<String, int>.from(latest.stats);
+      updatedStats[statKey] = (updatedStats[statKey] ?? 0) + 1;
+      await mercRepo.updateStats(merc.id, updatedStats);
+      try {
+        await ref.read(titleServiceProvider).evaluateActionStatHook(merc.id);
+      } on Exception catch (e) {
+        debugPrint('[BOM][Title] action_stat hook 실패: $e');
+      }
+    }
+
+    // M6 페이즈 4 #2 (FR-27·FR-29) — 성공/대성공 시 최고 기여 mercenary 캐시
+    if (result.resultType == QuestResult.success ||
+        result.resultType == QuestResult.greatSuccess) {
+      final survivors = quest.dispatchedMercIds.where((id) {
+        final d = result.mercDamages.firstWhere(
+          (md) => md.mercId == id,
+          orElse: () => const MercDamageResult(
+            mercId: '',
+            newStatus: MercenaryStatus.normal,
+          ),
+        );
+        return d.mercId.isNotEmpty && d.newStatus != MercenaryStatus.dead;
+      }).toList();
+      String? topMercId;
+      if (survivors.isNotEmpty) {
+        final allMercs = mercRepo.getAll();
+        int bestScore = -1;
+        for (final id in survivors) {
+          final m = allMercs.where((x) => x.id == id).firstOrNull;
+          if (m == null) continue;
+          final score = m.effectiveStr +
+              m.effectiveIntelligence +
+              m.effectiveVit +
+              m.effectiveAgi;
+          if (score > bestScore) {
+            bestScore = score;
+            topMercId = m.id;
+          }
+        }
+      }
+      if (topMercId != null) {
+        try {
+          await ref
+              .read(userDataProvider.notifier)
+              .updateLastDispatchProtagonist(topMercId);
+        } on Exception catch (e) {
+          debugPrint('[BOM][Title] lastDispatch 갱신 실패: $e');
         }
       }
     }

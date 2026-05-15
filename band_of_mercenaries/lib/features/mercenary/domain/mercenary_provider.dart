@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/features/mercenary/data/mercenary_repository.dart';
@@ -161,6 +162,12 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
     if (changed) _load();
   }
 
+  /// 칭호 영속화 — TitleService._grantTitle에서 호출.
+  Future<void> updateTitleIds(String mercId, List<String> titleIds) async {
+    await _repo.updateTitleIds(mercId, titleIds);
+    _load();
+  }
+
   Future<bool> dismiss(String mercId, int severancePay) async {
     final userData = ref.read(userDataProvider);
     if (userData == null || userData.gold < severancePay) return false;
@@ -205,6 +212,16 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
         ? '용병 "${merc.name}" 방출 (퇴직금: ${severancePay}G, 투입 정수 누적 +$totalPermanent 소실)'
         : '용병 "${merc.name}" 방출 (퇴직금: ${severancePay}G)';
     ref.read(activityLogProvider.notifier).addLog(message, logType);
+
+    // 수동 간판 mercenary 방출 시 자동 복귀 (M6 페이즈 4 #2 FR-31)
+    try {
+      final latestUserData = ref.read(userDataProvider);
+      if (latestUserData != null && latestUserData.flagshipMercId == mercId) {
+        await ref.read(userDataProvider.notifier).clearFlagship();
+      }
+    } on Exception catch (e) {
+      debugPrint('[BOM][Title] flagship 해제 실패 (dismiss): $e');
+    }
 
     return true;
   }

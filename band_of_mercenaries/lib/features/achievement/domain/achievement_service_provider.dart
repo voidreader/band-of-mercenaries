@@ -9,6 +9,8 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/achievement_service.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
 import 'package:band_of_mercenaries/features/achievement/view/achievement_unlocked_dialog.dart';
+import 'package:band_of_mercenaries/features/title/domain/achievement_hook_context_builder.dart';
+import 'package:band_of_mercenaries/features/title/domain/title_service_provider.dart';
 
 /// AchievementService 싱글턴 Provider.
 ///
@@ -33,10 +35,15 @@ final achievementServiceProvider = Provider<AchievementService>((ref) {
     enqueueDialog: (req) =>
         ref.read(dialogQueueProvider.notifier).enqueue(req),
     templates: staticData?.bandAchievementTemplates ?? const [],
-    buildAchievementDialog: (achievement, onDismiss) =>
+    buildAchievementDialog: (achievement, grantedTitles, onDismiss) =>
         AchievementUnlockedDialog(
           achievement: achievement,
+          grantedTitles: grantedTitles,
           onDismiss: onDismiss,
         ),
+    evaluateAchievementHook: (ach, ctx) async {
+      return await ref.read(titleServiceProvider).evaluateAchievementHook(ach, ctx);
+    },
+    buildHookContext: (ach) => buildAchievementHookContext(ref, ach),
   );
 });

@@ -5,10 +5,13 @@ import 'package:uuid/uuid.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/models/band_achievement_template.dart';
 import 'package:band_of_mercenaries/core/models/dialog_request.dart';
+import 'package:band_of_mercenaries/core/models/title_data.dart';
 import 'package:band_of_mercenaries/core/providers/dialog_queue_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
+import 'package:band_of_mercenaries/features/title/domain/title_service.dart'
+    show AchievementHookContext;
 
 /// 위업·연대기 발급 진입점.
 ///
@@ -23,6 +26,8 @@ class AchievementService {
     required this.enqueueDialog,
     required this.templates,
     required this.buildAchievementDialog,
+    this.evaluateAchievementHook,
+    this.buildHookContext,
   });
 
   final Box<BandAchievement> box;
@@ -33,8 +38,21 @@ class AchievementService {
 
   /// 다이얼로그 위젯 빌더 — Provider 바인딩 시점에 주입.
   /// AchievementUnlockedDialog가 후속 TASK에서 생성되므로 서비스 자체는 위젯 타입에 의존하지 않는다.
-  final Widget Function(BandAchievement achievement, VoidCallback onDismiss)
-      buildAchievementDialog;
+  final Widget Function(
+    BandAchievement achievement,
+    List<TitleData> grantedTitles,
+    VoidCallback onDismiss,
+  ) buildAchievementDialog;
+
+  /// 칭호 hook 평가 콜백 (M6 페이즈 4 #2) — nullable, 페이즈 4 #1 호환.
+  final Future<List<TitleData>> Function(
+    BandAchievement achievement,
+    AchievementHookContext context,
+  )? evaluateAchievementHook;
+
+  /// hook 컨텍스트 빌더 콜백 (M6 페이즈 4 #2) — nullable, 페이즈 4 #1 호환.
+  final AchievementHookContext Function(BandAchievement achievement)?
+      buildHookContext;
 
   /// 위업 발급. 멱등성 보장 ([hasAchievement] 사전 체크).
   ///
@@ -72,6 +90,17 @@ class AchievementService {
           : '★ 위업: $name — $mercName';
       addLog(logMessage, ActivityLogType.achievementUnlocked);
 
+      // (2.5) 칭호 hook 평가 (M6 페이즈 4 #2) — fail-soft. 콜백 nullable로 페이즈 4 #1 호환.
+      List<TitleData> grantedTitles = const [];
+      try {
+        if (evaluateAchievementHook != null && buildHookContext != null) {
+          final ctx = buildHookContext!(achievement);
+          grantedTitles = await evaluateAchievementHook!(achievement, ctx);
+        }
+      } on Exception catch (e) {
+        debugPrint('[BOM][Title] hook 평가 실패: $e');
+      }
+
       // reputation_rank 카테고리는 RankUpDialog 본체 인라인 연출이 대체하므로 별도 다이얼로그 큐 enqueue 생략.
       final category = _categoryOf(templateId);
       if (category != 'reputation_rank') {
@@ -86,10 +115,11 @@ class AchievementService {
               'name': name,
               'mercSnapshotName': mercName,
               'regionId': regionId,
+              'grantedTitles': grantedTitles.map((t) => t.name).toList(),
               ...payload,
             },
             builder: (context, onDismiss) =>
-                buildAchievementDialog(achievement, onDismiss),
+                buildAchievementDialog(achievement, grantedTitles, onDismiss),
           ),
         );
       }
