@@ -33,6 +33,10 @@ _$QuestPoolImpl _$$QuestPoolImplFromJson(Map<String, dynamic> json) =>
           (json['duration_override_seconds'] as num?)?.toInt(),
       trustRewardOverride: (json['trust_reward_override'] as num?)?.toInt(),
       minTrustLevel: (json['min_trust_level'] as num?)?.toInt() ?? 0,
+      isNamed: json['is_named'] as bool? ?? false,
+      namedHookType: json['named_hook_type'] as String?,
+      namedHookValue: json['named_hook_value'] as String?,
+      namedCooldownHours: (json['named_cooldown_hours'] as num?)?.toInt() ?? 24,
     );
 
 Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
@@ -59,4 +63,8 @@ Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
       'duration_override_seconds': instance.durationOverrideSeconds,
       'trust_reward_override': instance.trustRewardOverride,
       'min_trust_level': instance.minTrustLevel,
+      'is_named': instance.isNamed,
+      'named_hook_type': instance.namedHookType,
+      'named_hook_value': instance.namedHookValue,
+      'named_cooldown_hours': instance.namedCooldownHours,
     };

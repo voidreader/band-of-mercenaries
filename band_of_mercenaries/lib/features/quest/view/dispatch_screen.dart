@@ -6,6 +6,7 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/providers/timer_provider.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
 import 'package:band_of_mercenaries/core/models/dialog_request.dart';
+import 'package:band_of_mercenaries/core/models/quest_pool.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart' show TraitEventResult;
@@ -16,6 +17,7 @@ import 'package:band_of_mercenaries/features/quest/domain/sorted_quests_provider
 import 'package:band_of_mercenaries/features/quest/view/dispatch_detail_page.dart';
 import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
 import 'package:band_of_mercenaries/features/quest/view/chain_top_section.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/evolution_choice.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/trait_acquisition_dialog.dart';
@@ -380,6 +382,13 @@ class _QuestCard extends ConsumerWidget {
         ? null
         : data.factions.where((f) => f.id == quest.factionTag).firstOrNull;
 
+    // 지명 의뢰 정보 (M6 페이즈 4 #3)
+    final isNamed = pool?.isNamed ?? false;
+    String? namedSublabel;
+    if (isNamed && pool != null) {
+      namedSublabel = _resolveNamedHookLabel(pool, data);
+    }
+
     return QuestLayerInfo(
       chain: chain,
       isElite: quest.isElite,
@@ -387,12 +396,89 @@ class _QuestCard extends ConsumerWidget {
       sectorType: sectorType,
       faction: faction,
       isFactionExclusive: quest.isFactionExclusive,
+      isNamed: isNamed,
+      namedSublabel: namedSublabel,
     );
+  }
+
+  /// 지명 hook 타입을 서브라벨 문자열로 변환한다 (M6 페이즈 4 #3).
+  static String? _resolveNamedHookLabel(QuestPool pool, StaticGameData data) {
+    final hookType = pool.namedHookType;
+    final hookValue = pool.namedHookValue;
+    switch (hookType) {
+      case 'title':
+        if (hookValue != null) {
+          final title = data.titles.where((t) => t.id == hookValue).firstOrNull;
+          return title != null ? '칭호 — ${title.name}' : '칭호 보유 용병 지명';
+        }
+        return '칭호 보유 용병 지명';
+      case 'achievement_count':
+        return hookValue != null ? '위업 $hookValue개 이상' : '위업';
+      case 'flagship':
+        return '간판 용병 지명';
+      default:
+        return null; // fallback: '지명'만 표시
+    }
+  }
+
+  /// M6 페이즈 4 #3 — 지명 의뢰 카드 잠금 여부.
+  /// hook=title: 칭호 보유 alive mercenary 전원 파견 중일 때 true
+  /// hook=flagship: namedTargetMercId 동결 mercenary가 파견 중일 때 true
+  /// hook=achievement_count: 잠금 무관 (false)
+  static bool _isNamedQuestLocked(
+    ActiveQuest quest,
+    QuestPool pool,
+    List<Mercenary> mercs,
+  ) {
+    if (!pool.isNamed) return false;
+    switch (pool.namedHookType) {
+      case 'title':
+        final candidates = mercs
+            .where((m) =>
+                m.titleIds.contains(pool.namedHookValue) &&
+                m.status != MercenaryStatus.dead)
+            .toList();
+        if (candidates.isEmpty) return false;
+        return candidates.every((m) => m.isDispatched);
+      case 'flagship':
+        final targetId = quest.namedTargetMercId;
+        if (targetId == null) return false;
+        final target = mercs.where((m) => m.id == targetId).firstOrNull;
+        if (target == null || target.status == MercenaryStatus.dead) return false;
+        return target.isDispatched;
+      default:
+        return false;
+    }
+  }
+
+  /// M6 페이즈 4 #3 — 잠금 토스트에 표시할 지명 용병 이름.
+  /// hook=title: 첫 번째 alive title 보유 용병 이름
+  /// hook=flagship: namedTargetMercId 동결 용병 이름
+  /// 알 수 없으면 "지명 용병" fallback
+  static String _resolveLockedMercName(
+    ActiveQuest quest,
+    QuestPool pool,
+    List<Mercenary> mercs,
+  ) {
+    switch (pool.namedHookType) {
+      case 'title':
+        final candidate = mercs.where((m) =>
+            m.titleIds.contains(pool.namedHookValue) &&
+            m.status != MercenaryStatus.dead).firstOrNull;
+        return candidate?.name ?? '지명 용병';
+      case 'flagship':
+        final targetId = quest.namedTargetMercId;
+        if (targetId == null) return '지명 용병';
+        return mercs.where((m) => m.id == targetId).firstOrNull?.name ?? '지명 용병';
+      default:
+        return '지명 용병';
+    }
   }
 
   /// 이름 색상을 계층 우선순위에 따라 결정한다.
   Color? _nameColor(QuestLayerInfo layerInfo) {
     if (layerInfo.chain != null) return AppTheme.primary;
+    if (layerInfo.isNamed) return AppTheme.namedAccent;
     if (layerInfo.isElite && layerInfo.isUnique) return AppTheme.eliteUniqueAccent;
     if (layerInfo.isElite) return AppTheme.eliteAccent;
     return null; // 기본 onSurface
@@ -405,6 +491,8 @@ class _QuestCard extends ConsumerWidget {
     if (isFixed) return const Color(0xFF00ACC1);
     // 체인 → 금색 우선 (세력 전용과 중첩 시도 금색)
     if (layerInfo.chain != null) return AppTheme.chainGold;
+    // 지명 의뢰 → namedAccent
+    if (layerInfo.isNamed) return AppTheme.namedAccent;
     // 세력 전용 → 세력 컬러
     if (layerInfo.isFactionExclusive && layerInfo.faction != null) {
       return FactionData.parseColor(layerInfo.faction!.color);
@@ -425,18 +513,19 @@ class _QuestCard extends ConsumerWidget {
     final nameColor = _nameColor(layerInfo);
     final borderColor = _borderColor(layerInfo, isSelected, isFixed: isFixed);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: borderColor),
-          boxShadow: isSelected ? [const BoxShadow(color: Colors.black12, blurRadius: 4)] : null,
-        ),
-        child: IntrinsicHeight(
-          child: Row(
+    // M6 페이즈 4 #3 — 지명 의뢰 잠금 상태 계산
+    final mercList = ref.watch(mercenaryListProvider);
+    final locked = pool != null ? _isNamedQuestLocked(quest, pool, mercList) : false;
+
+    Widget cardContent = Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor),
+        boxShadow: isSelected ? [const BoxShadow(color: Colors.black12, blurRadius: 4)] : null,
+      ),
+      child: IntrinsicHeight(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 좌측 사이드바 (계층 색상)
@@ -581,8 +670,65 @@ class _QuestCard extends ConsumerWidget {
               ),
             ),
           ],
-          ),
         ),
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Stack(
+        children: [
+          // 잠금 상태일 때 카드 전체를 dimming + 탭 차단
+          Opacity(
+            opacity: locked ? 0.4 : 1.0,
+            child: AbsorbPointer(
+              absorbing: locked,
+              child: GestureDetector(
+                onTap: onTap,
+                child: cardContent,
+              ),
+            ),
+          ),
+          // M6 페이즈 4 #3 — 잠금 오버레이: 투명 탭 감지
+          if (locked)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  // locked == true 일 때 pool != null 이 Dart flow analysis에 의해 보장됨
+                  final mercName = _resolveLockedMercName(quest, pool, mercList);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('지명 용병 $mercName이(가) 복귀해야 수행할 수 있습니다'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+                behavior: HitTestBehavior.opaque,
+                child: const ColoredBox(color: Colors.transparent),
+              ),
+            ),
+          // 잠금 배지
+          if (locked)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppTheme.textHint.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  '지명 용병 복귀 대기',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

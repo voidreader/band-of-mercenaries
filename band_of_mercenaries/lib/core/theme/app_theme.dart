@@ -58,6 +58,10 @@ class AppTheme {
   // Chain quest colors
   static const Color chainGold = Color(0xFFD4AF37);           // 연계 퀘스트 금색
 
+  // Named quest accent (M6 페이즈 4 #3 — 지명 의뢰 5계층 색상 분리)
+  // chain=금 / settlement=주황 / named=분홍 / faction=세력별 / elite=주황
+  static const Color namedAccent = Color(0xFFE91E63);          // 지명 의뢰 분홍 마젠타
+
   // Memorial / Achievement colors
   static const Color memorialGray = Color(0xFF6E6E6E);        // 위업·연대기 회색
 

@@ -1,9 +1,9 @@
 # M6 실행 상태
 
 > 시작: 2026-05-05T11:40:25Z
-> 마지막 업데이트: 2026-05-13 (페이즈 4 #1 명세·구현·커밋 완료, 페이즈 4 #2 진입 대기)
+> 마지막 업데이트: 2026-05-15 (페이즈 4 #3 명세·구현·검증 완료, finalize 대기)
 > 현재 페이즈: 4
-> 상태: in_progress
+> 상태: completed
 
 ## 로드맵 요구사항 요약
 
@@ -85,7 +85,7 @@
 
 ## 페이즈 4: 개발 명세
 
-**상태**: in_progress
+**상태**: completed
 
 계획된 산출물:
 - [x] 1. 위업·연대기 시스템 명세 (`achievement_chronicle_spec`)
@@ -94,14 +94,18 @@
   - 산출물: `Docs/spec/[spec]20260513_M6_phase4_1_achievement-chronicle.md` (54.9KB)
   - 완료: 2026-05-13 (spec-writer 산출 + verify-spec PASS + implement-agent 15 TASK 순차 격리 모드 구현 완료 + finalize-feature commit `3f14c34`)
   - 핵심 결정: AchievementService 4 메서드(grant/recordMemorial/hasAchievement/getAll) 콜백 DI / 6 hook fail-soft trailing(체인·거점신뢰도·명성·엘리트유니크·T3+제작·사망/방출) / Hive 박스 11번째 `bandAchievements` typeId 16~19(BandAchievement·BandAchievementType·MercenarySnapshot·MemorialCause) / Supabase 30번째 테이블 `band_achievement_templates` 26행 시드(placeholder 7개 elite is_unique=true 후속 UPDATE 위임 + craft_first_rare 2행 T3+ 레시피 미존재로 제외) / AchievementUnlockedDialog high priority + reputation_rank 카테고리는 RankUpDialog 본체 인라인 / ChronicleScreen 상태 기반 렌더링(`_showChronicle`+`onBack`) HomeScreen·InfoScreen 양쪽 진입 / MercenarySnapshot 5필드 영속 보존(페이즈 4 #2 titleIds HiveField 5 호환) / 순환 참조 회피로 `achievement_service_provider.dart` 분리·re-export / TravelEventService `diedEvent` hook 미구현(사망 분기 부재, MemorialCause enum만 정의) / 구현 계획서: `Docs/spec/[spec]20260513_M6_phase4_1_achievement-chronicle_plan.md`
-- [ ] 2. 칭호·간판 용병 시스템 명세 (`title_flagship_spec`)
+- [x] 2. 칭호·간판 용병 시스템 명세 (`title_flagship_spec`)
   - 입력: 페이즈 1 #2 + 페이즈 2 #1
   - 핵심: Mercenary.titleIds + flagshipFlag + Supabase titles 테이블 + TitleService + FlagshipMercenaryService + 용병 상세/홈 UI
-  - 산출물: (미생성)
-- [ ] 3. 지명 의뢰 시스템 명세 (`named_quest_spec`)
+  - 산출물: `Docs/Archive/20260515_M6_phase4_2_titles-flagship/spec.md` + `plan.md` (아카이브됨)
+  - 완료: 2026-05-15 (spec-pipeline + visual-companion 3 wireframe + implement-agent 16 TASK 순차 격리 모드 + finalize-feature commit `f6bc960`)
+  - 핵심 결정: TitleService 콜백 DI 9개(titles/getMercenary/updateMercenaryTitles/addLog/enqueueDialog/hasAchievement/bandAchievements/staticData/buildTitleDialog) — 순환 참조 회피로 `title_service_provider.dart` 분리, hasAchievement/bandAchievements는 Hive box 직접 조회 / 3 hook 평가(evaluateAchievementHook Future / evaluateActionStatHook / evaluateStatusHook 모두 async) — (a) 위업 hook은 AchievementService.grant 본체 (2.5)에 통합 + grantedTitles dialog 1줄 인라인 / (b)·(c)는 신규 TitleUnlockedDialog(high) / hook_target 5종 모두 구현(require_protagonist / first_only / last_dispatch_protagonist UserData HiveField 25 캐시 / most_dispatched_to_region_3 stats 카운터 / top_contributor_24h 단순화 fallback) / FlagshipMercenaryService.selectAuto() 5단계 정렬(titleIds.length DESC → 위업 주인공 횟수 DESC → level DESC → partyPower DESC → recruitedAt ASC) + handleMercDeathOrRelease 자동 복귀 / `flagshipMercenaryProvider`(userData/mercList/bandAchievements 3종 watch) 수동(HiveField 24) 우선·자동 fallback / Mercenary.titleIds HiveField 24 + recruitedAt HiveField 25 / UserData.flagshipMercId HiveField 24 + lastDispatchProtagonistMercId HiveField 25 / MercenarySnapshot.titleIds HiveField 5(fromMercenary 자동 사본 동결) / PassiveBonusService titleEffects 인자 + MercenaryTitleEffects.collectFor 헬퍼(파티 첫 mercenary 단독 적용) + clamp +0.30 명시(questRewardMultiplier·mercenaryXpBonus) / ActivityLogType HiveField 30 titleUnlocked / Supabase 31번째 테이블 `titles` 신규 + 11행 시드(achievement×6 + action_stat×4 + status×1) / 페이즈 4 #1 `band_achievement_templates` 26행 시드도 함께 적용(누락 보완) / TitleUnlockedDialog high priority + barrierDismissible: false / TitlesSection(MercenarySynergySection 다음, BehaviorStatsSection 직전) + FlagshipToggleButton 4상태 분기 / FlagshipHomeCard(야영지 이미지 다음, ChronicleHomeCard 직전, gameTickProvider watch — 1초 재평가) / DialogTypeRegistry titleUnlocked 추가(10→11종) / 4 hook 통합 fail-soft trailing(파견 결과·부상 진입·사망 분기·dismiss 분기) / 단위 테스트 12 케이스(flagship_mercenary_service_test.dart) / 페이즈 2 #1 4개 오픈 질문 해소(titleEffects 옵션 인자 / questRewardMultiplier +0.30 / mercenaryXpBonus +0.30 / 11종 모두 hook_target 구현)
+- [x] 3. 지명 의뢰 시스템 명세 (`named_quest_spec`)
   - 입력: 페이즈 1 #2·#3 + 페이즈 2 #2 + 페이즈 4 #2 (Mercenary.titleIds 의존)
-  - 핵심: Supabase named_quests 테이블 + NamedQuestService + QuestGenerator 통합 + 의뢰 카드 차별화 UI
-  - 산출물: (미생성)
+  - 핵심: quest_pools 4 컬럼 확장(is_named/named_hook_type/named_hook_value/named_cooldown_hours) + NamedQuestService + QuestGenerator 통합 + NamedTier 정렬 슬롯 + 의뢰 카드 차별화 UI + 7행 SQL 인라인
+  - 산출물: `Docs/spec/[spec]20260515_M6_phase4_3_named-quests.md` + `Docs/superpowers/plans/2026-05-15-named-quests.md`
+  - 완료: 2026-05-15 (spec-pipeline + writing-plans + subagent-driven-development 16 TASK 구현 + flutter test 558+개 통과)
+  - 핵심 결정: HiveField 26 (UserData.namedQuestCooldowns + ActiveQuest.namedTargetMercId) + ActivityLogType.namedQuestTerminated HiveField 31 / quest_pools 4 컬럼 + 7행 INSERT / QuestGenerator named hook + α=3 가중치 + 24h 쿨다운 / QuestSortService NamedTier 7슬롯 / TASK 12 사망·방출 자동 종료 / TASK 13·14 UI 차별화 + LockOverlay / namedAccent 색상 (0xFFE91E63)
 
 ## 실행 이력
 
@@ -122,3 +126,7 @@
 - 2026-05-13: 페이즈 2 종료 체크포인트 사용자 `skip` 결정 → 페이즈 3 skipped + 페이즈 4 진입. 페이즈 4 #1 "위업·연대기 시스템 명세" 진행 대기
 - 2026-05-13: 페이즈 4 #1 "위업·연대기 시스템 명세" 완료 (`[spec]20260513_M6_phase4_1_achievement-chronicle.md`, 54.9KB) — spec-writer + verify-spec PASS / implement-agent 15 TASK 순차 격리 모드(planner → coder×15 + verifier×15 + flutter-reviewer×15 → 빌드 게이트 → final integration sanity check) / 28개 파일 변경 + dart-build-resolver 1회(테스트 fixture 4건) + TASK-4 5건 medium 정리 + TASK-14 BLOCK 1건 재작업(Navigator.push → 상태 기반 렌더링) / finalize-feature commit `3f14c34` + CLAUDE.md 갱신(typeId 16~19 + 박스 11 + 테이블 28) + Archive 4 사본 + CHANGELOG fragment + plan 문서
 - 2026-05-13: `--resume` 재호출. 페이즈 4 #1 매칭·체크 완료 → #2 "칭호·간판 용병 시스템 명세" 진입 대기
+- 2026-05-15: 페이즈 4 #2 "칭호·간판 용병 시스템 명세" 완료 (`[spec]20260515_M6_phase4_2_titles-flagship.md`, 70.5KB) — spec-pipeline(spec-writer + verify-spec) PASS / visual-companion 3 wireframe HTML(flagship_home_card / titles_section / title_unlocked_dialog) / implement-agent 16 TASK 순차 격리 모드 / Hive 박스 0+typeId 추가 0(MercenarySnapshot HiveField 5 titleIds + Mercenary HiveField 24·25 + UserData HiveField 24·25 + ActivityLogType HiveField 30) / Supabase 31번째 `titles` + 11행 시드 / 페이즈 4 #1 `band_achievement_templates` 26행도 함께 적용(누락 보완) / TitleService 9 콜백 / FlagshipMercenaryService 5단계 정렬 / hook_target 5종 모두 구현(사용자 결정) / PassiveBonusService titleEffects 옵션 인자 + clamp +0.30(사용자 결정 2종) / TitleUnlockedDialog high + AchievementUnlocked 본체 1줄 인라인 / FlagshipHomeCard + TitlesSection + FlagshipToggleButton 4상태 / 단위 테스트 12 케이스 / finalize-feature commit `f6bc960` + CLAUDE.md 갱신 + Archive 4 사본 + CHANGELOG fragment + plan 문서
+- 2026-05-15: `--resume` 재호출. 페이즈 4 #2 매칭·체크 완료 → #3 "지명 의뢰 시스템 명세" 진입 대기
+- 2026-05-15: 페이즈 4 #3 "지명 의뢰 시스템 명세" 명세 작성 (Sonnet spec-pipeline, verify-spec PASS) + writing-plans 16 TASK 작성 + subagent-driven-development 순차 구현 + flutter test 558+개 통과 + 통합 검증 완료
+- 2026-05-15: M6 마일스톤 전체 완료. 페이즈 1·2 산출물 5개 + 페이즈 4 #1·#2·#3 명세·구현 3개. roadmap 종료 조건 4건 모두 충족.

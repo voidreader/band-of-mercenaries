@@ -66,6 +66,8 @@ enum ActivityLogType {
   achievementUnlocked,
   @HiveField(30)
   titleUnlocked,
+  @HiveField(31)
+  namedQuestTerminated,
 }
 
 @HiveType(typeId: 7)

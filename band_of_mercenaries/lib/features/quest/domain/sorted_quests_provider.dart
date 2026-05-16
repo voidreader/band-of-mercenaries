@@ -30,7 +30,7 @@ final sortedPendingQuestsProvider = Provider<QuestSortResult>((ref) {
 
   final staticData = staticDataAsync.valueOrNull;
   if (userData == null || staticData == null) {
-    return const QuestSortResult(chainTier0: [], settlementTier: [], sortedRest: []);
+    return const QuestSortResult(chainTier0: [], settlementTier: [], namedTier: [], sortedRest: []);
   }
 
   final pending = quests.where((q) => q.status == QuestStatus.pending).toList();

@@ -10,11 +10,13 @@ class LayerSidebarResolver {
   static Color? resolveColor(QuestLayerInfo info) {
     // 1. 체인 다음 단계 (금색)
     if (info.chain != null) return AppTheme.chainGold;
-    // 2. 엘리트 유니크 (진보라)
+    // 2. 지명 의뢰 (분홍 마젠타) — M6 페이즈 4 #3
+    if (info.isNamed) return AppTheme.namedAccent;
+    // 3. 엘리트 유니크 (진보라)
     if (info.isElite && info.isUnique) return AppTheme.eliteUniqueBorder;
-    // 3. 엘리트 보통 (주황)
+    // 4. 엘리트 보통 (주황)
     if (info.isElite) return AppTheme.eliteBorder;
-    // 4~6. 변형 섹터 유형
+    // 5~7. 변형 섹터 유형
     switch (info.sectorType) {
       case 'hidden':
         return AppTheme.transformHidden;
@@ -23,11 +25,11 @@ class LayerSidebarResolver {
       case 'village':
         return AppTheme.transformVillage;
     }
-    // 7. 세력 전용
+    // 8. 세력 전용
     if (info.isFactionExclusive && info.faction != null) {
       return FactionData.parseColor(info.faction!.color);
     }
-    // 8. 일반 — 사이드바 생략
+    // 9. 일반 — 사이드바 생략
     return null;
   }
 }

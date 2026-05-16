@@ -63,6 +63,13 @@ class QuestLayerInfo {
   /// 전용 퀘스트 여부.
   final bool isFactionExclusive;
 
+  /// 지명 의뢰 여부 (M6 페이즈 4 #3).
+  final bool isNamed;
+
+  /// 지명 배지 하위 라벨 (hook에 따라 결정, M6 페이즈 4 #3).
+  /// ex) '칭호 — 마을의 은인' / '위업 3개 이상' / '간판 용병 지명'
+  final String? namedSublabel;
+
   const QuestLayerInfo({
     this.chain,
     this.isElite = false,
@@ -70,5 +77,7 @@ class QuestLayerInfo {
     this.sectorType,
     this.faction,
     this.isFactionExclusive = false,
+    this.isNamed = false,
+    this.namedSublabel,
   });
 }

@@ -63,7 +63,16 @@ mixin _$QuestPool {
   int? get trustRewardOverride =>
       throw _privateConstructorUsedError; // 단계별 노출 제어 컬럼 (페이즈 2 #3)
   @JsonKey(name: 'min_trust_level')
-  int get minTrustLevel => throw _privateConstructorUsedError;
+  int get minTrustLevel =>
+      throw _privateConstructorUsedError; // 지명 의뢰 컬럼 (M6 페이즈 4 #3)
+  @JsonKey(name: 'is_named')
+  bool get isNamed => throw _privateConstructorUsedError;
+  @JsonKey(name: 'named_hook_type')
+  String? get namedHookType => throw _privateConstructorUsedError;
+  @JsonKey(name: 'named_hook_value')
+  String? get namedHookValue => throw _privateConstructorUsedError;
+  @JsonKey(name: 'named_cooldown_hours')
+  int get namedCooldownHours => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -98,7 +107,11 @@ abstract class $QuestPoolCopyWith<$Res> {
       @JsonKey(name: 'reward_xp_bonus_override') int? rewardXpBonusOverride,
       @JsonKey(name: 'duration_override_seconds') int? durationOverrideSeconds,
       @JsonKey(name: 'trust_reward_override') int? trustRewardOverride,
-      @JsonKey(name: 'min_trust_level') int minTrustLevel});
+      @JsonKey(name: 'min_trust_level') int minTrustLevel,
+      @JsonKey(name: 'is_named') bool isNamed,
+      @JsonKey(name: 'named_hook_type') String? namedHookType,
+      @JsonKey(name: 'named_hook_value') String? namedHookValue,
+      @JsonKey(name: 'named_cooldown_hours') int namedCooldownHours});
 }
 
 /// @nodoc
@@ -136,6 +149,10 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
     Object? durationOverrideSeconds = freezed,
     Object? trustRewardOverride = freezed,
     Object? minTrustLevel = null,
+    Object? isNamed = null,
+    Object? namedHookType = freezed,
+    Object? namedHookValue = freezed,
+    Object? namedCooldownHours = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -226,6 +243,22 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
           ? _value.minTrustLevel
           : minTrustLevel // ignore: cast_nullable_to_non_nullable
               as int,
+      isNamed: null == isNamed
+          ? _value.isNamed
+          : isNamed // ignore: cast_nullable_to_non_nullable
+              as bool,
+      namedHookType: freezed == namedHookType
+          ? _value.namedHookType
+          : namedHookType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      namedHookValue: freezed == namedHookValue
+          ? _value.namedHookValue
+          : namedHookValue // ignore: cast_nullable_to_non_nullable
+              as String?,
+      namedCooldownHours: null == namedCooldownHours
+          ? _value.namedCooldownHours
+          : namedCooldownHours // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -260,7 +293,11 @@ abstract class _$$QuestPoolImplCopyWith<$Res>
       @JsonKey(name: 'reward_xp_bonus_override') int? rewardXpBonusOverride,
       @JsonKey(name: 'duration_override_seconds') int? durationOverrideSeconds,
       @JsonKey(name: 'trust_reward_override') int? trustRewardOverride,
-      @JsonKey(name: 'min_trust_level') int minTrustLevel});
+      @JsonKey(name: 'min_trust_level') int minTrustLevel,
+      @JsonKey(name: 'is_named') bool isNamed,
+      @JsonKey(name: 'named_hook_type') String? namedHookType,
+      @JsonKey(name: 'named_hook_value') String? namedHookValue,
+      @JsonKey(name: 'named_cooldown_hours') int namedCooldownHours});
 }
 
 /// @nodoc
@@ -296,6 +333,10 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
     Object? durationOverrideSeconds = freezed,
     Object? trustRewardOverride = freezed,
     Object? minTrustLevel = null,
+    Object? isNamed = null,
+    Object? namedHookType = freezed,
+    Object? namedHookValue = freezed,
+    Object? namedCooldownHours = null,
   }) {
     return _then(_$QuestPoolImpl(
       id: null == id
@@ -386,6 +427,22 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
           ? _value.minTrustLevel
           : minTrustLevel // ignore: cast_nullable_to_non_nullable
               as int,
+      isNamed: null == isNamed
+          ? _value.isNamed
+          : isNamed // ignore: cast_nullable_to_non_nullable
+              as bool,
+      namedHookType: freezed == namedHookType
+          ? _value.namedHookType
+          : namedHookType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      namedHookValue: freezed == namedHookValue
+          ? _value.namedHookValue
+          : namedHookValue // ignore: cast_nullable_to_non_nullable
+              as String?,
+      namedCooldownHours: null == namedCooldownHours
+          ? _value.namedCooldownHours
+          : namedCooldownHours // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -416,7 +473,11 @@ class _$QuestPoolImpl implements _QuestPool {
       @JsonKey(name: 'reward_xp_bonus_override') this.rewardXpBonusOverride,
       @JsonKey(name: 'duration_override_seconds') this.durationOverrideSeconds,
       @JsonKey(name: 'trust_reward_override') this.trustRewardOverride,
-      @JsonKey(name: 'min_trust_level') this.minTrustLevel = 0})
+      @JsonKey(name: 'min_trust_level') this.minTrustLevel = 0,
+      @JsonKey(name: 'is_named') this.isNamed = false,
+      @JsonKey(name: 'named_hook_type') this.namedHookType,
+      @JsonKey(name: 'named_hook_value') this.namedHookValue,
+      @JsonKey(name: 'named_cooldown_hours') this.namedCooldownHours = 24})
       : _specialFlags = specialFlags;
 
   factory _$QuestPoolImpl.fromJson(Map<String, dynamic> json) =>
@@ -494,10 +555,23 @@ class _$QuestPoolImpl implements _QuestPool {
   @override
   @JsonKey(name: 'min_trust_level')
   final int minTrustLevel;
+// 지명 의뢰 컬럼 (M6 페이즈 4 #3)
+  @override
+  @JsonKey(name: 'is_named')
+  final bool isNamed;
+  @override
+  @JsonKey(name: 'named_hook_type')
+  final String? namedHookType;
+  @override
+  @JsonKey(name: 'named_hook_value')
+  final String? namedHookValue;
+  @override
+  @JsonKey(name: 'named_cooldown_hours')
+  final int namedCooldownHours;
 
   @override
   String toString() {
-    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType, specialFlags: $specialFlags, enemyName: $enemyName, isFixed: $isFixed, fixedChainId: $fixedChainId, fixedStep: $fixedStep, trustThreshold: $trustThreshold, rewardGoldOverride: $rewardGoldOverride, rewardXpBonusOverride: $rewardXpBonusOverride, durationOverrideSeconds: $durationOverrideSeconds, trustRewardOverride: $trustRewardOverride, minTrustLevel: $minTrustLevel)';
+    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType, specialFlags: $specialFlags, enemyName: $enemyName, isFixed: $isFixed, fixedChainId: $fixedChainId, fixedStep: $fixedStep, trustThreshold: $trustThreshold, rewardGoldOverride: $rewardGoldOverride, rewardXpBonusOverride: $rewardXpBonusOverride, durationOverrideSeconds: $durationOverrideSeconds, trustRewardOverride: $trustRewardOverride, minTrustLevel: $minTrustLevel, isNamed: $isNamed, namedHookType: $namedHookType, namedHookValue: $namedHookValue, namedCooldownHours: $namedCooldownHours)';
   }
 
   @override
@@ -544,7 +618,14 @@ class _$QuestPoolImpl implements _QuestPool {
             (identical(other.trustRewardOverride, trustRewardOverride) ||
                 other.trustRewardOverride == trustRewardOverride) &&
             (identical(other.minTrustLevel, minTrustLevel) ||
-                other.minTrustLevel == minTrustLevel));
+                other.minTrustLevel == minTrustLevel) &&
+            (identical(other.isNamed, isNamed) || other.isNamed == isNamed) &&
+            (identical(other.namedHookType, namedHookType) ||
+                other.namedHookType == namedHookType) &&
+            (identical(other.namedHookValue, namedHookValue) ||
+                other.namedHookValue == namedHookValue) &&
+            (identical(other.namedCooldownHours, namedCooldownHours) ||
+                other.namedCooldownHours == namedCooldownHours));
   }
 
   @JsonKey(ignore: true)
@@ -572,7 +653,11 @@ class _$QuestPoolImpl implements _QuestPool {
         rewardXpBonusOverride,
         durationOverrideSeconds,
         trustRewardOverride,
-        minTrustLevel
+        minTrustLevel,
+        isNamed,
+        namedHookType,
+        namedHookValue,
+        namedCooldownHours
       ]);
 
   @JsonKey(ignore: true)
@@ -614,8 +699,12 @@ abstract class _QuestPool implements QuestPool {
       @JsonKey(name: 'duration_override_seconds')
       final int? durationOverrideSeconds,
       @JsonKey(name: 'trust_reward_override') final int? trustRewardOverride,
-      @JsonKey(name: 'min_trust_level')
-      final int minTrustLevel}) = _$QuestPoolImpl;
+      @JsonKey(name: 'min_trust_level') final int minTrustLevel,
+      @JsonKey(name: 'is_named') final bool isNamed,
+      @JsonKey(name: 'named_hook_type') final String? namedHookType,
+      @JsonKey(name: 'named_hook_value') final String? namedHookValue,
+      @JsonKey(name: 'named_cooldown_hours')
+      final int namedCooldownHours}) = _$QuestPoolImpl;
 
   factory _QuestPool.fromJson(Map<String, dynamic> json) =
       _$QuestPoolImpl.fromJson;
@@ -682,6 +771,18 @@ abstract class _QuestPool implements QuestPool {
   @override // 단계별 노출 제어 컬럼 (페이즈 2 #3)
   @JsonKey(name: 'min_trust_level')
   int get minTrustLevel;
+  @override // 지명 의뢰 컬럼 (M6 페이즈 4 #3)
+  @JsonKey(name: 'is_named')
+  bool get isNamed;
+  @override
+  @JsonKey(name: 'named_hook_type')
+  String? get namedHookType;
+  @override
+  @JsonKey(name: 'named_hook_value')
+  String? get namedHookValue;
+  @override
+  @JsonKey(name: 'named_cooldown_hours')
+  int get namedCooldownHours;
   @override
   @JsonKey(ignore: true)
   _$$QuestPoolImplCopyWith<_$QuestPoolImpl> get copyWith =>

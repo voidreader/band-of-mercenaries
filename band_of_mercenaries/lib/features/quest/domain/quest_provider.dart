@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/features/quest/data/quest_repository.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
+import 'package:band_of_mercenaries/core/models/quest_pool.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart'
     show QuestCompletionService, QuestCompletionResult, TraitEventResult, MercDamageResult;
@@ -40,7 +41,7 @@ import 'package:band_of_mercenaries/features/quest/domain/special_flag_processor
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_side_effects.dart';
 import 'package:band_of_mercenaries/core/providers/template_engine_provider.dart';
 import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
-import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/achievement_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
 import 'package:band_of_mercenaries/features/title/domain/title_provider.dart';
@@ -184,6 +185,29 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     _load();
   }
 
+  /// M6 페이즈 4 #3 — flagship 의뢰 자동 종료.
+  ///
+  /// 진행 중/대기 중 ActiveQuest 중 `namedTargetMercId == mercId`인 의뢰를
+  /// 자동 제거하고 ActivityLog 1줄 발급. dialog enqueue 없음 (조용한 종료).
+  Future<void> terminateNamedQuestsForMerc(String mercId) async {
+    final allQuests = _repo.getAll();
+    final terminated = allQuests
+        .where((q) =>
+            q.namedTargetMercId == mercId &&
+            q.status != QuestStatus.completed)
+        .toList();
+    for (final quest in terminated) {
+      await _repo.removeQuest(quest.id);
+      ref.read(activityLogProvider.notifier).addLog(
+        "지명 의뢰 '${quest.questName}'가 지명 용병의 부재로 종료되었다",
+        ActivityLogType.namedQuestTerminated,
+      );
+    }
+    if (terminated.isNotEmpty) {
+      state = _repo.getAll();
+    }
+  }
+
   Future<void> generateQuests() async {
     final staticData = ref.read(staticDataProvider).value;
     final userData = ref.read(userDataProvider);
@@ -250,9 +274,16 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       currentChainId: chainIdForSpawn,
       currentChainStep: pyegwangProgress?.currentStep,
       gate: newbieGate,
+      // M6 페이즈 4 #3 — 지명 의뢰 hook 평가 컨텍스트
+      mercenaries: ref.read(mercenaryListProvider),
+      bandAchievements: ref.read(bandAchievementsProvider),
+      flagshipMercId: userData.flagshipMercId,
+      namedQuestCooldowns: userData.namedQuestCooldowns,
     );
     await _repo.addQuests(quests);
     debugPrint('[BOM][Quest] generateQuests 완료: ${quests.length}개 생성');
+    // M6 페이즈 4 #3 — 지명 의뢰 쿨다운 갱신 (발급된 named pool → 다음 발급 가능 시각 기록)
+    await _updateNamedCooldownsForQuests(quests, staticData.questPools, userData.namedQuestCooldowns);
     await _injectFixedSettlementQuest();
     _load();
   }
@@ -456,8 +487,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       currentChainId: fillChainIdForSpawn,
       currentChainStep: fillPyegwangProgress?.currentStep,
       gate: newbieGate,
+      // M6 페이즈 4 #3 — 지명 의뢰 hook 평가 컨텍스트
+      mercenaries: ref.read(mercenaryListProvider),
+      bandAchievements: ref.read(bandAchievementsProvider),
+      flagshipMercId: userData.flagshipMercId,
+      namedQuestCooldowns: userData.namedQuestCooldowns,
     );
     await _repo.addQuests(newQuests);
+    // M6 페이즈 4 #3 — 지명 의뢰 쿨다운 갱신
+    await _updateNamedCooldownsForQuests(newQuests, staticData.questPools, userData.namedQuestCooldowns);
     _load();
   }
 
@@ -645,8 +683,15 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       currentChainId: refreshChainIdForSpawn,
       currentChainStep: refreshPyegwangProgress?.currentStep,
       gate: newbieGate,
+      // M6 페이즈 4 #3 — 지명 의뢰 hook 평가 컨텍스트
+      mercenaries: ref.read(mercenaryListProvider),
+      bandAchievements: ref.read(bandAchievementsProvider),
+      flagshipMercId: userData.flagshipMercId,
+      namedQuestCooldowns: userData.namedQuestCooldowns,
     );
     await _repo.addQuests(newQuests);
+    // M6 페이즈 4 #3 — 지명 의뢰 쿨다운 갱신
+    await _updateNamedCooldownsForQuests(newQuests, staticData.questPools, userData.namedQuestCooldowns);
     _load();
   }
 
@@ -965,6 +1010,12 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             }
           } on Exception catch (e) {
             debugPrint('[BOM][Title] flagship 해제 실패 (사망): $e');
+          }
+          // M6 페이즈 4 #3 — 사망 시 지명 의뢰 자동 종료
+          try {
+            await terminateNamedQuestsForMerc(deadMerc.id);
+          } on Exception catch (e) {
+            debugPrint('[BOM][Quest] 지명 의뢰 자동 종료 실패 (사망): $e');
           }
         }
       }
@@ -1398,5 +1449,29 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   Set<String> _currentTriggeredDiscoveries(int regionId) {
     final state = ref.read(regionStateRepositoryProvider).getState(regionId);
     return state?.triggeredDiscoveries.toSet() ?? const {};
+  }
+
+  /// M6 페이즈 4 #3 — 발급된 퀘스트 목록 중 isNamed=true인 pool에 대해
+  /// namedQuestCooldowns를 갱신한다. 기존 쿨다운은 보존(Map merge).
+  /// Hive save는 1회만 수행.
+  Future<void> _updateNamedCooldownsForQuests(
+    List<ActiveQuest> quests,
+    List<QuestPool> questPools,
+    Map<String, DateTime> existingCooldowns,
+  ) async {
+    final poolMap = {for (final p in questPools) p.id: p};
+    final namedPools = quests
+        .map((q) => poolMap[q.questPoolId])
+        .where((p) => p != null && p.isNamed)
+        .cast<QuestPool>()
+        .toList();
+    if (namedPools.isEmpty) return;
+
+    final cooldowns = Map<String, DateTime>.from(existingCooldowns);
+    final now = DateTime.now();
+    for (final pool in namedPools) {
+      cooldowns[pool.id] = now.add(Duration(hours: pool.namedCooldownHours));
+    }
+    await ref.read(userDataProvider.notifier).updateNamedQuestCooldowns(cooldowns);
   }
 }

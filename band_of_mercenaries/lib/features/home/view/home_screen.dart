@@ -607,6 +607,8 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '★', color: AppTheme.chainGold, bold: true);
       case ActivityLogType.titleUnlocked:
         return (icon: '✩', color: AppTheme.chainGold, bold: true);
+      case ActivityLogType.namedQuestTerminated:
+        return (icon: '⏱', color: d, bold: false);
     }
   }
 

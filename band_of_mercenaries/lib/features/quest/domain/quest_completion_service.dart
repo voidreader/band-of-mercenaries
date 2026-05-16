@@ -201,6 +201,12 @@ class QuestCompletionService {
           (resultType == QuestResult.greatSuccess || resultType == QuestResult.success)) {
         rewardGold = (rewardGold * HerbalistService.gatheringMultiplier(currentTrustLevel)).round();
       }
+      // FR-11: 지명 의뢰 보상 배수 (결과 배수 직후, 칭호/세력/랭크 효과 직전)
+      if (pool != null && pool.isNamed) {
+        final flags = pool.specialFlags;
+        final namedRewardMulti = (flags['named_reward_multiplier'] as num?)?.toDouble() ?? 1.0;
+        rewardGold = (rewardGold * namedRewardMulti).round();
+      }
       final mercTiers = mercs.map((merc) {
         final job = staticData.jobs.firstWhere(
           (j) => j.id == merc.jobId,
@@ -241,6 +247,12 @@ class QuestCompletionService {
         isGreatSuccess: resultType == QuestResult.greatSuccess,
         reputationGainModifier: PassiveBonusService.getReputationGainModifier(passiveEffects),
       );
+      // FR-11: 지명 의뢰 명성 배수 (결과 배수 직후, 칭호/세력/랭크 효과 직전)
+      if (pool != null && pool.isNamed) {
+        final flags = pool.specialFlags;
+        final namedRepMulti = (flags['named_reputation_multiplier'] as num?)?.toDouble() ?? 1.0;
+        repGain = (repGain * namedRepMulti).round();
+      }
     }
 
     // 데미지 계산

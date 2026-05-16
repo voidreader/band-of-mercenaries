@@ -3,8 +3,8 @@ import 'package:band_of_mercenaries/core/models/dialog_request.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 
-/// 퀘스트 카드 4종 배지를 왼→오른쪽 순서로 렌더하는 공유 위젯.
-/// 체인 → 엘리트 → 변형 섹터 → 세력 순으로 표시.
+/// 퀘스트 카드 배지를 왼→오른쪽 순서로 렌더하는 공유 위젯.
+/// 체인 → 지명 → 엘리트 → 변형 섹터 → 세력 순으로 표시.
 class QuestCardBadges extends StatelessWidget {
   final QuestLayerInfo info;
 
@@ -29,15 +29,19 @@ class QuestCardBadges extends StatelessWidget {
     if (info.chain != null) {
       badges.add(_chainBadge(info.chain!));
     }
-    // 2. 엘리트 배지: 🔥(보통) / ★(유니크)
+    // 2. 지명 배지: ✩ 지명 + hook 서브라벨 (M6 페이즈 4 #3)
+    if (info.isNamed) {
+      badges.add(_namedBadge(info.namedSublabel));
+    }
+    // 3. 엘리트 배지: 🔥(보통) / ★(유니크)
     if (info.isElite) {
       badges.add(_eliteBadge(info.isUnique));
     }
-    // 3. 변형 섹터 배지: 🏘️/🏛️/✦
+    // 4. 변형 섹터 배지: 🏘️/🏛️/✦
     if (info.sectorType != null) {
       badges.add(_sectorBadge(info.sectorType!));
     }
-    // 4. 세력 배지: 컬러 원형 + 세력명 (6자 초과 시 앞 3자 + …)
+    // 5. 세력 배지: 컬러 원형 + 세력명 (6자 초과 시 앞 3자 + …)
     if (info.faction != null) {
       badges.add(_factionBadge(info.faction!));
     }
@@ -64,6 +68,27 @@ class QuestCardBadges extends StatelessWidget {
         style: const TextStyle(
           fontSize: 10,
           color: AppTheme.chainGold,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  /// 지명 배지: ✩ 지명 + hook 서브라벨 (M6 페이즈 4 #3)
+  Widget _namedBadge(String? sublabel) {
+    final label = sublabel != null ? '✩ 지명 · $sublabel' : '✩ 지명';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppTheme.namedAccent.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppTheme.namedAccent, width: 1),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          color: AppTheme.namedAccent,
           fontWeight: FontWeight.w600,
         ),
       ),

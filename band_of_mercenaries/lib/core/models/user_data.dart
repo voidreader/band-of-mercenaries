@@ -88,6 +88,12 @@ class UserData extends HiveObject {
   @HiveField(25)
   String? lastDispatchProtagonistMercId;
 
+  /// 지명 의뢰 쿨다운 추적 (M6 페이즈 4 #3)
+  /// key: quest_pool_id, value: 다음 발급 가능 시각
+  /// ⚠️ 기획서 HiveField 25 → 페이즈 4 #2 충돌로 26 시프트
+  @HiveField(26)
+  Map<String, DateTime> namedQuestCooldowns;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -115,9 +121,11 @@ class UserData extends HiveObject {
     this.lastSmithyRepairAt,
     this.flagshipMercId,
     this.lastDispatchProtagonistMercId,
+    Map<String, DateTime>? namedQuestCooldowns,
   })  : facilities = facilities ?? {},
         artifactItemIds = artifactItemIds ?? <String>[],
-        completedChains = completedChains ?? <String>[];
+        completedChains = completedChains ?? <String>[],
+        namedQuestCooldowns = namedQuestCooldowns ?? <String, DateTime>{};
 
   Set<String> get completedChainSet => completedChains.toSet();
 

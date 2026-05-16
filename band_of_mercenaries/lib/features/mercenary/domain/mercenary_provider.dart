@@ -17,6 +17,7 @@ import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 
 final mercenaryRepositoryProvider = Provider((ref) => MercenaryRepository());
 
@@ -221,6 +222,13 @@ class MercenaryListNotifier extends StateNotifier<List<Mercenary>> {
       }
     } on Exception catch (e) {
       debugPrint('[BOM][Title] flagship 해제 실패 (dismiss): $e');
+    }
+
+    // M6 페이즈 4 #3 — 방출 시 지명 의뢰 자동 종료
+    try {
+      await ref.read(questListProvider.notifier).terminateNamedQuestsForMerc(mercId);
+    } on Exception catch (e) {
+      debugPrint('[BOM][Quest] 지명 의뢰 자동 종료 실패 (dismiss): $e');
     }
 
     return true;

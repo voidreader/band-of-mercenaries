@@ -9,19 +9,23 @@ import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 class QuestSortResult {
   final List<ActiveQuest> chainTier0; // ChainTopSection이 별도 렌더 (일반 목록에서 제거)
   final List<ActiveQuest> settlementTier; // 거점 사건 (settlement_ prefix, sortedRest 최상단 포함)
-  final List<ActiveQuest> sortedRest; // settlementTier + Tier 1~4 정렬된 결과
+  final List<ActiveQuest> namedTier; // 지명 의뢰 (M6 페이즈 4 #3 — settlementTier 다음, faction 위)
+  final List<ActiveQuest> sortedRest; // settlementTier + namedTier + Tier 1~4 정렬된 결과
 
   const QuestSortResult({
     required this.chainTier0,
     required this.settlementTier,
+    required this.namedTier,
     required this.sortedRest,
   });
 }
 
-/// 파견 화면 퀘스트 5계층 정렬 순수 서비스
+/// 파견 화면 퀘스트 5계층 + 지명 정렬 순수 서비스
 ///
 /// 계층 우선순위:
 /// - Tier 0: 체인 다음 단계 (별도 섹션 렌더, 목록에서 제거)
+/// - Settlement: 거점 사건 (sortedRest 최상단)
+/// - Named: 지명 의뢰 (M6 페이즈 4 #3 — settlement 다음, faction 위)
 /// - Tier 1: 세력 전용 퀘스트 (플레이어가 가입한 세력)
 /// - Tier 2: 엘리트 퀘스트 (유니크 → 보통 순)
 /// - Tier 3: 변형 섹터 전용 퀘스트 (현재 섹터 변형 타입 일치)
@@ -57,6 +61,7 @@ class QuestSortService {
     final chainTier0 = <ActiveQuest>[];
     final fixedTier = <ActiveQuest>[];
     final settlementTier = <ActiveQuest>[];
+    final namedTier = <ActiveQuest>[]; // M6 페이즈 4 #3
     final tier1 = <ActiveQuest>[];
     final tier2 = <ActiveQuest>[];
     final tier3 = <ActiveQuest>[];
@@ -66,6 +71,11 @@ class QuestSortService {
       // 고정 임무: 갱신되지 않으며 목록 최상단에 위치
       if (poolMap[q.questPoolId]?.isFixed == true) {
         fixedTier.add(q);
+        continue;
+      }
+      // M6 페이즈 4 #3 — 지명 의뢰: fixed/settlement 다음, faction/elite 위
+      if (poolMap[q.questPoolId]?.isNamed == true) {
+        namedTier.add(q);
         continue;
       }
       if (q.isChainQuest &&
@@ -98,6 +108,7 @@ class QuestSortService {
     // 각 Tier 내 정렬 적용
     _sortByEstimatedReward(fixedTier, poolMap, typeMap);
     _sortByEstimatedReward(settlementTier, poolMap, typeMap);
+    _sortByEstimatedReward(namedTier, poolMap, typeMap); // M6 페이즈 4 #3
     _sortByEstimatedReward(tier1, poolMap, typeMap);
     _sortTier2(tier2, poolMap, typeMap, eliteMap);
     _sortByEstimatedReward(tier3, poolMap, typeMap);
@@ -106,7 +117,8 @@ class QuestSortService {
     return QuestSortResult(
       chainTier0: chainTier0,
       settlementTier: settlementTier,
-      sortedRest: [...fixedTier, ...settlementTier, ...tier1, ...tier2, ...tier3, ...tier4],
+      namedTier: namedTier,
+      sortedRest: [...fixedTier, ...settlementTier, ...namedTier, ...tier1, ...tier2, ...tier3, ...tier4],
     );
   }
 

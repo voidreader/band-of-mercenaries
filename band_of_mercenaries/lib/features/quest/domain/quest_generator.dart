@@ -6,6 +6,9 @@ import 'package:band_of_mercenaries/core/models/quest_type.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/faction_tag_resolver.dart';
 import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/named_hook_evaluator.dart';
 
 class QuestGenerator {
   static const _uuid = Uuid();
@@ -33,6 +36,11 @@ class QuestGenerator {
     String? currentChainId, // M5 페이즈 4 #3 — 강제 spawn 분기용 현재 활성 체인 ID
     int? currentChainStep,  // M5 페이즈 4 #3 — 강제 spawn 분기용 현재 체인 단계
     NewbieGate gate = NewbieGate.normal, // 신규 유저 보호 게이트 (F/E/normal). 풀 weight 분기에 사용.
+    // M6 페이즈 4 #3 — 지명 의뢰 hook 평가 컨텍스트
+    List<Mercenary> mercenaries = const [],
+    List<BandAchievement> bandAchievements = const [],
+    String? flagshipMercId,
+    Map<String, DateTime> namedQuestCooldowns = const {},
   }) {
     // 1. 기본 티어 필터
     final filtered = questPools
@@ -47,6 +55,12 @@ class QuestGenerator {
 
     // 3. 전용/일반 분리
     final exclusivePools = filtered.where((p) => p.isFactionExclusive).toList();
+    final now = DateTime.now();
+    final hookContext = NamedHookContext(
+      mercenaries: mercenaries,
+      bandAchievements: bandAchievements,
+      flagshipMercId: flagshipMercId,
+    );
     final generalPools = filtered
         .where((p) => !p.isFactionExclusive)
         .where((p) => !p.isFixed)                           // REQ-03: 고정 의뢰 제외
@@ -54,6 +68,13 @@ class QuestGenerator {
         .where((p) => sectorType != null
             ? p.sectorType == sectorType
             : p.sectorType == null)
+        .where((p) {
+          // M6 페이즈 4 #3 — 지명 의뢰 hook + 쿨다운 평가
+          if (!p.isNamed) return true;
+          if (!NamedHookEvaluator.evaluateNamedHook(p, hookContext)) return false;
+          return NamedHookEvaluator.isCooldownPassed(
+              namedQuestCooldowns[p.id], now);
+        })
         .toList();
 
     // 4. 전용 퀘스트 후보 필터링
@@ -120,6 +141,11 @@ class QuestGenerator {
         (t) => t.id == pool.typeId,
         orElse: () => questTypes.first,
       );
+      // M6 페이즈 4 #3 — flagship 의뢰는 발급 시점의 flagshipMercId 동결
+      final namedTargetMercId =
+          (pool.isNamed && pool.namedHookType == 'flagship')
+              ? flagshipMercId
+              : null;
       results.add(ActiveQuest(
         id: _uuid.v4(),
         questPoolId: pool.id,
@@ -132,6 +158,7 @@ class QuestGenerator {
         reputationReward: repReward,
         isAdvancedTrack: null,
         specialFlags: pool.specialFlags.isEmpty ? null : Map<String, dynamic>.from(pool.specialFlags),
+        namedTargetMercId: namedTargetMercId,
       ));
     }
 
@@ -193,6 +220,9 @@ class QuestGenerator {
   }
 
   /// weight 0인 풀을 사전 제외하고, 비복원 가중 샘플링으로 [count]개 선택.
+  ///
+  /// M6 페이즈 4 #3 — 지명 의뢰(`isNamed=true`)는 +α=3 가중치 부여
+  /// (페이즈 2 #2 정량 검증: 매 갱신 약 64% 등장, 시간당 ~0.9회)
   static List<QuestPool> _weightedSample(
     List<QuestPool> pools,
     int count,
@@ -202,8 +232,10 @@ class QuestGenerator {
     if (count <= 0) return const [];
     final weighted = <({QuestPool pool, double weight})>[];
     for (final p in pools) {
-      final w = _weightFor(gate, p.difficulty);
-      if (w > 0) weighted.add((pool: p, weight: w));
+      var w = _weightFor(gate, p.difficulty);
+      if (w <= 0) continue;
+      if (p.isNamed) w += 3.0; // M6 페이즈 4 #3 — α=3 가중치
+      weighted.add((pool: p, weight: w));
     }
     final selected = <QuestPool>[];
     for (var i = 0; i < count; i++) {

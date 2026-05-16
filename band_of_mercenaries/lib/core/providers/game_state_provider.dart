@@ -133,6 +133,11 @@ class UserDataNotifier extends StateNotifier<UserData?> {
       regionEnvironmentTags: startRegion.environmentTags,
       currentSectorIndex: startSector - 1,
       gate: NewbieGate.newbieF, // 신규 시작 — 명성 0이므로 F 등급 고정
+      // M6 페이즈 4 #3 — 지명 의뢰 hook 평가 컨텍스트 (신규 게임: 용병·위업 없음)
+      mercenaries: startingMercs,
+      bandAchievements: const [],
+      flagshipMercId: null,
+      namedQuestCooldowns: const {},
     );
     for (final quest in initialQuests) {
       await questBox.add(quest);
@@ -408,6 +413,15 @@ class UserDataNotifier extends StateNotifier<UserData?> {
   Future<void> updateLastDispatchProtagonist(String? mercId) async {
     if (state == null) return;
     state!.lastDispatchProtagonistMercId = mercId;
+    await state!.save();
+    state = state;
+  }
+
+  /// M6 페이즈 4 #3 — 지명 의뢰 쿨다운 갱신.
+  /// 발급된 named pool에 대해 다음 발급 가능 시각을 기록한다.
+  Future<void> updateNamedQuestCooldowns(Map<String, DateTime> cooldowns) async {
+    if (state == null) return;
+    state!.namedQuestCooldowns = cooldowns;
     await state!.save();
     state = state;
   }

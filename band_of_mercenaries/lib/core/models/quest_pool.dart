@@ -35,6 +35,12 @@ class QuestPool with _$QuestPool {
 
     // 단계별 노출 제어 컬럼 (페이즈 2 #3)
     @Default(0) @JsonKey(name: 'min_trust_level') int minTrustLevel,
+
+    // 지명 의뢰 컬럼 (M6 페이즈 4 #3)
+    @Default(false) @JsonKey(name: 'is_named') bool isNamed,
+    @JsonKey(name: 'named_hook_type') String? namedHookType,
+    @JsonKey(name: 'named_hook_value') String? namedHookValue,
+    @Default(24) @JsonKey(name: 'named_cooldown_hours') int namedCooldownHours,
   }) = _QuestPool;
 
   factory QuestPool.fromJson(Map<String, dynamic> json) =>

@@ -115,6 +115,8 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.achievementUnlocked;
       case 30:
         return ActivityLogType.titleUnlocked;
+      case 31:
+        return ActivityLogType.namedQuestTerminated;
       default:
         return ActivityLogType.questResult;
     }
@@ -215,6 +217,9 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.titleUnlocked:
         writer.writeByte(30);
+        break;
+      case ActivityLogType.namedQuestTerminated:
+        writer.writeByte(31);
         break;
     }
   }

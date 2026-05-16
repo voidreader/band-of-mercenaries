@@ -112,6 +112,11 @@ class ActiveQuest extends HiveObject {
   @HiveField(25)
   String? renderedNarrative;
 
+  /// 지명 의뢰 발급 시 발급 시점의 flagshipMercId 동결 (M6 페이즈 4 #3)
+  /// flagship hook 전용 — title/achievement_count hook 의뢰는 null 유지
+  @HiveField(26)
+  String? namedTargetMercId;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -139,6 +144,7 @@ class ActiveQuest extends HiveObject {
     this.chainStep,
     this.specialFlags,
     this.renderedNarrative,
+    this.namedTargetMercId,
   });
 
   // 전용 퀘스트 여부 (isAdvancedTrack이 설정된 경우)
