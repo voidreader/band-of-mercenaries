@@ -69,7 +69,7 @@ class StaticGameData {
   final List<BandAchievementTemplate> bandAchievementTemplates; // M6 페이즈 4 #1 추가
   final List<TitleData> titles; // M6 페이즈 4 #2 추가
 
-  const StaticGameData({
+  StaticGameData({
     required this.difficulties,
     required this.jobs,
     required this.traits,
@@ -105,11 +105,15 @@ class StaticGameData {
   });
 
   /// from_region → (to_region → distance_units) 인덱싱 (M7 페이즈 4 #3)
+  /// const 생성자 제약으로 nullable 캐시 패턴 사용 — 최초 호출 시 1회 구성 후 재사용.
+  Map<int, Map<int, int>>? _regionAdjacencyMapCache;
   Map<int, Map<int, int>> get regionAdjacencyMap {
+    if (_regionAdjacencyMapCache != null) return _regionAdjacencyMapCache!;
     final map = <int, Map<int, int>>{};
     for (final adj in regionAdjacencies) {
       map.putIfAbsent(adj.fromRegion, () => <int, int>{})[adj.toRegion] = adj.distanceUnits;
     }
+    _regionAdjacencyMapCache = map;
     return map;
   }
 }

@@ -50,7 +50,7 @@ class RegionStateRepository {
   static final Map<int, DateTime> _lastDecayCheckedAt = {};
 
   DateTime getLastDecayCheckedAt(int regionId) =>
-      _lastDecayCheckedAt[regionId] ?? DateTime.now();
+      _lastDecayCheckedAt[regionId] ?? DateTime.fromMillisecondsSinceEpoch(0);
 
   void updateLastDecayCheckedAt(int regionId, DateTime now) {
     _lastDecayCheckedAt[regionId] = now;
@@ -509,8 +509,9 @@ class RegionStateRepository {
     }
   }
 
-  /// M7 페이즈 4 #4 — toggleFlag trailing에서 호출. region 3 인프라 단계 전이 평가.
-  /// fail-soft. event 반환 (이벤트 publish는 호출자 또는 본 메서드 내부).
+  /// M7 페이즈 4 #4 — toggleFlag trailing에서 호출. **region 3(GameConstants.startingRegionId) 한정** 인프라 단계 전이 평가.
+  /// 7리전 어디서 flag가 토글되더라도 본 메서드는 region 3 인프라 단계만 재평가하며, 결과 단계 변경 시 InfrastructureUpgradeEvent를 반환한다.
+  /// fail-soft. event 반환 (이벤트 publish는 호출자 책임).
   Future<InfrastructureUpgradeEvent?> _evaluateInfrastructureTransition({required Ref ref}) async {
     final r3State = getState(GameConstants.startingRegionId) ?? RegionState(regionId: GameConstants.startingRegionId);
     final currentTier = r3State.currentInfrastructureTier;

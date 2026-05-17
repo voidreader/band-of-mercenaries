@@ -375,7 +375,7 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         priority: DialogPriority.medium,
         dialogType: DialogTypeRegistry.settlementInfrastructureUpgraded,
         payload: {'fromTier': next.fromTier, 'toTier': next.toTier},
-        builder: (ctx, dismiss) => SettlementInfrastructureUpgradedDialog(event: captured),
+        builder: (ctx, dismiss) => SettlementInfrastructureUpgradedDialog(event: captured, onDismiss: dismiss),
       ));
       ref.read(settlementInfrastructureUpgradedProvider.notifier).state = null;
     });

@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/danger_level.dart';
 
 part 'region_state_model.g.dart';
 
@@ -52,7 +53,7 @@ class RegionState extends HiveObject {
   int get currentTrust => settlementTrust ?? 0;
   int get currentTrustLevel => settlementTrustLevel ?? 1;
   int get currentDangerScore => dangerScore ?? 0;
-  int get currentDangerLevel => dangerLevel ?? 2;
+  int get currentDangerLevel => dangerLevel ?? DangerLevelResolver.resolveLevel(currentDangerScore).cacheInt;
   bool hasFlag(String flag) => unlockedFlags.contains(flag);
   int get currentInfrastructureTier => infrastructureTier ?? 1;
 

@@ -6,10 +6,12 @@ import 'package:band_of_mercenaries/features/settlement/domain/settlement_infras
 /// M7 페이즈 4 #4 — 인프라 단계 승급 다이얼로그
 class SettlementInfrastructureUpgradedDialog extends StatelessWidget {
   final InfrastructureUpgradeEvent event;
+  final VoidCallback onDismiss;
 
   const SettlementInfrastructureUpgradedDialog({
     super.key,
     required this.event,
+    required this.onDismiss,
   });
 
   static const Map<int, String> _tierBody = {
@@ -69,7 +71,7 @@ class SettlementInfrastructureUpgradedDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: onDismiss,
           child: const Text('확인'),
         ),
       ],

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
@@ -147,26 +149,30 @@ class _ForeignStallScreenState extends ConsumerState<ForeignStallScreen> {
   Future<void> _purchase(BuildContext ctx, String itemId, int price, String itemName) async {
     final userData = ref.read(userDataProvider);
     if (userData == null || userData.gold < price) {
-      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('골드 부족')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('골드 부족')));
+      }
       return;
     }
     final inv = ref.read(inventoryRepositoryProvider);
     if (inv.getQuantityForItemId(itemId) >= 999) {
-      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('보유량 가득')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('보유량 가득')));
+      }
       return;
     }
     final staticData = ref.read(staticDataProvider).valueOrNull;
     if (staticData == null) return;
     await ref.read(userDataProvider.notifier).spendGold(price);
     await inv.addItem(itemId: itemId, quantity: 1, items: staticData.items);
-    if (ctx.mounted) {
-      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$itemName 구매 (${price}G)')));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$itemName 구매 (${price}G)')));
     }
   }
 
   void _showGossipDialog(BuildContext context, int tier) {
     final pool = tier >= 4 ? _gossipTier4 : _gossipTier3;
-    final text = pool[DateTime.now().millisecondsSinceEpoch % pool.length];
+    final text = pool[Random().nextInt(pool.length)];
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
