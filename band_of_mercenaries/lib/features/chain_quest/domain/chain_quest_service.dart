@@ -42,10 +42,15 @@ class ChainQuestService {
   /// null이거나 mercId를 찾지 못하면 null 반환.
   final MercenarySnapshot? Function(String? mercId)? buildSnapshot;
 
+  /// M7 페이즈 4 #1 FR-4b — 체인 완주 시 region dangerScore + flag toggle 콜백 (선택).
+  /// 미주입 시 hook skip (fail-soft).
+  final Future<void> Function(String chainId)? applyRegionStateFromChain;
+
   ChainQuestService(
     this._repo, {
     this.grantAchievement,
     this.buildSnapshot,
+    this.applyRegionStateFromChain,
   });
 
   Future<bool> tryActivate({
@@ -204,6 +209,15 @@ class ChainQuestService {
       }
     } on Exception catch (e) {
       debugPrint('[BOM][Achievement] chain hook 실패 ($chainId): $e');
+    }
+
+    // M7 페이즈 4 #1 FR-4b — chain 완주 시 region dangerScore + flag toggle trailing
+    try {
+      if (applyRegionStateFromChain != null) {
+        await applyRegionStateFromChain!(chainId);
+      }
+    } on Exception catch (e) {
+      debugPrint('[M7] chain region_state trailing 실패 ($chainId): $e');
     }
   }
 

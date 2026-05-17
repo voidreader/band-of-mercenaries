@@ -33,6 +33,7 @@ import 'package:band_of_mercenaries/core/models/crafting_recipe_data.dart'; // M
 import 'package:band_of_mercenaries/core/models/quest_pool_material_drop_data.dart'; // M5 추가
 import 'package:band_of_mercenaries/core/models/band_achievement_template.dart'; // M6 페이즈 4 #1 추가
 import 'package:band_of_mercenaries/core/models/title_data.dart'; // M6 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/core/models/region_adjacency.dart'; // M7 페이즈 4 #3 추가
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -44,6 +45,7 @@ class StaticGameData {
   final List<TraitComboEvolution> traitComboEvolutions;
   final List<TraitSynergy> traitSynergies;
   final List<Region> regions;
+  final List<RegionAdjacency> regionAdjacencies;
   final List<RegionSector> regionSectors;
   final List<QuestType> questTypes;
   final List<QuestPool> questPools;
@@ -77,6 +79,7 @@ class StaticGameData {
     required this.traitComboEvolutions,
     required this.traitSynergies,
     required this.regions,
+    required this.regionAdjacencies,
     required this.regionSectors,
     required this.questTypes,
     required this.questPools,
@@ -100,6 +103,15 @@ class StaticGameData {
     required this.bandAchievementTemplates, // M6 페이즈 4 #1 추가
     required this.titles, // M6 페이즈 4 #2 추가
   });
+
+  /// from_region → (to_region → distance_units) 인덱싱 (M7 페이즈 4 #3)
+  Map<int, Map<int, int>> get regionAdjacencyMap {
+    final map = <int, Map<int, int>>{};
+    for (final adj in regionAdjacencies) {
+      map.putIfAbsent(adj.fromRegion, () => <int, int>{})[adj.toRegion] = adj.distanceUnits;
+    }
+    return map;
+  }
 }
 
 final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
@@ -116,6 +128,7 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
     traitComboEvolutions: dataLoader.loadFromCache('trait_combo_evolutions', TraitComboEvolution.fromJson),
     traitSynergies: dataLoader.loadFromCache('trait_synergies', TraitSynergy.fromJson),
     regions: dataLoader.loadFromCache('regions', Region.fromJson),
+    regionAdjacencies: dataLoader.loadFromCache('region_adjacency', RegionAdjacency.fromJson),
     regionSectors: dataLoader.loadFromCache('region_sectors', RegionSector.fromJson),
     questTypes: dataLoader.loadFromCache('quest_types', QuestType.fromJson),
     questPools: dataLoader.loadFromCache('quest_pools', QuestPool.fromJson),

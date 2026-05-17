@@ -47,6 +47,7 @@ class SyncService {
     'quest_pool_material_drops', // 29. 의뢰 풀 재료 드랍 (M5 추가)
     'band_achievement_templates', // 30. 위업 템플릿 (M6 페이즈 4 #1 추가)
     'titles', // 31. 칭호 (M6 페이즈 4 #2 추가)
+    'region_adjacency', // 32. 지역 인접성 (M7 페이즈 4 #3 추가)
   ];
 
   SyncService({

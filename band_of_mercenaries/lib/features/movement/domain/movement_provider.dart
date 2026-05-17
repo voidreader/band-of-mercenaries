@@ -31,6 +31,9 @@ import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
+import 'package:band_of_mercenaries/features/movement/domain/movement_distance_calculator.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_config.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_provider.dart';
 
 final movementRepositoryProvider = Provider((ref) => MovementRepository());
 
@@ -101,8 +104,13 @@ class MovementNotifier extends StateNotifier<MovementState?> {
       return;
     }
 
-    final distance = UserData.calculateDistance(
-      userData.region, userData.sector, targetRegion, targetSector,
+    final adjacencyMap = staticData.regionAdjacencyMap;
+    final distance = MovementDistanceCalculator.calculate(
+      fromRegion: userData.region,
+      fromSector: userData.sector,
+      toRegion: targetRegion,
+      toSector: targetSector,
+      adjacencyMap: adjacencyMap,
     );
     final speedMult = ref.read(speedMultiplierProvider);
 
@@ -169,6 +177,13 @@ class MovementNotifier extends StateNotifier<MovementState?> {
     if (transportFacility != null) {
       final transportLevel = userData.facilities['transport'] ?? 0;
       travelReduction = ConstructionService.getEffectValue(transportFacility, transportLevel);
+    }
+
+    final infraTier = ref.read(settlementInfrastructureTierProvider(GameConstants.startingRegionId));
+    if (infraTier >= SettlementInfrastructureConfig.signpostMinTier &&
+        (userData.region == GameConstants.startingRegionId ||
+         targetRegion == GameConstants.startingRegionId)) {
+      travelReduction = 1.0 - ((1.0 - travelReduction) * SettlementInfrastructureConfig.signpostDistanceMultiplier);
     }
 
     final baseDuration = UserData.calculateMoveTime(distance, speedMultiplier: speedMult);

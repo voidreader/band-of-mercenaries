@@ -5,10 +5,12 @@ import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/shared/widgets/card_container.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/settlement_trust_provider.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/settlement_npc_data.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_provider.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/village_facility.dart';
 import 'package:band_of_mercenaries/features/settlement/view/chief_house_screen.dart';
 import 'package:band_of_mercenaries/features/settlement/view/old_smithy_screen.dart';
 import 'package:band_of_mercenaries/features/settlement/view/herbalist_screen.dart';
+import 'package:band_of_mercenaries/features/settlement/view/foreign_stall_screen.dart';
 
 class VillageVisitSection extends ConsumerWidget {
   final VillageFacility? selectedFacility;
@@ -37,52 +39,81 @@ class VillageVisitSection extends ConsumerWidget {
         VillageFacility.chiefHouse => ChiefHouseScreen(onClose: onClose),
         VillageFacility.oldSmithy => OldSmithyScreen(onClose: onClose),
         VillageFacility.herbalist => HerbalistScreen(onClose: onClose),
+        VillageFacility.foreignStall => ForeignStallScreen(onClose: onClose),
       };
     }
 
     final trust = ref.watch(settlementTrustProvider(GameConstants.startingRegionId));
     final level = trust.level;
+    final infraTier = ref.watch(settlementInfrastructureTierProvider(GameConstants.startingRegionId));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         CardContainer(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  '💬 ${SettlementNpcData.squareGossip[level] ?? ''}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textTertiary,
-                    fontStyle: FontStyle.italic,
-                    height: 1.4,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '💬 ${SettlementNpcData.squareGossip[level] ?? ''}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textTertiary,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.settlementAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: AppTheme.settlementAccent.withValues(alpha: 0.5),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '${_levelName(level)} Lv.$level',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.settlementAccent,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppTheme.settlementAccent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: AppTheme.settlementAccent.withValues(alpha: 0.5),
-                    width: 1,
+              if (infraTier >= 2) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppTheme.chainGold.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: AppTheme.chainGold.withValues(alpha: 0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    _infrastructureLabel(infraTier),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.chainGold,
+                    ),
                   ),
                 ),
-                child: Text(
-                  '${_levelName(level)} Lv.$level',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.settlementAccent,
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
         ),
@@ -110,9 +141,26 @@ class VillageVisitSection extends ConsumerWidget {
           subtitle: '1회성 즉시 회복 + 채집 정보',
           onSelect: onSelect,
         ),
+        if (infraTier >= 3) ...[
+          const SizedBox(height: 10),
+          _FacilityCard(
+            facility: VillageFacility.foreignStall,
+            emoji: '🛒',
+            title: '외래 좌판',
+            subtitle: '외래 상인 케일의 좌판 (재료 거래·외래 소식)',
+            onSelect: onSelect,
+          ),
+        ],
       ],
     );
   }
+
+  static String _infrastructureLabel(int tier) => switch (tier) {
+    2 => '거점 연결',
+    3 => '외래 좌판',
+    4 => '변방의 중심',
+    _ => '',
+  };
 }
 
 class _FacilityCard extends StatelessWidget {

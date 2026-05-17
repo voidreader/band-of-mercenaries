@@ -3,12 +3,16 @@ import 'package:uuid/uuid.dart';
 import 'package:band_of_mercenaries/core/models/elite_monster_data.dart';
 import 'package:band_of_mercenaries/core/models/quest_pool.dart';
 import 'package:band_of_mercenaries/core/models/quest_type.dart';
+import 'package:band_of_mercenaries/core/models/region_state_effect.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/faction_tag_resolver.dart';
 import 'package:band_of_mercenaries/core/domain/newbie_gate.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/named_hook_evaluator.dart';
+import 'package:band_of_mercenaries/features/quest/domain/region_state_weight_config.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/danger_level.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 
 class QuestGenerator {
   static const _uuid = Uuid();
@@ -41,6 +45,8 @@ class QuestGenerator {
     List<BandAchievement> bandAchievements = const [],
     String? flagshipMercId,
     Map<String, DateTime> namedQuestCooldowns = const {},
+    // M7 페이즈 4 #2 — region 상태(위험도/플래그/cumulative cap) 가중치 평가 컨텍스트
+    RegionState? regionState,
   }) {
     // 1. 기본 티어 필터
     final filtered = questPools
@@ -98,6 +104,7 @@ class QuestGenerator {
       remainingCount,
       gate,
       random,
+      regionState,
     );
 
     // 7. ActiveQuest 생성
@@ -219,22 +226,90 @@ class QuestGenerator {
     }
   }
 
+  /// M7 페이즈 4 #2 — 의뢰 풀 최종 가중치 계산.
+  ///
+  /// 다음 순서로 가중치를 산출하며, 비노출 조건(required/excluded) 위반 또는
+  /// NewbieGate 0 weight인 경우 0.0을 반환한다.
+  ///
+  /// 1. NewbieGate base weight (1) — 0이면 즉시 0 반환
+  /// 2. region_state_required 비노출 검증 — 현재 단계와 불일치 시 0 반환
+  /// 3. region_state_excluded 비노출 검증 — 현재 단계와 일치 시 0 반환
+  /// 4. dangerLevel × quest_type 매트릭스 multiplier (곱)
+  /// 5. unlockedFlags × quest_type multiplier (곱, 다중 합산)
+  /// 6. cumulative cap 도달 후 노출 빈도 축소 (곱)
+  /// 7. 지명 의뢰(`isNamed=true`)는 +α=3 가산 (M6 페이즈 4 #3)
+  static double computeFinalWeight({
+    required QuestPool pool,
+    required RegionState? regionState,
+    required NewbieGate gate,
+  }) {
+    // 1. NewbieGate base weight
+    var weight = _weightFor(gate, pool.difficulty);
+    if (weight <= 0) return 0.0;
+
+    // 2. 비노출 검증 — region_state_required
+    if (regionState != null && pool.regionStateRequired != null) {
+      final required = DangerLevelResolver.fromLowercaseString(pool.regionStateRequired!);
+      if (required != null) {
+        final currentLevel = DangerLevelResolver.fromCacheInt(regionState.currentDangerLevel);
+        if (currentLevel != required) return 0.0;
+      }
+    }
+
+    // 3. 비노출 검증 — region_state_excluded
+    if (regionState != null && pool.regionStateExcluded != null) {
+      final excluded = DangerLevelResolver.fromLowercaseString(pool.regionStateExcluded!);
+      if (excluded != null) {
+        final currentLevel = DangerLevelResolver.fromCacheInt(regionState.currentDangerLevel);
+        if (currentLevel == excluded) return 0.0;
+      }
+    }
+
+    // 4. dangerLevel 가중치
+    final level = regionState != null
+        ? (DangerLevelResolver.fromCacheInt(regionState.currentDangerLevel) ?? DangerLevel.peaceful)
+        : DangerLevel.peaceful;
+    final dangerMulti = RegionStateWeightConfig.dangerLevelMultiplier[level]?[pool.typeId] ?? 1.0;
+    weight *= dangerMulti;
+
+    // 5. unlockedFlags 가중치 합산
+    if (regionState != null) {
+      for (final flag in regionState.unlockedFlags) {
+        final flagMulti = RegionStateWeightConfig.flagMultipliers[flag]?[pool.typeId];
+        if (flagMulti != null) weight *= flagMulti;
+      }
+    }
+
+    // 6. cumulative cap 도달 후 노출 빈도 축소
+    final effect = pool.regionStateEffect;
+    if (effect is CumulativeEffect && regionState != null) {
+      if (regionState.unlockedFlags.contains(effect.thresholdFlag)) {
+        weight *= RegionStateWeightConfig.cumulativeCapReachedMultiplier;
+      }
+    }
+
+    // 7. 지명 의뢰 +α=3 가중치 (M6 페이즈 4 #3, 가산)
+    if (pool.isNamed) weight += 3.0;
+
+    return weight;
+  }
+
   /// weight 0인 풀을 사전 제외하고, 비복원 가중 샘플링으로 [count]개 선택.
   ///
-  /// M6 페이즈 4 #3 — 지명 의뢰(`isNamed=true`)는 +α=3 가중치 부여
-  /// (페이즈 2 #2 정량 검증: 매 갱신 약 64% 등장, 시간당 ~0.9회)
+  /// 가중치 계산은 [computeFinalWeight]에 일원화 (M7 페이즈 4 #2).
+  /// M6 페이즈 4 #3 지명 의뢰 α=3 가중치도 동일 경로로 적용된다.
   static List<QuestPool> _weightedSample(
     List<QuestPool> pools,
     int count,
     NewbieGate gate,
     Random random,
+    RegionState? regionState,
   ) {
     if (count <= 0) return const [];
     final weighted = <({QuestPool pool, double weight})>[];
     for (final p in pools) {
-      var w = _weightFor(gate, p.difficulty);
+      final w = computeFinalWeight(pool: p, regionState: regionState, gate: gate);
       if (w <= 0) continue;
-      if (p.isNamed) w += 3.0; // M6 페이즈 4 #3 — α=3 가중치
       weighted.add((pool: p, weight: w));
     }
     final selected = <QuestPool>[];

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'region_state_effect.dart';
 
 part 'quest_pool.freezed.dart';
 part 'quest_pool.g.dart';
@@ -41,6 +42,11 @@ class QuestPool with _$QuestPool {
     @JsonKey(name: 'named_hook_type') String? namedHookType,
     @JsonKey(name: 'named_hook_value') String? namedHookValue,
     @Default(24) @JsonKey(name: 'named_cooldown_hours') int namedCooldownHours,
+
+    // M7 페이즈 4 #2 — 지역 상태 시스템
+    @JsonKey(name: 'region_state_effect') RegionStateEffect? regionStateEffect,
+    @JsonKey(name: 'region_state_required') String? regionStateRequired,
+    @JsonKey(name: 'region_state_excluded') String? regionStateExcluded,
   }) = _QuestPool;
 
   factory QuestPool.fromJson(Map<String, dynamic> json) =>

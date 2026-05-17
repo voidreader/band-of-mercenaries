@@ -25,13 +25,18 @@ class RegionStateAdapter extends TypeAdapter<RegionState> {
       settlementTrustLevel: fields[5] as int?,
       lastEventCompletedAt: fields[6] as DateTime?,
       firstAcquiredMaterialIds: (fields[7] as List?)?.cast<String>(),
+      dangerScore: fields[8] as int?,
+      dangerLevel: fields[9] as int?,
+      unlockedFlags: (fields[10] as List?)?.cast<String>(),
+      questPoolCompletionCounts: (fields[11] as Map?)?.cast<String, int>(),
+      infrastructureTier: fields[12] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, RegionState obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.regionId)
       ..writeByte(1)
@@ -47,7 +52,17 @@ class RegionStateAdapter extends TypeAdapter<RegionState> {
       ..writeByte(6)
       ..write(obj.lastEventCompletedAt)
       ..writeByte(7)
-      ..write(obj.firstAcquiredMaterialIds);
+      ..write(obj.firstAcquiredMaterialIds)
+      ..writeByte(8)
+      ..write(obj.dangerScore)
+      ..writeByte(9)
+      ..write(obj.dangerLevel)
+      ..writeByte(10)
+      ..write(obj.unlockedFlags)
+      ..writeByte(11)
+      ..write(obj.questPoolCompletionCounts)
+      ..writeByte(12)
+      ..write(obj.infrastructureTier);
   }
 
   @override

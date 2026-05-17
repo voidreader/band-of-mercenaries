@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/core/constants/m7_constants.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/models/crafting_recipe_data.dart';
@@ -57,31 +58,34 @@ class CraftingService {
     final condition = recipe.unlockCondition;
 
     if (condition != null) {
-      // 신뢰도 조건 평가
-      if (condition.trustLevel != null) {
-        final trust = regionStateRepository
-            .getSettlementTrust(GameConstants.startingRegionId);
-        if (trust.level < condition.trustLevel!) return RecipeState.locked;
-      }
+      // M7 페이즈 4 #4 신규 type 분기
+      if (condition.type != null) {
+        if (!_isUnlockedM7(condition)) return RecipeState.locked;
+      } else {
+        // M5 기존 분기 (trustLevel/chainStep/firstAcquiredItem)
+        if (condition.trustLevel != null) {
+          final trust = regionStateRepository
+              .getSettlementTrust(GameConstants.startingRegionId);
+          if (trust.level < condition.trustLevel!) return RecipeState.locked;
+        }
 
-      // 체인 단계 완료 조건 평가
-      if (condition.chainStep != null) {
-        final chainStep = condition.chainStep!;
-        final progress = chainQuestRepository.get(chainStep.chainId);
-        final unlocked = progress != null &&
-            progress.status == ChainQuestStatus.completed &&
-            progress.currentStep > chainStep.step;
-        if (!unlocked) return RecipeState.locked;
-      }
+        if (condition.chainStep != null) {
+          final chainStep = condition.chainStep!;
+          final progress = chainQuestRepository.get(chainStep.chainId);
+          final unlocked = progress != null &&
+              progress.status == ChainQuestStatus.completed &&
+              progress.currentStep > chainStep.step;
+          if (!unlocked) return RecipeState.locked;
+        }
 
-      // 특정 아이템 최초 입수 조건 영속 평가
-      if (condition.firstAcquiredItem != null) {
-        final regionState =
-            regionStateRepository.getState(GameConstants.startingRegionId);
-        final acquired = regionState?.firstAcquiredMaterialIds
-                .contains(condition.firstAcquiredItem!) ??
-            false;
-        if (!acquired) return RecipeState.locked;
+        if (condition.firstAcquiredItem != null) {
+          final regionState =
+              regionStateRepository.getState(GameConstants.startingRegionId);
+          final acquired = regionState?.firstAcquiredMaterialIds
+                  .contains(condition.firstAcquiredItem!) ??
+              false;
+          if (!acquired) return RecipeState.locked;
+        }
       }
     }
 
@@ -92,6 +96,36 @@ class CraftingService {
     }
 
     return RecipeState.ready;
+  }
+
+  /// M7 페이즈 4 #4 신규 type 분기 해금 조건 평가.
+  bool _isUnlockedM7(RecipeUnlockCondition condition) {
+    switch (condition.type) {
+      case 'regionFlag':
+        final flag = condition.flag;
+        if (flag == null) return false;
+        for (final regionId in M7Constants.livingsphereRegions) {
+          final state = regionStateRepository.getState(regionId);
+          if (state?.unlockedFlags.contains(flag) == true) return true;
+        }
+        return false;
+      case 'infrastructureTier':
+        final value = condition.value;
+        if (value == null) return false;
+        final r3 = regionStateRepository.getState(GameConstants.startingRegionId);
+        final tier = r3?.currentInfrastructureTier ?? 1;
+        return tier >= value;
+      case 'all':
+        final conds = condition.conditions;
+        if (conds == null || conds.isEmpty) return false;
+        return conds.every(_isUnlockedM7);
+      case 'any':
+        final conds = condition.conditions;
+        if (conds == null || conds.isEmpty) return false;
+        return conds.any(_isUnlockedM7);
+      default:
+        return false;
+    }
   }
 
   /// 레시피를 실행하여 재료를 소비하고 결과물을 인벤토리에 추가한다.

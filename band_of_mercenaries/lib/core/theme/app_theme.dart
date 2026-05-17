@@ -28,6 +28,12 @@ class AppTheme {
   static const Color tier4Bg = Color(0xFFF3E5F5);
   static const Color tier5Bg = Color(0xFFFFEBEE);
 
+  // dangerLevel 색상 (M7 페이즈 4 #1 + #3)
+  static const Color dangerStable = Color(0xFF1565C0);    // 파랑 (안정)
+  static const Color dangerPeaceful = Color(0xFF2E7D32);  // 초록 (평온)
+  static const Color dangerTension = Color(0xFFFFA000);   // 주황 (긴장)
+  static const Color dangerThreat = Color(0xFFC62828);    // 빨강 (위협)
+
   // Trait category colors
   static const Map<String, Color> traitCategoryColors = {
     'Physical': Color(0xFF2E7D32),     // 초록
@@ -111,6 +117,22 @@ class AppTheme {
       default: return tier1Bg;
     }
   }
+
+  static Color dangerLevelColor(int level) => switch (level) {
+    1 => dangerStable,
+    2 => dangerPeaceful,
+    3 => dangerTension,
+    4 => dangerThreat,
+    _ => dangerPeaceful,
+  };
+
+  static String dangerLevelLabel(int level) => switch (level) {
+    1 => '안정',
+    2 => '평온',
+    3 => '긴장',
+    4 => '위협',
+    _ => '평온',
+  };
 
   static ThemeData get theme => ThemeData(
     useMaterial3: true,

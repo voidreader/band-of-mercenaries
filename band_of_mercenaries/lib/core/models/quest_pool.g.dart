@@ -37,6 +37,12 @@ _$QuestPoolImpl _$$QuestPoolImplFromJson(Map<String, dynamic> json) =>
       namedHookType: json['named_hook_type'] as String?,
       namedHookValue: json['named_hook_value'] as String?,
       namedCooldownHours: (json['named_cooldown_hours'] as num?)?.toInt() ?? 24,
+      regionStateEffect: json['region_state_effect'] == null
+          ? null
+          : RegionStateEffect.fromJson(
+              json['region_state_effect'] as Map<String, dynamic>),
+      regionStateRequired: json['region_state_required'] as String?,
+      regionStateExcluded: json['region_state_excluded'] as String?,
     );
 
 Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
@@ -67,4 +73,7 @@ Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
       'named_hook_type': instance.namedHookType,
       'named_hook_value': instance.namedHookValue,
       'named_cooldown_hours': instance.namedCooldownHours,
+      'region_state_effect': instance.regionStateEffect,
+      'region_state_required': instance.regionStateRequired,
+      'region_state_excluded': instance.regionStateExcluded,
     };

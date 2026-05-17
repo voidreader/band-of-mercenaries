@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/core/constants/m7_constants.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/settlement_trust_provider.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_config.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_provider.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/settlement_npc_data.dart';
@@ -51,6 +54,18 @@ class ChiefHouseScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               _DisabledRewardButton(),
+              // M7 페이즈 4 #4 — Tier 2+ 생활권 정보 버튼
+              Builder(builder: (context) {
+                final infraTier = ref.watch(settlementInfrastructureTierProvider(GameConstants.startingRegionId));
+                if (infraTier < 2) return const SizedBox.shrink();
+                return Column(children: [
+                  const SizedBox(height: 8),
+                  _ActionButton(
+                    label: '생활권 정보',
+                    onTap: () => _showLivingsphereDialog(context, ref, infraTier),
+                  ),
+                ]);
+              }),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -126,6 +141,56 @@ class ChiefHouseScreen extends ConsumerWidget {
             child: const Text('닫기'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLivingsphereDialog(BuildContext context, WidgetRef ref, int infraTier) {
+    final repo = ref.read(regionStateRepositoryProvider);
+    final staticData = ref.read(staticDataProvider).valueOrNull;
+
+    final rows = <Widget>[];
+    int totalFlags = 0;
+    for (final regionId in M7Constants.livingsphereRegions) {
+      final state = repo.getState(regionId);
+      final region = staticData?.regions.where((r) => r.region == regionId).firstOrNull;
+      if (region == null) continue;
+      final dangerLevel = state?.currentDangerLevel ?? 2;
+      final levelLabel = AppTheme.dangerLevelLabel(dangerLevel);
+      final levelColor = AppTheme.dangerLevelColor(dangerLevel);
+      final flagsCount = state?.unlockedFlags
+              .where((f) => SettlementInfrastructureConfig.infrastructureRelevantFlags.contains(f))
+              .length ??
+          0;
+      totalFlags += flagsCount;
+      rows.add(Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Expanded(child: Text(region.regionName, style: const TextStyle(fontSize: 13))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: levelColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: levelColor, width: 1),
+              ),
+              child: Text(levelLabel, style: TextStyle(fontSize: 11, color: levelColor, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      ));
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('생활권 정보 ($totalFlags/8)'),
+        content: SizedBox(
+          width: 320,
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: rows),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('확인'))],
       ),
     );
   }

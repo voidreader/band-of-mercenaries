@@ -35,13 +35,18 @@ class RecipeInput with _$RecipeInput {
       _$RecipeInputFromJson(json);
 }
 
-/// 레시피 해금 조건 (unlock_condition_json — 3종 형태를 nullable 필드로 단순 매핑).
+/// 레시피 해금 조건 (unlock_condition_json — 3종 기존 + 4종 M7 신규 필드로 단순 매핑).
 @freezed
 class RecipeUnlockCondition with _$RecipeUnlockCondition {
   const factory RecipeUnlockCondition({
     @JsonKey(name: 'trust_level') int? trustLevel,
     @JsonKey(name: 'chain_step') ChainStepCondition? chainStep,
     @JsonKey(name: 'first_acquired_item') String? firstAcquiredItem,
+    // M7 페이즈 4 #4 신규 type 분기 필드
+    String? type,   // 'regionFlag' / 'infrastructureTier' / 'all' / 'any'
+    String? flag,
+    int? value,
+    List<RecipeUnlockCondition>? conditions,
   }) = _RecipeUnlockCondition;
 
   factory RecipeUnlockCondition.fromJson(Map<String, dynamic> json) =>

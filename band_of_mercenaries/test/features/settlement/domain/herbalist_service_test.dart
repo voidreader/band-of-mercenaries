@@ -28,9 +28,9 @@ void main() {
       expect(HerbalistService.calculateCooldownMinutes(3), 15);
       expect(HerbalistService.calculateCooldownMinutes(4), 10);
     });
-    test('범위 외 입력 → 30분 fallback', () {
-      expect(HerbalistService.calculateCooldownMinutes(5), 30);
-      expect(HerbalistService.calculateCooldownMinutes(0), 30);
+    test('범위 외 입력 → 45분 fallback', () {
+      expect(HerbalistService.calculateCooldownMinutes(5), 45);
+      expect(HerbalistService.calculateCooldownMinutes(0), 45);
     });
   });
 

@@ -113,6 +113,7 @@ class QuestCompletionService {
     List<FactionState> factionStates = const [],
     Map<String, String>? sectorChanges,
     int currentTrustLevel = 1,
+    int currentInfraTier = 1,
   }) {
     // quest_pools에서 pool 조회 — is_fixed override 적용 여부 판정에 사용
     final pool = staticData.questPools.where((p) => p.id == quest.questPoolId).firstOrNull;
@@ -199,7 +200,7 @@ class QuestCompletionService {
       // REQ-13: 채집 의뢰 골드 보상 단계별 배수
       if (quest.questPoolId == 'dustvile_chore_03' &&
           (resultType == QuestResult.greatSuccess || resultType == QuestResult.success)) {
-        rewardGold = (rewardGold * HerbalistService.gatheringMultiplier(currentTrustLevel)).round();
+        rewardGold = (rewardGold * HerbalistService.gatheringMultiplier(currentTrustLevel, infraTier: currentInfraTier)).round();
       }
       // FR-11: 지명 의뢰 보상 배수 (결과 배수 직후, 칭호/세력/랭크 효과 직전)
       if (pool != null && pool.isNamed) {

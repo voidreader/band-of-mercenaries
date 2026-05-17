@@ -46,6 +46,12 @@ import 'package:band_of_mercenaries/features/investigation/domain/region_transfo
 import 'package:band_of_mercenaries/features/investigation/view/region_transform_dialog.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/trust_level_up_event.dart';
 import 'package:band_of_mercenaries/core/widgets/settlement_trust_up_dialog.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/danger_level_changed_event.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/danger_level_changed_provider.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/infrastructure_upgrade_event.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/infrastructure_upgrade_provider.dart';
+import 'package:band_of_mercenaries/core/widgets/region_state_changed_dialog.dart';
+import 'package:band_of_mercenaries/core/widgets/settlement_infrastructure_upgraded_dialog.dart';
 
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
@@ -211,6 +217,9 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
     final currentTab = ref.watch(currentTabProvider);
     final selectedMercId = ref.watch(selectedMercenaryIdProvider);
 
+    // M7 페이즈 4 #1 FR-4d — decay Provider 활성화 (60틱 카운터로 throttle)
+    ref.watch(regionDangerDecayProvider);
+
     ref.listen(gameTickProvider, (prev, next) {
       ref.read(userDataProvider.notifier).checkConstructionCompletion();
       ref.read(investigationNotifierProvider.notifier).checkCompletion();
@@ -339,6 +348,36 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         builder: (ctx, dismiss) => SettlementTrustUpDialog(event: captured, onDismiss: dismiss),
       ));
       ref.read(settlementTrustLevelUpProvider.notifier).state = null;
+    });
+
+    // 지역 위험도 단계 변화 (medium) — M7 페이즈 4 #1
+    ref.listen<DangerLevelChangedEvent?>(dangerLevelChangedProvider, (_, next) {
+      if (next == null) return;
+      if (next.isBigTransition) {
+        final captured = next;
+        ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+          id: 'regionStateChanged_${next.regionId}_${DateTime.now().millisecondsSinceEpoch}',
+          priority: DialogPriority.medium,
+          dialogType: DialogTypeRegistry.regionStateChanged,
+          payload: {'regionId': next.regionId, 'regionName': next.regionName},
+          builder: (ctx, dismiss) => RegionStateChangedDialog(event: captured, onDismiss: dismiss),
+        ));
+      }
+      ref.read(dangerLevelChangedProvider.notifier).state = null;
+    });
+
+    // 마을 기반시설 단계 승급 (medium) — M7 페이즈 4 #4
+    ref.listen<InfrastructureUpgradeEvent?>(settlementInfrastructureUpgradedProvider, (_, next) {
+      if (next == null) return;
+      final captured = next;
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'settlementInfrastructureUpgraded_${next.toTier}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.medium,
+        dialogType: DialogTypeRegistry.settlementInfrastructureUpgraded,
+        payload: {'fromTier': next.fromTier, 'toTier': next.toTier},
+        builder: (ctx, dismiss) => SettlementInfrastructureUpgradedDialog(event: captured),
+      ));
+      ref.read(settlementInfrastructureUpgradedProvider.notifier).state = null;
     });
 
     // ── 큐 → 단일 표시 listen ────────────────────────────────────────────────

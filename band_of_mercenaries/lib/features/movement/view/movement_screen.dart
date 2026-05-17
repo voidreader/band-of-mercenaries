@@ -18,6 +18,12 @@ import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_prog
 import 'package:band_of_mercenaries/core/data/region_sector_fallback.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/village_facility.dart';
 import 'package:band_of_mercenaries/features/settlement/view/village_visit_section.dart';
+import 'package:band_of_mercenaries/features/movement/domain/movement_distance_calculator.dart';
+import 'package:band_of_mercenaries/features/movement/view/livingsphere_jump_bar.dart';
+import 'package:band_of_mercenaries/features/movement/view/region_status_badge_row.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_config.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_provider.dart';
+import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
   const MovementScreen({super.key});
@@ -90,8 +96,12 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
         );
         // region 변경 시 sectorCount 초과 보정. 직접 변이 대신 로컬 변수로 안전하게 처리.
         final effectiveSelectedSector = _selectedSector.clamp(1, targetRegion.sectorCount);
-        final distance = UserData.calculateDistance(
-          userData.region, userData.sector, _selectedRegion, effectiveSelectedSector,
+        final distance = MovementDistanceCalculator.calculate(
+          fromRegion: userData.region,
+          fromSector: userData.sector,
+          toRegion: _selectedRegion,
+          toSector: effectiveSelectedSector,
+          adjacencyMap: data.regionAdjacencyMap,
         );
         final speedMult = ref.watch(speedMultiplierProvider);
         double travelReduction = 0.0;
@@ -99,6 +109,12 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
         if (transportFacility != null) {
           final transportLevel = userData.facilities['transport'] ?? 0;
           travelReduction = ConstructionService.getEffectValue(transportFacility, transportLevel);
+        }
+        final infraTier = ref.watch(settlementInfrastructureTierProvider(GameConstants.startingRegionId));
+        if (infraTier >= SettlementInfrastructureConfig.signpostMinTier &&
+            (userData.region == GameConstants.startingRegionId ||
+             _selectedRegion == GameConstants.startingRegionId)) {
+          travelReduction = 1.0 - ((1.0 - travelReduction) * SettlementInfrastructureConfig.signpostDistanceMultiplier);
         }
         final rawMoveTime = UserData.calculateMoveTime(distance, speedMultiplier: speedMult);
         final moveTime = Duration(seconds: (rawMoveTime.inSeconds * (1.0 - travelReduction)).round());
@@ -195,8 +211,10 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                                   children: [
                                     Text('지역 $_selectedRegion',
                                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                                    Text('${targetRegion.regionName} · Tier ${targetRegion.regionTier}',
+                                    Text('${_envIcon(targetRegion.environmentTags)} ${targetRegion.regionName} · Tier ${targetRegion.regionTier}',
                                         style: const TextStyle(fontSize: 13, color: AppTheme.textTertiary)),
+                                    const SizedBox(height: 4),
+                                    RegionStatusBadgeRow(regionId: _selectedRegion),
                                     if (!isTargetAccessible) ...[
                                       const SizedBox(height: 4),
                                       Container(
@@ -206,7 +224,7 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          '잠김',
+                                          '🔒 ${requiredRank.grade} 랭크 필요',
                                           style: const TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
@@ -241,6 +259,19 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 14),
+                    LivingsphereJumpBar(
+                      selectedRegion: _selectedRegion,
+                      onJump: userData.isMoving ? (_) {} : (regionId) {
+                        setState(() {
+                          _selectedRegion = regionId;
+                          final newRegion = data.regions.where((r) => r.region == regionId).firstOrNull;
+                          if (newRegion != null && _selectedSector > newRegion.sectorCount) {
+                            _selectedSector = 1;
+                          }
+                        });
+                      },
                     ),
                     const SizedBox(height: 14),
 
@@ -390,6 +421,15 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
     );
   }
 
+  static String _envIcon(List<String> tags) {
+    if (tags.contains('mountain')) return '🏔️';
+    if (tags.contains('coast')) return '🌊';
+    if (tags.contains('forest')) return '🌳';
+    if (tags.contains('swamp')) return '🌫️';
+    if (tags.contains('ruins')) return '🏛️';
+    if (tags.contains('plains')) return '🌾';
+    return '🌍';
+  }
 }
 
 class _SectorTile extends StatelessWidget {

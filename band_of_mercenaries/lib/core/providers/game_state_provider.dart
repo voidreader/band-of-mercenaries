@@ -425,4 +425,12 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     await state!.save();
     state = state;
   }
+
+  /// M7 페이즈 4 #4 — 외래 좌판 방문 횟수 +1
+  Future<void> incrementForeignStallVisit() async {
+    if (state == null) return;
+    state!.foreignStallVisitCount = state!.foreignStallVisitCount + 1;
+    await state!.save();
+    state = state;
+  }
 }

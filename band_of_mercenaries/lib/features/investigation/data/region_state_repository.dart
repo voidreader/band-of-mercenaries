@@ -3,18 +3,28 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/core/constants/m7_constants.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
+import 'package:band_of_mercenaries/core/models/quest_pool.dart';
+import 'package:band_of_mercenaries/core/models/region_state_effect.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
 import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/danger_level.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/danger_level_changed_event.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/danger_level_changed_provider.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_state_flag_descriptions.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/trust_level_up_event.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_config.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/infrastructure_upgrade_event.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/infrastructure_upgrade_provider.dart';
 
 final regionStateRepositoryProvider = Provider((ref) => RegionStateRepository());
 
@@ -35,6 +45,16 @@ class RegionStateRepository {
 
   // 단계별 한국어 명칭
   static const Map<int, String> _trustLevelNames = {1: '의심', 2: '인지', 3: '친근', 4: '소속'};
+
+  /// M7 페이즈 4 #1 — 위험도 점수 decay 체크 시각 (region별, 인메모리 캐시)
+  static final Map<int, DateTime> _lastDecayCheckedAt = {};
+
+  DateTime getLastDecayCheckedAt(int regionId) =>
+      _lastDecayCheckedAt[regionId] ?? DateTime.now();
+
+  void updateLastDecayCheckedAt(int regionId, DateTime now) {
+    _lastDecayCheckedAt[regionId] = now;
+  }
 
   RegionState? getState(int regionId) {
     try {
@@ -277,6 +297,295 @@ class RegionStateRepository {
     }
 
     return (newTrust: state.settlementTrust!, newLevel: newLevel, levelUpEvent: event);
+  }
+
+  // ─── M7 페이즈 4 #1 — 위험도·플래그 ────────────────────────────────────────
+
+  /// RegionState가 없으면 신규 생성 후 box.add. 있으면 기존 반환.
+  ///
+  /// 호출자가 mutation 후 [saveState] 또는 `state.save()` 호출 책임을 가진다.
+  /// (addSettlementTrust 라인 157 패턴 답습)
+  RegionState getOrCreateRegionState(int regionId) {
+    return getState(regionId) ?? RegionState(regionId: regionId);
+  }
+
+  /// 위험도 점수를 [delta]만큼 증감시킨다. clamp(-100, +100).
+  ///
+  /// 단계 전이 발생 시:
+  /// - ActivityLog `regionDangerLevelChanged` 기록
+  /// - 첫 peaceful 진입(음수 진입) 시 `region_pacified:region_$regionId` 위업 발급 (fail-soft)
+  /// - isBigTransition인 경우 [dangerLevelChangedProvider] publish
+  /// - 퀘스트 풀 갱신 ([refreshAvailableQuests])
+  Future<({int newScore, int newLevel, DangerLevelChangedEvent? event})> addDangerScore({
+    required int regionId,
+    required int delta,
+    required String source,
+    required Ref ref,
+  }) async {
+    if (delta == 0) {
+      final s = getState(regionId);
+      final score = s?.currentDangerScore ?? 0;
+      final level = s?.currentDangerLevel ?? 2;
+      return (newScore: score, newLevel: level, event: null);
+    }
+
+    var state = getState(regionId) ?? RegionState(regionId: regionId);
+    final oldScore = state.currentDangerScore;
+    final oldLevelInt = state.currentDangerLevel;
+    final oldLevel = DangerLevelResolver.fromCacheInt(oldLevelInt) ?? DangerLevel.peaceful;
+
+    final newScore = (oldScore + delta).clamp(-100, 100);
+    state.dangerScore = newScore;
+    final newLevel = DangerLevelResolver.resolveLevel(newScore);
+    state.dangerLevel = newLevel.cacheInt;
+    await saveState(state);
+
+    DangerLevelChangedEvent? event;
+
+    if (newLevel != oldLevel) {
+      final staticData = ref.read(staticDataProvider).valueOrNull;
+      final regionName = staticData?.regions
+              .where((r) => r.region == regionId)
+              .map((r) => r.regionName)
+              .firstOrNull ??
+          '지역 $regionId';
+
+      final isBig = DangerLevelChangedEvent.computeIsBigTransition(oldLevel, newLevel);
+
+      await ref.read(activityLogProvider.notifier).addLog(
+        '$regionName 상태가 ${oldLevel.koreanLabel} → ${newLevel.koreanLabel}(으)로 변화했다',
+        ActivityLogType.regionDangerLevelChanged,
+      );
+
+      // [FR] 첫 peaceful 진입 (음수 진입) 시 위업 발급 — fail-soft
+      List<String> grantedAchievements = [];
+      if (newScore < 0 && oldScore >= 0) {
+        try {
+          await ref.read(achievementServiceProvider).grant(
+            'region_pacified:region_$regionId',
+            regionId: regionId,
+            payload: {'oldScore': oldScore, 'newScore': newScore},
+          );
+          grantedAchievements = ['region_pacified:region_$regionId'];
+        } on Exception catch (e) {
+          debugPrint('[M7][Achievement] region_pacified grant 실패: $e');
+        }
+      }
+
+      event = DangerLevelChangedEvent(
+        regionId: regionId,
+        regionName: regionName,
+        from: oldLevel,
+        to: newLevel,
+        grantedAchievements: grantedAchievements,
+        isBigTransition: isBig,
+      );
+
+      if (isBig) {
+        ref.read(dangerLevelChangedProvider.notifier).state = event;
+      }
+
+      // region_state_required·excluded 재평가
+      await ref.read(questListProvider.notifier).refreshAvailableQuests();
+    }
+
+    return (newScore: newScore, newLevel: newLevel.cacheInt, event: event);
+  }
+
+  /// 영속 플래그를 멱등 추가한다. 신규 토글이면 true, 이미 있으면 false 반환.
+  ///
+  /// ActivityLog `regionUnlockedFlagToggled` 기록.
+  /// fail-soft trailing: 페이즈 4 #4 인프라 단계 전이 평가 (TASK-13에서 본체 활성화).
+  Future<bool> toggleFlag({
+    required int regionId,
+    required String flag,
+    required Ref ref,
+  }) async {
+    var state = getState(regionId) ?? RegionState(regionId: regionId);
+    if (state.unlockedFlags.contains(flag)) return false;
+
+    state.unlockedFlags.add(flag);
+    await saveState(state);
+
+    final staticData = ref.read(staticDataProvider).valueOrNull;
+    final regionName = staticData?.regions
+            .where((r) => r.region == regionId)
+            .map((r) => r.regionName)
+            .firstOrNull ??
+        '지역 $regionId';
+    final flagDesc = regionStateFlagDescriptions[flag] ?? flag;
+
+    await ref.read(activityLogProvider.notifier).addLog(
+      '$regionName에서 변화가 일어났다: $flagDesc',
+      ActivityLogType.regionUnlockedFlagToggled,
+    );
+
+    // M7 페이즈 4 #4 인프라 전이 평가 trailing (fail-soft)
+    try {
+      final event = await _evaluateInfrastructureTransition(ref: ref);
+      if (event != null) {
+        ref.read(settlementInfrastructureUpgradedProvider.notifier).state = event;
+      }
+    } on Exception catch (e) {
+      debugPrint('[M7][Infrastructure] transition 평가 실패: $e');
+    }
+
+    return true;
+  }
+
+  /// 영속 플래그 보유 여부 (동기 조회).
+  bool hasFlag(int regionId, String flag) {
+    final state = getState(regionId);
+    return state?.unlockedFlags.contains(flag) ?? false;
+  }
+
+  /// M7 페이즈 4 #2 — quest 완료 시 region_state_effect 적용.
+  ///
+  /// [CumulativeEffect]: 의뢰 완료 횟수를 [questPoolCompletionCounts]에 누적하며
+  /// [deltaPerCompletion]만큼 위험도를 누적한다. 누적량이 [capPerThreshold]
+  /// (음수 = 위험도 감소 폭)에 도달하면 [thresholdFlag]를 토글하고 -10 bonus 적용.
+  /// 이후 카운터는 계속 누적되지만 추가 위험도 감소는 없다.
+  ///
+  /// [OneshotEffect]: 플래그 보유 여부 확인 후, 신규 토글이면 [delta]만큼 위험도 변화.
+  Future<void> applyDangerScoreFromQuest({
+    required int regionId,
+    required QuestPool pool,
+    required Ref ref,
+  }) async {
+    final effect = pool.regionStateEffect;
+    if (effect == null) return;
+
+    switch (effect) {
+      case CumulativeEffect():
+        var state = getState(regionId) ?? RegionState(regionId: regionId);
+        // 이미 cap 도달 — 카운터 증가만 (saveState로 persist)
+        if (state.unlockedFlags.contains(effect.thresholdFlag)) {
+          state.questPoolCompletionCounts[pool.id] =
+              (state.questPoolCompletionCounts[pool.id] ?? 0) + 1;
+          await saveState(state);
+          return;
+        }
+        // 카운터 +1
+        final newCount = (state.questPoolCompletionCounts[pool.id] ?? 0) + 1;
+        state.questPoolCompletionCounts[pool.id] = newCount;
+        await saveState(state);
+
+        // delta 적용 (위험도 갱신은 addDangerScore가 자체 saveState 수행)
+        await addDangerScore(
+          regionId: regionId,
+          delta: effect.deltaPerCompletion,
+          source: 'cumulative_${pool.id}',
+          ref: ref,
+        );
+
+        // cap 도달 검증 — capPerThreshold는 음수 (위험도 감소 폭)
+        final cumulativeDelta = newCount * effect.deltaPerCompletion;
+        if (cumulativeDelta <= effect.capPerThreshold) {
+          final toggled = await toggleFlag(
+            regionId: regionId,
+            flag: effect.thresholdFlag,
+            ref: ref,
+          );
+          if (toggled) {
+            await addDangerScore(
+              regionId: regionId,
+              delta: -10,
+              source: 'cumulative_cap_bonus',
+              ref: ref,
+            );
+          }
+        }
+        break;
+      case OneshotEffect():
+        if (hasFlag(regionId, effect.flag)) return;
+        await toggleFlag(regionId: regionId, flag: effect.flag, ref: ref);
+        await addDangerScore(
+          regionId: regionId,
+          delta: effect.delta,
+          source: 'oneshot_${pool.id}',
+          ref: ref,
+        );
+        break;
+    }
+  }
+
+  /// M7 페이즈 4 #4 — toggleFlag trailing에서 호출. region 3 인프라 단계 전이 평가.
+  /// fail-soft. event 반환 (이벤트 publish는 호출자 또는 본 메서드 내부).
+  Future<InfrastructureUpgradeEvent?> _evaluateInfrastructureTransition({required Ref ref}) async {
+    final r3State = getState(GameConstants.startingRegionId) ?? RegionState(regionId: GameConstants.startingRegionId);
+    final currentTier = r3State.currentInfrastructureTier;
+
+    // 7리전 unlockedFlags 합산 (8 flag 한정)
+    int flagCount = 0;
+    for (final regionId in M7Constants.livingsphereRegions) {
+      final state = getState(regionId);
+      if (state == null) continue;
+      for (final flag in state.unlockedFlags) {
+        if (SettlementInfrastructureConfig.infrastructureRelevantFlags.contains(flag)) {
+          flagCount++;
+        }
+      }
+    }
+
+    final nextTier = SettlementInfrastructureConfig.resolveTier(flagCount);
+    if (nextTier <= currentTier) return null;
+
+    // 단계 갱신
+    r3State.infrastructureTier = nextTier;
+    await saveState(r3State);
+
+    // 통과한 모든 Tier 보상 합산
+    int rewardGold = 0, rewardXp = 0, rewardRep = 0;
+    for (int tier = currentTier + 1; tier <= nextTier; tier++) {
+      final r = SettlementInfrastructureConfig.infraTierRewards[tier];
+      if (r == null) continue;
+      rewardGold += r.gold;
+      rewardXp += r.xp;
+      rewardRep += r.rep;
+    }
+    if (rewardGold > 0) {
+      await ref.read(userDataProvider.notifier).addGold(rewardGold);
+    }
+    if (rewardRep > 0) {
+      await ref.read(userDataProvider.notifier).addReputation(rewardRep);
+    }
+    if (rewardXp > 0) {
+      await _grantXpEvenly(ref, rewardXp);
+    }
+
+    // ActivityLog
+    final tierName = SettlementInfrastructureConfig.infraTierNames[nextTier] ?? '';
+    ref.read(activityLogProvider.notifier).addLog(
+      '더스트빌이 [$nextTier단계: $tierName] 단계로 발전했다',
+      ActivityLogType.settlementInfrastructureUpgraded,
+    );
+
+    // 위업 hook — Tier 4 진입 시 '변방의 영주'
+    List<String> grantedAchievements = const [];
+    if (nextTier == 4) {
+      try {
+        await ref.read(achievementServiceProvider).grant(
+          'infrastructure_tier:tier_4',
+          regionId: GameConstants.startingRegionId,
+          payload: {'fromTier': currentTier, 'toTier': nextTier, 'flagCount': flagCount},
+        );
+        grantedAchievements = ['infrastructure_tier:tier_4'];
+      } on Exception catch (e) {
+        debugPrint('[M7][Achievement] infrastructure_tier grant 실패: $e');
+      }
+    }
+
+    // 퀘스트 풀 갱신
+    await ref.read(questListProvider.notifier).refreshAvailableQuests();
+
+    return InfrastructureUpgradeEvent(
+      fromTier: currentTier,
+      toTier: nextTier,
+      rewardGold: rewardGold > 0 ? rewardGold : null,
+      rewardXp: rewardXp > 0 ? rewardXp : null,
+      rewardReputation: rewardRep > 0 ? rewardRep : null,
+      grantedAchievements: grantedAchievements,
+    );
   }
 
   // ─── 내부 헬퍼 ────────────────────────────────────────────────────────────

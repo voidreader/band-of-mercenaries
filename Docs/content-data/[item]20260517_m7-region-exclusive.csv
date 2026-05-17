@@ -1,0 +1,9 @@
+id,name,description,flavor_text,category,slot,tier,effect_json,region_exclusive
+mat_herb_wildflower,들꽃 약초,,마른 초원 길가에 무리 짓는 작은 야생화. 도적 흔적 사이로 자란다.,material,material_herb,1,{},31
+mat_herb_seaweed,해초 약재,,해안 바위틈에 자라는 짠 향의 해초. 유목민들이 약으로 쓰는 재료.,material,material_herb,1,{},127
+mat_hide_nomad_strap,유목민 가죽끈,,변방 해안 유목민이 손수 무두질한 가죽끈. 거친 손길의 흔적이 남아 있다.,material,material_hide,2,{},127
+mat_monster_beast_fang,야수 송곳니,,외곽 숲의 거대 야수에게서 얻는 단단한 송곳니. 한참을 다듬어야 도구가 된다.,material,material_monster_part,2,{},9
+mat_herb_wind,바람약초,,풍신 숲 능선에서 바람을 맞으며 자라는 약초. 잎이 끊임없이 떨린다.,material,material_herb,2,{},10
+mat_herb_poison,독초,,회색 늪지의 안개 속에서 자라는 독성 약초. 함부로 만지면 손이 따끔하다.,material,material_herb,2,{},146
+mat_relic_swamp_seal,늪의 인장 조각,,늪 깊은 물 밑에서 건진 옛 인장의 일부. 표면에 알 수 없는 문양이 새겨져 있다.,material,material_relic_fragment,2,{},146
+mat_relic_burnt_seal,탄 인장 파편,,부서진 요새의 잿더미에서 발굴되는 검게 그을린 인장 조각. 옛 서약의 흔적.,material,material_relic_fragment,3,{},38

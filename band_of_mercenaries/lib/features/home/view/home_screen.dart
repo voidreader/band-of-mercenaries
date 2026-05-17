@@ -609,6 +609,12 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '✩', color: AppTheme.chainGold, bold: true);
       case ActivityLogType.namedQuestTerminated:
         return (icon: '⏱', color: d, bold: false);
+      case ActivityLogType.regionDangerLevelChanged:
+        return (icon: '⚠️', color: d, bold: false);
+      case ActivityLogType.regionUnlockedFlagToggled:
+        return (icon: '🗺️', color: d, bold: false);
+      case ActivityLogType.settlementInfrastructureUpgraded:
+        return (icon: '🏘️', color: AppTheme.settlementAccent, bold: false);
     }
   }
 

@@ -117,6 +117,12 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.titleUnlocked;
       case 31:
         return ActivityLogType.namedQuestTerminated;
+      case 32:
+        return ActivityLogType.regionDangerLevelChanged;
+      case 33:
+        return ActivityLogType.regionUnlockedFlagToggled;
+      case 34:
+        return ActivityLogType.settlementInfrastructureUpgraded;
       default:
         return ActivityLogType.questResult;
     }
@@ -220,6 +226,15 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.namedQuestTerminated:
         writer.writeByte(31);
+        break;
+      case ActivityLogType.regionDangerLevelChanged:
+        writer.writeByte(32);
+        break;
+      case ActivityLogType.regionUnlockedFlagToggled:
+        writer.writeByte(33);
+        break;
+      case ActivityLogType.settlementInfrastructureUpgraded:
+        writer.writeByte(34);
         break;
     }
   }

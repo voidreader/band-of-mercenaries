@@ -576,7 +576,14 @@ mixin _$RecipeUnlockCondition {
   @JsonKey(name: 'chain_step')
   ChainStepCondition? get chainStep => throw _privateConstructorUsedError;
   @JsonKey(name: 'first_acquired_item')
-  String? get firstAcquiredItem => throw _privateConstructorUsedError;
+  String? get firstAcquiredItem =>
+      throw _privateConstructorUsedError; // M7 페이즈 4 #4 신규 type 분기 필드
+  String? get type =>
+      throw _privateConstructorUsedError; // 'regionFlag' / 'infrastructureTier' / 'all' / 'any'
+  String? get flag => throw _privateConstructorUsedError;
+  int? get value => throw _privateConstructorUsedError;
+  List<RecipeUnlockCondition>? get conditions =>
+      throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -593,7 +600,11 @@ abstract class $RecipeUnlockConditionCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: 'trust_level') int? trustLevel,
       @JsonKey(name: 'chain_step') ChainStepCondition? chainStep,
-      @JsonKey(name: 'first_acquired_item') String? firstAcquiredItem});
+      @JsonKey(name: 'first_acquired_item') String? firstAcquiredItem,
+      String? type,
+      String? flag,
+      int? value,
+      List<RecipeUnlockCondition>? conditions});
 
   $ChainStepConditionCopyWith<$Res>? get chainStep;
 }
@@ -615,6 +626,10 @@ class _$RecipeUnlockConditionCopyWithImpl<$Res,
     Object? trustLevel = freezed,
     Object? chainStep = freezed,
     Object? firstAcquiredItem = freezed,
+    Object? type = freezed,
+    Object? flag = freezed,
+    Object? value = freezed,
+    Object? conditions = freezed,
   }) {
     return _then(_value.copyWith(
       trustLevel: freezed == trustLevel
@@ -629,6 +644,22 @@ class _$RecipeUnlockConditionCopyWithImpl<$Res,
           ? _value.firstAcquiredItem
           : firstAcquiredItem // ignore: cast_nullable_to_non_nullable
               as String?,
+      type: freezed == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String?,
+      flag: freezed == flag
+          ? _value.flag
+          : flag // ignore: cast_nullable_to_non_nullable
+              as String?,
+      value: freezed == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as int?,
+      conditions: freezed == conditions
+          ? _value.conditions
+          : conditions // ignore: cast_nullable_to_non_nullable
+              as List<RecipeUnlockCondition>?,
     ) as $Val);
   }
 
@@ -657,7 +688,11 @@ abstract class _$$RecipeUnlockConditionImplCopyWith<$Res>
   $Res call(
       {@JsonKey(name: 'trust_level') int? trustLevel,
       @JsonKey(name: 'chain_step') ChainStepCondition? chainStep,
-      @JsonKey(name: 'first_acquired_item') String? firstAcquiredItem});
+      @JsonKey(name: 'first_acquired_item') String? firstAcquiredItem,
+      String? type,
+      String? flag,
+      int? value,
+      List<RecipeUnlockCondition>? conditions});
 
   @override
   $ChainStepConditionCopyWith<$Res>? get chainStep;
@@ -678,6 +713,10 @@ class __$$RecipeUnlockConditionImplCopyWithImpl<$Res>
     Object? trustLevel = freezed,
     Object? chainStep = freezed,
     Object? firstAcquiredItem = freezed,
+    Object? type = freezed,
+    Object? flag = freezed,
+    Object? value = freezed,
+    Object? conditions = freezed,
   }) {
     return _then(_$RecipeUnlockConditionImpl(
       trustLevel: freezed == trustLevel
@@ -692,6 +731,22 @@ class __$$RecipeUnlockConditionImplCopyWithImpl<$Res>
           ? _value.firstAcquiredItem
           : firstAcquiredItem // ignore: cast_nullable_to_non_nullable
               as String?,
+      type: freezed == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String?,
+      flag: freezed == flag
+          ? _value.flag
+          : flag // ignore: cast_nullable_to_non_nullable
+              as String?,
+      value: freezed == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as int?,
+      conditions: freezed == conditions
+          ? _value._conditions
+          : conditions // ignore: cast_nullable_to_non_nullable
+              as List<RecipeUnlockCondition>?,
     ));
   }
 }
@@ -702,7 +757,12 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
   const _$RecipeUnlockConditionImpl(
       {@JsonKey(name: 'trust_level') this.trustLevel,
       @JsonKey(name: 'chain_step') this.chainStep,
-      @JsonKey(name: 'first_acquired_item') this.firstAcquiredItem});
+      @JsonKey(name: 'first_acquired_item') this.firstAcquiredItem,
+      this.type,
+      this.flag,
+      this.value,
+      final List<RecipeUnlockCondition>? conditions})
+      : _conditions = conditions;
 
   factory _$RecipeUnlockConditionImpl.fromJson(Map<String, dynamic> json) =>
       _$$RecipeUnlockConditionImplFromJson(json);
@@ -716,10 +776,27 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
   @override
   @JsonKey(name: 'first_acquired_item')
   final String? firstAcquiredItem;
+// M7 페이즈 4 #4 신규 type 분기 필드
+  @override
+  final String? type;
+// 'regionFlag' / 'infrastructureTier' / 'all' / 'any'
+  @override
+  final String? flag;
+  @override
+  final int? value;
+  final List<RecipeUnlockCondition>? _conditions;
+  @override
+  List<RecipeUnlockCondition>? get conditions {
+    final value = _conditions;
+    if (value == null) return null;
+    if (_conditions is EqualUnmodifiableListView) return _conditions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'RecipeUnlockCondition(trustLevel: $trustLevel, chainStep: $chainStep, firstAcquiredItem: $firstAcquiredItem)';
+    return 'RecipeUnlockCondition(trustLevel: $trustLevel, chainStep: $chainStep, firstAcquiredItem: $firstAcquiredItem, type: $type, flag: $flag, value: $value, conditions: $conditions)';
   }
 
   @override
@@ -732,13 +809,25 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
             (identical(other.chainStep, chainStep) ||
                 other.chainStep == chainStep) &&
             (identical(other.firstAcquiredItem, firstAcquiredItem) ||
-                other.firstAcquiredItem == firstAcquiredItem));
+                other.firstAcquiredItem == firstAcquiredItem) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.flag, flag) || other.flag == flag) &&
+            (identical(other.value, value) || other.value == value) &&
+            const DeepCollectionEquality()
+                .equals(other._conditions, _conditions));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, trustLevel, chainStep, firstAcquiredItem);
+  int get hashCode => Object.hash(
+      runtimeType,
+      trustLevel,
+      chainStep,
+      firstAcquiredItem,
+      type,
+      flag,
+      value,
+      const DeepCollectionEquality().hash(_conditions));
 
   @JsonKey(ignore: true)
   @override
@@ -757,10 +846,14 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
 
 abstract class _RecipeUnlockCondition implements RecipeUnlockCondition {
   const factory _RecipeUnlockCondition(
-      {@JsonKey(name: 'trust_level') final int? trustLevel,
-      @JsonKey(name: 'chain_step') final ChainStepCondition? chainStep,
-      @JsonKey(name: 'first_acquired_item')
-      final String? firstAcquiredItem}) = _$RecipeUnlockConditionImpl;
+          {@JsonKey(name: 'trust_level') final int? trustLevel,
+          @JsonKey(name: 'chain_step') final ChainStepCondition? chainStep,
+          @JsonKey(name: 'first_acquired_item') final String? firstAcquiredItem,
+          final String? type,
+          final String? flag,
+          final int? value,
+          final List<RecipeUnlockCondition>? conditions}) =
+      _$RecipeUnlockConditionImpl;
 
   factory _RecipeUnlockCondition.fromJson(Map<String, dynamic> json) =
       _$RecipeUnlockConditionImpl.fromJson;
@@ -774,6 +867,14 @@ abstract class _RecipeUnlockCondition implements RecipeUnlockCondition {
   @override
   @JsonKey(name: 'first_acquired_item')
   String? get firstAcquiredItem;
+  @override // M7 페이즈 4 #4 신규 type 분기 필드
+  String? get type;
+  @override // 'regionFlag' / 'infrastructureTier' / 'all' / 'any'
+  String? get flag;
+  @override
+  int? get value;
+  @override
+  List<RecipeUnlockCondition>? get conditions;
   @override
   @JsonKey(ignore: true)
   _$$RecipeUnlockConditionImplCopyWith<_$RecipeUnlockConditionImpl>

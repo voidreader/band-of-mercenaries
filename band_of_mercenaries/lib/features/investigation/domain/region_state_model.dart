@@ -29,8 +29,32 @@ class RegionState extends HiveObject {
   @HiveField(7)
   List<String> firstAcquiredMaterialIds;
 
+  /// M7 페이즈 4 #1 — 위험도 점수 (-100 ~ +100, clamp)
+  @HiveField(8)
+  int? dangerScore;
+
+  /// M7 페이즈 4 #1 — 위험도 단계 캐시 (1=stable 2=peaceful 3=tension 4=threat)
+  @HiveField(9)
+  int? dangerLevel;
+
+  /// M7 페이즈 4 #1 — 해금 상태 영속 플래그
+  @HiveField(10)
+  List<String> unlockedFlags;
+
+  /// M7 페이즈 4 #2 — quest_pool별 region 내 누적 완료 횟수
+  @HiveField(11)
+  Map<String, int> questPoolCompletionCounts;
+
+  /// M7 페이즈 4 #4 — 마을 인프라 단계 (1~4, region 3 한정)
+  @HiveField(12)
+  int? infrastructureTier;
+
   int get currentTrust => settlementTrust ?? 0;
   int get currentTrustLevel => settlementTrustLevel ?? 1;
+  int get currentDangerScore => dangerScore ?? 0;
+  int get currentDangerLevel => dangerLevel ?? 2;
+  bool hasFlag(String flag) => unlockedFlags.contains(flag);
+  int get currentInfrastructureTier => infrastructureTier ?? 1;
 
   bool get eventCompletedRecently =>
       lastEventCompletedAt != null &&
@@ -45,7 +69,14 @@ class RegionState extends HiveObject {
     this.settlementTrustLevel,
     this.lastEventCompletedAt,
     List<String>? firstAcquiredMaterialIds,
+    this.dangerScore,
+    this.dangerLevel,
+    List<String>? unlockedFlags,
+    Map<String, int>? questPoolCompletionCounts,
+    this.infrastructureTier,
   })  : triggeredDiscoveries = triggeredDiscoveries ?? [],
         sectorChanges = sectorChanges ?? {},
-        firstAcquiredMaterialIds = firstAcquiredMaterialIds ?? [];
+        firstAcquiredMaterialIds = firstAcquiredMaterialIds ?? [],
+        unlockedFlags = unlockedFlags ?? [],
+        questPoolCompletionCounts = questPoolCompletionCounts ?? {};
 }

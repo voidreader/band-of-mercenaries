@@ -94,6 +94,10 @@ class UserData extends HiveObject {
   @HiveField(26)
   Map<String, DateTime> namedQuestCooldowns;
 
+  /// M7 페이즈 4 #4 — 외래 좌판 방문 누적 카운트
+  @HiveField(27)
+  int foreignStallVisitCount;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -122,6 +126,7 @@ class UserData extends HiveObject {
     this.flagshipMercId,
     this.lastDispatchProtagonistMercId,
     Map<String, DateTime>? namedQuestCooldowns,
+    this.foreignStallVisitCount = 0,
   })  : facilities = facilities ?? {},
         artifactItemIds = artifactItemIds ?? <String>[],
         completedChains = completedChains ?? <String>[],

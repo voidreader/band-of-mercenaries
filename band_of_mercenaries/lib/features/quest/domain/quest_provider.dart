@@ -33,6 +33,7 @@ import 'package:band_of_mercenaries/features/inventory/domain/equipment_effect_c
 import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
 import 'package:band_of_mercenaries/core/models/passive_effect.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/elite_region_state_mapping.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_provider.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
 import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
@@ -279,6 +280,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       bandAchievements: ref.read(bandAchievementsProvider),
       flagshipMercId: userData.flagshipMercId,
       namedQuestCooldowns: userData.namedQuestCooldowns,
+      // M7 페이즈 4 #2 — region 상태(위험도/플래그) 가중치 평가 컨텍스트
+      regionState: ref
+          .read(regionStateRepositoryProvider)
+          .getState(userData.region),
     );
     await _repo.addQuests(quests);
     debugPrint('[BOM][Quest] generateQuests 완료: ${quests.length}개 생성');
@@ -492,6 +497,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       bandAchievements: ref.read(bandAchievementsProvider),
       flagshipMercId: userData.flagshipMercId,
       namedQuestCooldowns: userData.namedQuestCooldowns,
+      // M7 페이즈 4 #2 — region 상태(위험도/플래그) 가중치 평가 컨텍스트
+      regionState: ref
+          .read(regionStateRepositoryProvider)
+          .getState(userData.region),
     );
     await _repo.addQuests(newQuests);
     // M6 페이즈 4 #3 — 지명 의뢰 쿨다운 갱신
@@ -688,6 +697,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       bandAchievements: ref.read(bandAchievementsProvider),
       flagshipMercId: userData.flagshipMercId,
       namedQuestCooldowns: userData.namedQuestCooldowns,
+      // M7 페이즈 4 #2 — region 상태(위험도/플래그) 가중치 평가 컨텍스트
+      regionState: ref
+          .read(regionStateRepositoryProvider)
+          .getState(userData.region),
     );
     await _repo.addQuests(newQuests);
     // M6 페이즈 4 #3 — 지명 의뢰 쿨다운 갱신
@@ -799,6 +812,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           .read(regionStateRepositoryProvider)
           .getSettlementTrust(quest.region)
           .level,
+      currentInfraTier: ref
+          .read(regionStateRepositoryProvider)
+          .getState(GameConstants.startingRegionId)
+          ?.currentInfrastructureTier ?? 1,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
@@ -919,6 +936,36 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           } on Exception catch (e) {
             debugPrint('[BOM][Achievement] elite hook 실패: $e');
           }
+        }
+      }
+    }
+
+    // M7 페이즈 4 #1 FR-4c — 엘리트 유니크 처치 시 region dangerScore + flag toggle
+    if (quest.eliteId != null) {
+      final eliteData = staticData.eliteMonsters
+          .where((e) => e.id == quest.eliteId)
+          .firstOrNull;
+      if (eliteData != null && eliteData.isUnique) {
+        try {
+          final entry = eliteRegionStateMapping[quest.eliteId!];
+          if (entry != null) {
+            final repo = ref.read(regionStateRepositoryProvider);
+            final toggled = await repo.toggleFlag(
+              regionId: entry.regionId,
+              flag: entry.flag,
+              ref: ref,
+            );
+            if (toggled) {
+              await repo.addDangerScore(
+                regionId: entry.regionId,
+                delta: entry.delta,
+                source: 'elite_${quest.eliteId}',
+                ref: ref,
+              );
+            }
+          }
+        } on Exception catch (e) {
+          debugPrint('[M7] elite region_state trailing 실패: $e');
         }
       }
     }
@@ -1430,6 +1477,27 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             source: 'quest_d${quest.difficulty}',
             ref: ref,
           );
+    }
+
+    // M7 페이즈 4 #2 — region_state_effect trailing (fail-soft)
+    if (result.resultType == QuestResult.greatSuccess ||
+        result.resultType == QuestResult.success) {
+      final pool = staticData.questPools
+          .where((p) => p.id == quest.questPoolId)
+          .firstOrNull;
+      if (pool != null && pool.regionStateEffect != null) {
+        try {
+          await ref
+              .read(regionStateRepositoryProvider)
+              .applyDangerScoreFromQuest(
+                regionId: quest.region,
+                pool: pool,
+                ref: ref,
+              );
+        } on Exception catch (e) {
+          debugPrint('[M7] region_state_effect 적용 실패: $e');
+        }
+      }
     }
 
     ref.read(mercenaryListProvider.notifier).refresh();

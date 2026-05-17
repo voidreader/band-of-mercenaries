@@ -72,7 +72,15 @@ mixin _$QuestPool {
   @JsonKey(name: 'named_hook_value')
   String? get namedHookValue => throw _privateConstructorUsedError;
   @JsonKey(name: 'named_cooldown_hours')
-  int get namedCooldownHours => throw _privateConstructorUsedError;
+  int get namedCooldownHours =>
+      throw _privateConstructorUsedError; // M7 페이즈 4 #2 — 지역 상태 시스템
+  @JsonKey(name: 'region_state_effect')
+  RegionStateEffect? get regionStateEffect =>
+      throw _privateConstructorUsedError;
+  @JsonKey(name: 'region_state_required')
+  String? get regionStateRequired => throw _privateConstructorUsedError;
+  @JsonKey(name: 'region_state_excluded')
+  String? get regionStateExcluded => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -111,7 +119,13 @@ abstract class $QuestPoolCopyWith<$Res> {
       @JsonKey(name: 'is_named') bool isNamed,
       @JsonKey(name: 'named_hook_type') String? namedHookType,
       @JsonKey(name: 'named_hook_value') String? namedHookValue,
-      @JsonKey(name: 'named_cooldown_hours') int namedCooldownHours});
+      @JsonKey(name: 'named_cooldown_hours') int namedCooldownHours,
+      @JsonKey(name: 'region_state_effect')
+      RegionStateEffect? regionStateEffect,
+      @JsonKey(name: 'region_state_required') String? regionStateRequired,
+      @JsonKey(name: 'region_state_excluded') String? regionStateExcluded});
+
+  $RegionStateEffectCopyWith<$Res>? get regionStateEffect;
 }
 
 /// @nodoc
@@ -153,6 +167,9 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
     Object? namedHookType = freezed,
     Object? namedHookValue = freezed,
     Object? namedCooldownHours = null,
+    Object? regionStateEffect = freezed,
+    Object? regionStateRequired = freezed,
+    Object? regionStateExcluded = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -259,7 +276,31 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
           ? _value.namedCooldownHours
           : namedCooldownHours // ignore: cast_nullable_to_non_nullable
               as int,
+      regionStateEffect: freezed == regionStateEffect
+          ? _value.regionStateEffect
+          : regionStateEffect // ignore: cast_nullable_to_non_nullable
+              as RegionStateEffect?,
+      regionStateRequired: freezed == regionStateRequired
+          ? _value.regionStateRequired
+          : regionStateRequired // ignore: cast_nullable_to_non_nullable
+              as String?,
+      regionStateExcluded: freezed == regionStateExcluded
+          ? _value.regionStateExcluded
+          : regionStateExcluded // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $RegionStateEffectCopyWith<$Res>? get regionStateEffect {
+    if (_value.regionStateEffect == null) {
+      return null;
+    }
+
+    return $RegionStateEffectCopyWith<$Res>(_value.regionStateEffect!, (value) {
+      return _then(_value.copyWith(regionStateEffect: value) as $Val);
+    });
   }
 }
 
@@ -297,7 +338,14 @@ abstract class _$$QuestPoolImplCopyWith<$Res>
       @JsonKey(name: 'is_named') bool isNamed,
       @JsonKey(name: 'named_hook_type') String? namedHookType,
       @JsonKey(name: 'named_hook_value') String? namedHookValue,
-      @JsonKey(name: 'named_cooldown_hours') int namedCooldownHours});
+      @JsonKey(name: 'named_cooldown_hours') int namedCooldownHours,
+      @JsonKey(name: 'region_state_effect')
+      RegionStateEffect? regionStateEffect,
+      @JsonKey(name: 'region_state_required') String? regionStateRequired,
+      @JsonKey(name: 'region_state_excluded') String? regionStateExcluded});
+
+  @override
+  $RegionStateEffectCopyWith<$Res>? get regionStateEffect;
 }
 
 /// @nodoc
@@ -337,6 +385,9 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
     Object? namedHookType = freezed,
     Object? namedHookValue = freezed,
     Object? namedCooldownHours = null,
+    Object? regionStateEffect = freezed,
+    Object? regionStateRequired = freezed,
+    Object? regionStateExcluded = freezed,
   }) {
     return _then(_$QuestPoolImpl(
       id: null == id
@@ -443,6 +494,18 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
           ? _value.namedCooldownHours
           : namedCooldownHours // ignore: cast_nullable_to_non_nullable
               as int,
+      regionStateEffect: freezed == regionStateEffect
+          ? _value.regionStateEffect
+          : regionStateEffect // ignore: cast_nullable_to_non_nullable
+              as RegionStateEffect?,
+      regionStateRequired: freezed == regionStateRequired
+          ? _value.regionStateRequired
+          : regionStateRequired // ignore: cast_nullable_to_non_nullable
+              as String?,
+      regionStateExcluded: freezed == regionStateExcluded
+          ? _value.regionStateExcluded
+          : regionStateExcluded // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -477,7 +540,10 @@ class _$QuestPoolImpl implements _QuestPool {
       @JsonKey(name: 'is_named') this.isNamed = false,
       @JsonKey(name: 'named_hook_type') this.namedHookType,
       @JsonKey(name: 'named_hook_value') this.namedHookValue,
-      @JsonKey(name: 'named_cooldown_hours') this.namedCooldownHours = 24})
+      @JsonKey(name: 'named_cooldown_hours') this.namedCooldownHours = 24,
+      @JsonKey(name: 'region_state_effect') this.regionStateEffect,
+      @JsonKey(name: 'region_state_required') this.regionStateRequired,
+      @JsonKey(name: 'region_state_excluded') this.regionStateExcluded})
       : _specialFlags = specialFlags;
 
   factory _$QuestPoolImpl.fromJson(Map<String, dynamic> json) =>
@@ -568,10 +634,20 @@ class _$QuestPoolImpl implements _QuestPool {
   @override
   @JsonKey(name: 'named_cooldown_hours')
   final int namedCooldownHours;
+// M7 페이즈 4 #2 — 지역 상태 시스템
+  @override
+  @JsonKey(name: 'region_state_effect')
+  final RegionStateEffect? regionStateEffect;
+  @override
+  @JsonKey(name: 'region_state_required')
+  final String? regionStateRequired;
+  @override
+  @JsonKey(name: 'region_state_excluded')
+  final String? regionStateExcluded;
 
   @override
   String toString() {
-    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType, specialFlags: $specialFlags, enemyName: $enemyName, isFixed: $isFixed, fixedChainId: $fixedChainId, fixedStep: $fixedStep, trustThreshold: $trustThreshold, rewardGoldOverride: $rewardGoldOverride, rewardXpBonusOverride: $rewardXpBonusOverride, durationOverrideSeconds: $durationOverrideSeconds, trustRewardOverride: $trustRewardOverride, minTrustLevel: $minTrustLevel, isNamed: $isNamed, namedHookType: $namedHookType, namedHookValue: $namedHookValue, namedCooldownHours: $namedCooldownHours)';
+    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType, specialFlags: $specialFlags, enemyName: $enemyName, isFixed: $isFixed, fixedChainId: $fixedChainId, fixedStep: $fixedStep, trustThreshold: $trustThreshold, rewardGoldOverride: $rewardGoldOverride, rewardXpBonusOverride: $rewardXpBonusOverride, durationOverrideSeconds: $durationOverrideSeconds, trustRewardOverride: $trustRewardOverride, minTrustLevel: $minTrustLevel, isNamed: $isNamed, namedHookType: $namedHookType, namedHookValue: $namedHookValue, namedCooldownHours: $namedCooldownHours, regionStateEffect: $regionStateEffect, regionStateRequired: $regionStateRequired, regionStateExcluded: $regionStateExcluded)';
   }
 
   @override
@@ -625,7 +701,13 @@ class _$QuestPoolImpl implements _QuestPool {
             (identical(other.namedHookValue, namedHookValue) ||
                 other.namedHookValue == namedHookValue) &&
             (identical(other.namedCooldownHours, namedCooldownHours) ||
-                other.namedCooldownHours == namedCooldownHours));
+                other.namedCooldownHours == namedCooldownHours) &&
+            (identical(other.regionStateEffect, regionStateEffect) ||
+                other.regionStateEffect == regionStateEffect) &&
+            (identical(other.regionStateRequired, regionStateRequired) ||
+                other.regionStateRequired == regionStateRequired) &&
+            (identical(other.regionStateExcluded, regionStateExcluded) ||
+                other.regionStateExcluded == regionStateExcluded));
   }
 
   @JsonKey(ignore: true)
@@ -657,7 +739,10 @@ class _$QuestPoolImpl implements _QuestPool {
         isNamed,
         namedHookType,
         namedHookValue,
-        namedCooldownHours
+        namedCooldownHours,
+        regionStateEffect,
+        regionStateRequired,
+        regionStateExcluded
       ]);
 
   @JsonKey(ignore: true)
@@ -703,8 +788,12 @@ abstract class _QuestPool implements QuestPool {
       @JsonKey(name: 'is_named') final bool isNamed,
       @JsonKey(name: 'named_hook_type') final String? namedHookType,
       @JsonKey(name: 'named_hook_value') final String? namedHookValue,
-      @JsonKey(name: 'named_cooldown_hours')
-      final int namedCooldownHours}) = _$QuestPoolImpl;
+      @JsonKey(name: 'named_cooldown_hours') final int namedCooldownHours,
+      @JsonKey(name: 'region_state_effect')
+      final RegionStateEffect? regionStateEffect,
+      @JsonKey(name: 'region_state_required') final String? regionStateRequired,
+      @JsonKey(name: 'region_state_excluded')
+      final String? regionStateExcluded}) = _$QuestPoolImpl;
 
   factory _QuestPool.fromJson(Map<String, dynamic> json) =
       _$QuestPoolImpl.fromJson;
@@ -783,6 +872,15 @@ abstract class _QuestPool implements QuestPool {
   @override
   @JsonKey(name: 'named_cooldown_hours')
   int get namedCooldownHours;
+  @override // M7 페이즈 4 #2 — 지역 상태 시스템
+  @JsonKey(name: 'region_state_effect')
+  RegionStateEffect? get regionStateEffect;
+  @override
+  @JsonKey(name: 'region_state_required')
+  String? get regionStateRequired;
+  @override
+  @JsonKey(name: 'region_state_excluded')
+  String? get regionStateExcluded;
   @override
   @JsonKey(ignore: true)
   _$$QuestPoolImplCopyWith<_$QuestPoolImpl> get copyWith =>

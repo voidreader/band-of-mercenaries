@@ -68,6 +68,12 @@ enum ActivityLogType {
   titleUnlocked,
   @HiveField(31)
   namedQuestTerminated,
+  @HiveField(32)
+  regionDangerLevelChanged,
+  @HiveField(33)
+  regionUnlockedFlagToggled,
+  @HiveField(34)
+  settlementInfrastructureUpgraded,
 }
 
 @HiveType(typeId: 7)

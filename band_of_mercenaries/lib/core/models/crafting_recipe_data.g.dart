@@ -64,6 +64,13 @@ _$RecipeUnlockConditionImpl _$$RecipeUnlockConditionImplFromJson(
           : ChainStepCondition.fromJson(
               json['chain_step'] as Map<String, dynamic>),
       firstAcquiredItem: json['first_acquired_item'] as String?,
+      type: json['type'] as String?,
+      flag: json['flag'] as String?,
+      value: (json['value'] as num?)?.toInt(),
+      conditions: (json['conditions'] as List<dynamic>?)
+          ?.map(
+              (e) => RecipeUnlockCondition.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
 Map<String, dynamic> _$$RecipeUnlockConditionImplToJson(
@@ -72,6 +79,10 @@ Map<String, dynamic> _$$RecipeUnlockConditionImplToJson(
       'trust_level': instance.trustLevel,
       'chain_step': instance.chainStep,
       'first_acquired_item': instance.firstAcquiredItem,
+      'type': instance.type,
+      'flag': instance.flag,
+      'value': instance.value,
+      'conditions': instance.conditions,
     };
 
 _$ChainStepConditionImpl _$$ChainStepConditionImplFromJson(

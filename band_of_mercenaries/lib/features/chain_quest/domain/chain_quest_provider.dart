@@ -5,6 +5,8 @@ import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapsh
 import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_service.dart';
+import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/chain_region_state_mapping.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 
 final chainQuestServiceProvider = Provider<ChainQuestService>((ref) {
@@ -28,6 +30,25 @@ final chainQuestServiceProvider = Provider<ChainQuestService>((ref) {
       final job = staticData.jobs.where((j) => j.id == merc.jobId).firstOrNull;
       if (job == null) return null;
       return MercenarySnapshot.fromMercenary(merc, jobName: job.name, tier: job.tier);
+    },
+    // M7 페이즈 4 #1 FR-4b — 체인 완주 시 region dangerScore + flag toggle
+    applyRegionStateFromChain: (chainId) async {
+      final entry = chainRegionStateMapping[chainId];
+      if (entry == null) return;
+      final repo = ref.read(regionStateRepositoryProvider);
+      final toggled = await repo.toggleFlag(
+        regionId: entry.regionId,
+        flag: entry.flag,
+        ref: ref,
+      );
+      if (toggled) {
+        await repo.addDangerScore(
+          regionId: entry.regionId,
+          delta: entry.delta,
+          source: 'chain_$chainId',
+          ref: ref,
+        );
+      }
     },
   );
 });

@@ -8,6 +8,7 @@ import 'package:band_of_mercenaries/features/investigation/domain/settlement_tru
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/herbalist_service.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_provider.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/settlement_npc_data.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/village_facility.dart';
 import 'package:band_of_mercenaries/features/settlement/view/herbalist_heal_dialog.dart';
@@ -28,8 +29,9 @@ class HerbalistScreen extends ConsumerWidget {
     final mercs = ref.watch(mercenaryListProvider);
     final now = DateTime.now();
 
-    final cost = HerbalistService.calculateCost(level);
-    final cooldownMinutes = HerbalistService.calculateCooldownMinutes(level);
+    final infraTier = ref.watch(settlementInfrastructureTierProvider(GameConstants.startingRegionId));
+    final cost = HerbalistService.calculateCost(level, infraTier: infraTier);
+    final cooldownMinutes = HerbalistService.calculateCooldownMinutes(level, infraTier: infraTier);
 
     final cooldownEnd = userData?.herbalistCooldownEndTime;
     final isCooldownActive = cooldownEnd != null && now.isBefore(cooldownEnd);

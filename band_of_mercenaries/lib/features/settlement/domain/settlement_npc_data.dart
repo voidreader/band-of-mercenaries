@@ -90,6 +90,15 @@ class SettlementNpcData {
   static const String eventCompletedMessage =
       '마을이 며칠간 시끄럽게 떠들썩했다. 광장에서 작은 잔치가 열렸고, 사람들은 당신에게 고개를 숙였다.';
 
+  static const SettlementNpc _foreignStallNpc = SettlementNpc(
+    id: 'npc_foreign_stall',
+    name: '행상인',
+    emoji: '🛒',
+    greetingByLevel: {
+      1: '어서 오세요, 구경하다 가십쇼.',
+    },
+  );
+
   static SettlementNpc npcFor(VillageFacility facility) {
     switch (facility) {
       case VillageFacility.chiefHouse:
@@ -98,6 +107,8 @@ class SettlementNpcData {
         return hagen;
       case VillageFacility.herbalist:
         return neris;
+      case VillageFacility.foreignStall:
+        return _foreignStallNpc;
     }
   }
 
