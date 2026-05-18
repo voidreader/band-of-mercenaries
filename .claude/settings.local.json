@@ -122,7 +122,8 @@
       "Read(//opt/homebrew/bin/**)",
       "Bash(npx supabase *)",
       "Bash(awk '$6==\"5월\"')",
-      "Bash(sort -k7n)"
+      "Bash(sort -k7n)",
+      "Skill(spec-pipeline)"
     ]
   },
   "enabledPlugins": {
