@@ -26,10 +26,13 @@ import 'package:band_of_mercenaries/features/settlement/domain/settlement_infras
 import 'package:band_of_mercenaries/features/settlement/domain/infrastructure_upgrade_event.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/infrastructure_upgrade_provider.dart';
 
-final regionStateRepositoryProvider = Provider((ref) => RegionStateRepository());
+final regionStateRepositoryProvider = Provider(
+  (ref) => RegionStateRepository(),
+);
 
 class RegionStateRepository {
-  Box<RegionState> get _box => Hive.box<RegionState>(HiveInitializer.regionStateBoxName);
+  Box<RegionState> get _box =>
+      Hive.box<RegionState>(HiveInitializer.regionStateBoxName);
 
   // ─── 신뢰도 단계 임계값 (단계 → 최소 누적 점수) ─────────────────────────
   static const Map<int, int> _trustThresholds = {1: 0, 2: 30, 3: 80, 4: 200};
@@ -44,16 +47,21 @@ class RegionStateRepository {
   };
 
   // 단계별 한국어 명칭
-  static const Map<int, String> _trustLevelNames = {1: '의심', 2: '인지', 3: '친근', 4: '소속'};
-
-  /// M7 페이즈 4 #1 — 위험도 점수 decay 체크 시각 (region별, 인메모리 캐시)
-  static final Map<int, DateTime> _lastDecayCheckedAt = {};
+  static const Map<int, String> _trustLevelNames = {
+    1: '의심',
+    2: '인지',
+    3: '친근',
+    4: '소속',
+  };
 
   DateTime getLastDecayCheckedAt(int regionId) =>
-      _lastDecayCheckedAt[regionId] ?? DateTime.fromMillisecondsSinceEpoch(0);
+      getState(regionId)?.lastDangerDecayCheckedAt ??
+      DateTime.fromMillisecondsSinceEpoch(0);
 
-  void updateLastDecayCheckedAt(int regionId, DateTime now) {
-    _lastDecayCheckedAt[regionId] = now;
+  Future<void> updateLastDecayCheckedAt(int regionId, DateTime now) async {
+    var state = getState(regionId) ?? RegionState(regionId: regionId);
+    state.lastDangerDecayCheckedAt = now;
+    await saveState(state);
   }
 
   RegionState? getState(int regionId) {
@@ -162,7 +170,8 @@ class RegionStateRepository {
   ///
   /// 단계 승급 발생 시 통과한 모든 단계의 보상을 합산 지급하고
   /// [settlementTrustLevelUpProvider]에 이벤트를 publish한다.
-  Future<({int newTrust, int newLevel, TrustLevelUpEvent? levelUpEvent})> addSettlementTrust({
+  Future<({int newTrust, int newLevel, TrustLevelUpEvent? levelUpEvent})>
+  addSettlementTrust({
     required int regionId,
     required int amount,
     required String source,
@@ -171,7 +180,11 @@ class RegionStateRepository {
     // amount가 0이면 변경 없음 — addReputation 패턴 모방
     if (amount == 0) {
       final current = getSettlementTrust(regionId);
-      return (newTrust: current.trust, newLevel: current.level, levelUpEvent: null);
+      return (
+        newTrust: current.trust,
+        newLevel: current.level,
+        levelUpEvent: null,
+      );
     }
 
     var state = getState(regionId) ?? RegionState(regionId: regionId);
@@ -222,7 +235,9 @@ class RegionStateRepository {
           if (newLevel >= 2 && oldLevel < 2) {
             const itemId = 'mat_hide_faded_cloth';
             if (inv.getQuantityForItemId(itemId) >= 999) {
-              final itemData = staticData.items.firstWhereOrNull((i) => i.id == itemId);
+              final itemData = staticData.items.firstWhereOrNull(
+                (i) => i.id == itemId,
+              );
               if (itemData != null) {
                 await logger.addLog(
                   '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
@@ -230,7 +245,11 @@ class RegionStateRepository {
                 );
               }
             } else {
-              await inv.addItem(itemId: itemId, quantity: 1, items: staticData.items);
+              await inv.addItem(
+                itemId: itemId,
+                quantity: 1,
+                items: staticData.items,
+              );
               await addAcquiredMaterial(regionId, itemId);
             }
           }
@@ -238,7 +257,9 @@ class RegionStateRepository {
           if (newLevel >= 3 && oldLevel < 3) {
             const itemId = 'mat_ore_rusty_scrap';
             if (inv.getQuantityForItemId(itemId) >= 999) {
-              final itemData = staticData.items.firstWhereOrNull((i) => i.id == itemId);
+              final itemData = staticData.items.firstWhereOrNull(
+                (i) => i.id == itemId,
+              );
               if (itemData != null) {
                 await logger.addLog(
                   '${itemData.name} 보유량이 가득 찼습니다 (999 도달)',
@@ -246,7 +267,11 @@ class RegionStateRepository {
                 );
               }
             } else {
-              await inv.addItem(itemId: itemId, quantity: 3, items: staticData.items);
+              await inv.addItem(
+                itemId: itemId,
+                quantity: 3,
+                items: staticData.items,
+              );
               await addAcquiredMaterial(regionId, itemId);
             }
           }
@@ -255,16 +280,19 @@ class RegionStateRepository {
 
       // 거점명 동적 조회 — 미발견 시 '시작 거점' fallback
       final regionStaticData = ref.read(staticDataProvider).valueOrNull;
-      final settlementName = regionStaticData?.regions
+      final settlementName =
+          regionStaticData?.regions
               .where((r) => r.region == regionId)
               .map((r) => r.regionName)
               .firstOrNull ??
           '시작 거점';
 
-      ref.read(activityLogProvider.notifier).addLog(
-        '마을 신뢰도가 $newLevel단계(${_trustLevelNames[newLevel]})에 도달했다',
-        ActivityLogType.settlementTrustUp,
-      );
+      ref
+          .read(activityLogProvider.notifier)
+          .addLog(
+            '마을 신뢰도가 $newLevel단계(${_trustLevelNames[newLevel]})에 도달했다',
+            ActivityLogType.settlementTrustUp,
+          );
 
       event = TrustLevelUpEvent(
         regionId: regionId,
@@ -282,13 +310,17 @@ class RegionStateRepository {
       // [FR-6] 거점 신뢰도 4단계(소속) 진입 시 위업 발급
       if (newLevel == 4) {
         try {
-          await ref.read(achievementServiceProvider).grant(
-            'settlement_trust_belonging:region_$regionId',
-            regionId: regionId,
-            payload: {'oldLevel': oldLevel, 'newLevel': newLevel},
-          );
+          await ref
+              .read(achievementServiceProvider)
+              .grant(
+                'settlement_trust_belonging:region_$regionId',
+                regionId: regionId,
+                payload: {'oldLevel': oldLevel, 'newLevel': newLevel},
+              );
         } on Exception catch (e) {
-          debugPrint('[BOM][Achievement] settlement_trust_belonging grant 실패: $e');
+          debugPrint(
+            '[BOM][Achievement] settlement_trust_belonging grant 실패: $e',
+          );
         }
       }
 
@@ -296,7 +328,11 @@ class RegionStateRepository {
       await ref.read(questListProvider.notifier).refreshAvailableQuests();
     }
 
-    return (newTrust: state.settlementTrust!, newLevel: newLevel, levelUpEvent: event);
+    return (
+      newTrust: state.settlementTrust!,
+      newLevel: newLevel,
+      levelUpEvent: event,
+    );
   }
 
   // ─── M7 페이즈 4 #1 — 위험도·플래그 ────────────────────────────────────────
@@ -316,7 +352,8 @@ class RegionStateRepository {
   /// - 첫 peaceful 진입(음수 진입) 시 `region_pacified:region_$regionId` 위업 발급 (fail-soft)
   /// - isBigTransition인 경우 [dangerLevelChangedProvider] publish
   /// - 퀘스트 풀 갱신 ([refreshAvailableQuests])
-  Future<({int newScore, int newLevel, DangerLevelChangedEvent? event})> addDangerScore({
+  Future<({int newScore, int newLevel, DangerLevelChangedEvent? event})>
+  addDangerScore({
     required int regionId,
     required int delta,
     required String source,
@@ -332,7 +369,8 @@ class RegionStateRepository {
     var state = getState(regionId) ?? RegionState(regionId: regionId);
     final oldScore = state.currentDangerScore;
     final oldLevelInt = state.currentDangerLevel;
-    final oldLevel = DangerLevelResolver.fromCacheInt(oldLevelInt) ?? DangerLevel.peaceful;
+    final oldLevel =
+        DangerLevelResolver.fromCacheInt(oldLevelInt) ?? DangerLevel.peaceful;
 
     final newScore = (oldScore + delta).clamp(-100, 100);
     state.dangerScore = newScore;
@@ -344,28 +382,36 @@ class RegionStateRepository {
 
     if (newLevel != oldLevel) {
       final staticData = ref.read(staticDataProvider).valueOrNull;
-      final regionName = staticData?.regions
+      final regionName =
+          staticData?.regions
               .where((r) => r.region == regionId)
               .map((r) => r.regionName)
               .firstOrNull ??
           '지역 $regionId';
 
-      final isBig = DangerLevelChangedEvent.computeIsBigTransition(oldLevel, newLevel);
-
-      await ref.read(activityLogProvider.notifier).addLog(
-        '$regionName 상태가 ${oldLevel.koreanLabel} → ${newLevel.koreanLabel}(으)로 변화했다',
-        ActivityLogType.regionDangerLevelChanged,
+      final isBig = DangerLevelChangedEvent.computeIsBigTransition(
+        oldLevel,
+        newLevel,
       );
+
+      await ref
+          .read(activityLogProvider.notifier)
+          .addLog(
+            '$regionName 상태가 ${oldLevel.koreanLabel} → ${newLevel.koreanLabel}(으)로 변화했다',
+            ActivityLogType.regionDangerLevelChanged,
+          );
 
       // [FR] 첫 peaceful 진입 (음수 진입) 시 위업 발급 — fail-soft
       List<String> grantedAchievements = [];
       if (newScore < 0 && oldScore >= 0) {
         try {
-          await ref.read(achievementServiceProvider).grant(
-            'region_pacified:region_$regionId',
-            regionId: regionId,
-            payload: {'oldScore': oldScore, 'newScore': newScore},
-          );
+          await ref
+              .read(achievementServiceProvider)
+              .grant(
+                'region_pacified:region_$regionId',
+                regionId: regionId,
+                payload: {'oldScore': oldScore, 'newScore': newScore},
+              );
           grantedAchievements = ['region_pacified:region_$regionId'];
         } on Exception catch (e) {
           debugPrint('[M7][Achievement] region_pacified grant 실패: $e');
@@ -408,23 +454,27 @@ class RegionStateRepository {
     await saveState(state);
 
     final staticData = ref.read(staticDataProvider).valueOrNull;
-    final regionName = staticData?.regions
+    final regionName =
+        staticData?.regions
             .where((r) => r.region == regionId)
             .map((r) => r.regionName)
             .firstOrNull ??
         '지역 $regionId';
     final flagDesc = regionStateFlagDescriptions[flag] ?? flag;
 
-    await ref.read(activityLogProvider.notifier).addLog(
-      '$regionName에서 변화가 일어났다: $flagDesc',
-      ActivityLogType.regionUnlockedFlagToggled,
-    );
+    await ref
+        .read(activityLogProvider.notifier)
+        .addLog(
+          '$regionName에서 변화가 일어났다: $flagDesc',
+          ActivityLogType.regionUnlockedFlagToggled,
+        );
 
     // M7 페이즈 4 #4 인프라 전이 평가 trailing (fail-soft)
     try {
       final event = await _evaluateInfrastructureTransition(ref: ref);
       if (event != null) {
-        ref.read(settlementInfrastructureUpgradedProvider.notifier).state = event;
+        ref.read(settlementInfrastructureUpgradedProvider.notifier).state =
+            event;
       }
     } on Exception catch (e) {
       debugPrint('[M7][Infrastructure] transition 평가 실패: $e');
@@ -512,8 +562,12 @@ class RegionStateRepository {
   /// M7 페이즈 4 #4 — toggleFlag trailing에서 호출. **region 3(GameConstants.startingRegionId) 한정** 인프라 단계 전이 평가.
   /// 7리전 어디서 flag가 토글되더라도 본 메서드는 region 3 인프라 단계만 재평가하며, 결과 단계 변경 시 InfrastructureUpgradeEvent를 반환한다.
   /// fail-soft. event 반환 (이벤트 publish는 호출자 책임).
-  Future<InfrastructureUpgradeEvent?> _evaluateInfrastructureTransition({required Ref ref}) async {
-    final r3State = getState(GameConstants.startingRegionId) ?? RegionState(regionId: GameConstants.startingRegionId);
+  Future<InfrastructureUpgradeEvent?> _evaluateInfrastructureTransition({
+    required Ref ref,
+  }) async {
+    final r3State =
+        getState(GameConstants.startingRegionId) ??
+        RegionState(regionId: GameConstants.startingRegionId);
     final currentTier = r3State.currentInfrastructureTier;
 
     // 7리전 unlockedFlags 합산 (8 flag 한정)
@@ -522,7 +576,9 @@ class RegionStateRepository {
       final state = getState(regionId);
       if (state == null) continue;
       for (final flag in state.unlockedFlags) {
-        if (SettlementInfrastructureConfig.infrastructureRelevantFlags.contains(flag)) {
+        if (SettlementInfrastructureConfig.infrastructureRelevantFlags.contains(
+          flag,
+        )) {
           flagCount++;
         }
       }
@@ -555,21 +611,30 @@ class RegionStateRepository {
     }
 
     // ActivityLog
-    final tierName = SettlementInfrastructureConfig.infraTierNames[nextTier] ?? '';
-    ref.read(activityLogProvider.notifier).addLog(
-      '더스트빌이 [$nextTier단계: $tierName] 단계로 발전했다',
-      ActivityLogType.settlementInfrastructureUpgraded,
-    );
+    final tierName =
+        SettlementInfrastructureConfig.infraTierNames[nextTier] ?? '';
+    ref
+        .read(activityLogProvider.notifier)
+        .addLog(
+          '더스트빌이 [$nextTier단계: $tierName] 단계로 발전했다',
+          ActivityLogType.settlementInfrastructureUpgraded,
+        );
 
     // 위업 hook — Tier 4 진입 시 '변방의 영주'
     List<String> grantedAchievements = const [];
     if (nextTier == 4) {
       try {
-        await ref.read(achievementServiceProvider).grant(
-          'infrastructure_tier:tier_4',
-          regionId: GameConstants.startingRegionId,
-          payload: {'fromTier': currentTier, 'toTier': nextTier, 'flagCount': flagCount},
-        );
+        await ref
+            .read(achievementServiceProvider)
+            .grant(
+              'infrastructure_tier:tier_4',
+              regionId: GameConstants.startingRegionId,
+              payload: {
+                'fromTier': currentTier,
+                'toTier': nextTier,
+                'flagCount': flagCount,
+              },
+            );
         grantedAchievements = ['infrastructure_tier:tier_4'];
       } on Exception catch (e) {
         debugPrint('[M7][Achievement] infrastructure_tier grant 실패: $e');
@@ -595,7 +660,8 @@ class RegionStateRepository {
   /// 정수 나눗셈 잔여분은 0번째 용병에게 가산.
   Future<void> _grantXpEvenly(Ref ref, int totalXp) async {
     final mercRepo = ref.read(mercenaryRepositoryProvider);
-    final aliveList = mercRepo.getAll()
+    final aliveList = mercRepo
+        .getAll()
         .where((m) => m.status != MercenaryStatus.dead)
         .toList();
     if (aliveList.isEmpty) return;

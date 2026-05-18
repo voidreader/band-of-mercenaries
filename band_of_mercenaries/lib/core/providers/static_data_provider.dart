@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/data_loader.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
+import 'package:band_of_mercenaries/core/data/sync_service.dart';
 import 'package:band_of_mercenaries/core/models/difficulty.dart';
 import 'package:band_of_mercenaries/core/models/job.dart';
 import 'package:band_of_mercenaries/core/models/trait_data.dart';
@@ -66,7 +67,8 @@ class StaticGameData {
   final List<TravelChoiceResultData> travelChoiceResults;
   final List<CraftingRecipeData> craftingRecipes; // M5 추가
   final List<QuestPoolMaterialDropData> questPoolMaterialDrops; // M5 추가
-  final List<BandAchievementTemplate> bandAchievementTemplates; // M6 페이즈 4 #1 추가
+  final List<BandAchievementTemplate>
+  bandAchievementTemplates; // M6 페이즈 4 #1 추가
   final List<TitleData> titles; // M6 페이즈 4 #2 추가
 
   StaticGameData({
@@ -111,7 +113,8 @@ class StaticGameData {
     if (_regionAdjacencyMapCache != null) return _regionAdjacencyMapCache!;
     final map = <int, Map<int, int>>{};
     for (final adj in regionAdjacencies) {
-      map.putIfAbsent(adj.fromRegion, () => <int, int>{})[adj.toRegion] = adj.distanceUnits;
+      map.putIfAbsent(adj.fromRegion, () => <int, int>{})[adj.toRegion] =
+          adj.distanceUnits;
     }
     _regionAdjacencyMapCache = map;
     return map;
@@ -122,38 +125,103 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
   final cacheBox = Hive.box<String>(HiveInitializer.staticDataCacheBoxName);
   final dataLoader = DataLoader(cacheBox: cacheBox);
 
+  dataLoader.validateRequiredCaches(SyncService.allTables);
+
   return StaticGameData(
     difficulties: dataLoader.loadFromCache('difficulties', Difficulty.fromJson),
     jobs: dataLoader.loadFromCache('jobs', Job.fromJson),
     traits: dataLoader.loadFromCache('traits', TraitData.fromJson),
-    traitCategories: dataLoader.loadFromCache('trait_categories', TraitCategory.fromJson),
-    traitConflicts: dataLoader.loadFromCache('trait_conflicts', TraitConflict.fromJson),
-    traitTransitions: dataLoader.loadFromCache('trait_transitions', TraitTransition.fromJson),
-    traitComboEvolutions: dataLoader.loadFromCache('trait_combo_evolutions', TraitComboEvolution.fromJson),
-    traitSynergies: dataLoader.loadFromCache('trait_synergies', TraitSynergy.fromJson),
+    traitCategories: dataLoader.loadFromCache(
+      'trait_categories',
+      TraitCategory.fromJson,
+    ),
+    traitConflicts: dataLoader.loadFromCache(
+      'trait_conflicts',
+      TraitConflict.fromJson,
+    ),
+    traitTransitions: dataLoader.loadFromCache(
+      'trait_transitions',
+      TraitTransition.fromJson,
+    ),
+    traitComboEvolutions: dataLoader.loadFromCache(
+      'trait_combo_evolutions',
+      TraitComboEvolution.fromJson,
+    ),
+    traitSynergies: dataLoader.loadFromCache(
+      'trait_synergies',
+      TraitSynergy.fromJson,
+    ),
     regions: dataLoader.loadFromCache('regions', Region.fromJson),
-    regionAdjacencies: dataLoader.loadFromCache('region_adjacency', RegionAdjacency.fromJson),
-    regionSectors: dataLoader.loadFromCache('region_sectors', RegionSector.fromJson),
+    regionAdjacencies: dataLoader.loadFromCache(
+      'region_adjacency',
+      RegionAdjacency.fromJson,
+    ),
+    regionSectors: dataLoader.loadFromCache(
+      'region_sectors',
+      RegionSector.fromJson,
+    ),
     questTypes: dataLoader.loadFromCache('quest_types', QuestType.fromJson),
     questPools: dataLoader.loadFromCache('quest_pools', QuestPool.fromJson),
     personNames: dataLoader.loadFromCache('person_names', PersonName.fromJson),
-    travelEvents: dataLoader.loadFromCache('travel_events', TravelEvent.fromJson),
+    travelEvents: dataLoader.loadFromCache(
+      'travel_events',
+      TravelEvent.fromJson,
+    ),
     facilities: dataLoader.loadFromCache('facilities', Facility.fromJson),
     ranks: dataLoader.loadFromCache('ranks', Rank.fromJson),
-    mercenaryWages: dataLoader.loadFromCache('mercenary_wages', MercenaryWage.fromJson),
-    regionDiscoveries: dataLoader.loadFromCache('region_discoveries', RegionDiscoveryData.fromJson),
+    mercenaryWages: dataLoader.loadFromCache(
+      'mercenary_wages',
+      MercenaryWage.fromJson,
+    ),
+    regionDiscoveries: dataLoader.loadFromCache(
+      'region_discoveries',
+      RegionDiscoveryData.fromJson,
+    ),
     factions: dataLoader.loadFromCache('factions', FactionData.fromJson),
     items: dataLoader.loadFromCache('items', ItemData.fromJson),
-    eliteMonsters: dataLoader.loadFromCache('elite_monsters', EliteMonsterData.fromJson),
-    eliteLootEntries: dataLoader.loadFromCache('elite_loot_tables', EliteLootEntry.fromJson),
-    chainQuests: dataLoader.loadFromCache('chain_quests', ChainQuestData.fromJson),
-    questNarratives: dataLoader.loadFromCache('quest_narratives', QuestNarrativeData.fromJson),
-    travelChoiceEvents: dataLoader.loadFromCache('travel_choice_events', TravelChoiceEventData.fromJson),
-    travelChoiceOptions: dataLoader.loadFromCache('travel_choice_options', TravelChoiceOptionData.fromJson),
-    travelChoiceResults: dataLoader.loadFromCache('travel_choice_results', TravelChoiceResultData.fromJson),
-    craftingRecipes: dataLoader.loadFromCache('crafting_recipes', CraftingRecipeData.fromJson), // M5 추가
-    questPoolMaterialDrops: dataLoader.loadFromCache('quest_pool_material_drops', QuestPoolMaterialDropData.fromJson), // M5 추가
-    bandAchievementTemplates: dataLoader.loadFromCache('band_achievement_templates', BandAchievementTemplate.fromJson), // M6 페이즈 4 #1 추가
-    titles: dataLoader.loadFromCache('titles', TitleData.fromJson), // M6 페이즈 4 #2 추가
+    eliteMonsters: dataLoader.loadFromCache(
+      'elite_monsters',
+      EliteMonsterData.fromJson,
+    ),
+    eliteLootEntries: dataLoader.loadFromCache(
+      'elite_loot_tables',
+      EliteLootEntry.fromJson,
+    ),
+    chainQuests: dataLoader.loadFromCache(
+      'chain_quests',
+      ChainQuestData.fromJson,
+    ),
+    questNarratives: dataLoader.loadFromCache(
+      'quest_narratives',
+      QuestNarrativeData.fromJson,
+    ),
+    travelChoiceEvents: dataLoader.loadFromCache(
+      'travel_choice_events',
+      TravelChoiceEventData.fromJson,
+    ),
+    travelChoiceOptions: dataLoader.loadFromCache(
+      'travel_choice_options',
+      TravelChoiceOptionData.fromJson,
+    ),
+    travelChoiceResults: dataLoader.loadFromCache(
+      'travel_choice_results',
+      TravelChoiceResultData.fromJson,
+    ),
+    craftingRecipes: dataLoader.loadFromCache(
+      'crafting_recipes',
+      CraftingRecipeData.fromJson,
+    ), // M5 추가
+    questPoolMaterialDrops: dataLoader.loadFromCache(
+      'quest_pool_material_drops',
+      QuestPoolMaterialDropData.fromJson,
+    ), // M5 추가
+    bandAchievementTemplates: dataLoader.loadFromCache(
+      'band_achievement_templates',
+      BandAchievementTemplate.fromJson,
+    ), // M6 페이즈 4 #1 추가
+    titles: dataLoader.loadFromCache(
+      'titles',
+      TitleData.fromJson,
+    ), // M6 페이즈 4 #2 추가
   );
 });

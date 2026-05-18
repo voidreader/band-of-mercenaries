@@ -134,7 +134,7 @@ band_of_mercenaries/lib/
 | Mercenary | — | 26 |
 | ActiveQuest | — | 27 |
 | ActivityLogType (enum) | 6 | 35 |
-| RegionState | 8 | 13 |
+| RegionState | 8 | 14 |
 | FactionState | 9 | 6 |
 | FactionClueRecord | 10 | — |
 | InventoryItem | 11 | — |
@@ -194,7 +194,7 @@ cd band_of_mercenaries && flutter test test/features/mercenary/
 
 ## 문서 구조
 
-`Docs/` — `proto_design.md`(기획 레퍼런스) · `content_status.md`(구현 현황) · `game_overview.md`(AI 컨텍스트용) · `spec/`(명세서) · `changelog-fragments/`(릴리스 노트 단편)
+`Docs/` — `proto_design.md`(기획 레퍼런스) · `content_status.md`(M3 기준 보관본) · `game_overview.md`(AI 컨텍스트용) · `spec/`(진행 중 명세서) · `Archive/`(완료 산출물) · `changelog-fragments/`(릴리스 노트 단편)
 
 ## 분석 설정
 

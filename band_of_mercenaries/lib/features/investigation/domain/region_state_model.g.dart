@@ -30,13 +30,14 @@ class RegionStateAdapter extends TypeAdapter<RegionState> {
       unlockedFlags: (fields[10] as List?)?.cast<String>(),
       questPoolCompletionCounts: (fields[11] as Map?)?.cast<String, int>(),
       infrastructureTier: fields[12] as int?,
+      lastDangerDecayCheckedAt: fields[13] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, RegionState obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.regionId)
       ..writeByte(1)
@@ -62,7 +63,9 @@ class RegionStateAdapter extends TypeAdapter<RegionState> {
       ..writeByte(11)
       ..write(obj.questPoolCompletionCounts)
       ..writeByte(12)
-      ..write(obj.infrastructureTier);
+      ..write(obj.infrastructureTier)
+      ..writeByte(13)
+      ..write(obj.lastDangerDecayCheckedAt);
   }
 
   @override

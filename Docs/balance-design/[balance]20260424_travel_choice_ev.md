@@ -3,7 +3,7 @@
 > 작성일: 2026-04-24
 > 유형: 밸런스 분석 + 수치 조정 제안
 > 분석 대상: M3 이동 선택지 이벤트 12종 × 30 선택지 × 72 결과의 EV, `hidden > safe ≥ risky` 정책 검증, 발동 확률·효과 타입 분포
-> 입력: `Docs/content-design/[content]20260424_travel_choices.md`, 페이즈 2-1/2-2 밸런스 리포트, `travel_events`(Supabase 12행), `TravelEventService` 코드
+> 입력: `Docs/Archive/20260425_travel-choice-system/design.md`, 페이즈 2-1/2-2 밸런스 리포트, `travel_events`(Supabase 12행), `TravelEventService` 코드
 > 후속: 페이즈 3-0-4 `types/travel-choice.md`, 페이즈 3-5 114행 벌크 생성, 페이즈 4-5 `TravelChoiceService` + 회상 UI spec
 
 ## 결론 요약
@@ -433,7 +433,7 @@ INSERT INTO data_versions (table_name, version) VALUES
 - **페이즈 3-5 data-generator**: 
   - **선행 DDL**: Supabase MCP `apply_migration`으로 3테이블 + data_versions 엔트리 생성
   - **trait FK 사전 검증**: `SELECT id FROM traits WHERE id IN ('empathy', 'brave', ...)` 12종 실존 체크
-  - 호출: `/data-generator travel-choice --brief @Docs/content-design/[content]20260424_travel_choices.md --balance @Docs/balance-design/[balance]20260424_travel_choice_ev.md`
+  - 호출: `/data-generator travel-choice --brief @Docs/Archive/20260425_travel-choice-system/design.md --balance @Docs/balance-design/[balance]20260424_travel_choice_ev.md`
   - **검증 쿼리**(§4-5) 실행 후 정책 위반 0행 확인
 - **페이즈 4-1 TemplateEngine spec**: `evaluationScope: mercenary|team` 파라미터 확장 반영
 - **페이즈 4-5 spec**: `/spec-writer`로 `TravelChoiceService` + `TravelChoiceRecallDialog` + `ActiveTravel.choiceEventId` + 활동 로그 확장 통합 spec 작성. 본 리포트 §9 반영

@@ -6,7 +6,7 @@
 > - `Docs/content-design/[content]20260416_faction_system.md` — 14세력 마스터 데이터 + "거점 방문 필요" 정책 명시
 > - `Docs/content-design/[content]20260417_faction_passive_mapping.md` — 14세력 패시브 효과 정체성
 > - `Docs/content-design/[content]20260428_faction-facilities.md` — 페이즈 1 #1 (전용 시설은 거점과 분리)
-> - `Docs/content-design/[content]20260423_region_transform.md` — 변형 섹터 시각 표시 레퍼런스
+> - `Docs/Archive/20260424_region-transform-system/design.md` — 변형 섹터 시각 표시 레퍼런스
 > - `Docs/roadmap/master_roadmap.md` (529~624행) — M4 작업 상세
 > 후속:
 > - 페이즈 1 #3 "세력 상점 컨셉" (거점 방문이 상점 접근의 게이트)

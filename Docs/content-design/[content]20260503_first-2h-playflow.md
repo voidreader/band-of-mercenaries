@@ -3,10 +3,10 @@
 > 작성일: 2026-05-03
 > 유형: 신규 컨텐츠 (M4 마일스톤 — 페이즈 1 산출물 5/5)
 > 선행 문서:
-> - `Docs/content-design/[content]20260503_starting-settlement.md` — 4섹터·NPC 5명·거점 3종 MVP
+> - `Docs/Archive/20260503_m4-region-sectors/design_starting-settlement.md` — 4섹터·NPC 5명·거점 3종 MVP
 > - `Docs/content-design/[content]20260503_settlement-trust-and-fixed-events.md` — 신뢰도 4단계·6단계 사건 라인·trust_threshold·저장소 결정
-> - `Docs/content-design/[content]20260503_region-40-redesign.md` — region_id 3 더스트플레인 시작 거점
-> - `Docs/content-design/[content]20260503_sector-system-redesign.md` — 4섹터 sector_count 정책
+> - `Docs/Archive/20260503_m4-region-migration/design_content.md` — region_id 3 더스트플레인 시작 거점
+> - `Docs/Archive/20260503_m4-region-sectors/design_sector-system.md` — 4섹터 sector_count 정책
 > - `Docs/roadmap/master_roadmap.md` (770~775행) — 초반 2시간 흐름 가이드
 > 후속:
 > - 페이즈 2 #1 "마을 신뢰도 누적 임계값" — 본 문서의 신뢰도 누적 추정값을 입력으로 받아 4단계 임계값 역산

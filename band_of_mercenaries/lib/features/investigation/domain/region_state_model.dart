@@ -50,16 +50,23 @@ class RegionState extends HiveObject {
   @HiveField(12)
   int? infrastructureTier;
 
+  /// M7 후속 안정화 — 위험도 decay 마지막 체크 시각.
+  @HiveField(13)
+  DateTime? lastDangerDecayCheckedAt;
+
   int get currentTrust => settlementTrust ?? 0;
   int get currentTrustLevel => settlementTrustLevel ?? 1;
   int get currentDangerScore => dangerScore ?? 0;
-  int get currentDangerLevel => dangerLevel ?? DangerLevelResolver.resolveLevel(currentDangerScore).cacheInt;
+  int get currentDangerLevel =>
+      dangerLevel ??
+      DangerLevelResolver.resolveLevel(currentDangerScore).cacheInt;
   bool hasFlag(String flag) => unlockedFlags.contains(flag);
   int get currentInfrastructureTier => infrastructureTier ?? 1;
 
   bool get eventCompletedRecently =>
       lastEventCompletedAt != null &&
-      DateTime.now().difference(lastEventCompletedAt!) <= const Duration(hours: 24);
+      DateTime.now().difference(lastEventCompletedAt!) <=
+          const Duration(hours: 24);
 
   RegionState({
     required this.regionId,
@@ -75,9 +82,10 @@ class RegionState extends HiveObject {
     List<String>? unlockedFlags,
     Map<String, int>? questPoolCompletionCounts,
     this.infrastructureTier,
-  })  : triggeredDiscoveries = triggeredDiscoveries ?? [],
-        sectorChanges = sectorChanges ?? {},
-        firstAcquiredMaterialIds = firstAcquiredMaterialIds ?? [],
-        unlockedFlags = unlockedFlags ?? [],
-        questPoolCompletionCounts = questPoolCompletionCounts ?? {};
+    this.lastDangerDecayCheckedAt,
+  }) : triggeredDiscoveries = triggeredDiscoveries ?? [],
+       sectorChanges = sectorChanges ?? {},
+       firstAcquiredMaterialIds = firstAcquiredMaterialIds ?? [],
+       unlockedFlags = unlockedFlags ?? [],
+       questPoolCompletionCounts = questPoolCompletionCounts ?? {};
 }

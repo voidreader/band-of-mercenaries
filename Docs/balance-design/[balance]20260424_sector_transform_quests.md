@@ -3,7 +3,7 @@
 > 작성일: 2026-04-24
 > 유형: 밸런스 분석 + 수치 조정 제안
 > 분석 대상: M3 섹터 변형 3유형(village / ruins / hidden) 전용 퀘스트 풀 34행의 난이도·보상·특수 플래그·쿨다운 정책
-> 입력: `Docs/content-design/[content]20260423_region_transform.md`, `Docs/balance-design/[balance]20260424_chain_quest_rewards.md`(페이즈 2-1), `quest_pools`(Supabase 298행) / `difficulties` / `quest_types` / `elite_loot_tables` / `regions`
+> 입력: `Docs/Archive/20260424_region-transform-system/design.md`, `Docs/balance-design/[balance]20260424_chain_quest_rewards.md`(페이즈 2-1), `quest_pools`(Supabase 298행) / `difficulties` / `quest_types` / `elite_loot_tables` / `regions`
 > 후속: 페이즈 3-0-2 `types/region-transform.md`, 페이즈 3-2 `region_discoveries.transform` 18행, 페이즈 3-3 `quest_pools` sector 34행, 페이즈 4-3 `RegionState`/`QuestGenerator` spec
 
 ## 결론 요약
@@ -423,7 +423,7 @@ if (merc.traitLearningBoostUntil?.isAfter(DateTime.now()) ?? false) {
 ## 다음 단계 후속 안내
 
 - **페이즈 3-0-2 타입 스펙**: `Docs/content-data/types/region-transform.md` 작성 — 본 리포트 §7 반영
-- **페이즈 3-2 data-generator**: `/data-generator region-transform --brief @Docs/content-design/[content]20260423_region_transform.md --balance @Docs/balance-design/[balance]20260424_sector_transform_quests.md`
-- **페이즈 3-3 data-generator**: `/data-generator quest-pool-sector --brief @Docs/content-design/[content]20260423_region_transform.md --balance @Docs/balance-design/[balance]20260424_sector_transform_quests.md`
+- **페이즈 3-2 data-generator**: `/data-generator region-transform --brief @Docs/Archive/20260424_region-transform-system/design.md --balance @Docs/balance-design/[balance]20260424_sector_transform_quests.md`
+- **페이즈 3-3 data-generator**: `/data-generator quest-pool-sector --brief @Docs/Archive/20260424_region-transform-system/design.md --balance @Docs/balance-design/[balance]20260424_sector_transform_quests.md`
   - **선행 DDL 필요**: `ALTER TABLE quest_pools ADD COLUMN special_flags JSONB NULL DEFAULT '{}'::jsonb;` (operation-bom 반영)
 - **페이즈 4-3 spec**: `/spec-writer`로 `RegionTransformService` + `QuestGenerator` 확장 + `Mercenary.traitLearningBoostUntil` + 특수 플래그 처리 서비스 생성. 본 리포트 §8 + 페이즈 2-1 §8 통합 입력

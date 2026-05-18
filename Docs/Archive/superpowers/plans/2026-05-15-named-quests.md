@@ -8,7 +8,7 @@
 
 **Tech Stack:** Flutter · Riverpod · Hive · Supabase · freezed · json_serializable · build_runner · flutter_test
 
-**Spec:** `Docs/spec/[spec]20260515_M6_phase4_3_named-quests.md`
+**Spec:** `Docs/Archive/20260515_M6_phase4_3_named-quests/spec.md`
 
 **구현 컨벤션:** 본 프로젝트는 페이즈별 일괄 커밋(`finalize-feature`)을 채택하므로 각 TASK 끝에 commit하지 않고 TASK 16 통합 검증 후 단일 커밋. 단, 각 TASK 종료 시 build/test 통과를 verify한다.
 
@@ -1298,7 +1298,7 @@ Expected: `No issues found!`
 ```sql
 -- M6 페이즈 4 #3 — 지명 의뢰 시스템
 -- quest_pools 4 컬럼 확장 + CHECK 2 + INDEX 1 + 7행 INSERT
--- 명세서: Docs/spec/[spec]20260515_M6_phase4_3_named-quests.md §FR-1·FR-13
+-- 명세서: Docs/Archive/20260515_M6_phase4_3_named-quests/spec.md §FR-1·FR-13
 -- 작성일: 2026-05-15
 
 BEGIN;

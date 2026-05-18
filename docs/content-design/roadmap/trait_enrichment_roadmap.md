@@ -115,7 +115,7 @@ Phase 1~5를 통해 트레잇 시스템의 메커니즘(획득, 진화, 충돌, 
 **#15 아이템/스킬북 시스템**
 
 - 인벤토리, 저장, 사용 UI 등 대규모 인프라 구축 선행 필요
-- `idea_note.md`의 "넘버스 아이템", `future_ideas.md`의 "보상 다양화"와 함께 설계
+- `Docs/Archive/misc/idea_note.md`의 "넘버스 아이템", `future_ideas.md`의 "보상 다양화"와 함께 설계
 
 **#19 용병 티어 업그레이드**
 
@@ -132,4 +132,4 @@ Phase 1~5를 통해 트레잇 시스템의 메커니즘(획득, 진화, 충돌, 
 | 트레잇 구현 로드맵 | `Docs/Trait-Roadmap.md` |
 | 컨텐츠 개발 현황 | `Docs/content_status.md` |
 | 향후 개발 아이디어 | `Docs/future_ideas.md` |
-| 아이디어 메모 | `Docs/idea_note.md` |
+| 아이디어 메모 | `Docs/Archive/misc/idea_note.md` |

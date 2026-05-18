@@ -31,17 +31,17 @@
   - 핵심 결정: 7체인/24단계(2+3+3+3+4+4+5), 리전 티어 T1~T5 분산, 지역 이동 체인 5/7, M2a 장비 10종 중 7종 매핑(개인6+용병단1) — 나머지 3종(깃발/뿔피리/방패장식)은 엘리트·M4 경로로 분리. knowledge_threshold 60~95 분포. next_step_delay 실제 시간 기준(입문 10분~엔드 6시간). 체인 포기 불가 + 7일 휴면. **Q-2 확정: (e) 체인 시작 시점 protagonistMercId 고정 + 사망 폴백** (ChainQuestProgress 신규 필드). 체인 서사는 `chain_quests.description`에 직접 저장(quest_narratives와 독립). 오픈 질문 6건(Q-1 휴면 기간 / Q-2 인벤 가득 사전 차단 / Q-3 이동 중 delay 흐름 / Q-4 다중 체인 임계 차이 순차 / Q-5 실패 무보상 / Q-6 추상 세력→실제 faction id 매핑 1-4/3-1에서 확정)
 - [x] 3. 지역 변형 기획 — 마을/유적지/숨겨진 섹터 3유형, 변형 대상 리전 15~25개 선정, 유형별 전용 퀘스트 풀 컨셉
   - 참고 문서: M3 섹션, 페이즈 1-2 (연계 퀘스트 최종 단계와의 연결)
-  - 산출물: `Docs/content-design/[content]20260423_region_transform.md`
+  - 산출물: `Docs/Archive/20260424_region-transform-system/design.md`
   - 완료: 2026-04-24
   - 핵심 결정: 3유형 포지셔닝 확정(village 안전/반복·ruins 고위험·역사·1회성 강화·hidden 희귀 발견), 18개 변형 대상 리전 선정(T1-1: 5개/T2-3: 5개/T3-5: 4개/T4: 3개/T5: 1개), sector_type 4값(village/ruins/hidden/standard). 트리거 임계값: village 90/ruins 80/hidden 95. 영속성(되돌릴 수 없음) 확정. 연계 퀘스트 최종 단계 → 변형 잠금 해제 상호작용 확정. 체인 퀘스트 6/7이 변형 완료 조건 포함.
 - [x] 4. 퀘스트 서사 템플릿 기획 — quest_type(4) × result_type(4) 매트릭스, 유형×결과별 3~5개 변형 총 48~80개
   - 참고 문서: 페이즈 1-1 (TemplateEngine 문법)
-  - 산출물: `Docs/content-design/[content]20260424_quest_narratives.md`
+  - 산출물: `Docs/Archive/20260424_quest-narrative-integration/design.md`
   - 완료: 2026-04-24
   - 핵심 결정: **매트릭스 옵션 β(88행) 확정** — quest_type 6유형(활성 raid/hunt/escort/explore 4 + 스키마만 존재 labor/survey 2). 활성 4×4×4변형=64 + labor/survey 4×2변형×2유형=16 + 엘리트 전용 hunt/raid×4 result×1변형=8. **엘리트·섹터 확장 D 확정**(엘리트 전용 8행 + 섹터는 `[if region.sector_type=="..."]` 인라인 분기). **대표 용병 (b) 파티 기여 1위 확정**(`QuestCalculator.statWeights` 기반, labor=균등/survey=INT·AGI 우선). **스키마**: `quest_narratives`(id/quest_type/result_type/is_elite/template/weight/description) + CHECK 제약 + lookup 인덱스. **`quest_pools.enemy_name TEXT NULL` 신규 컬럼** + `{quest.enemy|적}` fallback. **`region.sector_type` 변수 추가**(카탈로그 29→30, 페이즈 1-1 후속 반영 필요). pick 50% 적용, 후보 2~4, 행당 최대 2개. 길이 40~120자 1~2문장. 체인 퀘스트는 `chain_quests.description` 독립(본 풀 비적용). 변형 섹터 34행·세력 전용 98행은 본 풀 자동 커버. 오픈 질문 8건(labor/survey 가중치·지역조사 관계·세력 톤 분기 범위·pick 시드·enemy_name 미채움 UX·엘리트 fallback 품질·엘리트 행의 quest.enemy 사용·weight 초기 차등).
 - [x] 5. 이동 선택지 이벤트 기획 — 10~15종 시나리오, 선택지 2~3개, 결과 확률, 트레잇 기반 숨겨진 선택지
   - 참고 문서: 페이즈 1-1 (TemplateEngine 문법), 기존 TravelEvent 12종
-  - 산출물: `Docs/content-design/[content]20260424_travel_choices.md`
+  - 산출물: `Docs/Archive/20260425_travel-choice-system/design.md`
   - 완료: 2026-04-24
   - 핵심 결정: **스키마 3테이블 분리 확정**(`travel_choice_events` + `travel_choice_options` + `travel_choice_results`). **발동 타이밍 "도착 후 회상"**(이동 중 UI 변화 없음, 방치형 UX 유지). 4 카테고리(encounter/dilemma/discovery/hazard) × 3개 = **12종 시나리오**. 선택지 구조: 기본 2(safe+risky) + 숨겨진 0~1(hidden) 총 2~3개. 결과 분기 선택지당 2~3개, probability 합=1.0 + `conditional_expr` 탈락 시 런타임 정규화. **효과 타입 8종**: 기존 5종(gold/injury/heal_tired/reputation/trait_innate) + 신규 3종(trait_acquired/item/nothing). delay 효과 제외(회상 맥락 부적절). **대표 용병 선정: preferred_traits 매칭 + 최고 레벨 fallback**(team-wide visibility 평가와 구분). **EV 정책: hidden > safe ≥ risky**(수치는 페이즈 2-3 위임). **TemplateEngine `evaluationScope` 파라미터 확장 후속 반영 필요**(has_trait 등의 team-wide 평가 모드). rollEvent 통합: 자동 이벤트 + 선택지 이벤트 독립 roll (선택지는 `distance × 0.08~0.12`). 총 114행 추정(12+30+72). 오픈 질문 10건(발동 확률·hidden UI 표시·trait 키 실존·preferred vs visibility 일치·delay 재확장·trait_acquired 매커니즘 공유·item 풀·팝업 순서·전원 파견 fallback·로그 표시).
 - [x] 6. 공존 정책 정의 — 파견 화면 [연계 진행 단계 최상단] > [가입 세력 전용(M1)] > [엘리트(M2b)] > [일반] 정렬·강조·UI 슬롯 규칙
@@ -142,26 +142,26 @@
   - 핵심: FR 12건 (치환·fallback·if/else/elif·pick·9개 연산자·evaluationScope·evaluate/render/validate API·TemplateContext 12필드·Riverpod Provider·카탈로그 30개). **verify-spec PASS**(5/5 항목 통과, 초기 1패스). 신규 파일 9개(엔진·컨텍스트·카탈로그·AST·오류·Provider·테스트 3종) + 수정 파일 1개(travel_event_service 통합). Q-A 2건 참고사항(List<String> eliteId 타입 정리 / List<QuestType> questTypes Context 필드 추가) 구현 단계에서 처리.
 - [x] 2. 연계 퀘스트 시스템 spec — `ChainQuestData`/`ChainQuestProgress`/`ChainQuestService`, `chainQuestProgress` Hive 박스, 파견 화면 상단 고정 UI, 타 지역 "이동 필요" 안내
   - 입력: 페이즈 1-2 + 페이즈 2-1 + 페이즈 3-1
-  - 산출물: `Docs/spec/M3/[spec]20260424_chain-quest-system.md`
+  - 산출물: `Docs/Archive/20260424_chain-quest-system/spec.md`
   - 완료: 2026-04-24
   - 핵심: FR 12건 (발동/주인공 선정·고정/단계 주입/단계 완료/death×0.5/인벤 차단/완주 보너스/폴백/휴면/플래그/템플릿 렌더/완주 후 재발동 방지). balance 2-1 런타임 로직 4건 전체 반영. Hive typeId 11(ChainQuestProgress)/12(ChainQuestStatus) 신규, HiveField append-only 준수(UserData 20·ActiveQuest 21~23·ActivityLogType 16~17). **verify-spec PASS**(5/5, 초기 1패스). `chain_quests.final_reputation_bonus` DDL·데이터 실존 재확인 완료. 수정 13 + 신규 9 = 22 파일.
 - [x] 3. 지역 변형 시스템 spec — `RegionState.sectorChanges`, transform 트리거, 이동 화면 구분, `QuestGenerator` sector_type 분기
   - 입력: 페이즈 1-3 + 페이즈 2-2 + 페이즈 3-2 + 페이즈 3-3
-  - 산출물: `Docs/spec/M3/[spec]20260424_region-transform-system.md`
+  - 산출물: `Docs/Archive/20260424_region-transform-system/spec.md`
   - 완료: 2026-04-24
   - 핵심: FR 12건 (sectorChanges 필드/transform 트리거/변형 팝업/QuestGenerator sector_type 분기/quest_pools 모델 확장/ActiveQuest.specialFlags/SpecialFlagProcessor 6종 플래그/traitLearningBoostUntil/이동 화면 시각 구분/applyTransform API/regionTransform 로그 타입/대기 퀘 보존). balance 2-2 특수 플래그 7건 전체 처리 + 페이즈 4-5와 공유 매커니즘 확정. HiveField append-only(RegionState 3 / Mercenary 23 / ActiveQuest 24 / ActivityLogType 15). **verify-spec PASS**(5/5, 초기 1패스). §FR-1 Map<int,String>→Map<String,String> Hive 안정성 일관성 수정 + reputation_penalty 규칙 명확화 수정. 수정 12 + 신규 8 = 20 파일.
 - [x] 4. 퀘스트 서사 통합 spec — `QuestNarrativeData`/`QuestNarrativeService`, 완료 팝업 서사 영역
   - 입력: 페이즈 1-4 + 페이즈 3-4 + 페이즈 4-1
-  - 산출물: `Docs/spec/M3/[spec]20260424_quest-narrative-integration.md`
+  - 산출물: `Docs/Archive/20260424_quest-narrative-integration/spec.md`
   - 완료: 2026-04-24
   - 핵심: FR 12건 (QuestNarrativeData 모델/pickTemplate weight 랜덤/renderNarrative/ActiveQuest.renderedNarrative HiveField 25/`{quest.enemy}` 해결 로직/QuestResultDialog 서사 영역/활동 로그 포맷/SyncService 동기화/대표 용병 선정 공식/체인 우회/엘리트 분기/pick 시드 결정). 페이즈 4-1에 `{quest.enemy}` 해결 로직(QuestPool.enemyName → EliteMonster.name → "적") 구현 요구 교차 전달. **verify-spec PASS**(5/5, 초기 1패스). **M3 신규 spec 작업 중 기존 `ActivityLogType` HiveField 15~17 점유(M2a essence) 발견 → 페이즈 4-2/4-3 spec의 HiveField 번호를 19/20·18로 일괄 교정**. 수정 9 + 신규 4 = 13 파일.
 - [x] 5. 이동 선택지 spec — `TravelChoiceEventData`, `TravelEventService` 확장, 이동 완료 후 "회상" UI, 트레잇 숨겨진 선택지
   - 입력: 페이즈 1-5 + 페이즈 2-3 + 페이즈 3-5 + 페이즈 4-1
-  - 산출물: `Docs/spec/M3/[spec]20260425_travel-choice-system.md`
+  - 산출물: `Docs/Archive/20260425_travel-choice-system/spec.md`
   - 완료: 2026-04-25
 - [x] 6. SyncService + 파견 화면 공존 정렬 spec — 3개 신규 테이블 동기화, data_versions 갱신, 페이즈 1-6 정렬 규칙 Flutter 구현
   - 입력: 페이즈 1-6 + 페이즈 3-1/4/5
-  - 산출물: `Docs/spec/M3/[spec]20260425_coexistence-policy.md`
+  - 산출물: `Docs/Archive/20260425_coexistence-policy/spec.md`
   - 완료: 2026-04-25
 
 ## 실행 이력
@@ -170,9 +170,9 @@
 - 2026-04-23: 페이즈 1~4 산출물 계획 승인 (6 + 3 + 9 + 6 = 24개)
 - 2026-04-23: 페이즈 1-1 완료 — TemplateEngine 공유 모듈 설계 (`Docs/content-design/[content]20260423_template_engine.md`)
 - 2026-04-23: 페이즈 1-2 완료 — 연계 퀘스트 시나리오 7체인/24단계 (`Docs/content-design/[content]20260423_chain_quests.md`). Q-2 해결.
-- 2026-04-24: 페이즈 1-3 완료 — 지역 변형 기획 18개 리전·3유형 (`Docs/content-design/[content]20260423_region_transform.md`)
-- 2026-04-24: 페이즈 1-4 완료 — 퀘스트 서사 템플릿 88행 매트릭스 + quest_type 6유형 확장 대응 + 엘리트/섹터 분기 전략 D + 스키마 + 샘플 16개 (`Docs/content-design/[content]20260424_quest_narratives.md`). Q-2·Q-6 해결. 페이즈 3-6(일반 퀘스트 200행 재분류) 신규 트랙 추가. 페이즈 4-1에 `region.sector_type` 카탈로그 확장 후속 반영 메모.
-- 2026-04-24: 페이즈 1-5 완료 — 이동 선택지 이벤트 12종·114행 기획 (`Docs/content-design/[content]20260424_travel_choices.md`). 스키마 3테이블 분리·도착 후 회상 UI·4 카테고리·hidden 트레잇 분기·효과 타입 8종 확정. Q-4(페이즈 1-1 선택지 결과 적용 시점) 해결(도착 직후 즉시 반영). 페이즈 4-1에 `evaluationScope` 파라미터 확장 후속 반영 메모. 페이즈 4-3·4-5가 trait_acquired 학습 가속 매커니즘 공유 권장.
+- 2026-04-24: 페이즈 1-3 완료 — 지역 변형 기획 18개 리전·3유형 (`Docs/Archive/20260424_region-transform-system/design.md`)
+- 2026-04-24: 페이즈 1-4 완료 — 퀘스트 서사 템플릿 88행 매트릭스 + quest_type 6유형 확장 대응 + 엘리트/섹터 분기 전략 D + 스키마 + 샘플 16개 (`Docs/Archive/20260424_quest-narrative-integration/design.md`). Q-2·Q-6 해결. 페이즈 3-6(일반 퀘스트 200행 재분류) 신규 트랙 추가. 페이즈 4-1에 `region.sector_type` 카탈로그 확장 후속 반영 메모.
+- 2026-04-24: 페이즈 1-5 완료 — 이동 선택지 이벤트 12종·114행 기획 (`Docs/Archive/20260425_travel-choice-system/design.md`). 스키마 3테이블 분리·도착 후 회상 UI·4 카테고리·hidden 트레잇 분기·효과 타입 8종 확정. Q-4(페이즈 1-1 선택지 결과 적용 시점) 해결(도착 직후 즉시 반영). 페이즈 4-1에 `evaluationScope` 파라미터 확장 후속 반영 메모. 페이즈 4-3·4-5가 trait_acquired 학습 가속 매커니즘 공유 권장.
 - 2026-04-24: 페이즈 1-6 완료 — 공존 정책 정의 (`Docs/content-design/[content]20260424_coexistence_policy.md`). 5계층 정렬·카드 시각 3원칙·도착 팝업 8단계·Global Dialog Queue(4 priority + Hive persistence)·RankUpOverlay 큐 통합·활동 로그 4신규 타입 확정. 페이즈 1-5 Q-8 + 페이즈 1-3 §5-4 해결. 페이즈 4-6 spec은 타 페이즈 4 spec들의 통합 계약 역할.
 - 2026-04-24: **페이즈 1(컨텐츠 설계) 완료** — 6개 산출물 전체 생성. 페이즈 2 체크포인트 대기.
 - 2026-04-24: 페이즈 2 시작 — 사용자 승인. 페이즈 2-1(연계 퀘스트 확정 보상 강도) 액션 안내.
@@ -189,7 +189,7 @@
 - 2026-04-24: **배치 G(페이즈 3-6 일반 퀘 200행 재분류) 완료** — 키워드 기반 UPDATE 200행. 분포 hunt 28.5%/escort 27.5%/raid 22.5%/explore 21.5% (escort/raid 경계선 2.5%p 편차 수용). enemy_name 채움 77행(38.5%). **페이즈 3 완료 체크포인트 대기**.
 - 2026-04-24: **페이즈 3(데이터 생성) 완료** — 10개 산출물 전체 생성. 4 타입 스펙 + 6 벌크 생성(chain_quests 24 / region_discoveries 25 / quest_pools sector 34 / quest_narratives 88 / travel_choice 114 / 일반 퀘 200 UPDATE) = 285 신규/UPDATE. 3 신규 테이블 + 2 컬럼 ALTER DDL. 페이즈 4 체크포인트 대기.
 - 2026-04-24: 페이즈 4 시작 — 사용자 승인. spec-pipeline으로 spec 6건 1건씩 순차 생성 방식 채택(auto 진행 X, 각 spec 후 사용자 확인).
-- 2026-04-25: 페이즈 4-5 완료 — 이동 선택지 spec (`Docs/spec/M3/[spec]20260425_travel-choice-system.md`)
-- 2026-04-25: 페이즈 4-6 완료 — SyncService + 공존 정렬 spec (`Docs/spec/M3/[spec]20260425_coexistence-policy.md`)
+- 2026-04-25: 페이즈 4-5 완료 — 이동 선택지 spec (`Docs/Archive/20260425_travel-choice-system/spec.md`)
+- 2026-04-25: 페이즈 4-6 완료 — SyncService + 공존 정렬 spec (`Docs/Archive/20260425_coexistence-policy/spec.md`)
 - 2026-04-25: **페이즈 4(개발 명세) 완료** — 6개 산출물 전체 생성.
 - 2026-04-25: **M3 마일스톤 완료** — 전체 24개 산출물 생성 완료. 상태: completed.

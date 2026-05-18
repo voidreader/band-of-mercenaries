@@ -4,7 +4,7 @@
 > 유형: 신규 컨텐츠 (M7 마일스톤 — 페이즈 1 산출물 2/4)
 > 선행 문서:
 > - `Docs/content-design/[content]20260516_m7_livingsphere_regions.md` — M7 페이즈 1 #1, 7개 리전 위험 등급/초기 상태/사건 후 변화 매핑
-> - `Docs/content-design/[content]20260423_region_transform.md` — M3 region-transform (영구 1회성, sector 단위)
+> - `Docs/Archive/20260424_region-transform-system/design.md` — M3 region-transform (영구 1회성, sector 단위)
 > - `Docs/content-design/[content]20260503_settlement-trust-and-fixed-events.md` — M4 마을 신뢰도 (region 3 거점, 누적 점수 + 4단계)
 > - `band_of_mercenaries/lib/features/investigation/domain/region_state_model.dart` — RegionState HiveField 0~7 사용 중
 > - `CLAUDE.md` — M6 페이즈 4 #1 위업 6 hook (체인·신뢰도·명성·엘리트·제작·사망)

@@ -486,4 +486,4 @@
 
 ## 이 문서에 대해
 
-이 문서는 기획자, 아티스트, 신규 팀원이 게임의 전체 구조를 빠르게 파악할 수 있도록 작성되었습니다. 기술적 구현 세부사항은 `content_status.md`를 참고하세요.
+이 문서는 기획자, 아티스트, 신규 팀원이 게임의 전체 구조를 빠르게 파악할 수 있도록 작성되었습니다. 최신 기술 구현 세부사항은 `AGENTS.md`, `Docs/milestone-runs/M7/state.md`, `Docs/Review/project_audit_2026-05-18.md`를 우선 참고하세요. `content_status.md`는 M3 기준 보관본입니다.

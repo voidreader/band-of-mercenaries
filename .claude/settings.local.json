@@ -123,7 +123,8 @@
       "Bash(npx supabase *)",
       "Bash(awk '$6==\"5월\"')",
       "Bash(sort -k7n)",
-      "Skill(spec-pipeline)"
+      "Skill(spec-pipeline)",
+      "Skill(using-superpowers)"
     ]
   },
   "enabledPlugins": {

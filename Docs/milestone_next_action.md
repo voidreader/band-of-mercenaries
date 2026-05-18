@@ -1,3 +1,7 @@
+> **보관 메모(2026년 5월 18일):** 이 문서는 M1 페이즈 2 시점의 임시 다음 액션 기록이다.
+> 현재 작업 기준으로 사용하지 않는다. 최신 진행 상태는 `Docs/milestone-runs/`와
+> `Docs/roadmap/master_roadmap.md`를 참조한다.
+
   페이즈 2: 밸런스 확정 — 다음 액션
 
   현재 액션: 3/4
@@ -23,6 +27,3 @@
   Docs/content-design/[content]20260417_dispatch_synergy.md, Docs/balance-design/20260417_faction_passive_values.md
 
   예상 산출물 경로: Docs/balance-design/20260417_dispatch_synergy_values.md
-
-
-  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

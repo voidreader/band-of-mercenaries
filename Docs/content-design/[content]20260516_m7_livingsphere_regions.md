@@ -4,8 +4,8 @@
 > 유형: 신규 컨텐츠 (M7 마일스톤 — 페이즈 1 산출물 1/4)
 > 선행 문서:
 > - `Docs/roadmap/master_roadmap.md` (1111~1167행) — M7 목표·포함 시스템·작업 상세·완료 조건
-> - `Docs/content-design/[content]20260503_region-40-redesign.md` — 살아남는 40개 region_id, 시작 거점 region 3 더스트플레인(mountain) 확정
-> - `Docs/content-design/[content]20260503_starting-settlement.md` — 더스트빌 4섹터 + 거점 3종 + NPC 5명
+> - `Docs/Archive/20260503_m4-region-migration/design_content.md` — 살아남는 40개 region_id, 시작 거점 region 3 더스트플레인(mountain) 확정
+> - `Docs/Archive/20260503_m4-region-sectors/design_starting-settlement.md` — 더스트빌 4섹터 + 거점 3종 + NPC 5명
 > - `Docs/content-design/[content]20260503_settlement-trust-and-fixed-events.md` — 마을 신뢰도 4단계 + `settlement_3_pyegwang_reopen` 6단계 고정 사건
 > - `CLAUDE.md` — M5 제작 5종 재료 출처 hook + region_exclusive 컬럼 + M6 페이즈 4 칭호·위업·지명 의뢰 hook
 >

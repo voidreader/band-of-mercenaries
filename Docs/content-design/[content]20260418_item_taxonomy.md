@@ -190,7 +190,7 @@ items (
 ### 기존 아이디어 / 문서와의 관계
 
 - `Docs/future_ideas.md`: "퀘스트 결과 — 보상 다양화 — 장비/아이템 시스템과 연동 필요" 항목이 M2a에서 첫 구현으로 실현됨. 다만 M2a에는 드랍 경로가 없어 퀘스트 보상 연동은 M2b에서 완결됨.
-- `Docs/idea_note.md`: "정수 획득 (게임 속 바바리안으로 살아남기)" 레퍼런스가 본 문서의 정수 4종 네이밍·감성의 근거가 됨.
+- `Docs/Archive/misc/idea_note.md`: "정수 획득 (게임 속 바바리안으로 살아남기)" 레퍼런스가 본 문서의 정수 4종 네이밍·감성의 근거가 됨.
 - `content_status.md` 7. 아키텍처 요약의 서비스 14개 목록에 `ItemEffectService`, `EssenceService`, `InventoryRepository`가 M2a 이후 추가될 예정 (페이즈 4 명세에서 확정).
 
 ### 로드맵 선행/후속 의존 재확인

@@ -2,7 +2,7 @@
 
 > 작성일: 2026-04-24
 > 유형: 시스템 설계 (M3 페이즈 1-6 · 메타 레이어)
-> 선행 의존: 페이즈 1-2 연계 퀘스트(`Docs/content-design/[content]20260423_chain_quests.md`), 페이즈 1-3 지역 변형(`Docs/content-design/[content]20260423_region_transform.md`), 페이즈 1-4 퀘스트 서사(`Docs/content-design/[content]20260424_quest_narratives.md`), 페이즈 1-5 이동 선택지(`Docs/content-design/[content]20260424_travel_choices.md`), M1 세력 전용 퀘스트 UI, M2b 엘리트 퀘스트 UI
+> 선행 의존: 페이즈 1-2 연계 퀘스트(`Docs/content-design/[content]20260423_chain_quests.md`), 페이즈 1-3 지역 변형(`Docs/Archive/20260424_region-transform-system/design.md`), 페이즈 1-4 퀘스트 서사(`Docs/Archive/20260424_quest-narrative-integration/design.md`), 페이즈 1-5 이동 선택지(`Docs/Archive/20260425_travel-choice-system/design.md`), M1 세력 전용 퀘스트 UI, M2b 엘리트 퀘스트 UI
 > 후속 페이즈 의존: 페이즈 4-6(SyncService + 파견 화면 공존 정렬 spec)
 
 ## 개요

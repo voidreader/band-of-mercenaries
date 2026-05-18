@@ -3,9 +3,9 @@
 > 작성일: 2026-05-03
 > 유형: 신규 컨텐츠 (M4 마일스톤 — 페이즈 1 산출물 4/5)
 > 선행 문서:
-> - `Docs/content-design/[content]20260503_starting-settlement.md` — 거점 잠금 정책·인사말 변주 17개·NPC 5명
-> - `Docs/content-design/[content]20260503_region-40-redesign.md` — 더스트플레인 region_id 3
-> - `Docs/content-design/[content]20260503_sector-system-redesign.md` — 4섹터 구성(폐광 = sector_index 2 dungeon)
+> - `Docs/Archive/20260503_m4-region-sectors/design_starting-settlement.md` — 거점 잠금 정책·인사말 변주 17개·NPC 5명
+> - `Docs/Archive/20260503_m4-region-migration/design_content.md` — 더스트플레인 region_id 3
+> - `Docs/Archive/20260503_m4-region-sectors/design_sector-system.md` — 4섹터 구성(폐광 = sector_index 2 dungeon)
 > - `Docs/roadmap/master_roadmap.md` (669~695행) — `#신뢰도 기반 고정 의뢰`, `#마을 신뢰도 4단계`
 > 후속:
 > - 페이즈 1 #5 "초반 2시간 플레이 흐름" — 본 문서의 6단계 사건 라인을 분 단위 흐름에 배치

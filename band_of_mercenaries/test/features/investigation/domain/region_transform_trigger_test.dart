@@ -72,5 +72,15 @@ void main() {
       expect(state.sectorChanges['2'], equals('ruins'));
       expect(state.sectorChanges['5'], equals('village'));
     });
+
+    test('위험도 decay 마지막 체크 시각은 모델에 보존된다', () {
+      final checkedAt = DateTime(2026, 5, 18, 12);
+      final state = RegionState(
+        regionId: 3,
+        lastDangerDecayCheckedAt: checkedAt,
+      );
+
+      expect(state.lastDangerDecayCheckedAt, checkedAt);
+    });
   });
 }

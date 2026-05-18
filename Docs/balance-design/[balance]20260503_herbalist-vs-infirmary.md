@@ -4,9 +4,9 @@
 > 유형: 신규 시스템 수치 설계 (M4 마일스톤 — 페이즈 2 산출물 2/4)
 > 분석 대상: 약초상(M4 신규 `HerbalistService`) vs 의무실(기존 `FacilityService`)
 > 선행 문서:
-> - `Docs/content-design/[content]20260503_starting-settlement.md` (페이즈 1 #3 2.3절) — 약초상 vs 의무실 역할 분리 정책
+> - `Docs/Archive/20260503_m4-region-sectors/design_starting-settlement.md` (페이즈 1 #3 2.3절) — 약초상 vs 의무실 역할 분리 정책
 > - `Docs/content-design/[content]20260503_first-2h-playflow.md` (페이즈 1 #5) — 분 단위 흐름의 부상 발생 빈도
-> - `Docs/balance-design/[balance]20260503_settlement-trust-tuning.md` (페이즈 2 #1) — 단계 진입 일회성 보상(2단계 100G·3단계 200G·4단계 500G)
+> - `Docs/Archive/20260503_m4-settlement-trust/design-balance.md` (페이즈 2 #1) — 단계 진입 일회성 보상(2단계 100G·3단계 200G·4단계 500G)
 > 후속:
 > - 페이즈 2 #3 (허드렛일 보상 곡선) — 채집 의뢰 보상 변화 +α 계산 입력
 > - 페이즈 4 #4 (마을 방문 UI + 거점 3종 + 약초상/의무실 분리) — 본 문서를 명세 직접 입력

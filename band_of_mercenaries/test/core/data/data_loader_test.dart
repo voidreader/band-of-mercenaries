@@ -30,7 +30,15 @@ void main() {
 
     test('saveToCache stores data', () async {
       final data = [
-        {'id': 'farmer', 'tier': 1, 'name': '농부', 'base_str': 4, 'base_intelligence': 3, 'base_vit': 24, 'base_agi': 96},
+        {
+          'id': 'farmer',
+          'tier': 1,
+          'name': '농부',
+          'base_str': 4,
+          'base_intelligence': 3,
+          'base_vit': 24,
+          'base_agi': 96,
+        },
       ];
 
       await dataLoader.saveToCache('jobs', data);
@@ -38,13 +46,23 @@ void main() {
     });
 
     test('hasCache returns true after saving', () async {
-      await dataLoader.saveToCache('jobs', [{'id': 'test'}]);
+      await dataLoader.saveToCache('jobs', [
+        {'id': 'test'},
+      ]);
       expect(dataLoader.hasCache(), true);
     });
 
     test('loadFromCache parses saved data correctly', () async {
       final data = [
-        {'id': 'farmer', 'tier': 1, 'name': '농부', 'base_str': 4, 'base_intelligence': 3, 'base_vit': 24, 'base_agi': 96},
+        {
+          'id': 'farmer',
+          'tier': 1,
+          'name': '농부',
+          'base_str': 4,
+          'base_intelligence': 3,
+          'base_vit': 24,
+          'base_agi': 96,
+        },
       ];
 
       await dataLoader.saveToCache('jobs', data);
@@ -61,10 +79,69 @@ void main() {
       expect(result, isEmpty);
     });
 
+    test(
+      'validateRequiredCaches throws when required table cache is missing',
+      () async {
+        await dataLoader.saveToCache('jobs', [
+          {'id': 'test'},
+        ]);
+
+        expect(
+          () => dataLoader.validateRequiredCaches(['jobs', 'regions']),
+          throwsA(
+            isA<StateError>().having(
+              (e) => e.message,
+              'message',
+              contains('regions'),
+            ),
+          ),
+        );
+      },
+    );
+
+    test(
+      'validateRequiredCaches treats empty cached table as missing',
+      () async {
+        await dataLoader.saveToCache('jobs', const []);
+
+        expect(
+          () => dataLoader.validateRequiredCaches(['jobs']),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test(
+      'validateRequiredCaches passes when every required table has data',
+      () async {
+        await dataLoader.saveToCache('jobs', [
+          {'id': 'test'},
+        ]);
+        await dataLoader.saveToCache('regions', [
+          {'region': 3},
+        ]);
+
+        expect(
+          () => dataLoader.validateRequiredCaches(['jobs', 'regions']),
+          returnsNormally,
+        );
+      },
+    );
+
     test('parseList converts list of maps to models', () {
       final response = [
-        {'grade': 'F', 'name': '무명', 'required_reputation': 0, 'unlock_tier': 1},
-        {'grade': 'E', 'name': '신입', 'required_reputation': 100, 'unlock_tier': 2},
+        {
+          'grade': 'F',
+          'name': '무명',
+          'required_reputation': 0,
+          'unlock_tier': 1,
+        },
+        {
+          'grade': 'E',
+          'name': '신입',
+          'required_reputation': 100,
+          'unlock_tier': 2,
+        },
       ];
 
       final ranks = DataLoader.parseList(response, Rank.fromJson);
