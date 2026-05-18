@@ -1,0 +1,41 @@
+id,category,key,display_text,tags_json,weight
+crk_m8a_field_01,battlefield,dust_square,먼지 낀 광장,"{""region"":3,""mood"":""dry""}",100
+crk_m8a_field_02,battlefield,reopened_mine,다시 열린 폐광 입구,"{""region"":3,""mood"":""record""}",100
+crk_m8a_field_03,battlefield,bandit_road,바퀴 자국 남은 도적길,"{""region"":31,""mood"":""road""}",100
+crk_m8a_field_04,battlefield,coast_cliff,짠 바람 부는 해안 절벽,"{""region"":127,""mood"":""coast""}",100
+crk_m8a_field_05,battlefield,nomad_tent,유목민 천막 사이,"{""region"":127,""mood"":""trade""}",90
+crk_m8a_field_06,battlefield,wind_forest_ridge,풍신 숲 능선,"{""region"":10,""mood"":""wind""}",100
+crk_m8a_field_07,battlefield,outer_forest_track,외곽 숲 짐승길,"{""region"":9,""mood"":""hunt""}",100
+crk_m8a_field_08,battlefield,broken_fort_wall,부서진 요새 성벽,"{""region"":38,""mood"":""fort""}",100
+crk_m8a_field_09,battlefield,fort_duel_ground,요새 안쪽 결투장,"{""region"":38,""mood"":""duel""}",90
+crk_m8a_field_10,battlefield,gray_swamp_fog,회색 늪지 안개,"{""region"":146,""mood"":""swamp""}",90
+crk_m8a_field_11,battlefield,night_cart_road,밤길 수레 행렬,"{""quest_type"":""escort"",""mood"":""contract""}",90
+crk_m8a_field_12,battlefield,collapsed_gate,무너진 문가,"{""quest_type"":""raid"",""mood"":""breach""}",90
+crk_m8a_enemy_01,enemy,grave_robber_captain,도굴꾼 대장,"{""region"":38,""mood"":""raid""}",100
+crk_m8a_enemy_02,enemy,grave_robber_scouts,도굴꾼 정찰조,"{""region"":38,""mood"":""explore""}",90
+crk_m8a_enemy_03,enemy,bandit_remnants,도적 잔당,"{""region"":31,""mood"":""road""}",100
+crk_m8a_enemy_04,enemy,coast_raiders,해안 습격대,"{""region"":127,""mood"":""escort""}",90
+crk_m8a_enemy_05,enemy,swamp_tracker,늪지 추적자,"{""region"":146,""mood"":""hunt""}",90
+crk_m8a_enemy_06,enemy,giant_forest_beast,거대 숲짐승,"{""region"":9,""mood"":""elite""}",100
+crk_m8a_enemy_07,enemy,trial_beast,시련관의 표식수,"{""faction"":""warriors"",""mood"":""trial""}",90
+crk_m8a_enemy_08,enemy,ambush_spearmen,매복 창병,"{""quest_type"":""escort"",""mood"":""ambush""}",80
+crk_m8a_enemy_09,enemy,contract_breakers,계약 파기자 무리,"{""faction"":""merchants"",""mood"":""contract""}",80
+crk_m8a_enemy_10,enemy,nameless_howler,이름 없는 포효자,"{""scope"":""elite"",""mood"":""fear""}",80
+crk_m8a_scene_01,decisive,shield_opens_path,방패로 길을 열었다,"{""scene"":""shield"",""result"":""positive""}",100
+crk_m8a_scene_02,decisive,backline_cut,후열의 압박을 끊었다,"{""scene"":""support"",""result"":""positive""}",95
+crk_m8a_scene_03,decisive,protagonist_last_step,주인공이 마지막 한 걸음을 버텼다,"{""scene"":""protagonist"",""result"":""positive""}",95
+crk_m8a_scene_04,decisive,cart_saved,수레가 전복되기 전에 붙잡혔다,"{""scene"":""escort"",""result"":""positive""}",90
+crk_m8a_scene_05,decisive,map_corrected,지도 표식이 바로잡혔다,"{""scene"":""record"",""result"":""positive""}",90
+crk_m8a_scene_06,decisive,seal_recovered,봉인이 온전하게 회수됐다,"{""scene"":""contract"",""result"":""positive""}",90
+crk_m8a_scene_07,decisive,duel_mark_pressed,결투 표식이 더 깊게 눌렸다,"{""scene"":""trial"",""result"":""positive""}",90
+crk_m8a_scene_08,decisive,retreat_controlled,후퇴가 질서를 유지했다,"{""scene"":""retreat"",""result"":""mixed""}",90
+crk_m8a_scene_09,decisive,second_ambush_failed,두 번째 매복이 늦었다,"{""scene"":""ambush"",""result"":""positive""}",85
+crk_m8a_scene_10,decisive,enemy_weakness_seen,강적의 약점이 드러났다,"{""scene"":""elite"",""result"":""positive""}",85
+crk_m8a_scene_11,decisive,signal_late,신호가 늦게 닿았다,"{""scene"":""support"",""result"":""negative""}",85
+crk_m8a_scene_12,decisive,formation_split,전열이 갈라졌다,"{""scene"":""line"",""result"":""negative""}",85
+crk_m8a_injury_01,injury,knee_gave_way,무릎이 꺾였다,"{""severity"":""medium""}",90
+crk_m8a_injury_02,injury,breath_lost,숨이 끊기듯 흔들렸다,"{""severity"":""medium""}",90
+crk_m8a_injury_03,injury,retreat_signal_late,후퇴 신호가 늦었다,"{""severity"":""high""}",90
+crk_m8a_injury_04,injury,shield_arm_numb,방패 든 팔이 저렸다,"{""severity"":""low""}",80
+crk_m8a_injury_05,injury,name_checked_late,늦게 확인된 이름이 있었다,"{""severity"":""high""}",80
+crk_m8a_injury_06,injury,field_dressing_done,응급 처치가 전열 뒤에서 끝났다,"{""severity"":""low""}",80
