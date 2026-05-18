@@ -5,7 +5,7 @@ description:
   `Docs` 디렉토리의 파일이나 저장소의 모든 `.md` 파일이 대상입니다.
 ---
 
-Recommended Model : Codex Sonnet
+Recommended Model : Claude Sonnet
 
 
 # `docs-writer` 스킬 지침

@@ -3,7 +3,7 @@ name: merge-changelog
 description: changelog-fragments 디렉토리의 개별 fragment 파일들을 합산하여 CHANGELOG.md를 갱신한다. 릴리스 또는 정기 정리 시점에 사용한다.
 ---
 
-Recommended Model : Codex Sonnet
+Recommended Model : Claude Sonnet
 
 ** 한국어 스타일 유지 **
 

@@ -3,7 +3,7 @@ name: implement-agent
 description: 사용자로부터 전달된 명세서를 기반으로 git 충돌 감지 후, 서브에이전트 파이프라인(planner → coder → verifier(spec) → flutter-reviewer(quality) → dart-build-resolver)을 직접 조율하여 구현을 진행하고 완료 후 산출물 문서를 생성한다. TASK 수가 많을 경우 superpowers 방식의 순차 격리 모드로 task별 two-stage review를 수행한다.
 ---
 
-Recommended Model : Codex Opus
+Recommended Model : Claude Opus
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?
@@ -112,11 +112,11 @@ Recommended Model : Codex Opus
    **각 coder 호출 시 프롬프트에 포함할 내용:**
    - 해당 태스크(TASK-n)의 상세 내용
    - 전체 구현 계획서 (컨텍스트 참조용)
-   - AGENTS.md 준수사항 리마인드:
+   - CLAUDE.md 준수사항 리마인드:
      - 최적화를 염두해서 개발을 진행한다.
      - 의존성을 되도록 줄이는 방향을 고려한다.
-     - AGENTS.md 코멘트 정책 준수
-     - AGENTS.md 금지사항을 준수하고, 부득이하게 위반해야하는 경우는 사유를 반드시 완료 보고에 포함한다.
+     - CLAUDE.md 코멘트 정책 준수
+     - CLAUDE.md 금지사항을 준수하고, 부득이하게 위반해야하는 경우는 사유를 반드시 완료 보고에 포함한다.
    - **자가 점검 책임 (필수)**: coder는 코드 작성 후 다음을 자체 수행하고 결과를 완료 보고에 기재해야 한다:
      - 변경 파일에 대한 `flutter analyze` (변경 파일 경로 한정)
      - 모델 변경 시 `dart run build_runner build --delete-conflicting-outputs`
@@ -333,7 +333,7 @@ Recommended Model : Codex Opus
         - 변경 파일 목록 (파일 경로, 변경 유형, 설명)
         - 실행 모드 (병렬/순차 격리) 및 검증 모드 (경량/풀/순차 격리 final) / 결과 요약 (verifier·flutter-reviewer 각 PASS/FAIL 횟수, 수정된 이슈 목록)
         - build_runner 재실행이 필요한 파일 목록 (해당 시)
-        - AGENTS.md 금지사항 위반이 있었다면 사유와 함께 명시
+        - CLAUDE.md 금지사항 위반이 있었다면 사유와 함께 명시
 
    **피드백 반영**: 사용자 테스트 중 피드백이 있으면:
    - 피드백 내용을 포함하여 해당 TASK의 coder를 Agent()로 재호출한다.
@@ -347,7 +347,7 @@ Recommended Model : Codex Opus
 
 6. **워크플로우 안내**
 
-> **AGENTS.md 업데이트, CHANGELOG Fragment 생성은 이 스킬에서 수행하지 않는다.**
+> **CLAUDE.md 업데이트, CHANGELOG Fragment 생성은 이 스킬에서 수행하지 않는다.**
 > 이 작업들은 `finalize-feature` 스킬에서 일괄 처리한다.
 
 - 이 스킬은 git commit과 문서 아카이브를 수행하지 않는다.

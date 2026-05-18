@@ -3,7 +3,7 @@ name: balance-designer
 description: Use when the user wants to analyze game balance, review formulas, simulate economy, or adjust numerical values for the mercenary band strategy game. Requires Supabase authentication. Explicit invocation only.
 ---
 
-Recommended Model : Codex Opus
+Recommended Model : Claude Opus
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?
@@ -67,7 +67,7 @@ Supabase에 접근할 수 없는 상태에서는 어떠한 분석도 진행하�
 
 **문서 수집:**
 - `Docs/content_status.md` — 현재 수치 현황
-- `AGENTS.md` — 게임 시스템 로직 섹션
+- `CLAUDE.md` — 게임 시스템 로직 섹션
 
 ### 3단계: 모드 판별
 

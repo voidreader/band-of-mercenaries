@@ -3,7 +3,7 @@ name: milestone-runner
 description: master_roadmap.md의 마일스톤 하나(M1~M6)를 선택하면 content-design → balance-design → data-generation → dev-spec 4개 페이즈를 체크포인트 기반으로 순차 진행한다. 각 페이즈 종료 시 사용자 승인을 받고, Docs/milestone-runs/에 상태를 기록하여 중단/재개를 지원한다. 다중 산출물 계획과 페이즈 스킵을 허용한다.
 ---
 
-Recommended Model : Codex Opus
+Recommended Model : Claude Opus
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?

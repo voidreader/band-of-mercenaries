@@ -3,7 +3,7 @@ name: verify-spec
 description: 명세서가 기획 문서의 의도를 정확히 반영했는지 검증한다. 5개 항목을 체크하여 PASS 또는 FAIL + 이슈 목록을 반환한다. spec-pipeline에서 자동 호출되며, 단독 호출도 가능하다.
 ---
 
-Recommended Model : Codex Opus
+Recommended Model : Claude Opus
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?

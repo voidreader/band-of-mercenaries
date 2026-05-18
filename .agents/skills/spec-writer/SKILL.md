@@ -3,7 +3,7 @@ name: spec-writer
 description: 게임 기획 문서를 읽고 코드베이스를 탐색하여, implement-spec 또는 implement-agent에서 바로 사용할 수 있는 개발 명세서를 생성한다.
 ---
 
-Recommended Model : Codex Sonnet
+Recommended Model : Claude Sonnet
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?
@@ -42,7 +42,7 @@ Recommended Model : Codex Sonnet
 
 기획 문서의 기능과 관련된 기존 코드를 탐색한다. Agent(subagent_type="Explore")를 활용하여 병렬로 탐색할 수 있다. 다음을 **모두 확인할 때까지** 탐색을 계속한다:
 
-1. 기능이 속하는 시스템 식별 (AGENTS.md의 아키텍처 섹션 참조)
+1. 기능이 속하는 시스템 식별 (CLAUDE.md의 아키텍처 섹션 참조)
 2. 수정 대상 파일을 모두 Read로 열어 실제 구조를 확인했다
 3. 기능의 진입점(호출이 시작되는 Provider/Notifier/Widget)을 식별했다
 4. 유사 기능이 있다면 해당 구현을 Read로 확인했다
@@ -78,7 +78,7 @@ UI가 포함된 경우, 명세서 작성 전에 사용자에게 먼저 물어본
 사용자가 동의한 경우:
 
 ```bash
-SCRIPTS_DIR="/Users/radiogaga/.Codex/plugins/cache/Codex-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts"
+SCRIPTS_DIR="/Users/radiogaga/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts"
 "$SCRIPTS_DIR/start-server.sh" --project-dir /Users/radiogaga/git/band-of-mercenaries
 ```
 
@@ -95,7 +95,7 @@ spec-writer의 목업은 content-designer의 "방향 선택" 목업과 다르다
 - **화면 진입 조건**: 어떤 상태/액션이 이 화면을 트리거하는가
 - **위젯 계층**: 주요 Widget 타입 명시 (예: `Column > ListView > Card`)
 - **상태 변수**: 화면을 제어하는 상태 (예: `_isExpanded`, `selectedId`)
-- **기존 패턴 준수**: AGENTS.md의 상태 기반 렌더링 제약, `ConstrainedBox(maxWidth: 430)` 등
+- **기존 패턴 준수**: CLAUDE.md의 상태 기반 렌더링 제약, `ConstrainedBox(maxWidth: 430)` 등
 
 ```html
 <h2>{화면명} 구조</h2>
@@ -193,7 +193,7 @@ cat "$STATE_DIR/events"
 - 화면 진입 조건: {어떤 상태/액션이 이 화면을 트리거하는가}
 - 위젯 계층: {Column > ListView > Card 등 주요 Widget 타입}
 - 상태 변수: {화면을 제어하는 로컬 상태 목록}
-- 화면 전환: {Navigator.push vs 상태 기반 렌더링 — AGENTS.md 제약 준수}
+- 화면 전환: {Navigator.push vs 상태 기반 렌더링 — CLAUDE.md 제약 준수}
 - 연출/애니메이션: ...
 
 ## 3. 영향 범위
@@ -231,7 +231,7 @@ cat "$STATE_DIR/events"
 
 ### 4.2 주의사항
 
-- {구현 시 주의할 점, AGENTS.md 금지사항과 관련된 부분 등}
+- {구현 시 주의할 점, CLAUDE.md 금지사항과 관련된 부분 등}
 
 ### 4.3 엣지 케이스
 

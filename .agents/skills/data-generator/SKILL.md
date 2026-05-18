@@ -3,7 +3,7 @@ name: data-generator
 description: content-designer와 balance-designer의 산출물을 입력으로 받아 컨셉에 맞는 컨텐츠 데이터(세력 퀘스트, 정수, 아이템, 엘리트 몬스터, 연계 퀘스트, 서사 텍스트 등)를 벌크 생성한다. CSV 파일로 출력하고 사용자 승인 후 Supabase MCP로 실제 DB에 쓴다.
 ---
 
-Recommended Model : Codex Opus
+Recommended Model : Claude Opus
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?
@@ -43,7 +43,7 @@ Recommended Model : Codex Opus
 
 ### 1단계: 인자 파싱 및 타입 확정
 
-- `{타입}` 값을 받아 `.Codex/skills/data-generator/types/{타입}.md` 파일 존재 여부를 확인한다
+- `{타입}` 값을 받아 `.claude/skills/data-generator/types/{타입}.md` 파일 존재 여부를 확인한다
 - 존재하지 않으면 지원 타입 목록을 출력하고 중단한다
 - `--brief` 파일을 Read로 확인한다. 없으면 중단한다
 
@@ -57,7 +57,7 @@ Recommended Model : Codex Opus
 3. `Docs/game_overview.md` — 세계관 톤 및 전체 구조
 
 **타입 스펙:**
-4. `.Codex/skills/data-generator/types/{타입}.md` — 해당 타입의 스키마, 톤 규칙, 생성 가이드라인
+4. `.claude/skills/data-generator/types/{타입}.md` — 해당 타입의 스키마, 톤 규칙, 생성 가이드라인
 
 **기획 산출물:**
 5. `--brief`로 전달된 기획서 — 이번 생성 작업의 컨셉/수치 기준
@@ -211,7 +211,7 @@ CSV 생성 후 다음을 출력한다:
 - `region-discovery` (상시) — 지역 조사 발견 데이터
 - `travel-event` (상시) — 여행 이벤트 (자동)
 
-새 타입 추가 방법: `.Codex/skills/data-generator/types/{타입}.md` 파일 생성. 기존 `faction-quest.md`를 템플릿으로 참고한다.
+새 타입 추가 방법: `.claude/skills/data-generator/types/{타입}.md` 파일 생성. 기존 `faction-quest.md`를 템플릿으로 참고한다.
 
 ## 주의사항
 

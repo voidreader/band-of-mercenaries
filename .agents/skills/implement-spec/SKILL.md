@@ -3,7 +3,7 @@ name: implement-spec
 description: 사용자로부터 전달된 명세서를 기반으로 요구사항 분석 및 구현 계획 수립을 진행한다. 프로젝트 아키텍처 규칙을 준수하여 구현을 진행하고 완료 후 산출물 문서를 생성한다.
 ---
 
-Recommended Model : Codex Sonnet
+Recommended Model : Claude Sonnet
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?
@@ -75,8 +75,8 @@ Recommended Model : Codex Sonnet
    개발 시 준수사항:
    - 최적화를 염두해서 개발을 진행한다.
    - 의존성을 되도록 줄이는 방향을 고려한다.
-   - AGENTS.md 코멘트 정책 준수
-   - AGENTS.md 금지사항을 준수하고, 부득이하게 위반해야하는 경우는 사유를 반드시 사용자에게 알려준다.
+   - CLAUDE.md 코멘트 정책 준수
+   - CLAUDE.md 금지사항을 준수하고, 부득이하게 위반해야하는 경우는 사유를 반드시 사용자에게 알려준다.
    - freezed/json_serializable/riverpod_generator를 사용하는 파일 수정 시, build_runner 재실행이 필요함을 안내한다.
 
 9. 구현 완료 — 검증 및 산출물 생성
@@ -121,7 +121,7 @@ Recommended Model : Codex Sonnet
         - 수립한 구현 계획과 실제 개발 사항 정리
         - 변경 파일 목록 (파일 경로, 변경 유형, 설명)
         - build_runner 재실행이 필요한 파일 목록 (해당 시)
-        - AGENTS.md 금지사항 위반이 있었다면 사유와 함께 명시
+        - CLAUDE.md 금지사항 위반이 있었다면 사유와 함께 명시
 
    **피드백 반영**: 사용자 테스트 중 피드백이 있으면 해당 문서를 업데이트한다.
 
@@ -129,7 +129,7 @@ Recommended Model : Codex Sonnet
 
 10. 워크플로우 안내
 
-> **AGENTS.md 업데이트, CHANGELOG Fragment 생성은 이 스킬에서 수행하지 않는다.**
+> **CLAUDE.md 업데이트, CHANGELOG Fragment 생성은 이 스킬에서 수행하지 않는다.**
 > 이 작업들은 `finalize-feature` 스킬에서 일괄 처리한다.
 
 - 이 스킬은 git commit과 문서 아카이브를 수행하지 않는다.

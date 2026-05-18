@@ -3,7 +3,7 @@ name: spec-pipeline
 description: 기획 문서를 받아 spec-writer(Sonnet)로 명세서를 작성하고, verify-spec(Opus)으로 검증한다. 최대 2회 수정 루프 후 implement-spec 또는 implement-agent 실행을 안내한다.
 ---
 
-Recommended Model : Codex Sonnet
+Recommended Model : Claude Sonnet
 ** 한국어 스타일 유지 **
 
 ## 언제 사용하나요?
@@ -44,7 +44,7 @@ FAIL + revision >= 2 → [3단계-C] 최종 FAIL 출력 → 사용자 결정 요
 
 ### [1단계] 명세서 작성
 
-`.Codex/skills/spec-writer/SKILL.md`를 Read로 읽고 **1~4단계를 그대로 수행**한다.
+`.claude/skills/spec-writer/SKILL.md`를 Read로 읽고 **1~4단계를 그대로 수행**한다.
 
 - 1단계: 기획 문서 분석
 - 2단계: 코드베이스 탐색
@@ -59,7 +59,7 @@ FAIL + revision >= 2 → [3단계-C] 최종 FAIL 출력 → 사용자 결정 요
 
 명세서 파일이 생성되면 다음을 수행한다.
 
-1. `.Codex/skills/verify-spec/SKILL.md`를 Read로 읽어 지침 전문을 확인한다.
+1. `.claude/skills/verify-spec/SKILL.md`를 Read로 읽어 지침 전문을 확인한다.
 2. Opus sub-agent를 호출하여 검증을 수행한다:
 
 ```
