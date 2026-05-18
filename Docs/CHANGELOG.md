@@ -1,5 +1,58 @@
 # CHANGELOG
 
+## 2026-05-17
+
+### M7 페이즈 4 — 지역 생활권 시스템 통합 구현
+
+- 더스트빌 인근 7리전(3·31·127·9·10·146·38)에 **위험도 4단계** 시스템 도입 (안정/평온/긴장/위협). 의뢰 완료·체인 완주·엘리트 처치로 위험도가 변하면 큰 전이 시 알림이 뜨고 "도적길 평정자" 같은 위업 7종이 발급된다.
+- **QuestGenerator 가중치 매트릭스** 도입 — 같은 region에서도 상태(위협↔안정)에 따라 raid/hunt/escort/explore 의뢰 빈도가 차별화. 도적 5회 소탕 후 안정 상태 진입 시 호위 의뢰 약 49% 점유로 체감 변화.
+- 신규 quest_pools 36행 + 36개 의뢰 풀별 cumulative/oneshot 효과 + 8개 영속 flag 토글 시스템.
+- **마을 인프라 4단계** 시스템 (고립/연결/거점화/변방의 중심). 외곽 7리전 사건 해결로 unlockedFlags 2/4/6개 도달 시 더스트빌 인프라가 자동 성장 + 보상 100/200/500G + XP/명성 합산. Tier 4 진입 시 "변방의 영주" 위업 발급.
+- **외래 좌판** 신규 거점 (Tier 3+) — 외래 상인 케일 NPC + 8종 재료 거래(Tier 4 -20% 할인) + 외래 소식 + 방문 횟수.
+- 약초상 비용/쿨다운/채집 보상이 신뢰도 × 인프라 단계 곱셈 합산 — Tier 4 도달 시 비용 -57%, 쿨다운 -84%, 채집 +44%.
+- 촌장 집에 "생활권 정보" 버튼 추가 (Tier 2+) — 7리전 위험도 한눈에 확인.
+- **이동 화면 확장** — 7리전 빠른 점프 칩 + dangerLevel 4색 배지 + unlockedFlags 미니 배지 + 환경 아이콘(🏔️/🌊/🌳/🌫️/🏛️/🌾) + 잠금 사유 명시.
+- **region_adjacency** 인접 그래프 신설 (22행) — region 이동 거리가 더 자연스러운 지리적 거리로 계산. region 3 ↔ 도적길·해안 2칸, 외곽 숲·풍신 숲 3칸, 부서진 요새·회색 늪지 4칸.
+- **광장 이정표** 효과 — Tier 2+ 도달 시 region 3 출발/도착 이동 시간 -10%.
+- 신규 6 제작 레시피 (Tier 2~4) — 야수 가죽 도구·들꽃 약초 향료·유목민 가죽 장비·해안 약물·안개 늪 인장 장신구·부서진 요새 인장 장비. unlock_condition `regionFlag`/`infrastructureTier`/`all`/`any` 4 type 지원.
+- 시간 경과(12시간) 시 안정화된 region이 자연 회귀하는 decay 메커니즘 — 재방문 동기.
+- chain_m7_mist_clearing 2단계 추가 — 회색 늪지 안개 해소 (특수 단발 -50).
+
+## 2026-05-15
+
+### M6 페이즈 4 #2 — 칭호·간판 용병 시스템
+
+- 칭호 시스템 추가 — 위업/행동지표/상태 hook 3종으로 자동 발급되는 11종 칭호 (마을의 은인·도적길 추적자·백전노장·정찰의 눈·호위의 노련함 등). 사망/방출 후에도 mercSnapshot에 영구 보존.
+- 간판 용병 시스템 추가 — 5단계 정렬(칭호 수→위업 주인공→레벨→partyPower→가입 빠른 순)로 자동 선정. 홈 야영지 카드 노출 + 용병 상세에서 수동 지정 토글 (자동/수동 4상태 전환).
+- 위업 발급 시 칭호 1줄 인라인 — AchievementUnlockedDialog 본체에 "칭호 획득" 1줄 통합 표시. (b)/(c) hook은 신규 TitleUnlockedDialog (high priority).
+- 칭호 효과 — PassiveBonusService 통합 (mercenary 단위 자동 가산). questRewardMultiplier·mercenaryXpBonus 가산 상한 +0.30 명시.
+- Supabase `titles` 테이블 신규 (31번째) + 11행 시드. 행동 지표 임계 페이즈 2 #1 결정값 반영(raid 20·dispatch 80·explore 15·escort 12).
+- 페이즈 4 #1 `band_achievement_templates` 테이블 (30번째) + 26행 시드도 함께 적용.
+- ActivityLog "칭호 획득" 항목 노출 (홈 활동 로그 + 연대기 ✩ 아이콘).
+
+### M6 페이즈 4 #3 — 지명 의뢰 시스템 (M6 마일스톤 완료)
+
+- 지명 의뢰 시스템 추가 — 칭호/위업 누적/간판 용병 정체성을 의뢰인이 알아보고 의뢰를 보내는 7종 지명 의뢰. hook 3종(title 3 / achievement_count 2 / flagship 2) + 24h 쿨다운 + 가중치 +α=3로 노출 빈도 자연 분산.
+- 의뢰 카드 차별화 — 신규 `namedAccent` 분홍 마젠타 색상으로 사이드바·이름·테두리·배지 일관 강조. ✩ 지명 배지에 hook별 설명("칭호 — {name}" / "위업 N개 이상" / "간판 용병 지명").
+- 잠금 UI — title hook은 보유 용병 전원 파견 중일 때, flagship hook은 동결 용병 파견 중일 때 카드 dim + 토스트 "지명 용병 {name}이(가) 복귀해야 수행할 수 있습니다".
+- 보상 보너스 — 골드 +30~50% + 명성 +30~50% 자동 적용 (`special_flags.named_reward_multiplier` / `named_reputation_multiplier`).
+- 자동 종료 — 사망/방출 시 진행 중인 flagship 의뢰 자동 정리 + ActivityLog "지명 의뢰 '{name}'가 지명 용병의 부재로 종료되었다" 발급.
+- 파견 화면 정렬 6슬롯 → 7슬롯 — 신규 `NamedTier`가 거점 사건 다음, 세력 전용 위에 배치.
+- `quest_pools` 4 컬럼 확장(M4 `is_fixed` 패턴 재사용) + CHECK 2종 + 부분 INDEX + 7행 데이터 시드.
+- M6 마일스톤 전체 완료 — roadmap 종료 조건 4건 모두 충족 (3~5h 내 용병 이름·칭호 기억 / 시작 거점 사건 해결 용병 지명 의뢰 1회 이상 / 사망 용병 연대기 영구 보존 / 간판 용병 시스템).
+
+## 2026-05-13
+
+### M6 페이즈 4 #1 — 위업·연대기 시스템
+
+- 용병단의 영구 기록을 추적하는 위업·연대기 시스템 신규 도입. 7 카테고리(체인 완주 / 거점 사건 / 거점 신뢰도 4단계 / 명성 등급 / 엘리트 유니크 첫 처치 / 희귀 첫 제작 / 추모) 단일 인터페이스로 통합.
+- 6 hook 자동 통합: 체인 완주(`ChainQuestService.completeChain`) · 거점 신뢰도 4단계(`RegionStateRepository.addSettlementTrust`) · 명성 등급 진입(`UserDataNotifier.addReputation`) · 엘리트 유니크 첫 처치(`quest_provider._applyCompletionResult`) · T3+ 첫 제작(`CraftingService.craft`) · 사망/방출 memorial(`quest_provider` dead 분기 + `MercenaryRepository.dismiss` 직전 snapshot 구성). 모두 fail-soft trailing side effect로 본 흐름과 격리.
+- `AchievementUnlockedDialog` high priority 다이얼로그 신규 — 카테고리별 Material Icons + chainGold 강조 + TemplateEngine 렌더 description. `reputation_rank` 카테고리는 RankUpDialog 본체 인라인("✨ 이 순간은 연대기에 새겨졌다")으로 대체하여 dialog 폭주 방지.
+- 신규 `ChronicleScreen` 영구 기록 화면 — ChoiceChip 7종 카테고리 필터(다중 선택) + 50개 페이징 + 카드 탭으로 dialog 재노출. HomeScreen 야영지 아래 연대기 카드(최근 1행 + 24시간 NEW 배지) + InfoScreen "용병단 연대기" 진입점 두 경로로 접근. 상태 기반 렌더링(`_showChronicle` + `onBack`) 적용.
+- `MercenarySnapshot` 5필드(id/name/jobId/jobName/tier) 발급 시점 영속 보존 — 용병 사망·방출 이후에도 위업 카드/연대기 화면에 주인공 정보 유지. 페이즈 4 #2(칭호)에서 `titleIds` 필드 추가 호환 예정.
+- Hive 신규 박스 `bandAchievements`(typeId 16~19 4종 어댑터) + Supabase 30번째 테이블 `band_achievement_templates`(26행 시드, 7 카테고리 CHECK + chronicle_variants JSONB + default_priority CHECK) + `ActivityLogType.achievementUnlocked` HiveField 29 + `AppTheme.memorialGray` 추가.
+- 멱등성 보장: `AchievementService.hasAchievement(templateId)` 사전 체크로 6 hook 모두 일회성. memorial은 `(mercSnapshot.id, cause)` 조합으로 중복 차단.
+
 ## 2026-05-05
 
 ### M5 페이즈 4 #2: CraftingService + 인벤토리 4탭(MaterialTab) + 낡은 대장간 정식 제작 화면
