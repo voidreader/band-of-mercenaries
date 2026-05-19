@@ -53,12 +53,15 @@ class SyncService {
     'faction_shop_items', // 35. 세력 상점 아이템 (M8a 페이즈 4 #1 추가)
     'combat_report_templates', // 36. 전투 보고서 템플릿 (M8a 페이즈 4 #2 추가)
     'combat_report_keywords', // 37. 전투 보고서 키워드 (M8a 페이즈 4 #2 추가)
+    'combat_skills', // 38. 전투 스킬 (M8b 페이즈 4 #2 추가)
+    'combat_status_effects', // 39. 전투 상태 이상 (M8b 페이즈 4 #2 추가)
+    'enemies', // 40. 적 정의 (M8b 페이즈 4 #2 추가)
   ];
 
   /// 비어 있어도 로컬 앱이 기동 가능해야 하는 보조 정적 데이터.
   ///
   /// region_sectors는 M4에서 더스트플레인 fallback을 코드로 보유하고, DB 시드는
-  /// 후속 일괄 배포 전까지 0행을 허용한다. M8a 신규 테이블도 존재하면 동기화하고,
+  /// 후속 일괄 배포 전까지 0행을 허용한다. M8a·M8b 신규 테이블도 존재하면 동기화하고,
   /// 없거나 비어 있으면 빈 데이터로 동작한다.
   static const Set<String> optionalTables = {
     'region_sectors',
@@ -67,6 +70,9 @@ class SyncService {
     'faction_shop_items',
     'combat_report_templates',
     'combat_report_keywords',
+    'combat_skills',
+    'combat_status_effects',
+    'enemies',
   };
 
   static List<String> get requiredTables =>
