@@ -42,8 +42,10 @@ class MercDamageResult {
   final MercenaryStatus newStatus;
   final DateTime? recoveryEndTime;
   final double damageRoll;
+
   /// 전설 ⑤ 사망 방지 특수 효과로 사망이 부상으로 다운그레이드된 경우 true.
   final bool legendaryPreventedDeath;
+
   /// 전설 ⑤ 발동 시 갱신할 쿨다운 만료 시각 (Mercenary.legendaryDeathPreventionCooldownUntil).
   final DateTime? newCooldownUntil;
 
@@ -71,6 +73,8 @@ class QuestCompletionResult {
   final String? renderedNarrative;
   // region 3 한정 일반 의뢰 신뢰도 점수 (호출측 > 0 체크로 누적 여부 결정)
   final int settlementTrustGain;
+  // 전투 보고서 생성 대상 의뢰 여부 (실제 저장은 후속 명세 담당)
+  final bool combatReportEligible;
 
   const QuestCompletionResult({
     required this.resultType,
@@ -85,6 +89,7 @@ class QuestCompletionResult {
     this.eliteLoot,
     this.renderedNarrative,
     this.settlementTrustGain = 0,
+    this.combatReportEligible = false,
   });
 }
 
@@ -116,7 +121,9 @@ class QuestCompletionService {
     int currentInfraTier = 1,
   }) {
     // quest_pools에서 pool 조회 — is_fixed override 적용 여부 판정에 사용
-    final pool = staticData.questPools.where((p) => p.id == quest.questPoolId).firstOrNull;
+    final pool = staticData.questPools
+        .where((p) => p.id == quest.questPoolId)
+        .firstOrNull;
 
     final partyPower = QuestCalculator.calculatePartyPower(
       mercs,
@@ -127,7 +134,9 @@ class QuestCompletionService {
       (d) => d.level == quest.difficulty.clamp(1, 5),
       orElse: () => staticData.difficulties.first,
     );
-    final questType = staticData.questTypes.firstWhere((t) => t.id == quest.questTypeId);
+    final questType = staticData.questTypes.firstWhere(
+      (t) => t.id == quest.questTypeId,
+    );
     final distancePenalty = (quest.region - playerRegion).abs();
 
     // 성공률 판정 (트레잇 + 패시브 보너스 적용)
@@ -158,11 +167,17 @@ class QuestCompletionService {
       partyRoles: RoleUtils.extractRoles(mercs, staticData.jobs),
       legendarySuccessBonus: legendarySuccessBonus,
     );
-    final successRate = (baseSuccessRate + passiveSuccessBonus).clamp(5.0, 95.0);
+    final successRate = (baseSuccessRate + passiveSuccessBonus).clamp(
+      5.0,
+      95.0,
+    );
 
     final roll = random.nextDouble() * 100;
     // 전설 ② result_upgrade: 성공 → 대성공 승격 (첫 적중 시 break)
-    var resultType = QuestCalculator.determineResult(successRate: successRate, roll: roll);
+    var resultType = QuestCalculator.determineResult(
+      successRate: successRate,
+      roll: roll,
+    );
     if (resultType == QuestResult.success) {
       for (final e in legendaryEffects) {
         if (e is LegendaryResultUpgrade) {
@@ -176,18 +191,21 @@ class QuestCompletionService {
     }
 
     // 보상 계산 (가산 방식으로 통합)
-    final passiveRewardBonus = PassiveBonusService.getQuestRewardMultiplier(
-      passiveEffects,
-      quest.questTypeId,
-    ) - 1.0;
+    final passiveRewardBonus =
+        PassiveBonusService.getQuestRewardMultiplier(
+          passiveEffects,
+          quest.questTypeId,
+        ) -
+        1.0;
     final trackBonus = quest.isFactionExclusive
         ? (quest.isAdvancedTrack == true
-            ? GameConstants.trackRewardAdvanced
-            : GameConstants.trackRewardBasic)
+              ? GameConstants.trackRewardAdvanced
+              : GameConstants.trackRewardBasic)
         : 0.0;
     int rewardGold = 0;
     int totalWage = 0;
-    if (resultType == QuestResult.greatSuccess || resultType == QuestResult.success) {
+    if (resultType == QuestResult.greatSuccess ||
+        resultType == QuestResult.success) {
       rewardGold = QuestCalculator.calculateReward(
         baseReward: questType.baseReward,
         rewardMultiplier: difficulty.rewardMultiplier,
@@ -195,17 +213,27 @@ class QuestCompletionService {
         trackBonus: trackBonus,
         passiveRewardBonus: passiveRewardBonus,
         // is_fixed=true 행은 기존 보상 경로(baseReward 등) 우회 (REQ-14)
-        rewardGoldOverride: pool?.isFixed == true ? pool?.rewardGoldOverride : null,
+        rewardGoldOverride: pool?.isFixed == true
+            ? pool?.rewardGoldOverride
+            : null,
       );
       // REQ-13: 채집 의뢰 골드 보상 단계별 배수
       if (quest.questPoolId == 'dustvile_chore_03' &&
-          (resultType == QuestResult.greatSuccess || resultType == QuestResult.success)) {
-        rewardGold = (rewardGold * HerbalistService.gatheringMultiplier(currentTrustLevel, infraTier: currentInfraTier)).round();
+          (resultType == QuestResult.greatSuccess ||
+              resultType == QuestResult.success)) {
+        rewardGold =
+            (rewardGold *
+                    HerbalistService.gatheringMultiplier(
+                      currentTrustLevel,
+                      infraTier: currentInfraTier,
+                    ))
+                .round();
       }
       // FR-11: 지명 의뢰 보상 배수 (결과 배수 직후, 칭호/세력/랭크 효과 직전)
       if (pool != null && pool.isNamed) {
         final flags = pool.specialFlags;
-        final namedRewardMulti = (flags['named_reward_multiplier'] as num?)?.toDouble() ?? 1.0;
+        final namedRewardMulti =
+            (flags['named_reward_multiplier'] as num?)?.toDouble() ?? 1.0;
         rewardGold = (rewardGold * namedRewardMulti).round();
       }
       final mercTiers = mercs.map((merc) {
@@ -215,7 +243,10 @@ class QuestCompletionService {
         );
         return job.tier;
       }).toList();
-      totalWage = QuestCalculator.calculateTotalWage(mercTiers, staticData.mercenaryWages);
+      totalWage = QuestCalculator.calculateTotalWage(
+        mercTiers,
+        staticData.mercenaryWages,
+      );
     }
 
     final netReward = rewardGold > 0 ? rewardGold - totalWage : 0;
@@ -229,7 +260,10 @@ class QuestCompletionService {
         (f) => f.id == 'training',
         orElse: () => staticData.facilities.first,
       );
-      trainingBonus = ConstructionService.getEffectValue(trainingFacility, trainingLevel);
+      trainingBonus = ConstructionService.getEffectValue(
+        trainingFacility,
+        trainingLevel,
+      );
     }
     final xpGain = ExperienceService.calculateXpGain(
       difficulty: quest.difficulty.clamp(1, 5),
@@ -237,21 +271,27 @@ class QuestCompletionService {
       facilityBonus: trainingBonus,
       passiveXpBonus: PassiveBonusService.getMercenaryXpBonus(passiveEffects),
       // is_fixed=true 행은 기본 XP 계산에 bonus 가산 (REQ-14)
-      rewardXpBonusOverride: pool?.isFixed == true ? pool?.rewardXpBonusOverride : null,
+      rewardXpBonusOverride: pool?.isFixed == true
+          ? pool?.rewardXpBonusOverride
+          : null,
     );
 
     // 명성 계산 (용병단 장비 reputation_gain_modifier 반영)
     int repGain = 0;
-    if (resultType == QuestResult.greatSuccess || resultType == QuestResult.success) {
+    if (resultType == QuestResult.greatSuccess ||
+        resultType == QuestResult.success) {
       repGain = ReputationService.calculateQuestReputation(
         difficulty: quest.difficulty.clamp(1, 5),
         isGreatSuccess: resultType == QuestResult.greatSuccess,
-        reputationGainModifier: PassiveBonusService.getReputationGainModifier(passiveEffects),
+        reputationGainModifier: PassiveBonusService.getReputationGainModifier(
+          passiveEffects,
+        ),
       );
       // FR-11: 지명 의뢰 명성 배수 (결과 배수 직후, 칭호/세력/랭크 효과 직전)
       if (pool != null && pool.isNamed) {
         final flags = pool.specialFlags;
-        final namedRepMulti = (flags['named_reputation_multiplier'] as num?)?.toDouble() ?? 1.0;
+        final namedRepMulti =
+            (flags['named_reputation_multiplier'] as num?)?.toDouble() ?? 1.0;
         repGain = (repGain * namedRepMulti).round();
       }
     }
@@ -264,18 +304,27 @@ class QuestCompletionService {
         (f) => f.id == 'infirmary',
         orElse: () => staticData.facilities.first,
       );
-      recoveryReduction = ConstructionService.getEffectValue(infirmaryFacility, infirmaryLevel);
+      recoveryReduction = ConstructionService.getEffectValue(
+        infirmaryFacility,
+        infirmaryLevel,
+      );
     }
 
     double injuryReduction = 0.0;
-    final fieldHospitalFacility = staticData.facilities.where((f) => f.id == 'field_hospital').firstOrNull;
+    final fieldHospitalFacility = staticData.facilities
+        .where((f) => f.id == 'field_hospital')
+        .firstOrNull;
     if (fieldHospitalFacility != null) {
       final fieldHospitalLevel = facilities['field_hospital'] ?? 0;
-      injuryReduction = ConstructionService.getEffectValue(fieldHospitalFacility, fieldHospitalLevel);
+      injuryReduction = ConstructionService.getEffectValue(
+        fieldHospitalFacility,
+        fieldHospitalLevel,
+      );
     }
 
     // 부상률에 패시브 injury_rate_modifier 배수 적용
-    final effectiveInjuryRate = difficulty.injuryRate *
+    final effectiveInjuryRate =
+        difficulty.injuryRate *
         (1.0 - injuryReduction) *
         PassiveBonusService.getInjuryRateMultiplier(passiveEffects);
 
@@ -285,7 +334,8 @@ class QuestCompletionService {
     final now = DateTime.now();
     final mercDamages = <MercDamageResult>[];
     for (final merc in mercs) {
-      if (resultType == QuestResult.failure || resultType == QuestResult.criticalFailure) {
+      if (resultType == QuestResult.failure ||
+          resultType == QuestResult.criticalFailure) {
         final damageRoll = random.nextDouble();
         final damageResult = QuestCalculator.calculateDamage(
           roll: damageRoll,
@@ -298,59 +348,137 @@ class QuestCompletionService {
         );
         if (damageResult == DamageResult.dead) {
           // 전설 ⑤ 사망 방지: 쿨다운 미만료 시 부상으로 다운그레이드
-          final special = legendaryEffects.whereType<LegendarySpecial>().firstOrNull;
+          final special = legendaryEffects
+              .whereType<LegendarySpecial>()
+              .firstOrNull;
           final cooldownUntil = mercCooldowns[merc.id];
-          final canPrevent = special != null && (cooldownUntil == null || now.isAfter(cooldownUntil));
+          final canPrevent =
+              special != null &&
+              (cooldownUntil == null || now.isAfter(cooldownUntil));
           if (canPrevent) {
-            final baseRecoverySeconds = (difficulty.level * 10 * 60 / speedMultiplier).round();
-            final passiveRecoveryMultiplier = PassiveBonusService.getRecoveryTimeMultiplier(
-              passiveEffects,
-              'injured',
+            final baseRecoverySeconds =
+                (difficulty.level * 10 * 60 / speedMultiplier).round();
+            final passiveRecoveryMultiplier =
+                PassiveBonusService.getRecoveryTimeMultiplier(
+                  passiveEffects,
+                  'injured',
+                );
+            final adjustedRecoverySeconds =
+                (baseRecoverySeconds *
+                        (1.0 - recoveryReduction) *
+                        passiveRecoveryMultiplier)
+                    .round();
+            mercDamages.add(
+              MercDamageResult(
+                mercId: merc.id,
+                newStatus: MercenaryStatus.injured,
+                recoveryEndTime: now.add(
+                  Duration(seconds: adjustedRecoverySeconds),
+                ),
+                damageRoll: damageRoll,
+                legendaryPreventedDeath: true,
+                newCooldownUntil: now.add(
+                  Duration(hours: special.cooldownHours),
+                ),
+              ),
             );
-            final adjustedRecoverySeconds = (baseRecoverySeconds * (1.0 - recoveryReduction) * passiveRecoveryMultiplier).round();
-            mercDamages.add(MercDamageResult(
-              mercId: merc.id,
-              newStatus: MercenaryStatus.injured,
-              recoveryEndTime: now.add(Duration(seconds: adjustedRecoverySeconds)),
-              damageRoll: damageRoll,
-              legendaryPreventedDeath: true,
-              newCooldownUntil: now.add(Duration(hours: special.cooldownHours)),
-            ));
           } else {
-            mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.dead, damageRoll: damageRoll));
+            mercDamages.add(
+              MercDamageResult(
+                mercId: merc.id,
+                newStatus: MercenaryStatus.dead,
+                damageRoll: damageRoll,
+              ),
+            );
           }
         } else if (damageResult == DamageResult.injured) {
-          final baseRecoverySeconds = (difficulty.level * 10 * 60 / speedMultiplier).round();
-          final passiveRecoveryMultiplier = PassiveBonusService.getRecoveryTimeMultiplier(
-            passiveEffects,
-            'injured',
+          final baseRecoverySeconds =
+              (difficulty.level * 10 * 60 / speedMultiplier).round();
+          final passiveRecoveryMultiplier =
+              PassiveBonusService.getRecoveryTimeMultiplier(
+                passiveEffects,
+                'injured',
+              );
+          final adjustedRecoverySeconds =
+              (baseRecoverySeconds *
+                      (1.0 - recoveryReduction) *
+                      passiveRecoveryMultiplier)
+                  .round();
+          mercDamages.add(
+            MercDamageResult(
+              mercId: merc.id,
+              newStatus: MercenaryStatus.injured,
+              recoveryEndTime: now.add(
+                Duration(seconds: adjustedRecoverySeconds),
+              ),
+              damageRoll: damageRoll,
+            ),
           );
-          final adjustedRecoverySeconds = (baseRecoverySeconds * (1.0 - recoveryReduction) * passiveRecoveryMultiplier).round();
-          mercDamages.add(MercDamageResult(
-            mercId: merc.id,
-            newStatus: MercenaryStatus.injured,
-            recoveryEndTime: now.add(Duration(seconds: adjustedRecoverySeconds)),
-            damageRoll: damageRoll,
-          ));
         } else {
-          mercDamages.add(MercDamageResult(mercId: merc.id, newStatus: MercenaryStatus.normal, damageRoll: damageRoll));
+          mercDamages.add(
+            MercDamageResult(
+              mercId: merc.id,
+              newStatus: MercenaryStatus.normal,
+              damageRoll: damageRoll,
+            ),
+          );
         }
       } else {
         final tiredSeconds = (5 * 60 / speedMultiplier).round();
-        mercDamages.add(MercDamageResult(
-          mercId: merc.id,
-          newStatus: MercenaryStatus.tired,
-          recoveryEndTime: now.add(Duration(seconds: tiredSeconds)),
-        ));
+        mercDamages.add(
+          MercDamageResult(
+            mercId: merc.id,
+            newStatus: MercenaryStatus.tired,
+            recoveryEndTime: now.add(Duration(seconds: tiredSeconds)),
+          ),
+        );
       }
     }
 
-    // 세력 평판 보상 (성공/대성공 시에만 지급)
-    final factionRepGain = (quest.factionTag != null &&
-            (resultType == QuestResult.greatSuccess ||
-                resultType == QuestResult.success))
-        ? (quest.reputationReward ?? 0)
-        : 0;
+    // 세력 평판 보상: faction_named 우선 분기, 일반 세력 태그는 기존 fallback
+    int factionRepGain = 0;
+    if (quest.factionTag != null) {
+      final flags = quest.specialFlags ?? const <String, dynamic>{};
+      if (flags['faction_named'] == true) {
+        switch (resultType) {
+          case QuestResult.greatSuccess:
+            factionRepGain =
+                (flags['faction_reputation_great_success'] as num?)?.toInt() ??
+                0;
+            break;
+          case QuestResult.success:
+            factionRepGain =
+                (flags['faction_reputation_success'] as num?)?.toInt() ?? 0;
+            break;
+          case QuestResult.criticalFailure:
+            factionRepGain =
+                (flags['faction_reputation_critical_failure'] as num?)
+                    ?.toInt() ??
+                0;
+            break;
+          case QuestResult.failure:
+            factionRepGain = 0;
+            break;
+        }
+      } else {
+        // 일반 세력 태그 의뢰: 성공/대성공 시에만 reputationReward 지급
+        if (resultType == QuestResult.greatSuccess ||
+            resultType == QuestResult.success) {
+          factionRepGain = quest.reputationReward ?? 0;
+        }
+      }
+    }
+
+    // 전투 보고서 생성 대상 의뢰 여부.
+    // 데이터 플래그를 우선하되, M8a 핵심 대상인 지명/엘리트/연계/고급 세력 의뢰는
+    // 플래그 누락 시에도 보고서 후보로 취급한다.
+    final combatReportEligible =
+        (quest.specialFlags ?? const <String, dynamic>{})['combat_report'] ==
+            true ||
+        quest.isElite ||
+        quest.isChainQuest ||
+        (pool?.isNamed == true) ||
+        (quest.isFactionExclusive && quest.isAdvancedTrack == true);
 
     // 엘리트 드랍 롤 (대실패 제외, eliteId 존재 시에만)
     EliteLootResult? eliteLoot;
@@ -402,6 +530,7 @@ class QuestCompletionService {
       eliteLoot: eliteLoot,
       renderedNarrative: renderedNarrative,
       settlementTrustGain: settlementTrustGain,
+      combatReportEligible: combatReportEligible,
     );
   }
 }

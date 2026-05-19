@@ -47,6 +47,9 @@ class QuestGenerator {
     Map<String, DateTime> namedQuestCooldowns = const {},
     // M7 페이즈 4 #2 — region 상태(위험도/플래그/cumulative cap) 가중치 평가 컨텍스트
     RegionState? regionState,
+    // FR-B2: M8a 세력 지명 의뢰 hook 평가 컨텍스트 — unlockedRegionFlags / activeContactIds
+    Map<int, Set<String>> unlockedRegionFlags = const {},
+    Set<String> activeContactIds = const {},
   }) {
     // 1. 기본 티어 필터
     final filtered = questPools
@@ -62,10 +65,14 @@ class QuestGenerator {
     // 3. 전용/일반 분리
     final exclusivePools = filtered.where((p) => p.isFactionExclusive).toList();
     final now = DateTime.now();
+    // FR-B2: unlockedRegionFlags / activeContactIds / factionReputations 3 신규 필드 채움
     final hookContext = NamedHookContext(
       mercenaries: mercenaries,
       bandAchievements: bandAchievements,
       flagshipMercId: flagshipMercId,
+      unlockedRegionFlags: unlockedRegionFlags,
+      activeContactIds: activeContactIds,
+      factionReputations: factionReputations,
     );
     final generalPools = filtered
         .where((p) => !p.isFactionExclusive)
@@ -135,14 +142,20 @@ class QuestGenerator {
 
     // 일반 퀘스트
     for (final pool in selectedGeneralPools) {
-      final tag = FactionTagResolver.resolve(
-        regionId: regionId,
-        joinedFactionIds: joinedFactionIds,
-        clueLevelsInRegion: clueLevelsInRegion,
-        hostileFactionIds: hostileFactionIds,
-        proximityTier: proximityTier,
-        random: random,
-      );
+      // FR-B5: 세력 지명 의뢰는 pool.factionTag를 고정 사용, 그 외는 FactionTagResolver 결과 사용
+      final String? tag;
+      if (pool.isNamed && pool.factionTag != null) {
+        tag = pool.factionTag;
+      } else {
+        tag = FactionTagResolver.resolve(
+          regionId: regionId,
+          joinedFactionIds: joinedFactionIds,
+          clueLevelsInRegion: clueLevelsInRegion,
+          hostileFactionIds: hostileFactionIds,
+          proximityTier: proximityTier,
+          random: random,
+        );
+      }
       final repReward = tag != null ? FactionTagResolver.tagReputationGain(proximityTier) : null;
       final questType = questTypes.firstWhere(
         (t) => t.id == pool.typeId,

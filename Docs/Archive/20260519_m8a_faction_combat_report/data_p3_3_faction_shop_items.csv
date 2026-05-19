@@ -1,0 +1,19 @@
+id,faction_id,item_id,item_name,shop_category,price_gold,min_reputation,requires_joined,unlock_type,unlock_value,stock_policy,stock_limit,restock_hours,sort_order,grant_type,notes
+shop_m8a_adv_map_fragment,faction_adventurers_guild,m8a_adv_map_fragment,지도 조각,consumable,80,1,false,faction_contact,contact_adventurers_dustvile_records,daily,2,24,10,item,탐험 의뢰 갱신 또는 보고서 태그 보조 후보
+shop_m8a_adv_record_ink,faction_adventurers_guild,m8a_adv_record_ink,기록원의 잉크,consumable,120,1,false,faction_contact,contact_adventurers_dustvile_records,daily,1,24,20,item,전투 보고서 상세 품질 또는 보존 연출 보조 후보
+shop_m8a_adv_explorer_gloves,faction_adventurers_guild,equip_accessory_explorer_gloves,탐험가 장갑,equipment,260,11,true,faction_reputation,faction_adventurers_guild>=11,once,1,,30,item,T2 개인 장비 후보
+shop_m8a_adv_temporary_banner,faction_adventurers_guild,guild_banner_temporary_guild,길드 임시 깃발,equipment,420,21,true,faction_reputation,faction_adventurers_guild>=21,once,1,,40,item,T2 용병단 깃발 후보
+shop_m8a_adv_old_compass,faction_adventurers_guild,guild_artifact_record_compass,오래된 나침반,equipment,620,31,true,faction_reputation,faction_adventurers_guild>=31,once,1,,50,item,전용 보상 레시피 결과물과 연동 가능
+shop_m8a_adv_wind_sample_box,faction_adventurers_guild,m8a_adv_wind_sample_box,풍신 숲 표본 상자,material_bundle,180,11,false,region_flag,region_10_windrunner_chain_completed,daily,1,24,60,bundle,mat_herb_wind 1개와 소량 골드 보조 후보
+shop_m8a_mer_sealed_contract,faction_merchants_alliance,m8a_mer_sealed_contract,밀봉 계약서,consumable,90,1,false,faction_contact,contact_merchants_kale_ledger,daily,2,24,10,item,호송 의뢰 보고서 또는 쿨다운 보조 후보
+shop_m8a_mer_supply_ration,faction_merchants_alliance,m8a_mer_supply_ration,상단 보급 식량,consumable,100,1,false,faction_contact,contact_merchants_kale_ledger,daily,2,24,20,item,피로 완화 소모품 후보
+shop_m8a_mer_nomad_strap_bundle,faction_merchants_alliance,mat_hide_nomad_strap,유목민 가죽끈 묶음,material_bundle,160,11,false,region_flag,region_127_nomad_friendly,daily,1,24,30,bundle,region_exclusive 재료 1개만 판매
+shop_m8a_mer_seaweed_bundle,faction_merchants_alliance,mat_herb_seaweed,해초 약재 묶음,material_bundle,120,11,false,region_flag,region_127_nomad_friendly,daily,1,24,40,bundle,region_exclusive 재료 1개만 판매
+shop_m8a_mer_golden_scale_replica,faction_merchants_alliance,guild_artifact_golden_scale_replica,황금 저울 복제품,equipment,500,31,true,faction_reputation,faction_merchants_alliance>=31,once,1,,50,item,T2~T3 용병단 아티팩트 후보
+shop_m8a_mer_trade_seal_piece,faction_merchants_alliance,m8a_mer_trade_seal_piece,교역 인장 조각,recipe_key,700,61,true,faction_reputation,faction_merchants_alliance>=61,once,1,,60,item,교역 인장 장식 레시피 핵심 재료 후보
+shop_m8a_war_training_sword,faction_warriors_guild,equip_weapon_training_wood_sword,훈련용 목검,equipment,280,1,false,faction_contact,contact_warriors_broken_fort_mark,once,1,,10,item,T2 STR 개인 장비 후보
+shop_m8a_war_red_spear_mark,faction_warriors_guild,m8a_war_red_spear_mark,붉은 창 표식,consumable,140,1,false,faction_contact,contact_warriors_broken_fort_mark,daily,1,24,20,item,전투 보고서 또는 칭호 보조 태그 후보
+shop_m8a_war_beast_fang_bundle,faction_warriors_guild,mat_monster_beast_fang,야수 송곳니 묶음,material_bundle,180,11,false,region_flag,region_9_giant_beast_killed,daily,1,24,30,bundle,전사 길드 hunt 보상과 중복되지 않도록 1개 제한
+shop_m8a_war_fort_iron_piece,faction_warriors_guild,mat_relic_burnt_seal,요새 철편,material_bundle,220,11,false,region_flag,region_38_ironbound_pact_completed,daily,1,24,40,bundle,탄 인장 파편 1개 제한 판매 후보
+shop_m8a_war_battle_standard_piece,faction_warriors_guild,guild_banner_warrior_standard_piece,전사의 군기 조각,equipment,520,31,true,faction_reputation,faction_warriors_guild>=31,once,1,,50,item,T2~T3 용병단 깃발 후보
+shop_m8a_war_duel_gloves,faction_warriors_guild,equip_accessory_duel_ground_gloves,결투장 장갑,equipment,680,61,true,faction_reputation,faction_warriors_guild>=61,once,1,,60,item,T3 개인 장비 후보

@@ -52,6 +52,9 @@ import 'package:band_of_mercenaries/features/settlement/domain/infrastructure_up
 import 'package:band_of_mercenaries/features/settlement/domain/infrastructure_upgrade_provider.dart';
 import 'package:band_of_mercenaries/core/widgets/region_state_changed_dialog.dart';
 import 'package:band_of_mercenaries/core/widgets/settlement_infrastructure_upgraded_dialog.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_contact_arrived_event.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_contact_service.dart';
+import 'package:band_of_mercenaries/features/info/view/faction_contact_arrived_dialog.dart';
 
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
@@ -176,6 +179,10 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // FR-A6: 앱 최초 진입 시 세력 접촉점 활성 평가
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _evaluateFactionContactArrivals();
+    });
   }
 
   @override
@@ -191,6 +198,8 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
     }
     if (state == AppLifecycleState.resumed) {
       _syncOnResume();
+      // FR-A6: 포그라운드 복귀 시 세력 접촉점 활성 평가
+      _evaluateFactionContactArrivals();
     }
   }
 
@@ -210,6 +219,58 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
   void _saveLastActiveTime() {
     final settingsBox = Hive.box(HiveInitializer.settingsBoxName);
     settingsBox.put(SettingsKeys.lastActiveTime, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// FR-A6: 세력 접촉점 신규 활성 여부를 평가하고 신규 발견 시 enqueue.
+  ///
+  /// dedup 기준: FactionStateRepository.hasContactUnlocked (영속 contactUnlockedIds).
+  /// 신규 활성 contactId 1개당 1회만 enqueue하며 먼저 markContactUnlocked로 영속 기록 후 enqueue.
+  void _evaluateFactionContactArrivals() {
+    final staticData = ref.read(staticDataProvider).value;
+    if (staticData == null) return;
+
+    final factionStateRepo = ref.read(factionStateRepositoryProvider);
+
+    for (final contact in staticData.factionContacts) {
+      // 이미 해금 처리된 contactId는 skip (영속 dedup)
+      if (factionStateRepo.hasContactUnlocked(
+        factionId: contact.factionId,
+        contactId: contact.id,
+      )) { continue; }
+
+      // 현재 활성 여부 평가 (FR-A3)
+      final active = FactionContactService.isActive(contact.id, ref);
+      if (!active) { continue; }
+
+      // factionName lookup
+      final factionName = staticData.factions
+              .where((f) => f.id == contact.factionId)
+              .firstOrNull
+              ?.name ??
+          contact.factionId;
+
+      // a) 영속 dedup 먼저 기록
+      unawaited(factionStateRepo.markContactUnlocked(
+        factionId: contact.factionId,
+        contactId: contact.id,
+      ));
+
+      // b) ActivityLog mirror log (FR-A6)
+      ref.read(activityLogProvider.notifier).addLog(
+        '$factionName 세력 접촉점(${contact.npcName})이(가) 활성화되었습니다',
+        ActivityLogType.factionContactUnlocked,
+      );
+
+      // c) Event publish → ref.listen이 dialogQueue enqueue 처리 (FR-A6, FR-G2)
+      ref.read(factionContactArrivedProvider.notifier).state =
+          FactionContactArrivedEvent(
+        factionId: contact.factionId,
+        factionName: factionName,
+        contactId: contact.id,
+        npcName: contact.npcName,
+        firstReactionText: contact.firstReactionText,
+      );
+    }
   }
 
   @override
@@ -378,6 +439,28 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         builder: (ctx, dismiss) => SettlementInfrastructureUpgradedDialog(event: captured, onDismiss: dismiss),
       ));
       ref.read(settlementInfrastructureUpgradedProvider.notifier).state = null;
+    });
+
+    // 세력 접촉점 도착 (medium) — M8a 페이즈 4 #1 FR-A6 / FR-G2
+    ref.listen<FactionContactArrivedEvent?>(factionContactArrivedProvider, (_, next) {
+      if (next == null) return;
+      final captured = next;
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'factionContactArrived_${next.contactId}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.medium,
+        dialogType: DialogTypeRegistry.factionContactArrived,
+        payload: {
+          'factionId': next.factionId,
+          'factionName': next.factionName,
+          'contactId': next.contactId,
+          'npcName': next.npcName,
+        },
+        builder: (ctx, dismiss) => FactionContactArrivedDialog(
+          event: captured,
+          onDismiss: dismiss,
+        ),
+      ));
+      ref.read(factionContactArrivedProvider.notifier).state = null;
     });
 
     // ── 큐 → 단일 표시 listen ────────────────────────────────────────────────

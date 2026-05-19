@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_report_model.dart';
 
 part 'quest_model.g.dart';
 
@@ -117,6 +118,9 @@ class ActiveQuest extends HiveObject {
   @HiveField(26)
   String? namedTargetMercId;
 
+  @HiveField(27)
+  CombatReport? combatReport;
+
   ActiveQuest({
     required this.id,
     required this.questPoolId,
@@ -145,6 +149,7 @@ class ActiveQuest extends HiveObject {
     this.specialFlags,
     this.renderedNarrative,
     this.namedTargetMercId,
+    this.combatReport,
   });
 
   // 전용 퀘스트 여부 (isAdvancedTrack이 설정된 경우)

@@ -249,6 +249,38 @@ class TitleService {
     }
   }
 
+  /// 세력 평판 임계값 도달 시 칭호 발급 hook.
+  ///
+  /// FR-E2: hook_type == 'faction_reputation' title들 중 hook_condition.faction_id가
+  /// 일치하고 oldRep < threshold && newRep >= threshold인 경우, hook_target에 명시된
+  /// mercenary(M8a는 last_dispatch_protagonist)에게 칭호를 발급한다.
+  ///
+  /// targetMercId가 null이거나 사망/이미 보유 시 silent skip.
+  /// _grantTitle 호출 후 TitleUnlockedDialog enqueue (evaluateActionStatHook 패턴).
+  Future<void> evaluateFactionReputationHook({
+    required String factionId,
+    required int oldRep,
+    required int newRep,
+    required String? targetMercId,
+  }) async {
+    if (targetMercId == null) return;
+    for (final title in titles.where((t) => t.hookType == 'faction_reputation')) {
+      final cond = title.hookCondition;
+      if (cond['faction_id'] != factionId) continue;
+      final threshold = (cond['threshold'] as num?)?.toInt();
+      if (threshold == null) continue;
+      if (!(oldRep < threshold && newRep >= threshold)) continue;
+      final merc = getMercenary(targetMercId);
+      if (merc == null) continue;
+      if (merc.status == MercenaryStatus.dead) continue;
+      if (merc.titleIds.contains(title.id)) continue;
+      await _grantTitle(merc, title);
+      final snapshot = _makeSnapshot(merc);
+      final reasonText = title.narrativeHint ?? '${title.name} 조건 충족';
+      enqueueDialog(_makeTitleUnlockedRequest(title, snapshot, reasonText));
+    }
+  }
+
   /// 칭호 영속화 + ActivityLog 미러. (FR-13)
   ///
   /// dialog enqueue는 호출측(evaluateActionStatHook / evaluateStatusHook)이 담당.

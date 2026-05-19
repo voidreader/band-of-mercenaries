@@ -12,6 +12,9 @@ import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/shared/widgets/card_container.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_join_section.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_top_bar.dart';
+import 'package:band_of_mercenaries/features/info/view/faction_contact_section.dart';
+import 'package:band_of_mercenaries/features/info/view/faction_named_quest_section.dart';
+import 'package:band_of_mercenaries/features/info/view/faction_shop_section.dart';
 
 class FactionDetailScreen extends ConsumerWidget {
   final String factionId;
@@ -403,6 +406,14 @@ class _FactionBody extends ConsumerWidget {
             ],
           ),
         ),
+        const SizedBox(height: 8),
+
+        // FR-G1 신규 3 섹션: 접촉점·지명 의뢰·세력 상점
+        FactionContactSection(factionId: faction.id),
+        const SizedBox(height: 8),
+        FactionNamedQuestSection(factionId: faction.id),
+        const SizedBox(height: 8),
+        FactionShopSection(factionId: faction.id),
         const SizedBox(height: 8),
 
         // 발견 기록

@@ -581,7 +581,12 @@ mixin _$RecipeUnlockCondition {
   String? get type =>
       throw _privateConstructorUsedError; // 'regionFlag' / 'infrastructureTier' / 'all' / 'any'
   String? get flag => throw _privateConstructorUsedError;
-  int? get value => throw _privateConstructorUsedError;
+  int? get value =>
+      throw _privateConstructorUsedError; // M8a 페이즈 4 #1 — CSV/JSONB에서 쓰는 세력 해금 조건 별칭.
+  @JsonKey(readValue: _readFactionId)
+  String? get factionId => throw _privateConstructorUsedError;
+  @JsonKey(readValue: _readMinReputation)
+  int? get minReputation => throw _privateConstructorUsedError;
   List<RecipeUnlockCondition>? get conditions =>
       throw _privateConstructorUsedError;
 
@@ -604,6 +609,8 @@ abstract class $RecipeUnlockConditionCopyWith<$Res> {
       String? type,
       String? flag,
       int? value,
+      @JsonKey(readValue: _readFactionId) String? factionId,
+      @JsonKey(readValue: _readMinReputation) int? minReputation,
       List<RecipeUnlockCondition>? conditions});
 
   $ChainStepConditionCopyWith<$Res>? get chainStep;
@@ -629,6 +636,8 @@ class _$RecipeUnlockConditionCopyWithImpl<$Res,
     Object? type = freezed,
     Object? flag = freezed,
     Object? value = freezed,
+    Object? factionId = freezed,
+    Object? minReputation = freezed,
     Object? conditions = freezed,
   }) {
     return _then(_value.copyWith(
@@ -655,6 +664,14 @@ class _$RecipeUnlockConditionCopyWithImpl<$Res,
       value: freezed == value
           ? _value.value
           : value // ignore: cast_nullable_to_non_nullable
+              as int?,
+      factionId: freezed == factionId
+          ? _value.factionId
+          : factionId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      minReputation: freezed == minReputation
+          ? _value.minReputation
+          : minReputation // ignore: cast_nullable_to_non_nullable
               as int?,
       conditions: freezed == conditions
           ? _value.conditions
@@ -692,6 +709,8 @@ abstract class _$$RecipeUnlockConditionImplCopyWith<$Res>
       String? type,
       String? flag,
       int? value,
+      @JsonKey(readValue: _readFactionId) String? factionId,
+      @JsonKey(readValue: _readMinReputation) int? minReputation,
       List<RecipeUnlockCondition>? conditions});
 
   @override
@@ -716,6 +735,8 @@ class __$$RecipeUnlockConditionImplCopyWithImpl<$Res>
     Object? type = freezed,
     Object? flag = freezed,
     Object? value = freezed,
+    Object? factionId = freezed,
+    Object? minReputation = freezed,
     Object? conditions = freezed,
   }) {
     return _then(_$RecipeUnlockConditionImpl(
@@ -743,6 +764,14 @@ class __$$RecipeUnlockConditionImplCopyWithImpl<$Res>
           ? _value.value
           : value // ignore: cast_nullable_to_non_nullable
               as int?,
+      factionId: freezed == factionId
+          ? _value.factionId
+          : factionId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      minReputation: freezed == minReputation
+          ? _value.minReputation
+          : minReputation // ignore: cast_nullable_to_non_nullable
+              as int?,
       conditions: freezed == conditions
           ? _value._conditions
           : conditions // ignore: cast_nullable_to_non_nullable
@@ -761,6 +790,8 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
       this.type,
       this.flag,
       this.value,
+      @JsonKey(readValue: _readFactionId) this.factionId,
+      @JsonKey(readValue: _readMinReputation) this.minReputation,
       final List<RecipeUnlockCondition>? conditions})
       : _conditions = conditions;
 
@@ -784,6 +815,13 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
   final String? flag;
   @override
   final int? value;
+// M8a 페이즈 4 #1 — CSV/JSONB에서 쓰는 세력 해금 조건 별칭.
+  @override
+  @JsonKey(readValue: _readFactionId)
+  final String? factionId;
+  @override
+  @JsonKey(readValue: _readMinReputation)
+  final int? minReputation;
   final List<RecipeUnlockCondition>? _conditions;
   @override
   List<RecipeUnlockCondition>? get conditions {
@@ -796,7 +834,7 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
 
   @override
   String toString() {
-    return 'RecipeUnlockCondition(trustLevel: $trustLevel, chainStep: $chainStep, firstAcquiredItem: $firstAcquiredItem, type: $type, flag: $flag, value: $value, conditions: $conditions)';
+    return 'RecipeUnlockCondition(trustLevel: $trustLevel, chainStep: $chainStep, firstAcquiredItem: $firstAcquiredItem, type: $type, flag: $flag, value: $value, factionId: $factionId, minReputation: $minReputation, conditions: $conditions)';
   }
 
   @override
@@ -813,6 +851,10 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
             (identical(other.type, type) || other.type == type) &&
             (identical(other.flag, flag) || other.flag == flag) &&
             (identical(other.value, value) || other.value == value) &&
+            (identical(other.factionId, factionId) ||
+                other.factionId == factionId) &&
+            (identical(other.minReputation, minReputation) ||
+                other.minReputation == minReputation) &&
             const DeepCollectionEquality()
                 .equals(other._conditions, _conditions));
   }
@@ -827,6 +869,8 @@ class _$RecipeUnlockConditionImpl implements _RecipeUnlockCondition {
       type,
       flag,
       value,
+      factionId,
+      minReputation,
       const DeepCollectionEquality().hash(_conditions));
 
   @JsonKey(ignore: true)
@@ -852,6 +896,8 @@ abstract class _RecipeUnlockCondition implements RecipeUnlockCondition {
           final String? type,
           final String? flag,
           final int? value,
+          @JsonKey(readValue: _readFactionId) final String? factionId,
+          @JsonKey(readValue: _readMinReputation) final int? minReputation,
           final List<RecipeUnlockCondition>? conditions}) =
       _$RecipeUnlockConditionImpl;
 
@@ -873,6 +919,12 @@ abstract class _RecipeUnlockCondition implements RecipeUnlockCondition {
   String? get flag;
   @override
   int? get value;
+  @override // M8a 페이즈 4 #1 — CSV/JSONB에서 쓰는 세력 해금 조건 별칭.
+  @JsonKey(readValue: _readFactionId)
+  String? get factionId;
+  @override
+  @JsonKey(readValue: _readMinReputation)
+  int? get minReputation;
   @override
   List<RecipeUnlockCondition>? get conditions;
   @override

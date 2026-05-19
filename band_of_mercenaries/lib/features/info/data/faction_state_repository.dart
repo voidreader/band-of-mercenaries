@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_join_service.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_shop_daily_entry.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 
-final factionStateRepositoryProvider = Provider((ref) => FactionStateRepository());
+final factionStateRepositoryProvider = Provider(
+  (ref) => FactionStateRepository(),
+);
 
 class FactionStateRepository {
   Box<FactionState> get _box =>
@@ -60,14 +63,17 @@ class FactionStateRepository {
     required DateTime foundAt,
   }) async {
     final state = await _getOrCreate(factionId);
-    final alreadyFound =
-        state.clueRecords.any((r) => r.discoveryId == discoveryId);
-    state.clueRecords.add(FactionClueRecord(
-      factionId: factionId,
-      regionId: regionId,
-      discoveryId: discoveryId,
-      foundAt: foundAt,
-    ));
+    final alreadyFound = state.clueRecords.any(
+      (r) => r.discoveryId == discoveryId,
+    );
+    state.clueRecords.add(
+      FactionClueRecord(
+        factionId: factionId,
+        regionId: regionId,
+        discoveryId: discoveryId,
+        foundAt: foundAt,
+      ),
+    );
     await state.save();
     return !alreadyFound;
   }
@@ -107,16 +113,104 @@ class FactionStateRepository {
   Future<void> addReputation(String factionId, int delta) async {
     final state = await _getOrCreate(factionId);
     final newRep = state.currentReputation + delta;
-    state.reputation =
-        FactionJoinService.clampReputation(newRep, joined: state.isJoined);
+    state.reputation = FactionJoinService.clampReputation(
+      newRep,
+      joined: state.isJoined,
+    );
     await state.save();
   }
 
   Future<void> setReputation(String factionId, int rep) async {
     final state = await _getOrCreate(factionId);
-    state.reputation =
-        FactionJoinService.clampReputation(rep, joined: state.isJoined);
+    state.reputation = FactionJoinService.clampReputation(
+      rep,
+      joined: state.isJoined,
+    );
     await state.save();
+  }
+
+  // ─── 세력 상점 구매 기록 (FR-D3) ──────────────────────────────
+
+  /// once/daily 분기로 세력 상점 구매를 기록한다 (FR-D3).
+  Future<void> recordShopPurchase({
+    required String factionId,
+    required String itemId,
+    required bool isDaily,
+    Duration? restockAfter,
+  }) async {
+    final state = await _getOrCreate(factionId);
+    if (isDaily) {
+      final daily = Map<String, FactionShopDailyEntry>.from(
+        state.effectiveShopDailyPurchases,
+      );
+      final existing = daily[itemId];
+      final now = DateTime.now();
+      final restockAt = existing?.restockAt;
+      final isRestocked = restockAt != null && !restockAt.isAfter(now);
+      final newCount = isRestocked ? 1 : (existing?.count ?? 0) + 1;
+      final newRestockAt = restockAfter != null
+          ? now.add(restockAfter)
+          : existing?.restockAt;
+      daily[itemId] = FactionShopDailyEntry(
+        count: newCount,
+        restockAt: newRestockAt,
+      );
+      state.shopDailyPurchases = daily;
+    } else {
+      final history = Map<String, bool>.from(
+        state.effectiveShopPurchaseHistory,
+      );
+      history[itemId] = true;
+      state.shopPurchaseHistory = history;
+    }
+    await state.save();
+  }
+
+  // ─── 세력 보상 지급 기록 (FR-E5) ──────────────────────────────
+
+  /// 세력 보상 지급 여부를 멱등으로 기록한다 (FR-E5).
+  Future<void> markRewardGranted({
+    required String factionId,
+    required String rewardId,
+  }) async {
+    final state = await _getOrCreate(factionId);
+    final ids = List<String>.from(state.effectiveGrantedRewardIds);
+    if (ids.contains(rewardId)) return;
+    ids.add(rewardId);
+    state.grantedRewardIds = ids;
+    await state.save();
+  }
+
+  /// 세력 보상 지급 여부를 동기 조회한다 (FR-E5).
+  bool hasGrantedReward({required String factionId, required String rewardId}) {
+    final state = getState(factionId);
+    if (state == null) return false;
+    return state.effectiveGrantedRewardIds.contains(rewardId);
+  }
+
+  // ─── 세력 연락처 해금 (FR-A6) ─────────────────────────────────
+
+  /// 세력 연락처 해금 여부를 멱등으로 기록한다 (FR-A6).
+  Future<void> markContactUnlocked({
+    required String factionId,
+    required String contactId,
+  }) async {
+    final state = await _getOrCreate(factionId);
+    final ids = List<String>.from(state.effectiveContactUnlockedIds);
+    if (ids.contains(contactId)) return;
+    ids.add(contactId);
+    state.contactUnlockedIds = ids;
+    await state.save();
+  }
+
+  /// 세력 연락처 해금 여부를 동기 조회한다 (FR-A6).
+  bool hasContactUnlocked({
+    required String factionId,
+    required String contactId,
+  }) {
+    final state = getState(factionId);
+    if (state == null) return false;
+    return state.effectiveContactUnlockedIds.contains(contactId);
   }
 
   // ─── 내부 헬퍼 ─────────────────────────────────────────────────

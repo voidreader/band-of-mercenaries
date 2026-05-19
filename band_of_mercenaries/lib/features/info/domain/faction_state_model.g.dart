@@ -66,13 +66,18 @@ class FactionStateAdapter extends TypeAdapter<FactionState> {
       joined: fields[3] as bool?,
       joinedAt: fields[4] as DateTime?,
       facilityLevels: (fields[5] as Map?)?.cast<String, int>(),
+      shopPurchaseHistory: (fields[6] as Map?)?.cast<String, bool>(),
+      shopDailyPurchases:
+          (fields[7] as Map?)?.cast<String, FactionShopDailyEntry>(),
+      grantedRewardIds: (fields[8] as List?)?.cast<String>(),
+      contactUnlockedIds: (fields[9] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, FactionState obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.factionId)
       ..writeByte(1)
@@ -84,7 +89,15 @@ class FactionStateAdapter extends TypeAdapter<FactionState> {
       ..writeByte(4)
       ..write(obj.joinedAt)
       ..writeByte(5)
-      ..write(obj.facilityLevels);
+      ..write(obj.facilityLevels)
+      ..writeByte(6)
+      ..write(obj.shopPurchaseHistory)
+      ..writeByte(7)
+      ..write(obj.shopDailyPurchases)
+      ..writeByte(8)
+      ..write(obj.grantedRewardIds)
+      ..writeByte(9)
+      ..write(obj.contactUnlockedIds);
   }
 
   @override

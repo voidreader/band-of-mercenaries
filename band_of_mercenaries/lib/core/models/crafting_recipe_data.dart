@@ -3,6 +3,12 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'crafting_recipe_data.freezed.dart';
 part 'crafting_recipe_data.g.dart';
 
+Object? _readFactionId(Map json, String key) =>
+    json['factionId'] ?? json['faction_id'] ?? json[key];
+
+Object? _readMinReputation(Map json, String key) =>
+    json['minReputation'] ?? json['min_reputation'] ?? json[key];
+
 /// 제작 레시피 정적 데이터 모델 (Supabase crafting_recipes 테이블과 1:1 대응).
 @freezed
 class CraftingRecipeData with _$CraftingRecipeData {
@@ -13,8 +19,11 @@ class CraftingRecipeData with _$CraftingRecipeData {
     @JsonKey(name: 'result_item_id') required String resultItemId,
     @JsonKey(name: 'result_quantity') @Default(1) int resultQuantity,
     @JsonKey(name: 'inputs_json') required List<RecipeInput> inputs,
-    @JsonKey(name: 'unlock_condition_json') RecipeUnlockCondition? unlockCondition,
-    @JsonKey(name: 'craft_location_id') @Default('old_smithy') String craftLocationId,
+    @JsonKey(name: 'unlock_condition_json')
+    RecipeUnlockCondition? unlockCondition,
+    @JsonKey(name: 'craft_location_id')
+    @Default('old_smithy')
+    String craftLocationId,
     @JsonKey(name: 'sort_order') @Default(0) int sortOrder,
     @JsonKey(name: 'created_at') DateTime? createdAt,
   }) = _CraftingRecipeData;
@@ -43,9 +52,12 @@ class RecipeUnlockCondition with _$RecipeUnlockCondition {
     @JsonKey(name: 'chain_step') ChainStepCondition? chainStep,
     @JsonKey(name: 'first_acquired_item') String? firstAcquiredItem,
     // M7 페이즈 4 #4 신규 type 분기 필드
-    String? type,   // 'regionFlag' / 'infrastructureTier' / 'all' / 'any'
+    String? type, // 'regionFlag' / 'infrastructureTier' / 'all' / 'any'
     String? flag,
     int? value,
+    // M8a 페이즈 4 #1 — CSV/JSONB에서 쓰는 세력 해금 조건 별칭.
+    @JsonKey(readValue: _readFactionId) String? factionId,
+    @JsonKey(readValue: _readMinReputation) int? minReputation,
     List<RecipeUnlockCondition>? conditions,
   }) = _RecipeUnlockCondition;
 

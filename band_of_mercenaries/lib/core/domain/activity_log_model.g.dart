@@ -123,6 +123,16 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.regionUnlockedFlagToggled;
       case 34:
         return ActivityLogType.settlementInfrastructureUpgraded;
+      case 35:
+        return ActivityLogType.factionContactUnlocked;
+      case 36:
+        return ActivityLogType.factionReputationChanged;
+      case 37:
+        return ActivityLogType.factionShopPurchased;
+      case 38:
+        return ActivityLogType.factionRewardGranted;
+      case 39:
+        return ActivityLogType.combatReportGenerated;
       default:
         return ActivityLogType.questResult;
     }
@@ -235,6 +245,21 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.settlementInfrastructureUpgraded:
         writer.writeByte(34);
+        break;
+      case ActivityLogType.factionContactUnlocked:
+        writer.writeByte(35);
+        break;
+      case ActivityLogType.factionReputationChanged:
+        writer.writeByte(36);
+        break;
+      case ActivityLogType.factionShopPurchased:
+        writer.writeByte(37);
+        break;
+      case ActivityLogType.factionRewardGranted:
+        writer.writeByte(38);
+        break;
+      case ActivityLogType.combatReportGenerated:
+        writer.writeByte(39);
         break;
     }
   }

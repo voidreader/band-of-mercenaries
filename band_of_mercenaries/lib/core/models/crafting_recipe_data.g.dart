@@ -67,6 +67,9 @@ _$RecipeUnlockConditionImpl _$$RecipeUnlockConditionImplFromJson(
       type: json['type'] as String?,
       flag: json['flag'] as String?,
       value: (json['value'] as num?)?.toInt(),
+      factionId: _readFactionId(json, 'factionId') as String?,
+      minReputation:
+          (_readMinReputation(json, 'minReputation') as num?)?.toInt(),
       conditions: (json['conditions'] as List<dynamic>?)
           ?.map(
               (e) => RecipeUnlockCondition.fromJson(e as Map<String, dynamic>))
@@ -82,6 +85,8 @@ Map<String, dynamic> _$$RecipeUnlockConditionImplToJson(
       'type': instance.type,
       'flag': instance.flag,
       'value': instance.value,
+      'factionId': instance.factionId,
+      'minReputation': instance.minReputation,
       'conditions': instance.conditions,
     };
 

@@ -615,6 +615,16 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '🗺️', color: d, bold: false);
       case ActivityLogType.settlementInfrastructureUpgraded:
         return (icon: '🏘️', color: AppTheme.settlementAccent, bold: false);
+      case ActivityLogType.factionContactUnlocked:
+        return (icon: '🤝', color: d, bold: false);
+      case ActivityLogType.factionReputationChanged:
+        return (icon: '🔱', color: d, bold: false);
+      case ActivityLogType.factionShopPurchased:
+        return (icon: '🛒', color: d, bold: false);
+      case ActivityLogType.factionRewardGranted:
+        return (icon: '🎁', color: d, bold: false);
+      case ActivityLogType.combatReportGenerated:
+        return (icon: '📋', color: d, bold: false);
     }
   }
 

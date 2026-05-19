@@ -32,7 +32,15 @@ StaticGameData _makeStaticData({
       ),
     ],
     jobs: [
-      const Job(id: 'warrior', tier: 1, name: '전사', baseStr: 10, baseIntelligence: 8, baseVit: 100, baseAgi: 50),
+      const Job(
+        id: 'warrior',
+        tier: 1,
+        name: '전사',
+        baseStr: 10,
+        baseIntelligence: 8,
+        baseVit: 100,
+        baseAgi: 50,
+      ),
     ],
     traits: [],
     traitCategories: [],
@@ -42,21 +50,39 @@ StaticGameData _makeStaticData({
     traitSynergies: [],
     regions: [],
     questTypes: [
-      QuestType(id: 'raid', name: '약탈', baseReward: baseReward, baseDuration: baseDuration, riskFactor: 1.0),
+      QuestType(
+        id: 'raid',
+        name: '약탈',
+        baseReward: baseReward,
+        baseDuration: baseDuration,
+        riskFactor: 1.0,
+      ),
     ],
     questPools: [],
     personNames: [],
     travelEvents: [],
     facilities: [
-      const Facility(id: 'training', name: '훈련소', effectType: 'xp_bonus', maxLevel: 3, costs: [100, 200, 400], values: [0.1, 0.2, 0.3]),
-      const Facility(id: 'infirmary', name: '의무실', effectType: 'recovery_reduction', maxLevel: 3, costs: [100, 200, 400], values: [0.1, 0.2, 0.3]),
+      const Facility(
+        id: 'training',
+        name: '훈련소',
+        effectType: 'xp_bonus',
+        maxLevel: 3,
+        costs: [100, 200, 400],
+        values: [0.1, 0.2, 0.3],
+      ),
+      const Facility(
+        id: 'infirmary',
+        name: '의무실',
+        effectType: 'recovery_reduction',
+        maxLevel: 3,
+        costs: [100, 200, 400],
+        values: [0.1, 0.2, 0.3],
+      ),
     ],
     ranks: [
       const Rank(grade: 'F', name: '신참', requiredReputation: 0, unlockTier: 1),
     ],
-    mercenaryWages: [
-      const MercenaryWage(tier: 1, wage: 10),
-    ],
+    mercenaryWages: [const MercenaryWage(tier: 1, wage: 10)],
     regionDiscoveries: const [],
     factions: const [],
     items: const <ItemData>[],
@@ -73,6 +99,11 @@ StaticGameData _makeStaticData({
     questPoolMaterialDrops: const [],
     bandAchievementTemplates: const [],
     titles: const [],
+    factionContacts: const [],
+    factionReactions: const [],
+    factionShopItems: const [],
+    combatReportTemplates: const [],
+    combatReportKeywords: const [],
   );
 }
 
@@ -90,7 +121,27 @@ ActiveQuest _makeQuest({int difficulty = 1, int region = 1}) {
   );
 }
 
-Mercenary _makeMerc({String id = 'm1', int str = 20, String traitId = '', String jobId = 'warrior'}) {
+ActiveQuest _makeEliteQuest() {
+  return ActiveQuest(
+    id: 'q_elite',
+    questPoolId: 'elite_test',
+    questTypeId: 'raid',
+    difficulty: 1,
+    region: 1,
+    questName: '엘리트 테스트',
+    status: QuestStatus.inProgress,
+    eliteId: 'elite_test',
+    startTime: DateTime.now().subtract(const Duration(minutes: 5)),
+    endTime: DateTime.now().subtract(const Duration(seconds: 1)),
+  );
+}
+
+Mercenary _makeMerc({
+  String id = 'm1',
+  int str = 20,
+  String traitId = '',
+  String jobId = 'warrior',
+}) {
   return Mercenary(
     id: id,
     name: '용병1',
@@ -137,7 +188,8 @@ void main() {
 
       // 성공 또는 대성공이어야 함 (높은 파워비)
       expect(
-        result.resultType == QuestResult.greatSuccess || result.resultType == QuestResult.success,
+        result.resultType == QuestResult.greatSuccess ||
+            result.resultType == QuestResult.success,
         isTrue,
       );
       expect(result.rewardGold, greaterThan(0));
@@ -171,7 +223,10 @@ void main() {
         }
       }
       expect(greatSuccessResult, isNotNull);
-      expect(greatSuccessResult!.rewardGold, 200); // baseReward * rewardMult(1.0) * 2
+      expect(
+        greatSuccessResult!.rewardGold,
+        200,
+      ); // baseReward * rewardMult(1.0) * 2
     });
 
     test('실패 시 보상 0, XP 절반, 명성 0', () {
@@ -235,15 +290,23 @@ void main() {
       final mercs = [_makeMerc(str: 50)];
 
       final withoutTraining = QuestCompletionService.calculate(
-        quest: quest, mercs: mercs, staticData: staticData,
-        playerRegion: 1, facilities: {},
-        speedMultiplier: 1.0, random: _SeededRandom(42),
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
       );
 
       final withTraining = QuestCompletionService.calculate(
-        quest: quest, mercs: mercs, staticData: staticData,
-        playerRegion: 1, facilities: {'training': 2},
-        speedMultiplier: 1.0, random: _SeededRandom(42),
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {'training': 2},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
       );
 
       // 같은 시드이므로 같은 결과 타입, XP만 다름
@@ -260,11 +323,17 @@ void main() {
       int? injurySeed;
       for (int seed = 0; seed < 500; seed++) {
         final result = QuestCompletionService.calculate(
-          quest: quest, mercs: mercs, staticData: staticData,
-          playerRegion: 1, facilities: {},
-          speedMultiplier: 1.0, random: _SeededRandom(seed),
+          quest: quest,
+          mercs: mercs,
+          staticData: staticData,
+          playerRegion: 1,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
         );
-        if (result.mercDamages.any((d) => d.newStatus == MercenaryStatus.injured)) {
+        if (result.mercDamages.any(
+          (d) => d.newStatus == MercenaryStatus.injured,
+        )) {
           injurySeed = seed;
           break;
         }
@@ -276,19 +345,31 @@ void main() {
       }
 
       final withoutInfirmary = QuestCompletionService.calculate(
-        quest: quest, mercs: mercs, staticData: staticData,
-        playerRegion: 1, facilities: {},
-        speedMultiplier: 1.0, random: _SeededRandom(injurySeed),
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(injurySeed),
       );
 
       final withInfirmary = QuestCompletionService.calculate(
-        quest: quest, mercs: mercs, staticData: staticData,
-        playerRegion: 1, facilities: {'infirmary': 2},
-        speedMultiplier: 1.0, random: _SeededRandom(injurySeed),
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {'infirmary': 2},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(injurySeed),
       );
 
-      final injuredWithout = withoutInfirmary.mercDamages.firstWhere((d) => d.newStatus == MercenaryStatus.injured);
-      final injuredWith = withInfirmary.mercDamages.firstWhere((d) => d.newStatus == MercenaryStatus.injured);
+      final injuredWithout = withoutInfirmary.mercDamages.firstWhere(
+        (d) => d.newStatus == MercenaryStatus.injured,
+      );
+      final injuredWith = withInfirmary.mercDamages.firstWhere(
+        (d) => d.newStatus == MercenaryStatus.injured,
+      );
 
       expect(
         injuredWith.recoveryEndTime!.isBefore(injuredWithout.recoveryEndTime!),
@@ -307,9 +388,13 @@ void main() {
 
       for (int seed = 0; seed < trials; seed++) {
         final nearResult = QuestCompletionService.calculate(
-          quest: quest, mercs: mercs, staticData: staticData,
-          playerRegion: 10, facilities: {},
-          speedMultiplier: 1.0, random: _SeededRandom(seed),
+          quest: quest,
+          mercs: mercs,
+          staticData: staticData,
+          playerRegion: 10,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
         );
         if (nearResult.resultType == QuestResult.greatSuccess ||
             nearResult.resultType == QuestResult.success) {
@@ -317,9 +402,13 @@ void main() {
         }
 
         final farResult = QuestCompletionService.calculate(
-          quest: quest, mercs: mercs, staticData: staticData,
-          playerRegion: 1, facilities: {},
-          speedMultiplier: 1.0, random: _SeededRandom(seed),
+          quest: quest,
+          mercs: mercs,
+          staticData: staticData,
+          playerRegion: 1,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
         );
         if (farResult.resultType == QuestResult.greatSuccess ||
             farResult.resultType == QuestResult.success) {
@@ -340,13 +429,21 @@ void main() {
       ];
 
       final result = QuestCompletionService.calculate(
-        quest: quest, mercs: mercs, staticData: staticData,
-        playerRegion: 1, facilities: {},
-        speedMultiplier: 1.0, random: _SeededRandom(42),
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
       );
 
       expect(result.mercDamages, hasLength(3));
-      expect(result.mercDamages.map((d) => d.mercId).toSet(), {'m1', 'm2', 'm3'});
+      expect(result.mercDamages.map((d) => d.mercId).toSet(), {
+        'm1',
+        'm2',
+        'm3',
+      });
     });
 
     test('속도 배율이 회복시간에 반영된다', () {
@@ -355,26 +452,53 @@ void main() {
       final mercs = [_makeMerc(str: 50)];
 
       final speed1x = QuestCompletionService.calculate(
-        quest: quest, mercs: mercs, staticData: staticData,
-        playerRegion: 1, facilities: {},
-        speedMultiplier: 1.0, random: _SeededRandom(42),
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
       );
 
       final speed10x = QuestCompletionService.calculate(
-        quest: quest, mercs: mercs, staticData: staticData,
-        playerRegion: 1, facilities: {},
-        speedMultiplier: 10.0, random: _SeededRandom(42),
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 10.0,
+        random: _SeededRandom(42),
       );
 
       // 성공 시 tired 상태, 회복 시간이 10배 빨라야 함
       final tired1x = speed1x.mercDamages.first;
       final tired10x = speed10x.mercDamages.first;
       if (tired1x.recoveryEndTime != null && tired10x.recoveryEndTime != null) {
-        final diff1x = tired1x.recoveryEndTime!.difference(DateTime.now()).inSeconds;
-        final diff10x = tired10x.recoveryEndTime!.difference(DateTime.now()).inSeconds;
+        final diff1x = tired1x.recoveryEndTime!
+            .difference(DateTime.now())
+            .inSeconds;
+        final diff10x = tired10x.recoveryEndTime!
+            .difference(DateTime.now())
+            .inSeconds;
         // 10x 속도면 회복시간이 약 1/10
         expect(diff10x, lessThan(diff1x));
       }
+    });
+
+    test('엘리트 의뢰는 combat_report 플래그가 없어도 전투 보고서 대상이다', () {
+      final staticData = _makeStaticData(enemyPower: 5);
+      final result = QuestCompletionService.calculate(
+        quest: _makeEliteQuest(),
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+
+      expect(result.combatReportEligible, isTrue);
     });
   });
 }

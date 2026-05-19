@@ -9,6 +9,7 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/achievement_service.dart';
 import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
 import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_progress.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
 import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/inventory_item_model.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
@@ -43,6 +44,9 @@ class CraftingService {
     required this.userDataNotifier,
     required this.activityLogNotifier,
     required this.achievementService,
+    // FR-F1: 세력 평판·접촉점 기반 해금 조건 평가 DI
+    required this.factionStateRepository,
+    required this.isFactionContactActive,
   });
 
   final StaticGameData staticData;
@@ -52,6 +56,9 @@ class CraftingService {
   final UserDataNotifier userDataNotifier;
   final ActivityLogNotifier activityLogNotifier;
   final AchievementService achievementService;
+  // FR-F1
+  final FactionStateRepository factionStateRepository;
+  final bool Function(String contactId) isFactionContactActive;
 
   /// 레시피의 해금 조건과 재료 보유량을 평가하여 RecipeState를 반환한다.
   RecipeState evaluateState(CraftingRecipeData recipe) {
@@ -64,25 +71,30 @@ class CraftingService {
       } else {
         // M5 기존 분기 (trustLevel/chainStep/firstAcquiredItem)
         if (condition.trustLevel != null) {
-          final trust = regionStateRepository
-              .getSettlementTrust(GameConstants.startingRegionId);
+          final trust = regionStateRepository.getSettlementTrust(
+            GameConstants.startingRegionId,
+          );
           if (trust.level < condition.trustLevel!) return RecipeState.locked;
         }
 
         if (condition.chainStep != null) {
           final chainStep = condition.chainStep!;
           final progress = chainQuestRepository.get(chainStep.chainId);
-          final unlocked = progress != null &&
+          final unlocked =
+              progress != null &&
               progress.status == ChainQuestStatus.completed &&
               progress.currentStep > chainStep.step;
           if (!unlocked) return RecipeState.locked;
         }
 
         if (condition.firstAcquiredItem != null) {
-          final regionState =
-              regionStateRepository.getState(GameConstants.startingRegionId);
-          final acquired = regionState?.firstAcquiredMaterialIds
-                  .contains(condition.firstAcquiredItem!) ??
+          final regionState = regionStateRepository.getState(
+            GameConstants.startingRegionId,
+          );
+          final acquired =
+              regionState?.firstAcquiredMaterialIds.contains(
+                condition.firstAcquiredItem!,
+              ) ??
               false;
           if (!acquired) return RecipeState.locked;
         }
@@ -112,7 +124,9 @@ class CraftingService {
       case 'infrastructureTier':
         final value = condition.value;
         if (value == null) return false;
-        final r3 = regionStateRepository.getState(GameConstants.startingRegionId);
+        final r3 = regionStateRepository.getState(
+          GameConstants.startingRegionId,
+        );
         final tier = r3?.currentInfrastructureTier ?? 1;
         return tier >= value;
       case 'all':
@@ -123,6 +137,19 @@ class CraftingService {
         final conds = condition.conditions;
         if (conds == null || conds.isEmpty) return false;
         return conds.any(_isUnlockedM7);
+      // FR-F1: 세력 평판 임계 해금 조건 (factionReputation >= value)
+      case 'factionReputation':
+        final factionId = condition.flag ?? condition.factionId;
+        final minRep = condition.value ?? condition.minReputation;
+        if (factionId == null || minRep == null) return false;
+        final state = factionStateRepository.getState(factionId);
+        final rep = state?.currentReputation ?? 0;
+        return rep >= minRep;
+      // FR-F1: 세력 접촉점 활성 여부 해금 조건
+      case 'factionContact':
+        final contactId = condition.flag;
+        if (contactId == null) return false;
+        return isFactionContactActive(contactId);
       default:
         return false;
     }
@@ -155,7 +182,8 @@ class CraftingService {
 
     final resultItemData = staticData.items.firstWhere(
       (i) => i.id == recipe.resultItemId,
-      orElse: () => throw ArgumentError('알 수 없는 resultItemId: ${recipe.resultItemId}'),
+      orElse: () =>
+          throw ArgumentError('알 수 없는 resultItemId: ${recipe.resultItemId}'),
     );
 
     await activityLogNotifier.addLog(

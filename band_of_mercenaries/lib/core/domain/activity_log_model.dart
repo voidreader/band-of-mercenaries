@@ -74,6 +74,16 @@ enum ActivityLogType {
   regionUnlockedFlagToggled,
   @HiveField(34)
   settlementInfrastructureUpgraded,
+  @HiveField(35)
+  factionContactUnlocked,
+  @HiveField(36)
+  factionReputationChanged,
+  @HiveField(37)
+  factionShopPurchased,
+  @HiveField(38)
+  factionRewardGranted,
+  @HiveField(39)
+  combatReportGenerated,
 }
 
 @HiveType(typeId: 7)

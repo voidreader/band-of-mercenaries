@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
 
+import 'faction_shop_daily_entry.dart';
+
 part 'faction_state_model.g.dart';
 
 @HiveType(typeId: 10)
@@ -45,6 +47,22 @@ class FactionState extends HiveObject {
   @HiveField(5)
   Map<String, int>? facilityLevels;
 
+  /// FR-D4: 세력 상점 누적 구매 이력 (itemId → 구매 여부)
+  @HiveField(6)
+  Map<String, bool>? shopPurchaseHistory;
+
+  /// FR-D4: 세력 상점 daily 재고 카운터 (itemId → FactionShopDailyEntry)
+  @HiveField(7)
+  Map<String, FactionShopDailyEntry>? shopDailyPurchases;
+
+  /// FR-E5: 이미 지급된 세력 보상 id 목록
+  @HiveField(8)
+  List<String>? grantedRewardIds;
+
+  /// FR-A6: 해금된 세력 연락처 id 목록
+  @HiveField(9)
+  List<String>? contactUnlockedIds;
+
   FactionState({
     required this.factionId,
     List<FactionClueRecord>? clueRecords,
@@ -52,6 +70,10 @@ class FactionState extends HiveObject {
     bool? joined,
     this.joinedAt,
     Map<String, int>? facilityLevels,
+    this.shopPurchaseHistory,
+    this.shopDailyPurchases,
+    this.grantedRewardIds,
+    this.contactUnlockedIds,
   })  : clueRecords = clueRecords ?? [],
         reputation = reputation ?? 0,
         joined = joined ?? false,
@@ -67,4 +89,16 @@ class FactionState extends HiveObject {
     final uniqueCount = clueRecords.map((r) => r.discoveryId).toSet().length;
     return uniqueCount.clamp(0, 3);
   }
+
+  Map<String, bool> get effectiveShopPurchaseHistory =>
+      shopPurchaseHistory ?? <String, bool>{};
+
+  Map<String, FactionShopDailyEntry> get effectiveShopDailyPurchases =>
+      shopDailyPurchases ?? <String, FactionShopDailyEntry>{};
+
+  List<String> get effectiveGrantedRewardIds =>
+      grantedRewardIds ?? const <String>[];
+
+  List<String> get effectiveContactUnlockedIds =>
+      contactUnlockedIds ?? const <String>[];
 }

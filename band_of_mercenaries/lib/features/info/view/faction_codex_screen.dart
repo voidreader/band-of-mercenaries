@@ -2,8 +2,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
+import 'package:band_of_mercenaries/features/achievement/domain/achievement_provider.dart' show bandAchievementsProvider;
 import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_contact_service.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 
@@ -122,6 +125,9 @@ class _FactionCodexScreenState extends ConsumerState<FactionCodexScreen> {
   Widget build(BuildContext context) {
     // factionRefreshProvider를 watch해서 join/leave 후 자동 갱신
     ref.watch(factionRefreshProvider);
+    // FR-G3: 활성 contact dot은 staticData/위업 변화에도 즉시 갱신되어야 한다.
+    ref.watch(staticDataProvider);
+    ref.watch(bandAchievementsProvider);
 
     final factions = ref.watch(factionListProvider);
     final repo = ref.read(factionStateRepositoryProvider);
@@ -193,7 +199,7 @@ class _FactionCodexScreenState extends ConsumerState<FactionCodexScreen> {
   }
 }
 
-class _FactionCard extends StatelessWidget {
+class _FactionCard extends ConsumerWidget {
   final FactionData faction;
   final int clueLevel;
   final bool joined;
@@ -209,84 +215,115 @@ class _FactionCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 4,
-              height: 44,
-              decoration: BoxDecoration(
-                color: factionColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+  Widget build(BuildContext context, WidgetRef ref) {
+    // FR-G3: 활성 contact 보유 여부 평가
+    final hasActiveContact = _hasActiveContact(ref);
+
+    return Stack(
+      children: [
+        InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 4,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: factionColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          clueLevel >= 1 ? faction.name : '???',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (joined)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: factionColor.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                                color: factionColor.withValues(alpha: 0.5)),
-                          ),
-                          child: Text(
-                            '가입',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: factionColor,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              clueLevel >= 1 ? faction.name : '???',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        )
-                      else
-                        _StarProgress(clueLevel: clueLevel),
+                          const SizedBox(width: 8),
+                          if (joined)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: factionColor.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                    color: factionColor.withValues(alpha: 0.5)),
+                              ),
+                              child: Text(
+                                '가입',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: factionColor,
+                                ),
+                              ),
+                            )
+                          else
+                            _StarProgress(clueLevel: clueLevel),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        clueLevel >= 2 ? faction.description : '???',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    clueLevel >= 2 ? faction.description : '???',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right,
+                    color: AppTheme.textHint, size: 20),
+              ],
+            ),
+          ),
+        ),
+        // FR-G3: 활성 contact 보유 시 분홍 dot 표시
+        if (hasActiveContact)
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                color: AppTheme.namedAccent,
+                shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right,
-                color: AppTheme.textHint, size: 20),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
+  }
+
+  bool _hasActiveContact(WidgetRef ref) {
+    final staticData = ref.read(staticDataProvider).value;
+    if (staticData == null) return false;
+    for (final contact in staticData.factionContacts) {
+      if (contact.factionId != faction.id) continue;
+      if (FactionContactService.isActive(contact.id, ref)) return true;
+    }
+    return false;
   }
 }
 

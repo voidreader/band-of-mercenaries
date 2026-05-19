@@ -5,10 +5,10 @@ import 'package:band_of_mercenaries/core/data/hive_initializer.dart';
 import 'package:band_of_mercenaries/core/data/settings_keys.dart';
 
 enum SyncStatus {
-  fullDownload,  // 첫 실행: 전체 다운로드
-  updated,       // 변경된 테이블 갱신됨
-  noChanges,     // 변경 없음
-  offline,       // 서버 연결 실패, 캐시 사용
+  fullDownload, // 첫 실행: 전체 다운로드
+  updated, // 변경된 테이블 갱신됨
+  noChanges, // 변경 없음
+  offline, // 서버 연결 실패, 캐시 사용
 }
 
 class SyncService {
@@ -48,13 +48,29 @@ class SyncService {
     'band_achievement_templates', // 30. 위업 템플릿 (M6 페이즈 4 #1 추가)
     'titles', // 31. 칭호 (M6 페이즈 4 #2 추가)
     'region_adjacency', // 32. 지역 인접성 (M7 페이즈 4 #3 추가)
+    'faction_contacts', // 33. 세력 접촉점 (M8a 페이즈 4 #1 추가)
+    'faction_reactions', // 34. 세력 반응 텍스트 (M8a 페이즈 4 #1 추가)
+    'faction_shop_items', // 35. 세력 상점 아이템 (M8a 페이즈 4 #1 추가)
+    'combat_report_templates', // 36. 전투 보고서 템플릿 (M8a 페이즈 4 #2 추가)
+    'combat_report_keywords', // 37. 전투 보고서 키워드 (M8a 페이즈 4 #2 추가)
   ];
 
-  SyncService({
-    required SupabaseClient client,
-    required DataLoader dataLoader,
-  })  : _client = client,
-        _dataLoader = dataLoader;
+  /// 아직 후속 스키마 명세/마이그레이션 전에도 로컬 앱이 기동 가능해야 하는
+  /// M8a 신규 테이블. 존재하면 동기화하고, 없으면 빈 데이터로 동작한다.
+  static const Set<String> optionalTables = {
+    'faction_contacts',
+    'faction_reactions',
+    'faction_shop_items',
+    'combat_report_templates',
+    'combat_report_keywords',
+  };
+
+  static List<String> get requiredTables =>
+      allTables.where((table) => !optionalTables.contains(table)).toList();
+
+  SyncService({required SupabaseClient client, required DataLoader dataLoader})
+    : _client = client,
+      _dataLoader = dataLoader;
 
   Box get _settingsBox => Hive.box(HiveInitializer.settingsBoxName);
 
@@ -138,7 +154,8 @@ class SyncService {
   /// 전체 테이블 다운로드 (첫 실행)
   Future<void> _fullDownload() async {
     try {
-      await _downloadTables(allTables);
+      await _downloadTables(requiredTables);
+      await _downloadOptionalTables(optionalTables);
       final serverVersions = await _fetchServerVersions();
       _saveLocalVersions(serverVersions);
     } catch (e) {
@@ -149,8 +166,18 @@ class SyncService {
 
   /// 지정된 테이블들 다운로드 + 캐시 저장
   Future<void> _downloadTables(List<String> tableNames) async {
+    await Future.wait(tableNames.map((table) => _downloadTable(table)));
+  }
+
+  Future<void> _downloadOptionalTables(Iterable<String> tableNames) async {
     await Future.wait(
-      tableNames.map((table) => _downloadTable(table)),
+      tableNames.map((table) async {
+        try {
+          await _downloadTable(table);
+        } catch (_) {
+          // 후속 정적 데이터 스키마 적용 전 환경에서는 optional 테이블이 없을 수 있다.
+        }
+      }),
     );
   }
 

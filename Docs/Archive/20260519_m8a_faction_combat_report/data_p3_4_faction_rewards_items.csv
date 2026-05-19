@@ -1,0 +1,5 @@
+id,name,description,flavor_text,category,slot,tier,effect_json,region_exclusive
+guild_artifact_record_compass,기록원의 나침반,artifact / 명성+5%,길드 기록원이 폐광 지도 조각과 바람길 표본을 맞춰 만든 작은 나침반. 정확한 방향보다 기록해야 할 방향을 가리킨다.,guild_equipment,artifact,3,"{""reputation_gain_modifier"":0.05}",
+guild_artifact_trade_seal,교역 인장 장식,artifact / 골드+3%,상인 연합의 인장 조각을 가죽끈에 묶은 장식. 길 위의 거래에서 이름값을 조금 올려 준다.,guild_equipment,artifact,3,"{""gold_reward_multiplier"":0.03}",
+guild_artifact_merchant_warrant,상단 보증서,artifact / 골드+2% 명성+5%,케일이 보증한 작은 증서. 더스트빌 밖의 상인들도 이 이름을 한번쯤 확인한다.,guild_equipment,artifact,3,"{""gold_reward_multiplier"":0.02,""reputation_gain_modifier"":0.05}",
+equip_accessory_red_spear_wristwrap,붉은 창의 손목끈,accessory / VIT +4,부서진 요새 결투장에서 승자를 표시하던 붉은 끈. 손목에 감으면 숨을 고르는 버릇이 남는다.,personal_equipment,accessory,3,"{""vit"":4}",

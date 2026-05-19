@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/features/quest/data/quest_repository.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_generator.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_report_service.dart';
 import 'package:band_of_mercenaries/core/models/quest_pool.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart'
@@ -48,6 +49,8 @@ import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.d
 import 'package:band_of_mercenaries/features/title/domain/title_provider.dart';
 import 'package:band_of_mercenaries/features/title/domain/title_service_provider.dart';
 import 'package:band_of_mercenaries/features/title/domain/mercenary_title_effects.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_contact_service.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_reward_service.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -247,6 +250,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       reputation: userData.reputation,
       ranks: staticData.ranks,
     );
+    // FR-B2 — M8a 세력 지명 의뢰 hook 평가 컨텍스트(region flag / contact)
+    final hookFields = _buildHookFieldsForGenerator();
     final quests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -284,6 +289,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       regionState: ref
           .read(regionStateRepositoryProvider)
           .getState(userData.region),
+      // FR-B2 — M8a 신규 hook 평가 컨텍스트(region flag / contact)
+      unlockedRegionFlags: hookFields.unlockedRegionFlags,
+      activeContactIds: hookFields.activeContactIds,
     );
     await _repo.addQuests(quests);
     debugPrint('[BOM][Quest] generateQuests 완료: ${quests.length}개 생성');
@@ -464,6 +472,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       reputation: userData.reputation,
       ranks: staticData.ranks,
     );
+    // FR-B2 — M8a 세력 지명 의뢰 hook 평가 컨텍스트(region flag / contact)
+    final hookFields = _buildHookFieldsForGenerator();
     final newQuests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -501,6 +511,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       regionState: ref
           .read(regionStateRepositoryProvider)
           .getState(userData.region),
+      // FR-B2 — M8a 신규 hook 평가 컨텍스트(region flag / contact)
+      unlockedRegionFlags: hookFields.unlockedRegionFlags,
+      activeContactIds: hookFields.activeContactIds,
     );
     await _repo.addQuests(newQuests);
     // M6 페이즈 4 #3 — 지명 의뢰 쿨다운 갱신
@@ -664,6 +677,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       reputation: userData.reputation,
       ranks: staticData.ranks,
     );
+    // FR-B2 — M8a 세력 지명 의뢰 hook 평가 컨텍스트(region flag / contact)
+    final hookFields = _buildHookFieldsForGenerator();
     final newQuests = QuestGenerator.generateQuests(
       regionTier: region.regionTier,
       regionId: userData.region,
@@ -701,6 +716,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       regionState: ref
           .read(regionStateRepositoryProvider)
           .getState(userData.region),
+      // FR-B2 — M8a 신규 hook 평가 컨텍스트(region flag / contact)
+      unlockedRegionFlags: hookFields.unlockedRegionFlags,
+      activeContactIds: hookFields.activeContactIds,
     );
     await _repo.addQuests(newQuests);
     // M6 페이즈 4 #3 — 지명 의뢰 쿨다운 갱신
@@ -851,6 +869,48 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     if (result.renderedNarrative != null) {
       quest.renderedNarrative = result.renderedNarrative;
       await quest.save();
+    }
+
+    // M8a 페이즈 4 #2 — 전투 보고서 생성 (fail-soft trailing)
+    if (result.combatReportEligible && quest.combatReport == null) {
+      try {
+        final userData = ref.read(userDataProvider);
+        if (userData != null) {
+          final partyMercs = quest.dispatchedMercIds
+              .map((id) => mercs.where((m) => m.id == id).firstOrNull)
+              .whereType<Mercenary>()
+              .toList();
+          final regionState = ref
+              .read(regionStateRepositoryProvider)
+              .getState(quest.region);
+          final factionStates = ref
+              .read(factionStateRepositoryProvider)
+              .getAll();
+          final report = CombatReportService.generate(
+            quest: quest,
+            partyMercs: partyMercs,
+            resultType: result.resultType,
+            staticData: staticData,
+            userData: userData,
+            factionStates: factionStates,
+            templateEngine: ref.read(templateEngineProvider),
+            regionState: regionState,
+            sectorChanges: regionState?.sectorChanges,
+          );
+          if (report != null) {
+            quest.combatReport = report;
+            await quest.save();
+            await ref
+                .read(activityLogProvider.notifier)
+                .addLog(
+                  '전투 보고서: ${quest.questName}',
+                  ActivityLogType.combatReportGenerated,
+                );
+          }
+        }
+      } catch (e, st) {
+        debugPrint('[BOM][CombatReport] 생성 실패: $e\n$st');
+      }
     }
 
     final resultText =
@@ -1308,11 +1368,63 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       await ref.read(userDataProvider.notifier).addReputation(result.repGain);
     }
 
-    // 세력 평판 지급
-    if (result.factionTag != null && result.factionRepGain > 0) {
-      ref
-          .read(factionStateRepositoryProvider)
-          .addReputation(result.factionTag!, result.factionRepGain);
+    // 세력 평판 지급 (FR-C3 / FR-C4 / FR-E2 / FR-E5)
+    final factionTag = result.factionTag;
+    final factionRepGain = result.factionRepGain;
+    if (factionTag != null && factionRepGain != 0) {
+      final factionRepo = ref.read(factionStateRepositoryProvider);
+
+      // FR-C4 — addReputation 전후 oldRep / newRep 캐시 (trailing hook 입력)
+      final oldRep = factionRepo.getState(factionTag)?.currentReputation ?? 0;
+      await factionRepo.addReputation(factionTag, factionRepGain);
+      final newRep =
+          factionRepo.getState(factionTag)?.currentReputation ?? oldRep;
+
+      // FR-C3 — ActivityLog factionReputationChanged ({세력명} 평판 +N)
+      try {
+        String factionName = factionTag;
+        final staticData = ref.read(staticDataProvider).value;
+        if (staticData != null) {
+          for (final f in staticData.factions) {
+            if (f.id == factionTag) {
+              factionName = f.name;
+              break;
+            }
+          }
+        }
+        final sign = factionRepGain > 0 ? '+' : '';
+        ref.read(activityLogProvider.notifier).addLog(
+              '$factionName 평판 $sign$factionRepGain',
+              ActivityLogType.factionReputationChanged,
+            );
+      } on Exception catch (e) {
+        debugPrint('[BOM][Faction] activityLog factionReputationChanged 실패: $e');
+      }
+
+      // FR-E2 — TitleService.evaluateFactionReputationHook fail-soft
+      try {
+        final targetMercId =
+            ref.read(userDataProvider)?.lastDispatchProtagonistMercId;
+        await ref.read(titleServiceProvider).evaluateFactionReputationHook(
+              factionId: factionTag,
+              oldRep: oldRep,
+              newRep: newRep,
+              targetMercId: targetMercId,
+            );
+      } on Exception catch (e) {
+        debugPrint('[BOM][Title] evaluateFactionReputationHook 실패: $e');
+      }
+
+      // FR-E5 — FactionRewardService.grantItemRewardIfEligible fail-soft
+      try {
+        await FactionRewardService.grantItemRewardIfEligibleFromProviderRef(
+          factionId: factionTag,
+          newRep: newRep,
+          ref: ref,
+        );
+      } on Exception catch (e) {
+        debugPrint('[BOM][Faction] grantItemRewardIfEligible 실패: $e');
+      }
     }
 
     // 전용 퀘스트 완료 시 쿨다운 기록
@@ -1517,6 +1629,41 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
   Set<String> _currentTriggeredDiscoveries(int regionId) {
     final state = ref.read(regionStateRepositoryProvider).getState(regionId);
     return state?.triggeredDiscoveries.toSet() ?? const {};
+  }
+
+  /// FR-B2 — M8a 세력 지명 의뢰 hook 평가용 컨텍스트 필드.
+  ///
+  /// `NamedHookContextBuilder.build(WidgetRef)`와 동일한 read 기반 정책을 적용하되,
+  /// quest_provider는 [Ref]를 사용하므로 동일 로직을 inline으로 재구성한다.
+  /// 매 호출 시 ref.read로 최신 region flag / contact 활성 상태를 수집.
+  ({Map<int, Set<String>> unlockedRegionFlags, Set<String> activeContactIds})
+      _buildHookFieldsForGenerator() {
+    final staticData = ref.read(staticDataProvider).value;
+    final unlockedRegionFlags = <int, Set<String>>{};
+    final activeContactIds = <String>{};
+    if (staticData == null) {
+      return (
+        unlockedRegionFlags: unlockedRegionFlags,
+        activeContactIds: activeContactIds,
+      );
+    }
+    final regionRepo = ref.read(regionStateRepositoryProvider);
+    for (final region in staticData.regions) {
+      final regionState = regionRepo.getState(region.region);
+      final flags = regionState?.unlockedFlags ?? const <String>[];
+      if (flags.isNotEmpty) {
+        unlockedRegionFlags[region.region] = flags.toSet();
+      }
+    }
+    for (final contact in staticData.factionContacts) {
+      if (FactionContactService.isActiveFromProviderRef(contact.id, ref)) {
+        activeContactIds.add(contact.id);
+      }
+    }
+    return (
+      unlockedRegionFlags: unlockedRegionFlags,
+      activeContactIds: activeContactIds,
+    );
   }
 
   /// M6 페이즈 4 #3 — 발급된 퀘스트 목록 중 isNamed=true인 pool에 대해

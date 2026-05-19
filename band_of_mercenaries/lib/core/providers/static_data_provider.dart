@@ -35,6 +35,11 @@ import 'package:band_of_mercenaries/core/models/quest_pool_material_drop_data.da
 import 'package:band_of_mercenaries/core/models/band_achievement_template.dart'; // M6 페이즈 4 #1 추가
 import 'package:band_of_mercenaries/core/models/title_data.dart'; // M6 페이즈 4 #2 추가
 import 'package:band_of_mercenaries/core/models/region_adjacency.dart'; // M7 페이즈 4 #3 추가
+import 'package:band_of_mercenaries/features/info/domain/faction_contact_data.dart'; // M8a 페이즈 4 #1 추가
+import 'package:band_of_mercenaries/features/info/domain/faction_reaction_data.dart'; // M8a 페이즈 4 #1 추가
+import 'package:band_of_mercenaries/features/info/domain/faction_shop_item_data.dart'; // M8a 페이즈 4 #1 추가
+import 'package:band_of_mercenaries/core/models/combat_report_template.dart'; // M8a 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/core/models/combat_report_keyword.dart'; // M8a 페이즈 4 #2 추가
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -70,6 +75,11 @@ class StaticGameData {
   final List<BandAchievementTemplate>
   bandAchievementTemplates; // M6 페이즈 4 #1 추가
   final List<TitleData> titles; // M6 페이즈 4 #2 추가
+  final List<FactionContact> factionContacts; // M8a 페이즈 4 #1 추가
+  final List<FactionReaction> factionReactions; // M8a 페이즈 4 #1 추가
+  final List<FactionShopItem> factionShopItems; // M8a 페이즈 4 #1 추가
+  final List<CombatReportTemplate> combatReportTemplates; // M8a 페이즈 4 #2 추가
+  final List<CombatReportKeyword> combatReportKeywords; // M8a 페이즈 4 #2 추가
 
   StaticGameData({
     required this.difficulties,
@@ -104,6 +114,11 @@ class StaticGameData {
     required this.questPoolMaterialDrops, // M5 추가
     required this.bandAchievementTemplates, // M6 페이즈 4 #1 추가
     required this.titles, // M6 페이즈 4 #2 추가
+    required this.factionContacts, // M8a 페이즈 4 #1 추가
+    required this.factionReactions, // M8a 페이즈 4 #1 추가
+    required this.factionShopItems, // M8a 페이즈 4 #1 추가
+    required this.combatReportTemplates, // M8a 페이즈 4 #2 추가
+    required this.combatReportKeywords, // M8a 페이즈 4 #2 추가
   });
 
   /// from_region → (to_region → distance_units) 인덱싱 (M7 페이즈 4 #3)
@@ -125,7 +140,7 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
   final cacheBox = Hive.box<String>(HiveInitializer.staticDataCacheBoxName);
   final dataLoader = DataLoader(cacheBox: cacheBox);
 
-  dataLoader.validateRequiredCaches(SyncService.allTables);
+  dataLoader.validateRequiredCaches(SyncService.requiredTables);
 
   return StaticGameData(
     difficulties: dataLoader.loadFromCache('difficulties', Difficulty.fromJson),
@@ -223,5 +238,25 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
       'titles',
       TitleData.fromJson,
     ), // M6 페이즈 4 #2 추가
+    factionContacts: dataLoader.loadFromCache(
+      'faction_contacts',
+      FactionContact.fromJson,
+    ), // M8a 페이즈 4 #1 추가
+    factionReactions: dataLoader.loadFromCache(
+      'faction_reactions',
+      FactionReaction.fromJson,
+    ), // M8a 페이즈 4 #1 추가
+    factionShopItems: dataLoader.loadFromCache(
+      'faction_shop_items',
+      FactionShopItem.fromJson,
+    ), // M8a 페이즈 4 #1 추가
+    combatReportTemplates: dataLoader.loadFromCache(
+      'combat_report_templates',
+      CombatReportTemplate.fromJson,
+    ), // M8a 페이즈 4 #2 추가
+    combatReportKeywords: dataLoader.loadFromCache(
+      'combat_report_keywords',
+      CombatReportKeyword.fromJson,
+    ), // M8a 페이즈 4 #2 추가
   );
 });

@@ -30,6 +30,8 @@ class DialogTypeRegistry {
   static const String regionStateChanged = 'regionStateChanged';
   // M7 페이즈 4 #5 — 마을 기반시설 업그레이드 다이얼로그
   static const String settlementInfrastructureUpgraded = 'settlementInfrastructureUpgraded';
+  // M8a — 세력 접촉점 도착 다이얼로그 (FR-G2)
+  static const String factionContactArrived = 'factionContactArrived';
 
   /// 등록된 전체 dialogType 키 집합. 영속 복원 시 필터링 기준으로 사용.
   static Set<String> get keys => {
@@ -46,6 +48,7 @@ class DialogTypeRegistry {
     titleUnlocked,
     regionStateChanged,
     settlementInfrastructureUpgraded,
+    factionContactArrived,
   };
 }
 
@@ -206,6 +209,12 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
         return '지역 상태가 변경되었습니다.';
       case DialogTypeRegistry.settlementInfrastructureUpgraded:
         return '마을의 기반시설이 업그레이드되었습니다.';
+      case DialogTypeRegistry.factionContactArrived:
+        final npcName = map['npcName'];
+        final factionName = map['factionName'];
+        return (npcName == null || factionName == null)
+            ? '세력 접촉점이 새로 활성화되었습니다.'
+            : '$factionName의 $npcName이(가) 도착했습니다.';
       default:
         return '표시되지 않은 알림이 있습니다.';
     }

@@ -15,7 +15,7 @@ class TemplateVariableSpec {
 }
 
 class TemplateVariableCatalog {
-  static const Set<String> namespaces = {'merc', 'quest', 'region', 'world'};
+  static const Set<String> namespaces = {'merc', 'quest', 'region', 'world', 'ally', 'enemy'};
 
   static const List<TemplateVariableSpec> entries = [
     // merc.* (9개)
@@ -54,6 +54,12 @@ class TemplateVariableCatalog {
     TemplateVariableSpec(namespace: 'world', field: 'rank_ko',         type: TemplateVariableType.string),
     TemplateVariableSpec(namespace: 'world', field: 'gold',            type: TemplateVariableType.integer),
     TemplateVariableSpec(namespace: 'world', field: 'joined_factions', type: TemplateVariableType.integer),
+
+    // ally.* (1개)
+    TemplateVariableSpec(namespace: 'ally', field: 'name', type: TemplateVariableType.string),
+
+    // enemy.* (1개)
+    TemplateVariableSpec(namespace: 'enemy', field: 'name', type: TemplateVariableType.string),
   ];
 
   static final Map<String, TemplateVariableSpec> _byKey = {

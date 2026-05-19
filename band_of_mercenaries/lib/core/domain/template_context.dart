@@ -21,6 +21,7 @@ class TemplateContext with _$TemplateContext {
     int? currentSectorIndex,
     @Default(<Mercenary>[]) List<Mercenary> rosterForTeam,
     String? eliteId,
+    String? allyName,
     String? enemyName,
     int? seed,
     @Default(EvaluationScope.mercenary) EvaluationScope evaluationScope,

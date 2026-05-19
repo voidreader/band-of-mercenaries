@@ -5,6 +5,8 @@ import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_provider.dart';
 import 'package:band_of_mercenaries/core/models/crafting_recipe_data.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/achievement_service_provider.dart';
+import 'package:band_of_mercenaries/features/info/data/faction_state_repository.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_contact_service.dart';
 import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
 import 'package:band_of_mercenaries/features/investigation/data/region_state_repository.dart';
 import 'package:band_of_mercenaries/features/chain_quest/data/chain_quest_repository.dart';
@@ -21,6 +23,10 @@ final craftingServiceProvider = Provider<CraftingService>((ref) {
     userDataNotifier: ref.read(userDataProvider.notifier),
     activityLogNotifier: ref.read(activityLogProvider.notifier),
     achievementService: ref.read(achievementServiceProvider),
+    // FR-F1: 세력 평판·접촉점 기반 해금 조건 DI
+    factionStateRepository: ref.read(factionStateRepositoryProvider),
+    isFactionContactActive: (id) =>
+        FactionContactService.isActiveFromProviderRef(id, ref),
   );
 });
 

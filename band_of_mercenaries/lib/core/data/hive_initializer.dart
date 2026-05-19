@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_report_model.dart';
 import 'package:band_of_mercenaries/core/models/user_data.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_model.dart';
 import 'package:band_of_mercenaries/core/domain/activity_log_repository.dart';
@@ -12,6 +13,7 @@ import 'package:band_of_mercenaries/core/models/persisted_dialog_entry.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_shop_daily_entry.dart';
 
 class HiveInitializer {
   static const String userBoxName = 'user';
@@ -33,6 +35,7 @@ class HiveInitializer {
     Hive.registerAdapter(MercenaryAdapter());
     Hive.registerAdapter(QuestStatusAdapter());
     Hive.registerAdapter(QuestResultAdapter());
+    Hive.registerAdapter(CombatReportAdapter()); // M8a 페이즈 4 #2
     Hive.registerAdapter(ActiveQuestAdapter());
     Hive.registerAdapter(UserDataAdapter());
     Hive.registerAdapter(ActivityLogTypeAdapter());
@@ -40,6 +43,7 @@ class HiveInitializer {
     Hive.registerAdapter(RegionStateAdapter());
     Hive.registerAdapter(FactionClueRecordAdapter());
     Hive.registerAdapter(FactionStateAdapter());
+    Hive.registerAdapter(FactionShopDailyEntryAdapter()); // M8a 페이즈 4 #1
     Hive.registerAdapter(InventoryItemAdapter());
     Hive.registerAdapter(ChainQuestStatusAdapter());
     Hive.registerAdapter(ChainQuestProgressAdapter());

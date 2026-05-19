@@ -19,6 +19,12 @@ String? _resolveVariable(String namespace, String field, TemplateContext ctx) {
     case 'world':
       return _resolveWorldField(field, ctx);
 
+    case 'ally':
+      return _resolveAllyField(field, ctx);
+
+    case 'enemy':
+      return _resolveEnemyField(field, ctx);
+
     default:
       return null;
   }
@@ -118,6 +124,24 @@ String? _resolveWorldField(String field, TemplateContext ctx) {
       return ctx.user.gold.toString();
     case 'joined_factions':
       return ctx.factionStates.where((f) => f.isJoined).length.toString();
+    default:
+      return null;
+  }
+}
+
+String? _resolveAllyField(String field, TemplateContext ctx) {
+  switch (field) {
+    case 'name':
+      return ctx.allyName ?? ctx.merc?.name;
+    default:
+      return null;
+  }
+}
+
+String? _resolveEnemyField(String field, TemplateContext ctx) {
+  switch (field) {
+    case 'name':
+      return ctx.enemyName ?? '적';
     default:
       return null;
   }
