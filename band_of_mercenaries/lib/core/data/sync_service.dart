@@ -55,9 +55,13 @@ class SyncService {
     'combat_report_keywords', // 37. 전투 보고서 키워드 (M8a 페이즈 4 #2 추가)
   ];
 
-  /// 아직 후속 스키마 명세/마이그레이션 전에도 로컬 앱이 기동 가능해야 하는
-  /// M8a 신규 테이블. 존재하면 동기화하고, 없으면 빈 데이터로 동작한다.
+  /// 비어 있어도 로컬 앱이 기동 가능해야 하는 보조 정적 데이터.
+  ///
+  /// region_sectors는 M4에서 더스트플레인 fallback을 코드로 보유하고, DB 시드는
+  /// 후속 일괄 배포 전까지 0행을 허용한다. M8a 신규 테이블도 존재하면 동기화하고,
+  /// 없거나 비어 있으면 빈 데이터로 동작한다.
   static const Set<String> optionalTables = {
+    'region_sectors',
     'faction_contacts',
     'faction_reactions',
     'faction_shop_items',
@@ -93,6 +97,7 @@ class SyncService {
       // 자가치유: 빈 배열로 캐시된 테이블이 있으면 재다운로드 대상에 포함.
       // 과거에 sync 시점 supabase가 비어있어 '[]'로 저장된 케이스 복구용.
       for (final table in serverVersions.keys) {
+        if (optionalTables.contains(table)) continue;
         if (_dataLoader.isCacheEmpty(table) && !changedTables.contains(table)) {
           changedTables.add(table);
         }
