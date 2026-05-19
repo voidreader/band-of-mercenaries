@@ -1,0 +1,11 @@
+id,kind,display_label,default_duration_turns,default_intensity,stack_policy,hook_target,apply_method,description
+buff_attack_up,buff,공격력 강화,2,0.20,refresh,"[""attack""]",multiplicative,공격력을 곱셈으로 강화한다.
+buff_defense_up,buff,방어력 강화,3,0.20,refresh,"[""defense""]",multiplicative,방어값을 곱셈으로 강화한다.
+buff_accuracy_up,buff,명중 강화,2,0.15,refresh,"[""hit""]",additive,명중률을 가산으로 강화한다.
+buff_evasion_up,buff,회피 강화,2,0.10,refresh,"[""evasion""]",additive,회피율을 가산으로 강화한다.
+debuff_attack_down,debuff,공격력 약화,2,0.20,refresh,"[""attack""]",multiplicative,공격력을 곱셈으로 약화한다.
+debuff_defense_down,debuff,방어력 약화,3,0.25,refresh,"[""defense""]",multiplicative,방어값을 곱셈으로 약화한다.
+debuff_accuracy_down,debuff,명중 약화,2,0.10,refresh,"[""hit""]",additive,명중률을 가산으로 약화한다.
+mez_stunned,mez,기절,1,1,refresh,"[""action_skip""]",none,행동 1회를 스킵한다. 회피·방어 판정은 정상.
+dot_bleeding,dot,출혈,3,1,stack,"[""round_end""]",proportional,라운드 종료마다 maxHp×0.04×stack 비례 피해.
+dot_poisoned,dot,중독,3,3,stack,"[""round_start""]",absolute,라운드 시작마다 intensity×5+level×2 절대 피해.
