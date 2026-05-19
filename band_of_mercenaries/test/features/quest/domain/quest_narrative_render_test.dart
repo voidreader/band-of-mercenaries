@@ -90,6 +90,9 @@ StaticGameData _makeStaticData({List<QuestNarrativeData> questNarratives = const
     factionShopItems: const [],
     combatReportTemplates: const [],
     combatReportKeywords: const [],
+    combatSkills: const [],
+    combatStatusEffects: const [],
+    enemyArchetypes: const [],
   );
 }
 

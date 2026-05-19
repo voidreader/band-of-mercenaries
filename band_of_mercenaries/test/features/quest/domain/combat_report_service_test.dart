@@ -8,7 +8,9 @@ import 'package:band_of_mercenaries/core/models/user_data.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_enums_hive.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_report_service.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 
 const _engine = TemplateEngine();
@@ -163,6 +165,9 @@ StaticGameData _makeStaticData({
     factionShopItems: const [],
     combatReportTemplates: combatReportTemplates,
     combatReportKeywords: combatReportKeywords,
+    combatSkills: const [],
+    combatStatusEffects: const [],
+    enemyArchetypes: const [],
   );
 }
 
@@ -425,6 +430,44 @@ void main() {
       );
 
       expect(report, isNull);
+    });
+
+    test('simulationResult가 있으면 템플릿이 없어도 최소 보고서를 반환한다', () {
+      final staticData = _makeStaticData(combatReportTemplates: const []);
+      final quest = _makeQuest(result: QuestResult.success);
+      final merc = _makeMerc(name: '주인공');
+      final simulationResult = CombatSimulationResult(
+        questResult: QuestResult.success,
+        turns: const [],
+        protagonistMercId: merc.id,
+        featuredMercIds: [merc.id],
+        exitCondition: CombatExitCondition.cObjectiveAchieved,
+        seed: 123,
+        toneTags: const ['decisive'],
+      );
+
+      final report = CombatReportService.generate(
+        quest: quest,
+        partyMercs: [merc],
+        resultType: QuestResult.success,
+        staticData: staticData,
+        userData: _makeUserData(),
+        factionStates: const [],
+        templateEngine: _engine,
+        seed: 0,
+        simulationResult: simulationResult,
+      );
+
+      expect(report, isNotNull);
+      expect(report!.summary, isNotEmpty);
+      expect(report.details, isNotEmpty);
+      expect(report.templateIds, isEmpty);
+      expect(report.schemaVersion, 1);
+      expect(report.turns, same(simulationResult.turns));
+      expect(report.exitCondition, simulationResult.exitCondition);
+      expect(report.objectiveProgress, simulationResult.objectiveProgress);
+      expect(report.featuredMercIds, [merc.id]);
+      expect(report.toneTags, contains('decisive'));
     });
 
     test('partyMercs 빈 리스트 → null 반환 (protagonist null)', () {

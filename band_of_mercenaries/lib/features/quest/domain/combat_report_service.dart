@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dar
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_report_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_narrative_service.dart';
 
@@ -35,6 +36,7 @@ class CombatReportService {
     RegionState? regionState,
     Map<String, String>? sectorChanges,
     int? seed,
+    CombatSimulationResult? simulationResult,
   }) {
     // 1. seed 결정 + 단일 Random 사용 (재현성)
     final effectiveSeed =
@@ -60,7 +62,7 @@ class CombatReportService {
       random: random,
       quest: quest,
     );
-    if (summary == null) return null;
+    if (summary == null && simulationResult == null) return null;
 
     // 6. 상세 N줄 선택
     final details = _pickDetails(
@@ -71,23 +73,46 @@ class CombatReportService {
       random: random,
       quest: quest,
     );
-    if (details.isEmpty) return null;
+    if (details.isEmpty && simulationResult == null) return null;
 
     // 7. 주인공 선택
-    final protagonist = QuestNarrativeService.pickProtagonist(
+    // simulationResult가 있으면 시뮬레이터가 결정한 protagonist 우선
+    Mercenary? protagonist;
+    if (simulationResult != null &&
+        simulationResult.protagonistMercId != null) {
+      protagonist = partyMercs
+          .where((m) => m.id == simulationResult.protagonistMercId)
+          .firstOrNull;
+    }
+    protagonist ??= QuestNarrativeService.pickProtagonist(
       partyMercs,
       quest.questTypeId,
     );
-    if (protagonist == null) return null;
+
+    // simulationResult가 있으면 protagonist null이어도 fallback 보고서 생성 (FR-9.2)
+    if (protagonist == null && simulationResult == null) return null;
+
+    // partyMercs가 비어 있으면 렌더링 불가 — abort
+    if (protagonist == null && partyMercs.isEmpty) return null;
 
     // 8. 보조 선택
-    final ally = _pickAlly(partyMercs, protagonist, random) ?? protagonist;
+    final ally = protagonist != null
+        ? (_pickAlly(partyMercs, protagonist, random) ?? protagonist)
+        : null;
 
     // 9. featuredMercIds dedup
-    final featuredMercIds = <String>{
-      protagonist.id,
-      ally.id,
-    }.toList(growable: false);
+    final List<String> featuredMercIds;
+    if (simulationResult != null &&
+        simulationResult.featuredMercIds.isNotEmpty) {
+      featuredMercIds = List<String>.from(simulationResult.featuredMercIds);
+    } else if (protagonist != null) {
+      featuredMercIds = <String>{
+        protagonist.id,
+        if (ally != null) ally.id,
+      }.toList(growable: false);
+    } else {
+      featuredMercIds = const [];
+    }
 
     // 10. enemyName 결정
     final enemyName = _resolveEnemyName(
@@ -97,6 +122,10 @@ class CombatReportService {
     );
 
     // 11. 템플릿 렌더링
+    // protagonist null이면 partyMercs.first를 context용으로 사용
+    final contextMerc = protagonist ?? partyMercs.firstOrNull;
+    if (contextMerc == null) return null;
+
     final region = staticData.regions
         .where((r) => r.region == quest.region)
         .firstOrNull;
@@ -106,26 +135,31 @@ class CombatReportService {
     final context = TemplateContext(
       user: userData,
       quest: quest,
-      merc: protagonist,
+      merc: contextMerc,
       region: region,
       factionStates: factionStates,
       sectorChanges: convertedSectorChanges,
       currentSectorIndex: userData.sector,
-      allyName: ally.name,
+      allyName: ally?.name,
       enemyName: enemyName,
       eliteId: quest.eliteId,
       seed: effectiveSeed,
       evaluationScope: EvaluationScope.mercenary,
     );
 
-    final renderedSummary = templateEngine.render(summary.template, context);
-    final renderedDetails = details
-        .map((t) => templateEngine.render(t.template, context))
-        .toList(growable: false);
+    final renderedSummary = summary != null
+        ? templateEngine.render(summary.template, context)
+        : _fallbackSimulationSummary(quest, resultType, simulationResult);
+    final renderedDetails = details.isNotEmpty
+        ? details
+              .map((t) => templateEngine.render(t.template, context))
+              .toList(growable: false)
+        : _fallbackSimulationDetails(simulationResult);
 
     // 12. toneTags 평탄화 + dedup
     final tagSet = <String>{};
-    for (final tpl in <CombatReportTemplate>[summary, ...details]) {
+    final tplsForTags = <CombatReportTemplate>[?summary, ...details];
+    for (final tpl in tplsForTags) {
       final tags = tpl.parsedTags;
       for (final key in const ['tone', 'beat', 'scene', 'mood', 'faction']) {
         final value = tags[key];
@@ -139,25 +173,72 @@ class CombatReportService {
       }
     }
 
+    // M8b 페이즈 4 #3 — simulationResult.toneTags 합집합
+    if (simulationResult != null) {
+      tagSet.addAll(simulationResult.toneTags);
+    }
+
     // 13. templateIds
-    final templateIds = <String>[summary.id, ...details.map((t) => t.id)];
+    final templateIds = <String>[
+      if (summary != null) summary.id,
+      ...details.map((t) => t.id),
+    ];
 
     // 14. CombatReport 반환
     return CombatReport(
       summary: renderedSummary,
       details: renderedDetails,
       seed: effectiveSeed,
-      protagonistMercId: protagonist.id,
+      protagonistMercId: simulationResult?.protagonistMercId ?? protagonist?.id,
       featuredMercIds: featuredMercIds,
       toneTags: tagSet.toList(growable: false),
       createdAt: DateTime.now(),
       templateIds: templateIds,
+      // M8b 페이즈 4 #3 — simulationResult가 있으면 구조 필드 최소 임베드
+      schemaVersion: simulationResult != null ? 1 : null,
+      combatantSnapshots: simulationResult?.combatantSnapshots,
+      turns: simulationResult?.turns,
+      exitCondition: simulationResult?.exitCondition,
+      objectiveProgress: simulationResult?.objectiveProgress,
+      enemySnapshots: simulationResult?.enemySnapshots,
+      statusEffectHistory: simulationResult?.statusEffectHistory,
     );
   }
 
   // ===========================================================================
   // private helpers
   // ===========================================================================
+
+  static String _fallbackSimulationSummary(
+    ActiveQuest quest,
+    QuestResult resultType,
+    CombatSimulationResult? simulationResult,
+  ) {
+    final resultLabel = switch (resultType) {
+      QuestResult.greatSuccess => '대성공',
+      QuestResult.success => '성공',
+      QuestResult.failure => '실패',
+      QuestResult.criticalFailure => '대실패',
+    };
+    final exitLabel = simulationResult?.exitCondition.name;
+    final suffix = exitLabel == null ? '' : ' ($exitLabel)';
+    return '${quest.questName} 전투 기록: $resultLabel$suffix';
+  }
+
+  static List<String> _fallbackSimulationDetails(
+    CombatSimulationResult? simulationResult,
+  ) {
+    if (simulationResult == null) {
+      return const ['전투 상세 기록이 남지 않았다.'];
+    }
+    final injured = simulationResult.injuredMercIds.length;
+    final deceased = simulationResult.deceasedMercIds.length;
+    final rounds = simulationResult.turns.length;
+    return [
+      '전투는 $rounds개 턴 기록으로 보존되었다.',
+      '부상 $injured명, 사망 $deceased명으로 정리되었다.',
+    ];
+  }
 
   /// QuestResult enum → 템플릿 매칭용 snake_case 키 (Q-9).
   static String _resultTypeKey(QuestResult result) {

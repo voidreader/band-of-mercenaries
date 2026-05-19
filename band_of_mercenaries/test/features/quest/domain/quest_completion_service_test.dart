@@ -104,6 +104,9 @@ StaticGameData _makeStaticData({
     factionShopItems: const [],
     combatReportTemplates: const [],
     combatReportKeywords: const [],
+    combatSkills: const [],
+    combatStatusEffects: const [],
+    enemyArchetypes: const [],
   );
 }
 

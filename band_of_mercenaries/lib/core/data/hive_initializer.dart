@@ -14,6 +14,13 @@ import 'package:band_of_mercenaries/features/achievement/domain/band_achievement
 import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_shop_daily_entry.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_enums_hive.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/features/quest/domain/combat_turn.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/features/quest/domain/combat_action.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/features/quest/domain/status_effect_event.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/features/quest/domain/combatant_snapshot.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/features/quest/domain/enemy_snapshot.dart'; // M8b 페이즈 4 #2 추가
 
 class HiveInitializer {
   static const String userBoxName = 'user';
@@ -36,6 +43,17 @@ class HiveInitializer {
     Hive.registerAdapter(QuestStatusAdapter());
     Hive.registerAdapter(QuestResultAdapter());
     Hive.registerAdapter(CombatReportAdapter()); // M8a 페이즈 4 #2
+    // M8b 페이즈 4 #2 — Hive enum (typeId 28~30)
+    Hive.registerAdapter(CombatExitConditionAdapter());      // 28
+    Hive.registerAdapter(BehaviorPatternAdapter());          // 29
+    Hive.registerAdapter(PositionRowAdapter());              // 30
+    // M8b 페이즈 4 #2 — 시뮬레이션 영속 (typeId 22~27)
+    Hive.registerAdapter(CombatSimulationResultAdapter());   // 22
+    Hive.registerAdapter(CombatTurnAdapter());               // 23
+    Hive.registerAdapter(CombatActionAdapter());             // 24
+    Hive.registerAdapter(StatusEffectEventAdapter());        // 25
+    Hive.registerAdapter(CombatantSnapshotAdapter());        // 26
+    Hive.registerAdapter(EnemySnapshotAdapter());            // 27
     Hive.registerAdapter(ActiveQuestAdapter());
     Hive.registerAdapter(UserDataAdapter());
     Hive.registerAdapter(ActivityLogTypeAdapter());

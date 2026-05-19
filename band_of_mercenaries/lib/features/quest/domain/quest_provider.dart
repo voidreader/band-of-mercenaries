@@ -805,6 +805,32 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       ...titleEffects,
     ]);
 
+    // M8b 페이즈 4 #3 ([FR-12.1]): 체인 주인공 사망 저항 90% 상한 활성화를 위해
+    // non-settlement chain의 protagonistMercId를 런타임 플래그로 병합.
+    if (quest.isChainQuest &&
+        quest.isSettlementStep == false &&
+        quest.chainId != null) {
+      try {
+        final chainProgress = ref
+            .read(chainQuestRepositoryProvider)
+            .get(quest.chainId!);
+        final chainProtagonistMercId = chainProgress?.protagonistMercId;
+        if (chainProtagonistMercId != null) {
+          quest.specialFlags = <String, dynamic>{
+            ...?quest.specialFlags,
+            'chain_protagonist_id': chainProtagonistMercId,
+          };
+        }
+      } on Exception catch (e) {
+        debugPrint('[BOM][Quest] chain_protagonist_id 병합 실패: $e');
+      }
+    }
+
+    // M8b 페이즈 4 #3 ([FR-12]): regionState를 시뮬레이터 입력으로 전달
+    final questRegionState = ref
+        .read(regionStateRepositoryProvider)
+        .getState(quest.region);
+
     final result = QuestCompletionService.calculate(
       quest: quest,
       mercs: mercs,
@@ -822,10 +848,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       templateEngine: ref.read(templateEngineProvider),
       userData: userData,
       factionStates: ref.read(factionStateRepositoryProvider).getAll(),
-      sectorChanges: ref
-          .read(regionStateRepositoryProvider)
-          .getState(userData.region)
-          ?.sectorChanges,
+      sectorChanges: questRegionState?.sectorChanges,
       currentTrustLevel: ref
           .read(regionStateRepositoryProvider)
           .getSettlementTrust(quest.region)
@@ -834,6 +857,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           .read(regionStateRepositoryProvider)
           .getState(GameConstants.startingRegionId)
           ?.currentInfrastructureTier ?? 1,
+      regionState: questRegionState,
     );
 
     final difficulty = staticData.difficulties.firstWhere(
@@ -896,6 +920,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
             templateEngine: ref.read(templateEngineProvider),
             regionState: regionState,
             sectorChanges: regionState?.sectorChanges,
+            simulationResult: result.simulationResult, // M8b 페이즈 4 #3 ([FR-13])
           );
           if (report != null) {
             quest.combatReport = report;
@@ -953,7 +978,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     }
 
     // M6 페이즈 4 #1 — 엘리트 유니크 첫 처치 hook
-    if (quest.eliteId != null) {
+    // M8b 페이즈 4 #3 ([FR-15]): 성공·대성공만 grant (실패 시 "처치" 위업 방지)
+    if (quest.eliteId != null &&
+        (result.resultType == QuestResult.success ||
+         result.resultType == QuestResult.greatSuccess)) {
       final eliteData = staticData.eliteMonsters
           .where((e) => e.id == quest.eliteId)
           .firstOrNull;
@@ -1001,7 +1029,10 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     }
 
     // M7 페이즈 4 #1 FR-4c — 엘리트 유니크 처치 시 region dangerScore + flag toggle
-    if (quest.eliteId != null) {
+    // M8b 페이즈 4 #3 ([FR-15]): 성공·대성공만 trailing (실패 시 지역 안정화 방지)
+    if (quest.eliteId != null &&
+        (result.resultType == QuestResult.success ||
+         result.resultType == QuestResult.greatSuccess)) {
       final eliteData = staticData.eliteMonsters
           .where((e) => e.id == quest.eliteId)
           .firstOrNull;

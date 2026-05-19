@@ -25,13 +25,20 @@ class CombatReportAdapter extends TypeAdapter<CombatReport> {
       toneTags: (fields[5] as List).cast<String>(),
       createdAt: fields[6] as DateTime,
       templateIds: (fields[7] as List).cast<String>(),
+      schemaVersion: fields[8] as int?,
+      combatantSnapshots: (fields[9] as List?)?.cast<CombatantSnapshot>(),
+      turns: (fields[10] as List?)?.cast<CombatTurn>(),
+      exitCondition: fields[11] as CombatExitCondition?,
+      objectiveProgress: fields[12] as double?,
+      enemySnapshots: (fields[13] as List?)?.cast<EnemySnapshot>(),
+      statusEffectHistory: (fields[14] as List?)?.cast<StatusEffectEvent>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, CombatReport obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.summary)
       ..writeByte(1)
@@ -47,7 +54,21 @@ class CombatReportAdapter extends TypeAdapter<CombatReport> {
       ..writeByte(6)
       ..write(obj.createdAt)
       ..writeByte(7)
-      ..write(obj.templateIds);
+      ..write(obj.templateIds)
+      ..writeByte(8)
+      ..write(obj.schemaVersion)
+      ..writeByte(9)
+      ..write(obj.combatantSnapshots)
+      ..writeByte(10)
+      ..write(obj.turns)
+      ..writeByte(11)
+      ..write(obj.exitCondition)
+      ..writeByte(12)
+      ..write(obj.objectiveProgress)
+      ..writeByte(13)
+      ..write(obj.enemySnapshots)
+      ..writeByte(14)
+      ..write(obj.statusEffectHistory);
   }
 
   @override

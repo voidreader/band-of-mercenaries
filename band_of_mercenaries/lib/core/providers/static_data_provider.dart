@@ -40,6 +40,9 @@ import 'package:band_of_mercenaries/features/info/domain/faction_reaction_data.d
 import 'package:band_of_mercenaries/features/info/domain/faction_shop_item_data.dart'; // M8a 페이즈 4 #1 추가
 import 'package:band_of_mercenaries/core/models/combat_report_template.dart'; // M8a 페이즈 4 #2 추가
 import 'package:band_of_mercenaries/core/models/combat_report_keyword.dart'; // M8a 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/core/models/combat_skill.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/core/models/combat_status_effect.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/core/models/enemy_archetype.dart'; // M8b 페이즈 4 #2 추가
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -80,6 +83,9 @@ class StaticGameData {
   final List<FactionShopItem> factionShopItems; // M8a 페이즈 4 #1 추가
   final List<CombatReportTemplate> combatReportTemplates; // M8a 페이즈 4 #2 추가
   final List<CombatReportKeyword> combatReportKeywords; // M8a 페이즈 4 #2 추가
+  final List<CombatSkill> combatSkills; // M8b 페이즈 4 #2 추가
+  final List<CombatStatusEffect> combatStatusEffects; // M8b 페이즈 4 #2 추가
+  final List<EnemyArchetype> enemyArchetypes; // M8b 페이즈 4 #2 추가
 
   StaticGameData({
     required this.difficulties,
@@ -119,6 +125,9 @@ class StaticGameData {
     required this.factionShopItems, // M8a 페이즈 4 #1 추가
     required this.combatReportTemplates, // M8a 페이즈 4 #2 추가
     required this.combatReportKeywords, // M8a 페이즈 4 #2 추가
+    required this.combatSkills, // M8b 페이즈 4 #2 추가
+    required this.combatStatusEffects, // M8b 페이즈 4 #2 추가
+    required this.enemyArchetypes, // M8b 페이즈 4 #2 추가
   });
 
   /// from_region → (to_region → distance_units) 인덱싱 (M7 페이즈 4 #3)
@@ -258,5 +267,17 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
       'combat_report_keywords',
       CombatReportKeyword.fromJson,
     ), // M8a 페이즈 4 #2 추가
+    combatSkills: dataLoader.loadFromCache(
+      'combat_skills',
+      CombatSkill.fromJson,
+    ), // M8b 페이즈 4 #2 추가
+    combatStatusEffects: dataLoader.loadFromCache(
+      'combat_status_effects',
+      CombatStatusEffect.fromJson,
+    ), // M8b 페이즈 4 #2 추가
+    enemyArchetypes: dataLoader.loadFromCache(
+      'enemies',
+      EnemyArchetype.fromJson,
+    ), // M8b 페이즈 4 #2 추가
   );
 });

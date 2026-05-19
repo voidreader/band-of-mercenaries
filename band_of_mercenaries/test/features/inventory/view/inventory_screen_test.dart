@@ -133,6 +133,9 @@ StaticGameData _makeStaticData({List<ItemData> items = const []}) {
     factionShopItems: const [],
     combatReportTemplates: const [],
     combatReportKeywords: const [],
+    combatSkills: const [],
+    combatStatusEffects: const [],
+    enemyArchetypes: const [],
   );
 }
 

@@ -1,4 +1,9 @@
 import 'package:hive/hive.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combatant_snapshot.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_turn.dart';
+import 'package:band_of_mercenaries/features/quest/domain/enemy_snapshot.dart';
+import 'package:band_of_mercenaries/features/quest/domain/status_effect_event.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_enums_hive.dart';
 
 part 'combat_report_model.g.dart';
 
@@ -28,6 +33,28 @@ class CombatReport extends HiveObject {
   @HiveField(7)
   List<String> templateIds;
 
+  // M8b 페이즈 4 #2 추가
+  @HiveField(8)
+  int? schemaVersion;
+
+  @HiveField(9)
+  List<CombatantSnapshot>? combatantSnapshots;
+
+  @HiveField(10)
+  List<CombatTurn>? turns;
+
+  @HiveField(11)
+  CombatExitCondition? exitCondition;
+
+  @HiveField(12)
+  double? objectiveProgress;
+
+  @HiveField(13)
+  List<EnemySnapshot>? enemySnapshots;
+
+  @HiveField(14)
+  List<StatusEffectEvent>? statusEffectHistory;
+
   CombatReport({
     required this.summary,
     required this.details,
@@ -37,5 +64,13 @@ class CombatReport extends HiveObject {
     required this.toneTags,
     required this.createdAt,
     required this.templateIds,
+    // M8b 페이즈 4 #2 추가
+    this.schemaVersion,
+    this.combatantSnapshots,
+    this.turns,
+    this.exitCondition,
+    this.objectiveProgress,
+    this.enemySnapshots,
+    this.statusEffectHistory,
   });
 }
