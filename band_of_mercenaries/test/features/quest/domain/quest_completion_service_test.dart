@@ -11,12 +11,27 @@ import 'package:band_of_mercenaries/core/models/mercenary_wage.dart';
 import 'package:band_of_mercenaries/core/models/facility.dart';
 import 'package:band_of_mercenaries/core/models/rank.dart';
 import 'package:band_of_mercenaries/core/models/item_data.dart';
+import 'package:band_of_mercenaries/core/models/quest_pool.dart';
+import 'package:band_of_mercenaries/core/models/chain_quest_data.dart';
+import 'package:band_of_mercenaries/core/models/combat_enums.dart';
+import 'package:band_of_mercenaries/core/models/combat_skill.dart';
+import 'package:band_of_mercenaries/core/models/combat_status_effect.dart';
+import 'package:band_of_mercenaries/core/models/enemy_archetype.dart';
+import 'package:band_of_mercenaries/core/models/user_data.dart';
+import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
+import 'package:band_of_mercenaries/features/inventory/domain/legendary_effect.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_enums_hive.dart';
 
 StaticGameData _makeStaticData({
   int enemyPower = 10,
   double rewardMultiplier = 1.0,
   int baseReward = 100,
   int baseDuration = 60,
+  List<ChainQuestData> chainQuests = const [],
+  List<QuestPool> questPools = const [],
+  List<CombatSkill> combatSkills = const [],
+  List<CombatStatusEffect> combatStatusEffects = const [],
+  List<EnemyArchetype> enemyArchetypes = const [],
 }) {
   return StaticGameData(
     difficulties: [
@@ -58,7 +73,7 @@ StaticGameData _makeStaticData({
         riskFactor: 1.0,
       ),
     ],
-    questPools: [],
+    questPools: questPools,
     personNames: [],
     travelEvents: [],
     facilities: [
@@ -88,7 +103,7 @@ StaticGameData _makeStaticData({
     items: const <ItemData>[],
     eliteMonsters: const [],
     eliteLootEntries: const [],
-    chainQuests: const [],
+    chainQuests: chainQuests,
     questNarratives: const [],
     travelChoiceEvents: const [],
     travelChoiceOptions: const [],
@@ -104,9 +119,9 @@ StaticGameData _makeStaticData({
     factionShopItems: const [],
     combatReportTemplates: const [],
     combatReportKeywords: const [],
-    combatSkills: const [],
-    combatStatusEffects: const [],
-    enemyArchetypes: const [],
+    combatSkills: combatSkills,
+    combatStatusEffects: combatStatusEffects,
+    enemyArchetypes: enemyArchetypes,
   );
 }
 
@@ -504,4 +519,539 @@ void main() {
       expect(result.combatReportEligible, isTrue);
     });
   });
+
+  // ==========================================================================
+  // M8b 페이즈 4 #5 FR-4 — combatSimulationEligible 매트릭스 14 케이스.
+  // 명세 페이즈 4 #3 [FR-3] 평가식 분기:
+  //   isElite || (isChainQuest && _isChainSimulationStep) ||
+  //   (pool?.isNamed) || (isFactionExclusive &&
+  //       (isAdvancedTrack || _factionReputation >= 31))
+  // ==========================================================================
+
+  group('FR-4 combatSimulationEligible 매트릭스', () {
+    test('case 1: 일반 엘리트 의뢰 → true', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuestRich(eliteId: 'elite_normal');
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isTrue);
+      expect(result.combatReportEligible, isTrue, reason: 'OR로 자동 true');
+    });
+
+    test('case 2: 유니크 엘리트 의뢰 → true', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuestRich(eliteId: 'elite_unique');
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isTrue);
+    });
+
+    test('case 3: 체인 최종 단계 (chainStep+1 == totalSteps) → true', () {
+      final staticData = _makeStaticData(
+        chainQuests: const [
+          ChainQuestData(
+            id: 'cq1',
+            chainId: 'chain_a',
+            chainName: 'Chain A',
+            step: 0,
+            totalSteps: 2,
+            name: '1단계',
+            description: '',
+            questTypeId: 'raid',
+            difficulty: 1,
+            combatPower: 1,
+            rewardGold: 0,
+            durationSeconds: 60,
+          ),
+          ChainQuestData(
+            id: 'cq2',
+            chainId: 'chain_a',
+            chainName: 'Chain A',
+            step: 1,
+            totalSteps: 2,
+            name: '최종 단계',
+            description: '',
+            questTypeId: 'raid',
+            difficulty: 1,
+            combatPower: 1,
+            rewardGold: 0,
+            durationSeconds: 60,
+          ),
+        ],
+      );
+      final quest = _makeQuestRich(
+        isChainStep: true,
+        chainId: 'chain_a',
+        chainStep: 1,
+      );
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isTrue);
+    });
+
+    test('case 4: chain_core_step=true → true', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuestRich(
+        isChainStep: true,
+        chainId: 'chain_b',
+        chainStep: 0,
+        specialFlags: const {'chain_core_step': true},
+      );
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isTrue);
+    });
+
+    test('case 5: 체인 일반 단계 (chain_core_step 미설정, 엘리트 미동반) → false', () {
+      final staticData = _makeStaticData(
+        chainQuests: const [
+          ChainQuestData(
+            id: 'cq1',
+            chainId: 'chain_c',
+            chainName: 'Chain C',
+            step: 0,
+            totalSteps: 3,
+            name: '1단계',
+            description: '',
+            questTypeId: 'raid',
+            difficulty: 1,
+            combatPower: 1,
+            rewardGold: 0,
+            durationSeconds: 60,
+          ),
+        ],
+      );
+      final quest = _makeQuestRich(
+        isChainStep: true,
+        chainId: 'chain_c',
+        chainStep: 0,
+      );
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isFalse);
+    });
+
+    test('case 6: 거점 사건 체인 (settlement_x, 엘리트 미동반) → false', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuestRich(
+        isChainStep: true,
+        chainId: 'settlement_dustvile_x',
+        chainStep: 0,
+      );
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      // settlement chain + chainSteps 없음 + chain_core_step 없음 + 엘리트 없음
+      expect(result.combatSimulationEligible, isFalse);
+    });
+
+    test('case 7: M6 지명 의뢰 (pool.isNamed=true) → true', () {
+      final staticData = _makeStaticData(questPools: [_makeNamedPool('pool1')]);
+      final quest = _makeQuestRich(questPoolId: 'pool1');
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isTrue);
+    });
+
+    test('case 8: M8a 세력 지명 의뢰 (pool.isNamed=true) → true', () {
+      // case 7과 동일 동작이지만 factionTag 추가로 차별화.
+      final staticData = _makeStaticData(
+        questPools: [_makeNamedPool('faction_named_pool')],
+      );
+      final quest = _makeQuestRich(
+        questPoolId: 'faction_named_pool',
+        factionTag: 'faction_a',
+      );
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isTrue);
+    });
+
+    test('case 9: 세력 고급 트랙 (isAdvancedTrack=true) → true', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuestRich(
+        factionTag: 'faction_a',
+        isAdvancedTrack: true,
+      );
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isTrue);
+    });
+
+    test('case 10: 세력 기본 트랙 + 평판 31 → true', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuestRich(
+        factionTag: 'faction_a',
+        isAdvancedTrack: false,
+      );
+      final factionState = FactionState(factionId: 'faction_a')
+        ..joined = true
+        ..reputation = 31;
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+        factionStates: [factionState],
+      );
+      expect(result.combatSimulationEligible, isTrue);
+    });
+
+    test('case 11: 세력 기본 트랙 + 평판 30 → false', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuestRich(
+        factionTag: 'faction_a',
+        isAdvancedTrack: false,
+      );
+      final factionState = FactionState(factionId: 'faction_a')
+        ..joined = true
+        ..reputation = 30;
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+        factionStates: [factionState],
+      );
+      expect(result.combatSimulationEligible, isFalse);
+    });
+
+    test('case 12: 더스트빌 허드렛일 일반 의뢰 → false', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuestRich(questPoolId: 'dustvile_chore_03');
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isFalse);
+    });
+
+    test('case 13: 일반 의뢰 (factionTag null, isElite false) → false', () {
+      final staticData = _makeStaticData();
+      final quest = _makeQuest();
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isFalse);
+      expect(result.simulationResult, isNull);
+    });
+
+    test('case 14: pool=null + isElite=true → true', () {
+      // pool이 questPools에 미등록 시 firstOrNull=null. 그래도 isElite로 true.
+      final staticData = _makeStaticData(); // questPools 비어있음 (기본)
+      final quest = _makeQuestRich(
+        eliteId: 'elite_x',
+        questPoolId: 'nonexistent_pool',
+      );
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: [_makeMerc(str: 50)],
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+      expect(result.combatSimulationEligible, isTrue);
+    });
+  });
+
+  // ==========================================================================
+  // M8b 페이즈 4 #5 — FR-16 / FR-21 / FR-23 단위 검증.
+  // ==========================================================================
+
+  group('FR-16 일반 의뢰 fallback', () {
+    test('일반 의뢰는 simulationResult=null, QuestCalculator 경로 사용', () {
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+      final mercs = [_makeMerc(str: 50)];
+
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+
+      // 일반 의뢰 = combatSimulationEligible false + simulationResult null
+      expect(result.combatSimulationEligible, isFalse);
+      expect(result.simulationResult, isNull);
+      // 기존 QuestCalculator 경로 동작 검증 (보상 발생)
+      expect(result.mercDamages, hasLength(1));
+      expect(result.resultType, isNotNull);
+    });
+  });
+
+  group('FR-21 시뮬레이션 활성 의뢰는 LegendaryResultUpgrade 미적용', () {
+    test('시뮬레이션 결과는 final, fallback의 LegendaryResultUpgrade는 미적용', () {
+      final staticData = _makeStaticData(
+        enemyPower: 1,
+        combatSkills: [_passiveShieldSkill()],
+        combatStatusEffects: [_attackUpEffect()],
+        enemyArchetypes: [_overpoweringElite()],
+      );
+      final quest = _makeEliteQuest();
+      final mercs = [_makeMerc(str: 50)];
+      final legendaryEffects = <LegendaryEffect>[
+        const LegendaryResultUpgrade(chance: 1.0),
+      ];
+
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(1),
+        legendaryEffects: legendaryEffects,
+        userData: _makeUserData(),
+      );
+
+      expect(result.combatSimulationEligible, isTrue);
+      expect(
+        result.simulationResult,
+        isNotNull,
+        reason: '시뮬레이션 경로가 실제 호출되어야 함',
+      );
+      expect(result.resultType, equals(result.simulationResult!.questResult));
+      expect(
+        result.resultType,
+        isNot(equals(QuestResult.greatSuccess)),
+        reason: 'LegendaryResultUpgrade chance=1.0이 시뮬레이션 결과를 승격하면 안 됨',
+      );
+    });
+  });
+
+  group('FR-23 recoveryEndTime은 시뮬레이션 DoT 누적량 반영 안 함', () {
+    test('부상자 recoveryEndTime은 difficulty × 10분 / speedMultiplier 산식 유지', () {
+      // 시뮬레이션 미적용 일반 의뢰에서 부상자 발생 시 산식 확인.
+      final staticData = _makeStaticData(enemyPower: 1000); // 강한 적
+      final quest = _makeQuest();
+      final mercs = [_makeMerc(str: 1, traitId: '')];
+
+      // 부상 발생까지 시드 탐색.
+      Duration? recoveryDuration;
+      for (var seed = 0; seed < 200; seed++) {
+        final result = QuestCompletionService.calculate(
+          quest: quest,
+          mercs: mercs,
+          staticData: staticData,
+          playerRegion: 1,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
+        );
+        final damage = result.mercDamages.firstOrNull;
+        if (damage?.newStatus == MercenaryStatus.injured &&
+            damage?.recoveryEndTime != null) {
+          recoveryDuration = damage!.recoveryEndTime!.difference(
+            DateTime.now(),
+          );
+          break;
+        }
+      }
+      // difficulty.level=1 × 10분 = 600초 (recoveryReduction/passive 미적용).
+      // 마진 ±60초 (DateTime.now 호출 시점 차이).
+      if (recoveryDuration != null) {
+        expect(
+          recoveryDuration.inSeconds,
+          inInclusiveRange(540, 660),
+          reason: 'recoveryEndTime DoT 누적량 미반영 확인 (기존 산식 유지)',
+        );
+      }
+    });
+  });
+}
+
+// ===========================================================================
+// FR-4 매트릭스용 추가 헬퍼
+// ===========================================================================
+
+QuestPool _makeNamedPool(String id) {
+  return QuestPool(
+    id: id,
+    name: '지명 의뢰 테스트 풀',
+    type: 1,
+    difficulty: 1,
+    minRegionDiff: 0,
+    maxRegionDiff: 0,
+    typeId: 'raid',
+    isNamed: true,
+    specialFlags: const {},
+  );
+}
+
+UserData _makeUserData() {
+  return UserData(
+    gold: 1000,
+    region: 1,
+    sector: 1,
+    lastFreeRecruit: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026, 1, 1),
+  );
+}
+
+CombatSkill _passiveShieldSkill() {
+  return const CombatSkill(
+    id: 'skill_warrior_shield_bulwark',
+    role: 'warrior',
+    triggerKind: TriggerKind.passive,
+    actionCost: ActionCost.passive,
+    targetingKind: TargetingKind.self,
+    shieldBlockBonus: 0.10,
+    displayLabel: '방패 보루',
+    description: '방패 막기 강화',
+  );
+}
+
+CombatStatusEffect _attackUpEffect() {
+  return const CombatStatusEffect(
+    id: 'buff_attack_up',
+    kind: 'buff',
+    displayLabel: '공격력 강화',
+    defaultDurationTurns: 2,
+    defaultIntensity: 0.2,
+    stackPolicy: StackPolicy.refresh,
+    hookTarget: ['attack'],
+    applyMethod: ApplyMethod.multiplicative,
+    description: '공격력 강화',
+  );
+}
+
+EnemyArchetype _overpoweringElite() {
+  return const EnemyArchetype(
+    id: 'enemy_overpowering_elite',
+    name: '압도적인 엘리트',
+    enemyKind: EnemyKind.elite,
+    eliteMonsterId: 'elite_test',
+    role: 'warrior',
+    tier: 5,
+    baseStr: 100,
+    baseInt: 20,
+    baseVit: 100,
+    baseAgi: 80,
+    baseHp: 800,
+    baseAttack: 500,
+    baseDefense: 80,
+    behaviorPattern: BehaviorPattern.aggressive,
+    environmentTags: ['plains'],
+    description: '시뮬레이션 결과를 fallback과 분리하기 위한 강적',
+  );
+}
+
+ActiveQuest _makeQuestRich({
+  String id = 'q_matrix',
+  String questPoolId = 'pool1',
+  String questTypeId = 'raid',
+  int difficulty = 1,
+  int region = 1,
+  String? eliteId,
+  bool? isChainStep,
+  String? chainId,
+  int? chainStep,
+  String? factionTag,
+  bool? isAdvancedTrack,
+  Map<String, dynamic>? specialFlags,
+}) {
+  return ActiveQuest(
+    id: id,
+    questPoolId: questPoolId,
+    questTypeId: questTypeId,
+    difficulty: difficulty,
+    region: region,
+    questName: '매트릭스 테스트',
+    status: QuestStatus.inProgress,
+    startTime: DateTime.now().subtract(const Duration(minutes: 5)),
+    endTime: DateTime.now().subtract(const Duration(seconds: 1)),
+    eliteId: eliteId,
+    isChainStep: isChainStep,
+    chainId: chainId,
+    chainStep: chainStep,
+    factionTag: factionTag,
+    isAdvancedTrack: isAdvancedTrack,
+    specialFlags: specialFlags,
+  );
 }

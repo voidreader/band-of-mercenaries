@@ -119,6 +119,98 @@ void main() {
       );
       expect(stats['near_death_count'], isNull);
     });
+
+    // ============================================================
+    // M8b 페이즈 4 #5 FR-22 — damageRoll 1.0/0.5/0.0 매핑 호환
+    // 페이즈 4 #3 [FR-8] case a/b/c 변환에서 시뮬레이션 결과는
+    //   case a (deceased) damageRoll=1.0
+    //   case b (injured)  damageRoll=0.5
+    //   case c (tired)    damageRoll=0.0
+    // 으로 고정 매핑된다. updateStatsAfterQuest의 단순 threshold 비교
+    // (`damageRoll < deathRate * 2`)와 호환됨을 확인한다.
+    // ============================================================
+
+    test('FR-22 case a (damageRoll 1.0, dead) → near_death 미증가 (dead guard)', () {
+      // 시뮬레이션 사망 케이스: damageStatus == dead.
+      // updateStatsAfterQuest line 69 guard로 near_death_count 증가 안 함.
+      final stats = MercenaryStatService.updateStatsAfterQuest(
+        {},
+        resultType: QuestResult.criticalFailure,
+        questTypeId: 'raid',
+        difficulty: 3,
+        partySize: 1,
+        damageStatus: MercenaryStatus.dead,
+        damageRoll: 1.0,
+        deathRate: 0.3,
+        rewardGold: 0,
+        mercLevel: 1,
+      );
+      expect(stats['near_death_count'], isNull, reason: 'dead guard로 미증가');
+      expect(stats['injury_count'], isNull, reason: 'dead는 injured 아님');
+    });
+
+    test('FR-22 case a + legendary canPrevent (damageRoll 1.0, injured) → injury_count 증가', () {
+      // legendary ⑤로 dead→injured 다운그레이드된 케이스.
+      final stats = MercenaryStatService.updateStatsAfterQuest(
+        {},
+        resultType: QuestResult.criticalFailure,
+        questTypeId: 'raid',
+        difficulty: 3,
+        partySize: 1,
+        damageStatus: MercenaryStatus.injured,
+        damageRoll: 1.0,
+        deathRate: 0.3,
+        rewardGold: 0,
+        mercLevel: 1,
+      );
+      // damageRoll(1.0) < deathRate*2(0.6) → false → near_death 미증가.
+      // damageStatus == injured → injury_count 증가.
+      expect(stats['injury_count'], equals(1), reason: 'injured → injury_count');
+      expect(
+        stats['near_death_count'],
+        isNull,
+        reason: 'damageRoll 1.0은 deathRate*2(0.6)보다 크므로 미증가',
+      );
+    });
+
+    test('FR-22 case b (damageRoll 0.5, injured) → injury_count 증가, threshold 비교 정상', () {
+      // 시뮬레이션 부상 케이스.
+      final stats = MercenaryStatService.updateStatsAfterQuest(
+        {},
+        resultType: QuestResult.failure,
+        questTypeId: 'raid',
+        difficulty: 3,
+        partySize: 1,
+        damageStatus: MercenaryStatus.injured,
+        damageRoll: 0.5,
+        deathRate: 0.3,
+        rewardGold: 0,
+        mercLevel: 1,
+      );
+      expect(stats['injury_count'], equals(1), reason: 'injured → injury_count');
+      // damageRoll(0.5) < deathRate*2(0.6) → true → near_death 증가.
+      expect(stats['near_death_count'], equals(1), reason: 'threshold 통과');
+    });
+
+    test('FR-22 case c (damageRoll 0.0, tired) → injury_count 미증가, threshold 통과', () {
+      // 시뮬레이션 무사 케이스(생존 + 부상 없음).
+      final stats = MercenaryStatService.updateStatsAfterQuest(
+        {},
+        resultType: QuestResult.failure,
+        questTypeId: 'raid',
+        difficulty: 3,
+        partySize: 1,
+        damageStatus: MercenaryStatus.tired,
+        damageRoll: 0.0,
+        deathRate: 0.3,
+        rewardGold: 0,
+        mercLevel: 1,
+      );
+      expect(stats['injury_count'], isNull, reason: 'tired는 injured 아님');
+      // damageRoll(0.0) < deathRate*2(0.6) → true → near_death 증가.
+      // isFailure인 무사 케이스(도주)에서 "죽음의 문턱" 카운트 자연 발생.
+      expect(stats['near_death_count'], equals(1));
+    });
   });
 
   group('MercenaryStatService.updateStatsAfterTravel', () {

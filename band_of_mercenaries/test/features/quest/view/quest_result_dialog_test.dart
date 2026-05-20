@@ -679,5 +679,114 @@ void main() {
       // 상태 효과 fallback 노출
       expect(find.textContaining('상태 효과'), findsAtLeastNWidgets(1));
     });
+
+    // ─── [M8b 페이즈 4 #5 FR-10] lineBudget 매트릭스 4/5/6/7/8 ─────────────────
+
+    testWidgets('[FR-10] details.length=4 + turns 30개 → 라운드 로그 4개', (tester) async {
+      final report = _buildLineBudgetReport(detailLines: 4);
+      final quest = _quest(report: report);
+      final data = _stubStaticData();
+      await _pumpDialog(tester, quest, data);
+      // R{i} 헤더가 4개 노출되어야 한다 (lineBudget = clamp(4, 8) = 4).
+      final headerCount = _countRoundHeaders(tester);
+      expect(headerCount, equals(4));
+    });
+
+    testWidgets('[FR-10] details.length=7 + turns 30개 → 라운드 로그 7개', (tester) async {
+      final report = _buildLineBudgetReport(detailLines: 7);
+      final quest = _quest(report: report);
+      final data = _stubStaticData();
+      await _pumpDialog(tester, quest, data);
+      final headerCount = _countRoundHeaders(tester);
+      expect(headerCount, equals(7));
+    });
+
+    testWidgets('[FR-10] details.length=9 (overflow) → 라운드 로그 상한 8', (tester) async {
+      final report = _buildLineBudgetReport(detailLines: 9);
+      final quest = _quest(report: report);
+      final data = _stubStaticData();
+      await _pumpDialog(tester, quest, data);
+      // clamp(4, 8) 상한 = 8.
+      final headerCount = _countRoundHeaders(tester);
+      expect(headerCount, equals(8));
+    });
+
+    // ─── [M8b 페이즈 4 #5 FR-11] decisive key 추가 케이스 ──────────────────────
+
+    testWidgets('[FR-11] decisiveKeywordKey == null → 배지 미렌더링', (tester) async {
+      final report = _buildM8bReport(
+        turns: [
+          _turn(1, [_action(decisiveKeywordKey: null, damage: 10)]),
+        ],
+        details: const ['요약 1'],
+        exit: CombatExitCondition.bEnemyWiped,
+      );
+      final quest = _quest(report: report);
+      final data = _stubStaticData();
+      await _pumpDialog(tester, quest, data);
+      // 결정적 장면 배지 텍스트 미존재.
+      expect(find.text('결정적 장면'), findsNothing);
+    });
+
+    // ─── [M8b 페이즈 4 #5 FR-12] 비노출 14종 핵심 확장 ─────────────────────────
+
+    testWidgets('[FR-12] damageRoll/intensity/명중률/HP 절대값/사망저항 등 미노출', (tester) async {
+      // damage=42인 액션에서 damage 텍스트만 보이고 다른 수치는 가린다.
+      final report = _buildM8bReport(
+        turns: [
+          _turn(1, [_action(damage: 42, isKill: true)]),
+        ],
+        details: const ['상세 1'],
+        exit: CombatExitCondition.bEnemyWiped,
+      );
+      final quest = _quest(report: report);
+      final data = _stubStaticData();
+      await _pumpDialog(tester, quest, data);
+
+      // 비노출 항목 매트릭스 14종 핵심 검증.
+      // (1) damageRoll 1.0/0.5/0.0 텍스트 미노출.
+      expect(find.textContaining('damageRoll'), findsNothing);
+      // (2) seed 텍스트 미노출.
+      expect(find.textContaining('seed'), findsNothing);
+      // (3) actionScore 텍스트 미노출.
+      expect(find.textContaining('actionScore'), findsNothing);
+      // (4) HP 절대값 형식 미노출 (예: 'HP 120/200').
+      expect(find.textContaining(RegExp(r'HP \d+/\d+')), findsNothing);
+      // (5) intensity 텍스트 미노출.
+      expect(find.textContaining('intensity'), findsNothing);
+      // (6) 명중률·회피율·치명타율·사망 저항률 백분율 매트릭스 미노출 (예: '명중률 85%').
+      expect(find.textContaining('명중률'), findsNothing);
+      expect(find.textContaining('회피율'), findsNothing);
+      expect(find.textContaining('치명타율'), findsNothing);
+      expect(find.textContaining('사망 저항률'), findsNothing);
+    });
   });
+}
+
+// ─── FR-10 lineBudget 매트릭스용 헬퍼 ────────────────────────────────────────
+
+CombatReport _buildLineBudgetReport({required int detailLines}) {
+  // turns 30개 (모두 damage>=1인 basic_attack 액션 1개씩)
+  final turns = [
+    for (var i = 1; i <= 30; i++)
+      _turn(i, [_action(damage: 5, position: 'development')]),
+  ];
+  return _buildM8bReport(
+    turns: turns,
+    details: [for (var i = 0; i < detailLines; i++) '상세 $i'],
+    exit: CombatExitCondition.bEnemyWiped,
+  );
+}
+
+// R{i} 패턴 헤더 노출 수를 RegExp로 카운트.
+int _countRoundHeaders(WidgetTester tester) {
+  final pattern = RegExp(r'^R\d+$');
+  var count = 0;
+  for (final element in find.byType(Text).evaluate()) {
+    final text = (element.widget as Text).data;
+    if (text != null && pattern.hasMatch(text)) {
+      count++;
+    }
+  }
+  return count;
 }

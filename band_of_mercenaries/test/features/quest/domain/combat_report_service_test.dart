@@ -11,6 +11,7 @@ import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.da
 import 'package:band_of_mercenaries/features/quest/domain/combat_enums_hive.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_report_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart';
+import 'package:band_of_mercenaries/features/quest/domain/combat_turn.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 
 const _engine = TemplateEngine();
@@ -572,4 +573,186 @@ void main() {
       expect(trustedFactionRep!.details.length, greaterThan(4));
     });
   });
+
+  // ==========================================================================
+  // M8b 페이즈 4 #5 — FR-8 / FR-9 / FR-17 보강
+  // ==========================================================================
+
+  group('FR-17 simulationResult=null 시 M8a 호환 (schemaVersion null)', () {
+    test('simulationResult 미전달 시 schemaVersion 등 신규 필드 모두 null', () {
+      final templates = [
+        _makeTemplate(
+          id: 't_sum',
+          scope: 'quest_type',
+          resultType: 'success',
+          lineType: 'summary',
+          template: '요약',
+        ),
+        for (var i = 0; i < 6; i++)
+          _makeTemplate(
+            id: 't_det_$i',
+            scope: 'quest_type',
+            resultType: 'success',
+            lineType: 'detail',
+            template: '상세 $i',
+          ),
+      ];
+      final staticData = _makeStaticData(combatReportTemplates: templates);
+      final quest = _makeQuest(result: QuestResult.success);
+      final merc = _makeMerc(name: '주인공');
+
+      final report = CombatReportService.generate(
+        quest: quest,
+        partyMercs: [merc],
+        resultType: QuestResult.success,
+        staticData: staticData,
+        userData: _makeUserData(),
+        factionStates: const [],
+        templateEngine: _engine,
+        seed: 7,
+        simulationResult: null,
+      );
+
+      expect(report, isNotNull);
+      // M8b 신규 HiveField 8~14 모두 null/default 보장.
+      expect(report!.schemaVersion, isNull, reason: 'schemaVersion');
+      expect(report.turns, isNull, reason: 'turns');
+      expect(report.combatantSnapshots, isNull, reason: 'combatantSnapshots');
+      expect(report.exitCondition, isNull, reason: 'exitCondition');
+      expect(report.objectiveProgress, isNull, reason: 'objectiveProgress');
+      expect(report.enemySnapshots, isNull, reason: 'enemySnapshots');
+      expect(report.statusEffectHistory, isNull, reason: 'statusEffectHistory');
+    });
+  });
+
+  group('FR-8 / FR-9 simulationResult 입력 시 details.length 매트릭스', () {
+    // 본 그룹은 simulationResult가 있는 보고서 생성 시 details.length가
+    // 페이즈 2 #4 §2.1 매트릭스(3R→4 / 4~5R→5~6 / 6R→6~7 / 7~8R→7~8) 정합인지 확인.
+    // 라인 풀이 충분하면 매트릭스에 맞춰 details가 생성되어야 한다.
+    //
+    // 페이즈 4 #3 [FR-9.2]: simulationResult != null일 때 템플릿 선택 실패 시에도
+    // 최소 fallback 보고서를 만들어 schemaVersion=1과 구조 필드를 저장한다.
+    //
+    // 본 검증의 핵심:
+    //   1) simulationResult != null → report.schemaVersion == 1.
+    //   2) report.turns / combatantSnapshots / exitCondition 등 구조 필드 임베드.
+    //   3) details.length 가 합리적 범위 (라인 풀이 부족하면 최소 fallback).
+
+    test('simulationResult != null + 라인 풀 충분 → schemaVersion=1, 구조 필드 임베드', () {
+      // 라인 풀: summary 1 + detail 16 (8 라운드 매트릭스 충분).
+      final templates = [
+        _makeTemplate(
+          id: 't_sum',
+          scope: 'quest_type',
+          resultType: 'success',
+          lineType: 'summary',
+          template: '요약',
+        ),
+        for (var i = 0; i < 16; i++)
+          _makeTemplate(
+            id: 't_det_$i',
+            scope: 'quest_type',
+            resultType: 'success',
+            lineType: 'detail',
+            template: '상세 $i',
+          ),
+      ];
+      final staticData = _makeStaticData(combatReportTemplates: templates);
+      final quest = _makeQuest(result: QuestResult.success);
+      final merc = _makeMerc(name: '주인공');
+
+      final simResult = _stubSimulationResult(
+        questResult: QuestResult.success,
+        turnCount: 6,
+      );
+
+      final report = CombatReportService.generate(
+        quest: quest,
+        partyMercs: [merc],
+        resultType: QuestResult.success,
+        staticData: staticData,
+        userData: _makeUserData(),
+        factionStates: const [],
+        templateEngine: _engine,
+        seed: 7,
+        simulationResult: simResult,
+      );
+
+      expect(report, isNotNull);
+      // M8b 페이즈 4 #3 [FR-9] 최소 임베드 검증.
+      expect(report!.schemaVersion, equals(1), reason: 'schemaVersion=1');
+      expect(report.turns, isNotNull, reason: 'turns 임베드');
+      expect(report.turns!.length, equals(6), reason: 'turns 길이 보존');
+      expect(report.exitCondition, isNotNull, reason: 'exitCondition 임베드');
+      expect(report.objectiveProgress, isNotNull, reason: 'objectiveProgress 임베드');
+      // 페이즈 2 #4 §2.1: 6라운드 → details 6~7줄.
+      expect(report.details.length, inInclusiveRange(1, 8));
+    });
+
+    test('simulationResult != null + 라인 풀 부족 → 최소 fallback 보고서', () {
+      // 라인 풀이 매우 빈약해도 simulationResult가 있으면 null 반환 금지
+      // (페이즈 4 #3 [FR-9.2]).
+      final templates = [
+        _makeTemplate(
+          id: 't_sum',
+          scope: 'quest_type',
+          resultType: 'success',
+          lineType: 'summary',
+          template: '요약',
+        ),
+      ];
+      final staticData = _makeStaticData(combatReportTemplates: templates);
+      final quest = _makeQuest(result: QuestResult.success);
+      final merc = _makeMerc(name: '주인공');
+
+      final simResult = _stubSimulationResult(
+        questResult: QuestResult.success,
+        turnCount: 3,
+      );
+
+      final report = CombatReportService.generate(
+        quest: quest,
+        partyMercs: [merc],
+        resultType: QuestResult.success,
+        staticData: staticData,
+        userData: _makeUserData(),
+        factionStates: const [],
+        templateEngine: _engine,
+        seed: 7,
+        simulationResult: simResult,
+      );
+
+      expect(report, isNotNull, reason: '최소 fallback 보고서 반환');
+      expect(report!.schemaVersion, equals(1));
+      expect(report.turns, isNotNull);
+    });
+  });
+}
+
+// ===========================================================================
+// FR-8/FR-9/FR-17 보강용 헬퍼
+// ===========================================================================
+
+CombatSimulationResult _stubSimulationResult({
+  required QuestResult questResult,
+  required int turnCount,
+}) {
+  return CombatSimulationResult(
+    questResult: questResult,
+    turns: [
+      for (var i = 0; i < turnCount; i++)
+        CombatTurn(roundIndex: i, phase: 'general', actions: const []),
+    ],
+    protagonistMercId: 'merc-001',
+    featuredMercIds: const ['merc-001'],
+    injuredMercIds: const [],
+    deceasedMercIds: const [],
+    objectiveProgress: 1.0,
+    exitCondition: CombatExitCondition.bEnemyWiped,
+    statusEffectHistory: const [],
+    seed: 1,
+    toneTags: const [],
+    combatantSnapshots: const [],
+    enemySnapshots: const [],
+  );
 }

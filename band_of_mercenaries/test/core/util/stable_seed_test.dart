@@ -62,5 +62,46 @@ void main() {
 
       expect(dmgSeed, isNot(equals(hitSeed)));
     });
+
+    // M8b 페이즈 4 #5 FR-2 — 표본 5종 + 1000회 반복 결정성 + 충돌 0/5.
+    test('FR-2: 5 input samples produce deterministic hashes (1000 repeats)', () {
+      const samples = [
+        '',
+        'a',
+        'merc_1|quest_a',
+        'dmg|0|123456',
+        'death|merc_a',
+      ];
+      for (final input in samples) {
+        final baseline = stableSeed32(input);
+        for (var i = 0; i < 1000; i++) {
+          expect(
+            stableSeed32(input),
+            equals(baseline),
+            reason: 'input="$input" iter=$i 변동 발견',
+          );
+        }
+      }
+    });
+
+    test('FR-2: 5 sample pair collisions are zero', () {
+      const samples = [
+        '',
+        'a',
+        'merc_1|quest_a',
+        'dmg|0|123456',
+        'death|merc_a',
+      ];
+      final hashes = samples.map(stableSeed32).toList();
+      for (var i = 0; i < hashes.length; i++) {
+        for (var j = i + 1; j < hashes.length; j++) {
+          expect(
+            hashes[i],
+            isNot(equals(hashes[j])),
+            reason: '"${samples[i]}" / "${samples[j]}" 충돌',
+          );
+        }
+      }
+    });
   });
 }

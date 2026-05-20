@@ -826,7 +826,7 @@ class CombatSimulator {
       final died = _resolveDeath(
         state,
         defender,
-        actor.isChainProtagonist(state),
+        defender.isChainProtagonist(state),
       );
       isKill = died;
       if (defender.isEnemy && died) {
@@ -1715,7 +1715,7 @@ class CombatSimulator {
           ),
         );
         if (c.hp <= 0) {
-          _resolveDeath(state, c, false);
+          _resolveDeath(state, c, c.isChainProtagonist(state));
           break;
         }
       }
@@ -1752,7 +1752,7 @@ class CombatSimulator {
           ),
         );
         if (c.hp <= 0) {
-          _resolveDeath(state, c, false);
+          _resolveDeath(state, c, c.isChainProtagonist(state));
           break;
         }
       }

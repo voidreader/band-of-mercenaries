@@ -201,7 +201,7 @@ freezed · json_serializable · hive_generator · riverpod_generator — `build_
 
 ## 테스트 구조
 
-66개 테스트 파일, `test/` 아래 `lib/` 구조와 동일. 도메인 서비스 유닛 테스트 위주. 전체 테스트 593 PASS(M8b 페이즈 4 시점).
+70개 테스트 파일, `test/` 아래 `lib/` 구조와 동일. 도메인 서비스 유닛 테스트 위주. 전체 테스트 669 PASS(M8b 페이즈 4 #5 검증·밸런스 명세 구현 시점).
 
 ```bash
 cd band_of_mercenaries && flutter test test/features/quest/
