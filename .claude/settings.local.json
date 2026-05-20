@@ -124,7 +124,8 @@
       "Bash(awk '$6==\"5월\"')",
       "Bash(sort -k7n)",
       "Skill(spec-pipeline)",
-      "Skill(using-superpowers)"
+      "Skill(using-superpowers)",
+      "Bash(sort -t':' -k3 -n)"
     ]
   },
   "enabledPlugins": {
