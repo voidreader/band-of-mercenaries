@@ -47,6 +47,10 @@ class QuestPool with _$QuestPool {
     @JsonKey(name: 'region_state_effect') RegionStateEffect? regionStateEffect,
     @JsonKey(name: 'region_state_required') String? regionStateRequired,
     @JsonKey(name: 'region_state_excluded') String? regionStateExcluded,
+
+    // M8.5 페이즈 4 #2 — 파티 크기 제약
+    @Default(1) @JsonKey(name: 'party_size_min') int partySizeMin,
+    @JsonKey(name: 'party_size_max') int? partySizeMax,
   }) = _QuestPool;
 
   factory QuestPool.fromJson(Map<String, dynamic> json) =>

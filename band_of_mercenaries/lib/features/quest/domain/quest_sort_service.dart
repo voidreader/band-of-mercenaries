@@ -108,7 +108,7 @@ class QuestSortService {
     // 각 Tier 내 정렬 적용
     _sortByEstimatedReward(fixedTier, poolMap, typeMap);
     _sortByEstimatedReward(settlementTier, poolMap, typeMap);
-    _sortByEstimatedReward(namedTier, poolMap, typeMap); // M6 페이즈 4 #3
+    _sortNamedTier(namedTier, poolMap, typeMap); // M8.5 페이즈 4 #2 — 솔로→소수정예→일반 순 (희소도 차이 반영)
     _sortByEstimatedReward(tier1, poolMap, typeMap);
     _sortTier2(tier2, poolMap, typeMap, eliteMap);
     _sortByEstimatedReward(tier3, poolMap, typeMap);
@@ -132,6 +132,48 @@ class QuestSortService {
     final pool = poolMap[q.questPoolId];
     if (pool == null || pool.sectorType == null) return false;
     return pool.sectorType == currentSectorTransform;
+  }
+
+  /// 지명 의뢰 전용 정렬 (M8.5 페이즈 4 #2 §FR-8)
+  ///
+  /// 솔로 → 소수정예 → 일반 named 순서로 그룹화.
+  /// 희소도가 높은 의뢰(인원 제한이 엄격할수록)를 먼저 노출하여
+  /// 플레이어가 자원 배분을 쉽게 판단할 수 있도록 한다.
+  ///
+  /// 정렬 키 (순서대로):
+  /// 1. partySizeGroup 오름차순 (솔로=0 / 소수정예=1 / 일반=2)
+  /// 2. estimatedReward 내림차순 (보상 큰 것 우선)
+  /// 3. difficulty 오름차순 (같은 보상이라면 쉬운 퀘스트 우선)
+  /// 4. id 오름차순 (결정론적 tie-breaker)
+  static void _sortNamedTier(
+    List<ActiveQuest> tier,
+    Map<String, QuestPool> poolMap,
+    Map<String, QuestType> typeMap,
+  ) {
+    tier.sort((a, b) {
+      final poolA = poolMap[a.questPoolId];
+      final poolB = poolMap[b.questPoolId];
+      final groupA = _partySizeGroup(poolA?.partySizeMax);
+      final groupB = _partySizeGroup(poolB?.partySizeMax);
+      if (groupA != groupB) return groupA.compareTo(groupB);
+
+      final rewardA = _estimatedReward(a, poolMap, typeMap);
+      final rewardB = _estimatedReward(b, poolMap, typeMap);
+      if (rewardA != rewardB) return rewardB.compareTo(rewardA); // desc
+
+      final diffA = a.difficulty;
+      final diffB = b.difficulty;
+      if (diffA != diffB) return diffA.compareTo(diffB);
+
+      return a.id.compareTo(b.id);
+    });
+  }
+
+  /// 파티 규모 그룹 분류 (솔로=0 / 소수정예=1 / 일반=2)
+  static int _partySizeGroup(int? partySizeMax) {
+    if (partySizeMax == 1) return 0;
+    if (partySizeMax == 2 || partySizeMax == 3) return 1;
+    return 2;
   }
 
   /// 추정 보상 기준 동일 Tier 내 정렬

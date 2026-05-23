@@ -24,6 +24,7 @@ import 'package:band_of_mercenaries/features/settlement/domain/herbalist_service
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_simulator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart';
+import 'package:band_of_mercenaries/features/quest/domain/flagship_solo_quest_config.dart';
 
 class TraitEventResult {
   final String? acquiredTraitKey;
@@ -160,6 +161,21 @@ class QuestCompletionService {
                 _factionReputation(quest, factionStates) >= 31));
 
     // M8b 페이즈 4 #3 — 단계 3: 시뮬레이션 호출 ([FR-4] §3, [FR-11] fail-soft)
+    // M8.5 페이즈 4 #2: 솔로/소수정예 의뢰는 per-merc 사망 저항 cap 적용.
+    // DB(`special_flags.death_resistance_cap`) > FlagshipSoloQuestConfig 상수 fallback 우선순위.
+    final deathResistanceCaps = <String, double>{};
+    if (pool != null && pool.partySizeMax != null) {
+      final configuredCap =
+          (pool.specialFlags['death_resistance_cap'] as num?)?.toDouble();
+      final fallbackCap = pool.partySizeMax == 1
+          ? FlagshipSoloQuestConfig.soloDeathResistanceCap       // 0.95
+          : FlagshipSoloQuestConfig.smallPartyDeathResistanceCap; // 0.90
+      final cap = configuredCap ?? fallbackCap;
+      for (final merc in mercs) {
+        deathResistanceCaps[merc.id] = cap;
+      }
+    }
+
     CombatSimulationResult? simulationResult;
     if (combatSimulationEligible && userData != null) {
       try {
@@ -172,6 +188,7 @@ class QuestCompletionService {
           factionStates: factionStates,
           regionState: regionState,
           partyEquipmentBonuses: partyEquipmentBonuses,
+          deathResistanceCaps: deathResistanceCaps,
         );
       } catch (e, st) {
         debugPrint('[BOM][CombatSimulator] simulate throw: $e\n$st');

@@ -301,8 +301,12 @@ class QuestGenerator {
       }
     }
 
-    // 7. 지명 의뢰 +α=3 가중치 (M6 페이즈 4 #3, 가산)
-    if (pool.isNamed) weight += 3.0;
+    // 7. 지명 의뢰 +α 가중치 (M6 페이즈 4 #3 + M8.5 페이즈 4 #2 — named_weight_alpha 우선)
+    if (pool.isNamed) {
+      final namedAlpha =
+          (pool.specialFlags['named_weight_alpha'] as num?)?.toDouble() ?? 3.0;
+      weight += namedAlpha;
+    }
 
     return weight;
   }

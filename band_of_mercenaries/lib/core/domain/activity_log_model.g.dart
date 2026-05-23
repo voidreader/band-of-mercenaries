@@ -133,6 +133,8 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.factionRewardGranted;
       case 39:
         return ActivityLogType.combatReportGenerated;
+      case 40:
+        return ActivityLogType.soloQuestInjuredReturn;
       default:
         return ActivityLogType.questResult;
     }
@@ -260,6 +262,9 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.combatReportGenerated:
         writer.writeByte(39);
+        break;
+      case ActivityLogType.soloQuestInjuredReturn:
+        writer.writeByte(40);
         break;
     }
   }

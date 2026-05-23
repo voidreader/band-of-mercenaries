@@ -4,6 +4,7 @@ import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/models/elite_monster_data.dart';
+import 'package:band_of_mercenaries/core/models/quest_pool.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_provider.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_calculator.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
@@ -28,6 +29,16 @@ class DispatchDetailPage extends ConsumerStatefulWidget {
 class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
   final Set<String> _selectedMercIds = {};
 
+  /// M8.5 페이즈 4 #2 FR-14 — 파티 크기 유효성 검사
+  /// pool.partySizeMax가 null이면 1명 이상, 아니면 [partySizeMin, partySizeMax] 범위 강제
+  bool _partySizeValid(QuestPool? pool) {
+    if (pool?.partySizeMax == null) {
+      return _selectedMercIds.isNotEmpty;
+    }
+    final n = _selectedMercIds.length;
+    return n >= pool!.partySizeMin && n <= pool.partySizeMax!;
+  }
+
   @override
   Widget build(BuildContext context) {
     final quests = ref.watch(questListProvider);
@@ -43,6 +54,10 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
     return staticData.when(
       data: (data) {
         final questType = data.questTypes.firstWhere((t) => t.id == quest.questTypeId);
+        // M8.5 페이즈 4 #2 — pool lookup (파티 크기 제약 + 지명 배수)
+        final QuestPool? pool = data.questPools
+            .where((p) => p.id == quest.questPoolId)
+            .firstOrNull;
         final difficulty = data.difficulties.firstWhere(
           (d) => d.level == quest.difficulty.clamp(1, 5),
           orElse: () => data.difficulties.first,
@@ -77,10 +92,16 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
           partyRoles: partyRoles,
         );
 
-        final grossReward = QuestCalculator.calculateReward(
+        // M8.5 페이즈 4 #2 FR-15 — 지명 의뢰 보상 배수 미리보기 반영
+        int grossReward = QuestCalculator.calculateReward(
           baseReward: questType.baseReward,
           rewardMultiplier: difficulty.rewardMultiplier,
         );
+        if (pool != null && pool.isNamed) {
+          final multi =
+              (pool.specialFlags['named_reward_multiplier'] as num?)?.toDouble() ?? 1.0;
+          grossReward = (grossReward * multi).round();
+        }
         final mercTiers = selectedMercs.map((merc) {
           final job = data.jobs.firstWhere((j) => j.id == merc.jobId, orElse: () => data.jobs.first);
           return job.tier;
@@ -247,13 +268,28 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                                     borderRadius: BorderRadius.circular(8),
                                     onTap: canSelect
                                         ? () {
-                                            setState(() {
-                                              if (isSelected) {
-                                                _selectedMercIds.remove(merc.id);
-                                              } else {
-                                                _selectedMercIds.add(merc.id);
+                                            // M8.5 페이즈 4 #2 FR-14 — 솔로 의뢰 radio 동작
+                                            if (pool?.partySizeMax == 1 && !isSelected) {
+                                              if (_selectedMercIds.isNotEmpty) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('솔로 의뢰는 1명만 파견할 수 있습니다'),
+                                                  ),
+                                                );
                                               }
-                                            });
+                                              setState(() {
+                                                _selectedMercIds.clear();
+                                                _selectedMercIds.add(merc.id);
+                                              });
+                                            } else {
+                                              setState(() {
+                                                if (isSelected) {
+                                                  _selectedMercIds.remove(merc.id);
+                                                } else {
+                                                  _selectedMercIds.add(merc.id);
+                                                }
+                                              });
+                                            }
                                           }
                                         : null,
                                     child: Container(
@@ -403,6 +439,18 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                           ),
                         ],
                       ),
+                      // M8.5 페이즈 4 #2 FR-14 — 파티 크기 안내 문구 (페어/삼인행)
+                      if (pool?.partySizeMax != null &&
+                          pool!.partySizeMin == pool.partySizeMax &&
+                          pool.partySizeMax! > 1 &&
+                          !_partySizeValid(pool))
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '정확히 ${pool.partySizeMax}명을 선택하세요 (현재 ${_selectedMercIds.length}명)',
+                            style: const TextStyle(fontSize: 12, color: AppTheme.criticalFailure),
+                          ),
+                        ),
                       if (!hasEnoughGold && _selectedMercIds.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
@@ -413,7 +461,8 @@ class _DispatchDetailPageState extends ConsumerState<DispatchDetailPage> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: (_selectedMercIds.isEmpty || !hasEnoughGold)
+                          // M8.5 페이즈 4 #2 FR-14 — _partySizeValid로 파티 크기 유효성 통합
+                          onPressed: (!_partySizeValid(pool) || !hasEnoughGold)
                               ? null
                               : () async {
                                   final success = await ref.read(questListProvider.notifier)

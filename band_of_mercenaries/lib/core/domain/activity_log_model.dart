@@ -84,6 +84,8 @@ enum ActivityLogType {
   factionRewardGranted,
   @HiveField(39)
   combatReportGenerated,
+  @HiveField(40)
+  soloQuestInjuredReturn,
 }
 
 @HiveType(typeId: 7)

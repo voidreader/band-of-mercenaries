@@ -80,7 +80,12 @@ mixin _$QuestPool {
   @JsonKey(name: 'region_state_required')
   String? get regionStateRequired => throw _privateConstructorUsedError;
   @JsonKey(name: 'region_state_excluded')
-  String? get regionStateExcluded => throw _privateConstructorUsedError;
+  String? get regionStateExcluded =>
+      throw _privateConstructorUsedError; // M8.5 페이즈 4 #2 — 파티 크기 제약
+  @JsonKey(name: 'party_size_min')
+  int get partySizeMin => throw _privateConstructorUsedError;
+  @JsonKey(name: 'party_size_max')
+  int? get partySizeMax => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -123,7 +128,9 @@ abstract class $QuestPoolCopyWith<$Res> {
       @JsonKey(name: 'region_state_effect')
       RegionStateEffect? regionStateEffect,
       @JsonKey(name: 'region_state_required') String? regionStateRequired,
-      @JsonKey(name: 'region_state_excluded') String? regionStateExcluded});
+      @JsonKey(name: 'region_state_excluded') String? regionStateExcluded,
+      @JsonKey(name: 'party_size_min') int partySizeMin,
+      @JsonKey(name: 'party_size_max') int? partySizeMax});
 
   $RegionStateEffectCopyWith<$Res>? get regionStateEffect;
 }
@@ -170,6 +177,8 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
     Object? regionStateEffect = freezed,
     Object? regionStateRequired = freezed,
     Object? regionStateExcluded = freezed,
+    Object? partySizeMin = null,
+    Object? partySizeMax = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -288,6 +297,14 @@ class _$QuestPoolCopyWithImpl<$Res, $Val extends QuestPool>
           ? _value.regionStateExcluded
           : regionStateExcluded // ignore: cast_nullable_to_non_nullable
               as String?,
+      partySizeMin: null == partySizeMin
+          ? _value.partySizeMin
+          : partySizeMin // ignore: cast_nullable_to_non_nullable
+              as int,
+      partySizeMax: freezed == partySizeMax
+          ? _value.partySizeMax
+          : partySizeMax // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 
@@ -342,7 +359,9 @@ abstract class _$$QuestPoolImplCopyWith<$Res>
       @JsonKey(name: 'region_state_effect')
       RegionStateEffect? regionStateEffect,
       @JsonKey(name: 'region_state_required') String? regionStateRequired,
-      @JsonKey(name: 'region_state_excluded') String? regionStateExcluded});
+      @JsonKey(name: 'region_state_excluded') String? regionStateExcluded,
+      @JsonKey(name: 'party_size_min') int partySizeMin,
+      @JsonKey(name: 'party_size_max') int? partySizeMax});
 
   @override
   $RegionStateEffectCopyWith<$Res>? get regionStateEffect;
@@ -388,6 +407,8 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
     Object? regionStateEffect = freezed,
     Object? regionStateRequired = freezed,
     Object? regionStateExcluded = freezed,
+    Object? partySizeMin = null,
+    Object? partySizeMax = freezed,
   }) {
     return _then(_$QuestPoolImpl(
       id: null == id
@@ -506,6 +527,14 @@ class __$$QuestPoolImplCopyWithImpl<$Res>
           ? _value.regionStateExcluded
           : regionStateExcluded // ignore: cast_nullable_to_non_nullable
               as String?,
+      partySizeMin: null == partySizeMin
+          ? _value.partySizeMin
+          : partySizeMin // ignore: cast_nullable_to_non_nullable
+              as int,
+      partySizeMax: freezed == partySizeMax
+          ? _value.partySizeMax
+          : partySizeMax // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -543,7 +572,9 @@ class _$QuestPoolImpl implements _QuestPool {
       @JsonKey(name: 'named_cooldown_hours') this.namedCooldownHours = 24,
       @JsonKey(name: 'region_state_effect') this.regionStateEffect,
       @JsonKey(name: 'region_state_required') this.regionStateRequired,
-      @JsonKey(name: 'region_state_excluded') this.regionStateExcluded})
+      @JsonKey(name: 'region_state_excluded') this.regionStateExcluded,
+      @JsonKey(name: 'party_size_min') this.partySizeMin = 1,
+      @JsonKey(name: 'party_size_max') this.partySizeMax})
       : _specialFlags = specialFlags;
 
   factory _$QuestPoolImpl.fromJson(Map<String, dynamic> json) =>
@@ -644,10 +675,17 @@ class _$QuestPoolImpl implements _QuestPool {
   @override
   @JsonKey(name: 'region_state_excluded')
   final String? regionStateExcluded;
+// M8.5 페이즈 4 #2 — 파티 크기 제약
+  @override
+  @JsonKey(name: 'party_size_min')
+  final int partySizeMin;
+  @override
+  @JsonKey(name: 'party_size_max')
+  final int? partySizeMax;
 
   @override
   String toString() {
-    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType, specialFlags: $specialFlags, enemyName: $enemyName, isFixed: $isFixed, fixedChainId: $fixedChainId, fixedStep: $fixedStep, trustThreshold: $trustThreshold, rewardGoldOverride: $rewardGoldOverride, rewardXpBonusOverride: $rewardXpBonusOverride, durationOverrideSeconds: $durationOverrideSeconds, trustRewardOverride: $trustRewardOverride, minTrustLevel: $minTrustLevel, isNamed: $isNamed, namedHookType: $namedHookType, namedHookValue: $namedHookValue, namedCooldownHours: $namedCooldownHours, regionStateEffect: $regionStateEffect, regionStateRequired: $regionStateRequired, regionStateExcluded: $regionStateExcluded)';
+    return 'QuestPool(id: $id, name: $name, type: $type, difficulty: $difficulty, minRegionDiff: $minRegionDiff, maxRegionDiff: $maxRegionDiff, typeId: $typeId, factionTag: $factionTag, isFactionExclusive: $isFactionExclusive, minReputation: $minReputation, sectorType: $sectorType, specialFlags: $specialFlags, enemyName: $enemyName, isFixed: $isFixed, fixedChainId: $fixedChainId, fixedStep: $fixedStep, trustThreshold: $trustThreshold, rewardGoldOverride: $rewardGoldOverride, rewardXpBonusOverride: $rewardXpBonusOverride, durationOverrideSeconds: $durationOverrideSeconds, trustRewardOverride: $trustRewardOverride, minTrustLevel: $minTrustLevel, isNamed: $isNamed, namedHookType: $namedHookType, namedHookValue: $namedHookValue, namedCooldownHours: $namedCooldownHours, regionStateEffect: $regionStateEffect, regionStateRequired: $regionStateRequired, regionStateExcluded: $regionStateExcluded, partySizeMin: $partySizeMin, partySizeMax: $partySizeMax)';
   }
 
   @override
@@ -707,7 +745,11 @@ class _$QuestPoolImpl implements _QuestPool {
             (identical(other.regionStateRequired, regionStateRequired) ||
                 other.regionStateRequired == regionStateRequired) &&
             (identical(other.regionStateExcluded, regionStateExcluded) ||
-                other.regionStateExcluded == regionStateExcluded));
+                other.regionStateExcluded == regionStateExcluded) &&
+            (identical(other.partySizeMin, partySizeMin) ||
+                other.partySizeMin == partySizeMin) &&
+            (identical(other.partySizeMax, partySizeMax) ||
+                other.partySizeMax == partySizeMax));
   }
 
   @JsonKey(ignore: true)
@@ -742,7 +784,9 @@ class _$QuestPoolImpl implements _QuestPool {
         namedCooldownHours,
         regionStateEffect,
         regionStateRequired,
-        regionStateExcluded
+        regionStateExcluded,
+        partySizeMin,
+        partySizeMax
       ]);
 
   @JsonKey(ignore: true)
@@ -792,8 +836,10 @@ abstract class _QuestPool implements QuestPool {
       @JsonKey(name: 'region_state_effect')
       final RegionStateEffect? regionStateEffect,
       @JsonKey(name: 'region_state_required') final String? regionStateRequired,
-      @JsonKey(name: 'region_state_excluded')
-      final String? regionStateExcluded}) = _$QuestPoolImpl;
+      @JsonKey(name: 'region_state_excluded') final String? regionStateExcluded,
+      @JsonKey(name: 'party_size_min') final int partySizeMin,
+      @JsonKey(name: 'party_size_max')
+      final int? partySizeMax}) = _$QuestPoolImpl;
 
   factory _QuestPool.fromJson(Map<String, dynamic> json) =
       _$QuestPoolImpl.fromJson;
@@ -881,6 +927,12 @@ abstract class _QuestPool implements QuestPool {
   @override
   @JsonKey(name: 'region_state_excluded')
   String? get regionStateExcluded;
+  @override // M8.5 페이즈 4 #2 — 파티 크기 제약
+  @JsonKey(name: 'party_size_min')
+  int get partySizeMin;
+  @override
+  @JsonKey(name: 'party_size_max')
+  int? get partySizeMax;
   @override
   @JsonKey(ignore: true)
   _$$QuestPoolImplCopyWith<_$QuestPoolImpl> get copyWith =>

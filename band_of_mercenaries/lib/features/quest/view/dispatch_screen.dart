@@ -406,7 +406,20 @@ class _QuestCard extends ConsumerWidget {
       isFactionExclusive: quest.isFactionExclusive,
       isNamed: isNamed,
       namedSublabel: namedSublabel,
+      partySizeLabel: _resolvePartySizeLabel(pool),
     );
+  }
+
+  /// M8.5 페이즈 4 #2 — 솔로/페어/삼인행 시각 차별화.
+  /// isNamed=true이고 partySizeMax가 1~3일 때 라벨 반환, 그 외 null.
+  static String? _resolvePartySizeLabel(QuestPool? pool) {
+    if (pool == null || !pool.isNamed) return null;
+    final max = pool.partySizeMax;
+    if (max == null) return null; // partySizeMax 미지정 = 일반 지명 의뢰
+    if (max == 1) return '⭐ 솔로';
+    if (max == 2) return '⭐⭐ 페어';
+    if (max == 3) return '⭐⭐⭐ 삼인행';
+    return null;
   }
 
   /// 지명 hook 타입을 서브라벨 문자열로 변환한다 (M6 페이즈 4 #3).

@@ -29,9 +29,9 @@ class QuestCardBadges extends StatelessWidget {
     if (info.chain != null) {
       badges.add(_chainBadge(info.chain!));
     }
-    // 2. 지명 배지: ✩ 지명 + hook 서브라벨 (M6 페이즈 4 #3)
+    // 2. 지명 배지: ✩ 지명 + hook 서브라벨 + 파티 규모 라벨 (M6 페이즈 4 #3, M8.5 페이즈 4 #2)
     if (info.isNamed) {
-      badges.add(_namedBadge(info.namedSublabel));
+      badges.add(_namedBadge(info.namedSublabel, info.partySizeLabel));
     }
     // 3. 엘리트 배지: 🔥(보통) / ★(유니크)
     if (info.isElite) {
@@ -74,9 +74,10 @@ class QuestCardBadges extends StatelessWidget {
     );
   }
 
-  /// 지명 배지: ✩ 지명 + hook 서브라벨 (M6 페이즈 4 #3)
-  Widget _namedBadge(String? sublabel) {
-    final label = sublabel != null ? '✩ 지명 · $sublabel' : '✩ 지명';
+  /// 지명 배지: ✩ 지명 + 파티 규모 라벨 + hook 서브라벨 (M6 페이즈 4 #3, M8.5 페이즈 4 #2).
+  /// partySizeLabel이 있으면 우선 표시, sublabel과 병렬 조합.
+  Widget _namedBadge(String? sublabel, String? partySizeLabel) {
+    final label = _composeNamedLabel(partySizeLabel, sublabel);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -93,6 +94,21 @@ class QuestCardBadges extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// 지명 배지 최종 라벨 조합 4분기 (M8.5 페이즈 4 #2).
+  /// partySizeLabel + sublabel 유무에 따라 결합 문자열 반환.
+  String _composeNamedLabel(String? partySizeLabel, String? sublabel) {
+    if (partySizeLabel != null && sublabel != null) {
+      return '$partySizeLabel · $sublabel';
+    }
+    if (partySizeLabel != null) {
+      return partySizeLabel;
+    }
+    if (sublabel != null) {
+      return '✩ 지명 · $sublabel';
+    }
+    return '✩ 지명';
   }
 
   Widget _eliteBadge(bool isUnique) {

@@ -51,6 +51,8 @@ import 'package:band_of_mercenaries/features/title/domain/title_service_provider
 import 'package:band_of_mercenaries/features/title/domain/mercenary_title_effects.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_contact_service.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_reward_service.dart';
+import 'package:band_of_mercenaries/core/util/stable_seed.dart';
+import 'package:band_of_mercenaries/features/quest/domain/flagship_solo_quest_config.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -535,6 +537,14 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     final pool = staticData.questPools
         .where((p) => p.id == quest.questPoolId)
         .firstOrNull;
+
+    // M8.5 페이즈 4 #2 [FR-13]: 솔로/소수정예 의뢰 인원 강제 (UI 강제와 이중 방어선)
+    if (pool != null && pool.partySizeMax != null) {
+      if (mercIds.length < pool.partySizeMin ||
+          mercIds.length > pool.partySizeMax!) {
+        return false;
+      }
+    }
 
     // Check dispatch cost
     final difficulty = staticData.difficulties.firstWhere(
@@ -1316,6 +1326,204 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       } on Exception catch (e) {
         debugPrint('[BOM][Title] action_stat hook 실패: $e');
       }
+    }
+
+    // M8.5 페이즈 4 #2 — 솔로/소수정예 의뢰 trailing 5종 (FR-10·12·19·20·21)
+    // 5 블록 모두 동일 pool lookup을 공유한다. fail-soft 격리 위해 블록별 try/catch.
+    final soloPool = staticData.questPools
+        .where((p) => p.id == quest.questPoolId)
+        .firstOrNull;
+
+    // [FR-10] 솔로/소수정예 카운터 + 칭호 hook
+    // 성공/대성공 한정. 직전 region 카운터에서 갱신된 stats를 보존하기 위해
+    // mercRepo.getAll()에서 latest를 재조회한 뒤 Map<String,int>.from으로 신규 Map을 만들어 병합.
+    try {
+      if (soloPool != null &&
+          soloPool.partySizeMax != null &&
+          (result.resultType == QuestResult.success ||
+              result.resultType == QuestResult.greatSuccess)) {
+        Future<void> incrementCounter(
+          Mercenary merc,
+          String key, {
+          bool incrementGreatSuccess = false,
+        }) async {
+          final latest = mercRepo
+                  .getAll()
+                  .where((m) => m.id == merc.id)
+                  .firstOrNull ??
+              merc;
+          final updatedStats = Map<String, int>.from(latest.stats);
+          updatedStats[key] = (updatedStats[key] ?? 0) + 1;
+          if (incrementGreatSuccess) {
+            updatedStats['solo_great_success_count'] =
+                (updatedStats['solo_great_success_count'] ?? 0) + 1;
+          }
+          await mercRepo.updateStats(merc.id, updatedStats);
+        }
+
+        if (soloPool.partySizeMax == 1) {
+          // 솔로: dispatchedMercIds 첫 번째 (mercs는 dispatch 순서를 보장하지 않을 수 있어 first 사용)
+          if (mercs.isNotEmpty) {
+            final merc = mercs.first;
+            await incrementCounter(
+              merc,
+              'solo_completion_count',
+              incrementGreatSuccess:
+                  result.resultType == QuestResult.greatSuccess,
+            );
+          }
+        } else if (soloPool.partySizeMax == 2 && soloPool.partySizeMin == 2) {
+          for (final merc in mercs) {
+            await incrementCounter(merc, 'pair_completion_count');
+          }
+        } else if (soloPool.partySizeMax == 3 && soloPool.partySizeMin == 3) {
+          for (final merc in mercs) {
+            await incrementCounter(merc, 'small_party_count');
+          }
+        }
+        // 칭호 hook 평가 (M6 패턴)
+        for (final merc in mercs) {
+          try {
+            await ref
+                .read(titleServiceProvider)
+                .evaluateActionStatHook(merc.id);
+          } on Exception catch (e) {
+            debugPrint('[FR-10] action_stat hook 실패 (${merc.id}): $e');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[FR-10] solo/pair/small_party counter error: $e');
+    }
+
+    // [FR-12] 솔로/소수정예 의뢰 실패 시 부상 복귀 ActivityLog
+    // 부상 상태로 마킹된 용병별로 메시지 1줄 발급. dialog enqueue 없음.
+    try {
+      if (soloPool != null &&
+          soloPool.partySizeMax != null &&
+          (result.resultType == QuestResult.failure ||
+              result.resultType == QuestResult.criticalFailure)) {
+        final prefix = soloPool.partySizeMax == 1
+            ? '솔로'
+            : soloPool.partySizeMax == 2
+                ? '페어'
+                : '삼인행';
+        for (final damage in result.mercDamages) {
+          if (damage.newStatus == MercenaryStatus.injured) {
+            final merc =
+                mercs.where((m) => m.id == damage.mercId).firstOrNull;
+            if (merc != null) {
+              await ref.read(activityLogProvider.notifier).addLog(
+                    '$prefix 의뢰 "${quest.questName}" — ${merc.name}이(가) 중상으로 귀환했다',
+                    ActivityLogType.soloQuestInjuredReturn,
+                  );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[FR-12] soloQuestInjuredReturn log error: $e');
+    }
+
+    // [FR-19] 솔로 의뢰 성공/대성공 시 보장 드랍 + 중복 시 골드 변환
+    // 매트릭스에 등록된 pool.id에 한해 적용. 중복 보유 시 100G × difficulty 변환.
+    try {
+      if (soloPool != null &&
+          (result.resultType == QuestResult.success ||
+              result.resultType == QuestResult.greatSuccess)) {
+        final guaranteedItemId =
+            FlagshipSoloQuestConfig.guaranteedDropMatrix[soloPool.id];
+        if (guaranteedItemId != null) {
+          final inventoryRepo = ref.read(inventoryRepositoryProvider);
+          final alreadyHas = inventoryRepo
+              .getAll()
+              .any((row) => row.itemId == guaranteedItemId);
+          if (!alreadyHas) {
+            await inventoryRepo.addItem(
+              itemId: guaranteedItemId,
+              items: staticData.items,
+            );
+            final itemName = staticData.items
+                    .where((i) => i.id == guaranteedItemId)
+                    .firstOrNull
+                    ?.name ??
+                guaranteedItemId;
+            await ref.read(activityLogProvider.notifier).addLog(
+                  '솔로 의뢰 보상 — $itemName(을)를 획득했다',
+                  ActivityLogType.factionRewardGranted,
+                );
+          } else {
+            // 중복 정책: 100G × difficulty 변환
+            final goldAmount = (100 * soloPool.difficulty).round();
+            await ref.read(userDataProvider.notifier).addGold(goldAmount);
+            await ref.read(activityLogProvider.notifier).addLog(
+                  '솔로 의뢰 보상 — ${goldAmount}G로 변환되었다',
+                  ActivityLogType.questResult,
+                );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[FR-19] guaranteedDrop error: $e');
+    }
+
+    // [FR-20] 솔로 의뢰 성공/대성공 시 확률 드랍 (결정적 시드)
+    // stableSeed32로 quest 단위 결정적 시드 생성 → Random.nextDouble < chance 판정.
+    // 중복 보유 시 silent skip (FR-19와 달리 골드 변환 미적용 — 명세 §FR-20).
+    try {
+      if (soloPool != null &&
+          (result.resultType == QuestResult.success ||
+              result.resultType == QuestResult.greatSuccess)) {
+        final dropEntry =
+            FlagshipSoloQuestConfig.probabilisticDropMatrix[soloPool.id];
+        if (dropEntry != null) {
+          final seed = stableSeed32(
+              '${quest.startTime?.toUtc().microsecondsSinceEpoch ?? 0}|${quest.id}|drop');
+          final rng = Random(seed);
+          if (rng.nextDouble() < dropEntry.chance) {
+            final inventoryRepo = ref.read(inventoryRepositoryProvider);
+            final alreadyHas = inventoryRepo
+                .getAll()
+                .any((row) => row.itemId == dropEntry.itemId);
+            if (!alreadyHas) {
+              await inventoryRepo.addItem(
+                itemId: dropEntry.itemId,
+                items: staticData.items,
+              );
+              final itemName = staticData.items
+                      .where((i) => i.id == dropEntry.itemId)
+                      .firstOrNull
+                      ?.name ??
+                  dropEntry.itemId;
+              await ref.read(activityLogProvider.notifier).addLog(
+                    '솔로 의뢰 보상 — 희귀 아이템 $itemName(을)를 획득했다',
+                    ActivityLogType.factionRewardGranted,
+                  );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[FR-20] probabilisticDrop error: $e');
+    }
+
+    // [FR-21] 솔로 의뢰 성공/대성공 시 후속 메시지 (ActivityLog 단독)
+    // 매트릭스에 등록된 pool.id에 한해 1줄 발급. dialog 미발생.
+    try {
+      if (soloPool != null &&
+          (result.resultType == QuestResult.success ||
+              result.resultType == QuestResult.greatSuccess)) {
+        final epilogue =
+            FlagshipSoloQuestConfig.epilogueMessages[soloPool.id];
+        if (epilogue != null) {
+          await ref.read(activityLogProvider.notifier).addLog(
+                epilogue,
+                ActivityLogType.questResult,
+              );
+        }
+      }
+    } catch (e) {
+      debugPrint('[FR-21] epilogueMessage error: $e');
     }
 
     // M6 페이즈 4 #2 (FR-27·FR-29) — 성공/대성공 시 최고 기여 mercenary 캐시

@@ -70,6 +70,10 @@ class QuestLayerInfo {
   /// ex) '칭호 — 마을의 은인' / '위업 3개 이상' / '간판 용병 지명'
   final String? namedSublabel;
 
+  /// 파티 규모 라벨 (M8.5 페이즈 4 #2 — 솔로/페어/삼인행 시각 차별화).
+  /// ex) '⭐ 솔로' / '⭐⭐ 페어' / '⭐⭐⭐ 삼인행' / null(일반 지명)
+  final String? partySizeLabel;
+
   const QuestLayerInfo({
     this.chain,
     this.isElite = false,
@@ -79,5 +83,6 @@ class QuestLayerInfo {
     this.isFactionExclusive = false,
     this.isNamed = false,
     this.namedSublabel,
+    this.partySizeLabel,
   });
 }

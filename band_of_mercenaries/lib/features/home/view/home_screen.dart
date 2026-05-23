@@ -632,6 +632,8 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '🎁', color: d, bold: false);
       case ActivityLogType.combatReportGenerated:
         return (icon: '📋', color: d, bold: false);
+      case ActivityLogType.soloQuestInjuredReturn:
+        return (icon: '💊', color: d, bold: false);
     }
   }
 

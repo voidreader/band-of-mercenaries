@@ -43,6 +43,8 @@ _$QuestPoolImpl _$$QuestPoolImplFromJson(Map<String, dynamic> json) =>
               json['region_state_effect'] as Map<String, dynamic>),
       regionStateRequired: json['region_state_required'] as String?,
       regionStateExcluded: json['region_state_excluded'] as String?,
+      partySizeMin: (json['party_size_min'] as num?)?.toInt() ?? 1,
+      partySizeMax: (json['party_size_max'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
@@ -76,4 +78,6 @@ Map<String, dynamic> _$$QuestPoolImplToJson(_$QuestPoolImpl instance) =>
       'region_state_effect': instance.regionStateEffect,
       'region_state_required': instance.regionStateRequired,
       'region_state_excluded': instance.regionStateExcluded,
+      'party_size_min': instance.partySizeMin,
+      'party_size_max': instance.partySizeMax,
     };

@@ -50,6 +50,9 @@ class CombatSimulator {
     RegionState? regionState,
     Map<String, EquipmentStatBonus> partyEquipmentBonuses = const {},
     int? seed,
+    // M8.5 페이즈 4 #2: 솔로/소수정예 의뢰의 per-merc 사망 저항 cap 적용.
+    // 호출 측에서 mercId → cap (예: 0.95) 전달. 미지정 시 baseCap(체인 0.90/일반 0.80) 사용.
+    Map<String, double> deathResistanceCaps = const {},
   }) {
     try {
       // FR-20 + §4.3: 엣지 케이스 가드.
@@ -78,6 +81,7 @@ class CombatSimulator {
         factionStates: factionStates,
         regionState: regionState,
         partyEquipmentBonuses: partyEquipmentBonuses,
+        deathResistanceCaps: deathResistanceCaps,
       );
       if (phase1 == null) return null;
 
@@ -104,6 +108,8 @@ class CombatSimulator {
     required List<FactionState> factionStates,
     RegionState? regionState,
     required Map<String, EquipmentStatBonus> partyEquipmentBonuses,
+    // M8.5 페이즈 4 #2: per-merc 사망 저항 cap 패스스루.
+    required Map<String, double> deathResistanceCaps,
   }) {
     // FR-6 §3 + §6: 파티 스냅샷 동결 + 진형 배치.
     final partySnapshots = <CombatantSnapshot>[];
@@ -264,6 +270,7 @@ class CombatSimulator {
       killedEnemyCount: 0,
       combatantSnapshots: List<CombatantSnapshot>.from(partySnapshots),
       enemySnapshots: List<EnemySnapshot>.from(enemies),
+      deathResistanceCaps: deathResistanceCaps,
     );
   }
 
@@ -1492,7 +1499,14 @@ class CombatSimulator {
     return sum;
   }
 
-  static double _evaluateDeathResist(_Combatant c, bool isChainProtagonist) {
+  // M8.5 페이즈 4 #2: deathResistanceCaps per-merc cap 통합.
+  // baseCap(체인 0.90 / 일반 0.80)과 perMercCap 중 더 높은 값을 effectiveMax로 단일 clamp.
+  // 체인 주인공 보너스(`+= (1.0 - chance) * 0.5`)는 effectiveMax clamp 이전에 적용.
+  static double _evaluateDeathResist(
+    _Combatant c,
+    bool isChainProtagonist,
+    Map<String, double> deathResistanceCaps,
+  ) {
     final base = CombatSimulatorConstants.baseDeathResistByTier[c.tier] ?? 0.30;
     final roleBonus =
         CombatSimulatorConstants.roleDeathResistBonus[c.role] ?? 0.0;
@@ -1506,11 +1520,13 @@ class CombatSimulator {
     );
     if (isChainProtagonist) {
       chance += (1.0 - chance) * 0.5;
-      chance = chance.clamp(
-        0.0,
-        CombatSimulatorConstants.deathResistChainProtagonistMax,
-      );
     }
+    final perMercCap = deathResistanceCaps[c.id];
+    final baseCap = isChainProtagonist
+        ? CombatSimulatorConstants.deathResistChainProtagonistMax
+        : CombatSimulatorConstants.deathResistMax;
+    final effectiveMax = max(perMercCap ?? baseCap, baseCap);
+    chance = chance.clamp(0.0, effectiveMax);
     return chance;
   }
 
@@ -1774,7 +1790,11 @@ class CombatSimulator {
       _cleanupOnDeath(state, c, state.lastRoundIndexEstimate);
       return true;
     }
-    final chance = _evaluateDeathResist(c, isChainProtagonist);
+    final chance = _evaluateDeathResist(
+      c,
+      isChainProtagonist,
+      state.deathResistanceCaps,
+    );
     final deathRng = Random(
       state.seed ^
           stableSeed32('${CombatSimulatorConstants.seedKeyDeath}|${c.id}'),
@@ -2450,6 +2470,8 @@ class _Phase1State {
   final Map<String, int> damageDealt;
   final List<CombatantSnapshot> combatantSnapshots;
   final List<EnemySnapshot> enemySnapshots;
+  // M8.5 페이즈 4 #2: per-merc 사망 저항 cap (mercId → cap, 0.0~1.0).
+  final Map<String, double> deathResistanceCaps;
   int killedEnemyCount;
   CombatExitCondition exitCondition = CombatExitCondition.dRoundLimit;
   int lastRoundIndex = 0;
@@ -2474,6 +2496,7 @@ class _Phase1State {
     required this.killedEnemyCount,
     required this.combatantSnapshots,
     required this.enemySnapshots,
+    required this.deathResistanceCaps,
   });
 
   int get lastRoundIndexEstimate => lastRoundIndex < 1 ? 1 : lastRoundIndex;
