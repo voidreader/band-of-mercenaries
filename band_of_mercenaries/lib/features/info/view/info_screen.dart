@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/features/crafting/domain/material_jump_provider.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers.dart';
+import 'package:band_of_mercenaries/features/info/domain/info_screen_auto_show_providers.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_codex_screen.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_detail_screen.dart';
 import 'package:band_of_mercenaries/features/info/view/guild_equipment_screen.dart';
+import 'package:band_of_mercenaries/features/info/view/livingsphere_detail_screen.dart';
 import 'package:band_of_mercenaries/features/info/view/rank_info_screen.dart';
 import 'package:band_of_mercenaries/features/inventory/view/inventory_screen.dart';
 import 'package:band_of_mercenaries/features/achievement/view/chronicle_screen.dart';
@@ -23,6 +25,7 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
   bool _showGuildEquipment = false;
   bool _showInventory = false;
   bool _showChronicle = false;
+  bool _showLivingsphere = false;
   String? _selectedFactionId;
 
   @override
@@ -38,6 +41,43 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
     if (scrollTarget != null && !_showCodex && _selectedFactionId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _showCodex = true);
+      });
+    }
+
+    // M8.5 페이즈 4 #1: 4 auto-show provider 감지 (post-frame + mounted 가드)
+    final autoCodex = ref.watch(infoScreenAutoShowCodexProvider);
+    if (autoCodex && !_showCodex && _selectedFactionId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _showCodex = true);
+        ref.read(infoScreenAutoShowCodexProvider.notifier).state = false;
+      });
+    }
+
+    final autoInventory = ref.watch(infoScreenAutoShowInventoryProvider);
+    if (autoInventory && !_showInventory) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _showInventory = true);
+        ref.read(infoScreenAutoShowInventoryProvider.notifier).state = false;
+      });
+    }
+
+    final autoLivingsphere = ref.watch(infoScreenAutoShowLivingsphereProvider);
+    if (autoLivingsphere && !_showLivingsphere) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _showLivingsphere = true);
+        ref.read(infoScreenAutoShowLivingsphereProvider.notifier).state = false;
+      });
+    }
+
+    final autoChronicle = ref.watch(infoScreenAutoShowChronicleProvider);
+    if (autoChronicle && !_showChronicle) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _showChronicle = true);
+        ref.read(infoScreenAutoShowChronicleProvider.notifier).state = false;
       });
     }
 
@@ -71,6 +111,12 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
 
     if (_showChronicle) {
       return ChronicleScreen(onBack: () => setState(() => _showChronicle = false));
+    }
+
+    if (_showLivingsphere) {
+      return LivingsphereDetailScreen(
+        onBack: () => setState(() => _showLivingsphere = false),
+      );
     }
 
     final repo = ref.read(factionStateRepositoryProvider);
@@ -200,6 +246,15 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                   subtitle: const Text('우리 용병단의 영구 기록'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => setState(() => _showChronicle = true),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.public, color: AppTheme.chainGold),
+                  title: const Text('생활권 대시보드'),
+                  subtitle: const Text('더스트플레인 완성도 + 30분/8시간 목표'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => setState(() => _showLivingsphere = true),
                 ),
               ),
             ],

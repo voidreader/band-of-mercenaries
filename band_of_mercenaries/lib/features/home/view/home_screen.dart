@@ -30,6 +30,7 @@ import 'package:band_of_mercenaries/core/models/dialog_request.dart';
 import 'package:band_of_mercenaries/features/achievement/view/chronicle_home_card.dart';
 import 'package:band_of_mercenaries/features/achievement/view/chronicle_screen.dart';
 import 'package:band_of_mercenaries/features/title/view/flagship_home_card.dart';
+import 'package:band_of_mercenaries/features/home/view/livingsphere_summary_section.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -382,6 +383,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: ChronicleHomeCard(
                     onTap: () => setState(() => _showChronicle = true),
                   ),
+                ),
+
+                // 생활권 대시보드 카드 (M8.5 페이즈 4 #1)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  child: LivingsphereSummarySection(),
                 ),
 
                 // 최근 활동

@@ -433,4 +433,20 @@ class UserDataNotifier extends StateNotifier<UserData?> {
     await state!.save();
     state = state;
   }
+
+  /// M8.5 페이즈 4 #1 — 30분 목표 핀 설정/해제
+  Future<void> setShortGoalPin(String? pinId) async {
+    if (state == null) return;
+    state!.shortGoalPinId = pinId;
+    await state!.save();
+    state = state;
+  }
+
+  /// M8.5 페이즈 4 #1 — 8시간 목표 핀 설정/해제
+  Future<void> setLongGoalPin(String? pinId) async {
+    if (state == null) return;
+    state!.longGoalPinId = pinId;
+    await state!.save();
+    state = state;
+  }
 }

@@ -45,13 +45,15 @@ class UserDataAdapter extends TypeAdapter<UserData> {
       lastDispatchProtagonistMercId: fields[25] as String?,
       namedQuestCooldowns: (fields[26] as Map?)?.cast<String, DateTime>(),
       foreignStallVisitCount: fields[27] as int,
+      shortGoalPinId: fields[28] as String?,
+      longGoalPinId: fields[29] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserData obj) {
     writer
-      ..writeByte(28)
+      ..writeByte(30)
       ..writeByte(0)
       ..write(obj.gold)
       ..writeByte(1)
@@ -107,7 +109,11 @@ class UserDataAdapter extends TypeAdapter<UserData> {
       ..writeByte(26)
       ..write(obj.namedQuestCooldowns)
       ..writeByte(27)
-      ..write(obj.foreignStallVisitCount);
+      ..write(obj.foreignStallVisitCount)
+      ..writeByte(28)
+      ..write(obj.shortGoalPinId)
+      ..writeByte(29)
+      ..write(obj.longGoalPinId);
   }
 
   @override

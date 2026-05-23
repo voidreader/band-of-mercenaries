@@ -158,7 +158,10 @@ class CombatReportService {
 
     // 12. toneTags 평탄화 + dedup
     final tagSet = <String>{};
-    final tplsForTags = <CombatReportTemplate>[?summary, ...details];
+    final tplsForTags = <CombatReportTemplate>[
+      if (summary != null) summary,
+      ...details,
+    ];
     for (final tpl in tplsForTags) {
       final tags = tpl.parsedTags;
       for (final key in const ['tone', 'beat', 'scene', 'mood', 'faction']) {

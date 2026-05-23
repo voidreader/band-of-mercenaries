@@ -24,6 +24,8 @@ import 'package:band_of_mercenaries/features/movement/view/region_status_badge_r
 import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_config.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/settlement_infrastructure_provider.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
+import 'package:band_of_mercenaries/features/movement/domain/livingsphere_movement_target_provider.dart';
+import 'package:band_of_mercenaries/features/settlement/domain/settlement_facility_target_provider.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
   const MovementScreen({super.key});
@@ -59,6 +61,36 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
         setState(() => _selectedFacility = null);
       }
     });
+
+    // M8.5 페이즈 4 #1: 생활권 점프 target provider 감지
+    ref.listen<int?>(livingsphereMovementTargetProvider, (prev, next) {
+      if (next == null) return;
+      setState(() {
+        _selectedRegion = next;
+        _selectedSector = 1;
+      });
+      ref.read(livingsphereMovementTargetProvider.notifier).state = null;
+    });
+
+    // M8.5 페이즈 4 #1: 거점 시설 점프 target provider 감지 (FR-25)
+    ref.listen<VillageFacility?>(settlementFacilityTargetProvider, (prev, next) {
+      if (next == null) return;
+      final currentUserData = ref.read(userDataProvider);
+      if (currentUserData == null) {
+        ref.read(settlementFacilityTargetProvider.notifier).state = null;
+        return;
+      }
+      if (currentUserData.region == GameConstants.startingRegionId && currentUserData.sector == 1) {
+        setState(() => _selectedFacility = next);
+      } else {
+        setState(() {
+          _selectedRegion = GameConstants.startingRegionId;
+          _selectedSector = 1;
+        });
+      }
+      ref.read(settlementFacilityTargetProvider.notifier).state = null;
+    });
+
     final staticData = ref.watch(staticDataProvider);
     final quests = ref.watch(questListProvider);
     final hasDispatchedQuests = quests.any((q) => q.status == QuestStatus.inProgress);

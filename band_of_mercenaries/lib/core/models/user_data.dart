@@ -98,6 +98,16 @@ class UserData extends HiveObject {
   @HiveField(27)
   int foreignStallVisitCount;
 
+  /// M8.5 페이즈 4 #1 — 30분 목표 핀 ID
+  /// pinId 포맷: 'quest:{id}', 'chain:{id}', 'craft:{id}', 'trust:{regionId}:{nextLevel}',
+  /// 'infra:{regionId}:{nextTier}', 'rank:{nextGrade}', 'pacify:{regionId}', 'faction_join:{factionId}'
+  @HiveField(28)
+  String? shortGoalPinId;
+
+  /// M8.5 페이즈 4 #1 — 8시간 목표 핀 ID (포맷은 shortGoalPinId와 동일)
+  @HiveField(29)
+  String? longGoalPinId;
+
   UserData({
     required this.gold,
     this.continent = 1,
@@ -127,6 +137,8 @@ class UserData extends HiveObject {
     this.lastDispatchProtagonistMercId,
     Map<String, DateTime>? namedQuestCooldowns,
     this.foreignStallVisitCount = 0,
+    this.shortGoalPinId,
+    this.longGoalPinId,
   })  : facilities = facilities ?? {},
         artifactItemIds = artifactItemIds ?? <String>[],
         completedChains = completedChains ?? <String>[],

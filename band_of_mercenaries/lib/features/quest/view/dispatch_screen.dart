@@ -14,6 +14,7 @@ import 'package:band_of_mercenaries/features/quest/domain/elite_loot_service.dar
 import 'package:band_of_mercenaries/features/quest/domain/role_synergy_matrix.dart';
 import 'package:band_of_mercenaries/features/quest/domain/role_utils.dart';
 import 'package:band_of_mercenaries/features/quest/domain/sorted_quests_provider.dart';
+import 'package:band_of_mercenaries/features/quest/domain/dispatch_focus_provider.dart';
 import 'package:band_of_mercenaries/features/quest/view/dispatch_detail_page.dart';
 import 'package:band_of_mercenaries/features/quest/view/quest_result_dialog.dart';
 import 'package:band_of_mercenaries/features/quest/view/chain_top_section.dart';
@@ -74,6 +75,13 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
           }
         });
       }
+    });
+
+    // M8.5 페이즈 4 #1 (FR-24): 생활권 점프 진입 감지
+    // MVP: 카드 인덱스 매칭/스크롤은 후속 마일스톤 위임. 현재는 provider 리셋만 수행
+    ref.listen<String?>(dispatchFocusQuestPoolIdProvider, (prev, next) {
+      if (next == null) return;
+      ref.read(dispatchFocusQuestPoolIdProvider.notifier).state = null;
     });
 
     if (userData == null) return const Center(child: CircularProgressIndicator());

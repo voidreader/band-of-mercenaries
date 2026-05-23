@@ -18,6 +18,7 @@ import 'package:band_of_mercenaries/features/investigation/domain/danger_level_c
 import 'package:band_of_mercenaries/features/investigation/domain/danger_level_changed_provider.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_flag_descriptions.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
+import 'package:band_of_mercenaries/features/investigation/domain/region_state_version_provider.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/trust_level_up_event.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
@@ -58,10 +59,18 @@ class RegionStateRepository {
       getState(regionId)?.lastDangerDecayCheckedAt ??
       DateTime.fromMillisecondsSinceEpoch(0);
 
-  Future<void> updateLastDecayCheckedAt(int regionId, DateTime now) async {
+  Future<void> updateLastDecayCheckedAt(
+    int regionId,
+    DateTime now, {
+    Ref? ref,
+  }) async {
     var state = getState(regionId) ?? RegionState(regionId: regionId);
     state.lastDangerDecayCheckedAt = now;
     await saveState(state);
+    // M8.5 페이즈 4 #1 — 대시보드 invalidation trigger
+    if (ref != null && regionId == GameConstants.startingRegionId) {
+      ref.read(region3StateVersionProvider.notifier).update((s) => s + 1);
+    }
   }
 
   RegionState? getState(int regionId) {
@@ -82,7 +91,11 @@ class RegionStateRepository {
   }
 
   // knowledge를 delta만큼 증가시키고 clamp(0, 100), 업데이트된 RegionState 반환
-  Future<RegionState> updateKnowledge(int regionId, int delta) async {
+  Future<RegionState> updateKnowledge(
+    int regionId,
+    int delta, {
+    Ref? ref,
+  }) async {
     var state = getState(regionId);
     if (state == null) {
       state = RegionState(regionId: regionId);
@@ -90,6 +103,10 @@ class RegionStateRepository {
     }
     state.knowledge = (state.knowledge + delta).clamp(0, 100);
     await state.save();
+    // M8.5 페이즈 4 #1 — 대시보드 invalidation trigger
+    if (ref != null && regionId == GameConstants.startingRegionId) {
+      ref.read(region3StateVersionProvider.notifier).update((s) => s + 1);
+    }
     return state;
   }
 
@@ -103,7 +120,11 @@ class RegionStateRepository {
   }
 
   /// region별 재료 첫 입수 영속 추적 (M5 페이즈 4 #3 — CraftingService.firstAcquiredItem 영속 평가용)
-  Future<void> addAcquiredMaterial(int regionId, String itemId) async {
+  Future<void> addAcquiredMaterial(
+    int regionId,
+    String itemId, {
+    Ref? ref,
+  }) async {
     var state = getState(regionId);
     if (state == null) {
       state = RegionState(regionId: regionId);
@@ -114,6 +135,10 @@ class RegionStateRepository {
     }
     state.firstAcquiredMaterialIds.add(itemId);
     await state.save();
+    // M8.5 페이즈 4 #1 — 대시보드 invalidation trigger
+    if (ref != null && regionId == GameConstants.startingRegionId) {
+      ref.read(region3StateVersionProvider.notifier).update((s) => s + 1);
+    }
   }
 
   // 섹터 변환을 적용한다. MVP: 리전당 최대 1섹터 변형 제약. 성공 시 true 반환
@@ -328,6 +353,11 @@ class RegionStateRepository {
       await ref.read(questListProvider.notifier).refreshAvailableQuests();
     }
 
+    // M8.5 페이즈 4 #1 — 대시보드 invalidation trigger
+    if (regionId == GameConstants.startingRegionId) {
+      ref.read(region3StateVersionProvider.notifier).update((s) => s + 1);
+    }
+
     return (
       newTrust: state.settlementTrust!,
       newLevel: newLevel,
@@ -435,6 +465,11 @@ class RegionStateRepository {
       await ref.read(questListProvider.notifier).refreshAvailableQuests();
     }
 
+    // M8.5 페이즈 4 #1 — 대시보드 invalidation trigger
+    if (regionId == GameConstants.startingRegionId) {
+      ref.read(region3StateVersionProvider.notifier).update((s) => s + 1);
+    }
+
     return (newScore: newScore, newLevel: newLevel.cacheInt, event: event);
   }
 
@@ -478,6 +513,11 @@ class RegionStateRepository {
       }
     } on Exception catch (e) {
       debugPrint('[M7][Infrastructure] transition 평가 실패: $e');
+    }
+
+    // M8.5 페이즈 4 #1 — 대시보드 invalidation trigger
+    if (regionId == GameConstants.startingRegionId) {
+      ref.read(region3StateVersionProvider.notifier).update((s) => s + 1);
     }
 
     return true;
@@ -643,6 +683,9 @@ class RegionStateRepository {
 
     // 퀘스트 풀 갱신
     await ref.read(questListProvider.notifier).refreshAvailableQuests();
+
+    // M8.5 페이즈 4 #1 — 대시보드 invalidation trigger (region 3 인프라 변경)
+    ref.read(region3StateVersionProvider.notifier).update((s) => s + 1);
 
     return InfrastructureUpgradeEvent(
       fromTier: currentTier,
