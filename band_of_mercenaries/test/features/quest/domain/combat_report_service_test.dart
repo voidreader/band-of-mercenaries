@@ -13,6 +13,7 @@ import 'package:band_of_mercenaries/features/quest/domain/combat_report_service.
 import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_turn.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/status_effect_event.dart';
 
 const _engine = TemplateEngine();
 
@@ -169,6 +170,8 @@ StaticGameData _makeStaticData({
     combatSkills: const [],
     combatStatusEffects: const [],
     enemyArchetypes: const [],
+    hiddenStats: const [],
+    battleMemoryTemplates: const [],
   );
 }
 
@@ -726,6 +729,364 @@ void main() {
       expect(report!.schemaVersion, equals(1));
       expect(report.turns, isNotNull);
     });
+  });
+
+  // ==========================================================================
+  // M8.5 페이즈 4 #3 — FR-17 감정 장면 섹션 테스트
+  // ==========================================================================
+
+  group('FR-17 감정 장면 섹션 (_buildEmotionalScenes)', () {
+    // ------------------------------------------------------------------------
+    // helper: emotional scope 템플릿 생성 (tags_json.emotion 키 기반 매칭)
+    // ------------------------------------------------------------------------
+
+    // 감정 종류별 emotional 템플릿 생성 (tags_json = {"emotion": "<kind>"})
+    CombatReportTemplate makeEmotionalTemplate({
+      required String id,
+      required String emotionKind,
+      String template = '',
+    }) {
+      return _makeTemplate(
+        id: id,
+        scope: 'emotional',
+        resultType: null,
+        lineType: 'detail',
+        template: template.isEmpty ? 'emotional_$emotionKind 장면' : template,
+        tagsJson: <String, dynamic>{'emotion': emotionKind},
+      );
+    }
+
+    // statusEffectHistory 주입용 apply 이벤트 생성
+    StatusEffectEvent makeApplyEvent(String effectId) {
+      return StatusEffectEvent(
+        eventType: 'apply',
+        roundIndex: 0,
+        targetId: 'merc-001',
+        effectId: effectId,
+        labelKey: effectId,
+      );
+    }
+
+    // 기본 quest_type 템플릿 (summary + detail) — simulationResult가 있을 때
+    // 본문 구성을 위한 최소 풀
+    List<CombatReportTemplate> baseTemplates() {
+      return [
+        _makeTemplate(
+          id: 'base_sum',
+          scope: 'quest_type',
+          resultType: 'success',
+          lineType: 'summary',
+          template: '기본 요약',
+        ),
+        for (var i = 0; i < 6; i++)
+          _makeTemplate(
+            id: 'base_det_$i',
+            scope: 'quest_type',
+            resultType: 'success',
+            lineType: 'detail',
+            template: '기본 상세 $i',
+          ),
+      ];
+    }
+
+    // simulationResult with statusEffectHistory
+    CombatSimulationResult makeSimWithHistory(
+      List<StatusEffectEvent> history,
+    ) {
+      return CombatSimulationResult(
+        questResult: QuestResult.success,
+        turns: const [],
+        protagonistMercId: 'merc-001',
+        featuredMercIds: const ['merc-001'],
+        exitCondition: CombatExitCondition.cObjectiveAchieved,
+        statusEffectHistory: history,
+        seed: 42,
+        toneTags: const [],
+      );
+    }
+
+    test(
+      'scope=emotional 템플릿이 있으면 감정 장면이 최대 3줄 추가된다',
+      () {
+        // 4종 감정 이벤트 주입 — 우선순위 역순으로 나열해 정렬 확인도 겸함
+        final history = [
+          makeApplyEvent('emotional_despair'), // 우선순위 4위
+          makeApplyEvent('emotional_sorrow'), // 우선순위 3위
+          makeApplyEvent('emotional_rage'), // 우선순위 2위
+          makeApplyEvent('emotional_determination'), // 우선순위 1위
+        ];
+
+        final emotionalTemplates = [
+          makeEmotionalTemplate(id: 'e_det', emotionKind: 'determination'),
+          makeEmotionalTemplate(id: 'e_rage', emotionKind: 'rage'),
+          makeEmotionalTemplate(id: 'e_sorrow', emotionKind: 'sorrow'),
+          makeEmotionalTemplate(id: 'e_despair', emotionKind: 'despair'),
+        ];
+
+        final allTemplates = [...baseTemplates(), ...emotionalTemplates];
+        final staticData = _makeStaticData(
+          combatReportTemplates: allTemplates,
+        );
+        final quest = _makeQuest(result: QuestResult.success);
+        final merc = _makeMerc(name: '주인공');
+        final simResult = makeSimWithHistory(history);
+
+        final report = CombatReportService.generate(
+          quest: quest,
+          partyMercs: [merc],
+          resultType: QuestResult.success,
+          staticData: staticData,
+          userData: _makeUserData(),
+          factionStates: const [],
+          templateEngine: _engine,
+          seed: 10,
+          simulationResult: simResult,
+        );
+
+        expect(report, isNotNull);
+        // 감정 장면은 최대 3줄 (4가지 감정 중 3개만 추가)
+        // details = base_details + emotional_lines, emotional_lines <= 3
+        final emotionalContent = report!.details
+            .where((line) => line.startsWith('emotional_'))
+            .toList();
+        expect(
+          emotionalContent.length,
+          lessThanOrEqualTo(3),
+          reason: '감정 장면은 최대 3줄',
+        );
+        expect(
+          emotionalContent.length,
+          greaterThanOrEqualTo(1),
+          reason: '감정 이벤트가 있으면 최소 1줄 추가',
+        );
+      },
+    );
+
+    test(
+      '감정 장면이 우선순위 순(투지>분노>슬픔>절망)으로 추가된다',
+      () {
+        // 4종 감정 이벤트를 모두 주입 — 보고서 details 후미에 붙는 감정 줄이
+        // determination → rage → sorrow (또는 despair) 순임을 확인
+        final history = [
+          makeApplyEvent('emotional_despair'),
+          makeApplyEvent('emotional_sorrow'),
+          makeApplyEvent('emotional_rage'),
+          makeApplyEvent('emotional_determination'),
+        ];
+
+        final emotionalTemplates = [
+          makeEmotionalTemplate(
+            id: 'e_det',
+            emotionKind: 'determination',
+            template: '투지_장면',
+          ),
+          makeEmotionalTemplate(
+            id: 'e_rage',
+            emotionKind: 'rage',
+            template: '분노_장면',
+          ),
+          makeEmotionalTemplate(
+            id: 'e_sorrow',
+            emotionKind: 'sorrow',
+            template: '슬픔_장면',
+          ),
+          makeEmotionalTemplate(
+            id: 'e_despair',
+            emotionKind: 'despair',
+            template: '절망_장면',
+          ),
+        ];
+
+        final allTemplates = [...baseTemplates(), ...emotionalTemplates];
+        final staticData = _makeStaticData(
+          combatReportTemplates: allTemplates,
+        );
+        final quest = _makeQuest(result: QuestResult.success);
+        final merc = _makeMerc(name: '주인공');
+        final simResult = makeSimWithHistory(history);
+
+        final report = CombatReportService.generate(
+          quest: quest,
+          partyMercs: [merc],
+          resultType: QuestResult.success,
+          staticData: staticData,
+          userData: _makeUserData(),
+          factionStates: const [],
+          templateEngine: _engine,
+          seed: 10,
+          simulationResult: simResult,
+        );
+
+        expect(report, isNotNull);
+        final allDetails = report!.details;
+
+        // details 후미 최대 3개를 감정 줄 후보로 확인
+        // 전체 details에서 투지_장면은 분노_장면보다 앞에 등장해야 함
+        int detIdx(String marker) =>
+            allDetails.indexWhere((l) => l.contains(marker));
+        final detIdx1 = detIdx('투지_장면');
+        final detIdx2 = detIdx('분노_장면');
+
+        // 투지, 분노 둘 다 등장한 경우에만 순서 검증
+        if (detIdx1 >= 0 && detIdx2 >= 0) {
+          expect(
+            detIdx1 < detIdx2,
+            isTrue,
+            reason: '투지 장면은 분노 장면보다 먼저 등장해야 함',
+          );
+        }
+
+        // 투지 장면은 반드시 포함 (최우선순위)
+        expect(
+          allDetails.any((l) => l.contains('투지_장면')),
+          isTrue,
+          reason: '최우선순위 투지 장면이 포함되어야 함',
+        );
+      },
+    );
+
+    test(
+      'scope=emotional 템플릿이 없으면(빈 풀) 보고서 생성이 실패하지 않는다(fail-soft)',
+      () {
+        // emotional 이벤트가 있어도 scope='emotional' 템플릿이 0행이면 skip
+        final history = [
+          makeApplyEvent('emotional_determination'),
+          makeApplyEvent('emotional_rage'),
+        ];
+
+        // emotional scope 없이 기본 템플릿만 구성
+        final staticData = _makeStaticData(
+          combatReportTemplates: baseTemplates(),
+        );
+        final quest = _makeQuest(result: QuestResult.success);
+        final merc = _makeMerc(name: '주인공');
+        final simResult = makeSimWithHistory(history);
+
+        final report = CombatReportService.generate(
+          quest: quest,
+          partyMercs: [merc],
+          resultType: QuestResult.success,
+          staticData: staticData,
+          userData: _makeUserData(),
+          factionStates: const [],
+          templateEngine: _engine,
+          seed: 10,
+          simulationResult: simResult,
+        );
+
+        // fail-soft: null 반환 금지
+        expect(report, isNotNull, reason: '빈 emotional 풀에서도 보고서 생성 성공');
+
+        // 기존 본문 details가 그대로 유지됨 (emotional 줄이 추가되지 않음)
+        final hasEmotional = report!.details.any(
+          (l) => l.startsWith('emotional_'),
+        );
+        expect(
+          hasEmotional,
+          isFalse,
+          reason: 'emotional 템플릿이 없으면 감정 줄이 추가되지 않아야 함',
+        );
+
+        // 기존 base details가 정상 포함
+        expect(report.details, isNotEmpty, reason: '기본 details가 유지되어야 함');
+      },
+    );
+
+    test(
+      '동일 감정 effectId 중복 이벤트는 1줄만 추가된다',
+      () {
+        // 같은 effectId가 여러 번 apply되어도 1회만 추출
+        final history = [
+          makeApplyEvent('emotional_rage'),
+          makeApplyEvent('emotional_rage'), // 중복
+          makeApplyEvent('emotional_rage'), // 중복
+        ];
+
+        final emotionalTemplates = [
+          makeEmotionalTemplate(
+            id: 'e_rage',
+            emotionKind: 'rage',
+            template: '분노_장면',
+          ),
+          makeEmotionalTemplate(
+            id: 'e_rage2',
+            emotionKind: 'rage',
+            template: '분노_장면2',
+          ),
+        ];
+
+        final allTemplates = [...baseTemplates(), ...emotionalTemplates];
+        final staticData = _makeStaticData(
+          combatReportTemplates: allTemplates,
+        );
+        final quest = _makeQuest(result: QuestResult.success);
+        final merc = _makeMerc(name: '주인공');
+        final simResult = makeSimWithHistory(history);
+
+        final report = CombatReportService.generate(
+          quest: quest,
+          partyMercs: [merc],
+          resultType: QuestResult.success,
+          staticData: staticData,
+          userData: _makeUserData(),
+          factionStates: const [],
+          templateEngine: _engine,
+          seed: 10,
+          simulationResult: simResult,
+        );
+
+        expect(report, isNotNull);
+        // rage effectId 중복이므로 추가되는 감정 장면은 1줄
+        final emotionalCount = report!.details
+            .where(
+              (l) => l.contains('분노_장면'),
+            )
+            .length;
+        expect(
+          emotionalCount,
+          equals(1),
+          reason: '중복 effectId는 1줄만 추가',
+        );
+      },
+    );
+
+    test(
+      'simulationResult=null이면 감정 장면이 추가되지 않는다',
+      () {
+        final emotionalTemplates = [
+          makeEmotionalTemplate(id: 'e_det', emotionKind: 'determination'),
+        ];
+        final allTemplates = [...baseTemplates(), ...emotionalTemplates];
+        final staticData = _makeStaticData(
+          combatReportTemplates: allTemplates,
+        );
+        final quest = _makeQuest(result: QuestResult.success);
+        final merc = _makeMerc(name: '주인공');
+
+        final report = CombatReportService.generate(
+          quest: quest,
+          partyMercs: [merc],
+          resultType: QuestResult.success,
+          staticData: staticData,
+          userData: _makeUserData(),
+          factionStates: const [],
+          templateEngine: _engine,
+          seed: 10,
+          simulationResult: null, // simulationResult 없음
+        );
+
+        expect(report, isNotNull);
+        // simulationResult=null → _buildEmotionalScenes 즉시 [] 반환
+        final hasEmotional = report!.details.any(
+          (l) => l.startsWith('emotional_'),
+        );
+        expect(
+          hasEmotional,
+          isFalse,
+          reason: 'simulationResult=null이면 감정 장면 없음',
+        );
+      },
+    );
   });
 }
 

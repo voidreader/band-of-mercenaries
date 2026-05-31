@@ -98,6 +98,8 @@ StaticGameData _emptyStaticData() {
     combatSkills: const [],
     combatStatusEffects: const [],
     enemyArchetypes: const [],
+    hiddenStats: const [],
+    battleMemoryTemplates: const [],
   );
 }
 

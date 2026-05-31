@@ -342,6 +342,222 @@ void main() {
       );
     });
   });
+
+  // M8.5 페이즈 4 #3: hiddenStatEffects가 기존 효과와 동일한 상한을 공유하는지 검증
+  group('PassiveBonusService — hiddenStatEffects 상한 공유', () {
+    test('reputationGainModifier — titleEffects + hiddenStatEffects 합산 상한 +0.30',
+        () {
+      // titleEffects: +0.20, hiddenStatEffects: +0.15 → 합산 0.35 → 상한 0.30
+      final titleEffects = [
+        PassiveEffect.reputationGainModifier(value: 0.20),
+      ];
+      final hiddenStatEffects = [
+        PassiveEffect.reputationGainModifier(value: 0.15),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 0,
+        allRanks: [],
+        joinedFactions: [],
+        titleEffects: titleEffects,
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      expect(
+        PassiveBonusService.getReputationGainModifier(ce),
+        closeTo(0.30, 0.0001),
+      );
+    });
+
+    test('reputationGainModifier — 단독 hiddenStatEffects +0.18 (상한 미포함)',
+        () {
+      final hiddenStatEffects = [
+        PassiveEffect.reputationGainModifier(value: 0.18),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 0,
+        allRanks: [],
+        joinedFactions: [],
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      expect(
+        PassiveBonusService.getReputationGainModifier(ce),
+        closeTo(0.18, 0.0001),
+      );
+    });
+
+    test(
+        'recoveryTimeReduction — titleEffects(0.15 for injured) + hiddenStatEffects(0.20 for injured) = 0.35 → (1-0.35)=0.65',
+        () {
+      // 회복 시간 감소는 곱셈 계열: (1 - Σ).clamp(0.10, 1.0)
+      final titleEffects = [
+        PassiveEffect.recoveryTimeReduction(status: 'injured', value: 0.15),
+      ];
+      final hiddenStatEffects = [
+        PassiveEffect.recoveryTimeReduction(status: 'injured', value: 0.20),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 0,
+        allRanks: [],
+        joinedFactions: [],
+        titleEffects: titleEffects,
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      expect(
+        PassiveBonusService.getRecoveryTimeMultiplier(ce, 'injured'),
+        closeTo(0.65, 0.0001),
+      );
+    });
+
+    test(
+        'recoveryTimeReduction — 합산 감소 1.20 (titleEffects 0.70 + hiddenStatEffects 0.50) → 하한 0.10 클램프',
+        () {
+      final titleEffects = [
+        PassiveEffect.recoveryTimeReduction(status: 'tired', value: 0.70),
+      ];
+      final hiddenStatEffects = [
+        PassiveEffect.recoveryTimeReduction(status: 'tired', value: 0.50),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 0,
+        allRanks: [],
+        joinedFactions: [],
+        titleEffects: titleEffects,
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      expect(
+        PassiveBonusService.getRecoveryTimeMultiplier(ce, 'tired'),
+        0.10,
+      );
+    });
+
+    test('recoveryTimeReduction — status 불일치 (titleEffects tired + hiddenStatEffects injured)',
+        () {
+      // titleEffects는 tired, hiddenStatEffects는 injured
+      // injured 조회 시 hiddenStatEffects만 포함 → (1 - 0.25) = 0.75
+      final titleEffects = [
+        PassiveEffect.recoveryTimeReduction(status: 'tired', value: 0.30),
+      ];
+      final hiddenStatEffects = [
+        PassiveEffect.recoveryTimeReduction(status: 'injured', value: 0.25),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 0,
+        allRanks: [],
+        joinedFactions: [],
+        titleEffects: titleEffects,
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      expect(
+        PassiveBonusService.getRecoveryTimeMultiplier(ce, 'injured'),
+        closeTo(0.75, 0.0001),
+      );
+    });
+
+    test('collect() with hiddenStatEffects — 기존 소스(personalEquipment/guildEquipment)와 함께 누적',
+        () {
+      // personalEquipmentLegendaries: +0.10, guildEquipments: +0.05, hiddenStatEffects: +0.12
+      // 합산 0.27 → 상한 0.30 미포함
+      final personalEquipmentLegendaries = [
+        PassiveEffect.reputationGainModifier(value: 0.10),
+      ];
+      final guildEquipments = [
+        PassiveEffect.reputationGainModifier(value: 0.05),
+      ];
+      final hiddenStatEffects = [
+        PassiveEffect.reputationGainModifier(value: 0.12),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 0,
+        allRanks: [],
+        joinedFactions: [],
+        personalEquipmentLegendaries: personalEquipmentLegendaries,
+        guildEquipments: guildEquipments,
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      expect(
+        PassiveBonusService.getReputationGainModifier(ce),
+        closeTo(0.27, 0.0001),
+      );
+    });
+
+    test(
+        'collect() with multiple hiddenStatEffects — 여러 effect 누적 후 상한 공유',
+        () {
+      // hiddenStatEffects에 2개 effect: +0.15, +0.18 → 합산 0.33 → 상한 0.30
+      final hiddenStatEffects = [
+        PassiveEffect.reputationGainModifier(value: 0.15),
+        PassiveEffect.reputationGainModifier(value: 0.18),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 0,
+        allRanks: [],
+        joinedFactions: [],
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      expect(
+        PassiveBonusService.getReputationGainModifier(ce),
+        closeTo(0.30, 0.0001),
+      );
+    });
+
+    test('recoveryTimeReduction + questRewardMultiplier — hiddenStatEffects 혼합 타입',
+        () {
+      // hiddenStatEffects에 recovery + questReward 혼합
+      final hiddenStatEffects = [
+        PassiveEffect.recoveryTimeReduction(status: 'injured', value: 0.25),
+        PassiveEffect.questRewardMultiplier(questType: 'raid', value: 0.12),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 0,
+        allRanks: [],
+        joinedFactions: [],
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      // recoveryTimeReduction 검증: (1 - 0.25) = 0.75
+      expect(
+        PassiveBonusService.getRecoveryTimeMultiplier(ce, 'injured'),
+        closeTo(0.75, 0.0001),
+      );
+      // questRewardMultiplier 검증: 1 + 0.12 = 1.12
+      expect(
+        PassiveBonusService.getQuestRewardMultiplier(ce, 'raid'),
+        closeTo(1.12, 0.0001),
+      );
+    });
+
+    test(
+        'titleEffects + hiddenStatEffects + 랭크 효과 — 모든 소스 동시 누적 후 상한 공유',
+        () {
+      final ranks = [
+        _rank('F', 0, {'effects': []}),
+        _rank('D', 2000, {
+          'effects': [
+            {
+              'type': 'reputation_gain_modifier',
+              'value': 0.08,
+            },
+          ],
+        }),
+      ];
+      final titleEffects = [
+        PassiveEffect.reputationGainModifier(value: 0.10),
+      ];
+      final hiddenStatEffects = [
+        PassiveEffect.reputationGainModifier(value: 0.15),
+      ];
+      final ce = PassiveBonusService.collect(
+        reputation: 2000,
+        allRanks: ranks,
+        joinedFactions: [],
+        titleEffects: titleEffects,
+        hiddenStatEffects: hiddenStatEffects,
+      );
+      // 랭크 0.08 + titleEffects 0.10 + hiddenStatEffects 0.15 = 0.33 → 상한 0.30
+      expect(
+        PassiveBonusService.getReputationGainModifier(ce),
+        closeTo(0.30, 0.0001),
+      );
+    });
+  });
 }
 
 Rank _rank(String grade, int req, Map<String, dynamic> bonusJson) {

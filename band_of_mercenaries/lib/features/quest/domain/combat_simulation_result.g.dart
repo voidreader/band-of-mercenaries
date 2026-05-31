@@ -31,13 +31,16 @@ class CombatSimulationResultAdapter
       toneTags: (fields[10] as List).cast<String>(),
       combatantSnapshots: (fields[11] as List).cast<CombatantSnapshot>(),
       enemySnapshots: (fields[12] as List).cast<EnemySnapshot>(),
+      hiddenStatEvents: (fields[13] as Map?)?.map((dynamic k, dynamic v) =>
+          MapEntry(k as String, (v as Map).cast<String, int>())),
+      battleMemoryEvents: (fields[14] as List?)?.cast<BattleMemoryEntry>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, CombatSimulationResult obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.questResult)
       ..writeByte(1)
@@ -63,7 +66,11 @@ class CombatSimulationResultAdapter
       ..writeByte(11)
       ..write(obj.combatantSnapshots)
       ..writeByte(12)
-      ..write(obj.enemySnapshots);
+      ..write(obj.enemySnapshots)
+      ..writeByte(13)
+      ..write(obj.hiddenStatEvents)
+      ..writeByte(14)
+      ..write(obj.battleMemoryEvents);
   }
 
   @override

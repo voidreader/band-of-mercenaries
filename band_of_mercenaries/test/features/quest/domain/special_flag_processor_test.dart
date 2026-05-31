@@ -76,6 +76,8 @@ StaticGameData _minimalStaticData({List<ItemData> items = const []}) {
     combatSkills: const [],
     combatStatusEffects: const [],
     enemyArchetypes: const [],
+    hiddenStats: const [],
+    battleMemoryTemplates: const [],
   );
 }
 

@@ -274,6 +274,8 @@ StaticGameData _stubStaticData({
     combatSkills: skills,
     combatStatusEffects: effects,
     enemyArchetypes: const [],
+    hiddenStats: const [],
+    battleMemoryTemplates: const [],
   );
 }
 

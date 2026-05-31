@@ -43,13 +43,15 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       traitLearningBoostUntil: fields[23] as DateTime?,
       titleIds: (fields[24] as List?)?.cast<String>(),
       recruitedAt: fields[25] as DateTime?,
+      hiddenStats: (fields[26] as Map?)?.cast<String, int>(),
+      battleMemories: (fields[27] as List?)?.cast<BattleMemoryEntry>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Mercenary obj) {
     writer
-      ..writeByte(26)
+      ..writeByte(28)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -101,7 +103,11 @@ class MercenaryAdapter extends TypeAdapter<Mercenary> {
       ..writeByte(24)
       ..write(obj.titleIds)
       ..writeByte(25)
-      ..write(obj.recruitedAt);
+      ..write(obj.recruitedAt)
+      ..writeByte(26)
+      ..write(obj.hiddenStats)
+      ..writeByte(27)
+      ..write(obj.battleMemories);
   }
 
   @override

@@ -25,6 +25,8 @@ import 'package:band_of_mercenaries/features/investigation/domain/region_state_m
 import 'package:band_of_mercenaries/features/quest/domain/combat_simulator.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart';
 import 'package:band_of_mercenaries/features/quest/domain/flagship_solo_quest_config.dart';
+import 'package:band_of_mercenaries/features/quest/domain/hidden_stat_bonus_resolver.dart';
+import 'package:band_of_mercenaries/core/models/passive_effect.dart';
 
 class TraitEventResult {
   final String? acquiredTraitKey;
@@ -84,6 +86,9 @@ class QuestCompletionResult {
   // M8b 페이즈 4 #3 추가
   final bool combatSimulationEligible;
   final CombatSimulationResult? simulationResult;
+  // M8.5 페이즈 4 #3 — 운(luck) hiddenStat 기반 드랍 확률 보너스.
+  // 파티 최고 luck lv 1명에서 산출. 실제 적용은 quest_provider(TASK-21) 위임.
+  final double itemDropBonus;
 
   const QuestCompletionResult({
     required this.resultType,
@@ -101,6 +106,7 @@ class QuestCompletionResult {
     this.combatReportEligible = false,
     this.combatSimulationEligible = false,
     this.simulationResult,
+    this.itemDropBonus = 0.0,
   });
 }
 
@@ -136,6 +142,56 @@ class QuestCompletionService {
     final pool = staticData.questPools
         .where((p) => p.id == quest.questPoolId)
         .firstOrNull;
+
+    // M8.5 페이즈 4 #3 — hiddenStat 사전 계산 ──────────────────────────────
+    // fortitude: per-merc 개인 효과 — 용병별 hiddenStatEffects 맵 (TASK-19 FR-18)
+    // 부상/사망 대상 용병 각각의 hiddenStats에서만 적용하기 위해 mercId → effects 맵 생성.
+    final Map<String, List<PassiveEffect>> mercHiddenStatEffects = {
+      for (final merc in mercs)
+        merc.id: HiddenStatBonusResolver.collectPassiveBonuses(merc.hiddenStats),
+    };
+
+    // grit: 파티 최고 grit lv 1명 선택 (동률 시 mercId 오름차순 첫 번째) (TASK-19 FR-18)
+    Mercenary? topGritMerc;
+    for (final merc in mercs) {
+      final gritLv = merc.hiddenStats[HiddenStatBonusResolver.grit] ?? 0;
+      if (topGritMerc == null) {
+        topGritMerc = merc;
+      } else {
+        final prevLv =
+            topGritMerc.hiddenStats[HiddenStatBonusResolver.grit] ?? 0;
+        if (gritLv > prevLv ||
+            (gritLv == prevLv && merc.id.compareTo(topGritMerc.id) < 0)) {
+          topGritMerc = merc;
+        }
+      }
+    }
+    final List<PassiveEffect> gritHiddenStatEffects = topGritMerc != null
+        ? HiddenStatBonusResolver.collectPassiveBonuses(
+            topGritMerc.hiddenStats,
+          )
+        : const [];
+
+    // luck: 파티 최고 luck lv 1명 선택 (동률 시 mercId 오름차순 첫 번째) (TASK-19 FR-19)
+    Mercenary? topLuckMerc;
+    for (final merc in mercs) {
+      final luckLv = merc.hiddenStats[HiddenStatBonusResolver.luck] ?? 0;
+      if (topLuckMerc == null) {
+        topLuckMerc = merc;
+      } else {
+        final prevLv =
+            topLuckMerc.hiddenStats[HiddenStatBonusResolver.luck] ?? 0;
+        if (luckLv > prevLv ||
+            (luckLv == prevLv && merc.id.compareTo(topLuckMerc.id) < 0)) {
+          topLuckMerc = merc;
+        }
+      }
+    }
+    // itemDropBonus: 합산 금지 — 최고 luck 1명에서만 산출. 실제 적용은 TASK-21 위임.
+    final double itemDropBonus = topLuckMerc != null
+        ? HiddenStatBonusResolver.itemDropBonus(topLuckMerc.hiddenStats)
+        : 0.0;
+    // ─────────────────────────────────────────────────────────────────────────
 
     final partyPower = QuestCalculator.calculatePartyPower(
       mercs,
@@ -342,14 +398,19 @@ class QuestCompletionService {
     );
 
     // 명성 계산 (용병단 장비 reputation_gain_modifier 반영)
+    // M8.5 페이즈 4 #3 FR-18: grit hiddenStatEffects(파티 최고 grit 1명)를
+    // passiveEffects에 합산하여 getReputationGainModifier 계산. 상한 +0.30 공유.
     int repGain = 0;
     if (resultType == QuestResult.greatSuccess ||
         resultType == QuestResult.success) {
+      final gritMergedEffects = CollectedEffects(
+        [...passiveEffects.effects, ...gritHiddenStatEffects],
+      );
       repGain = ReputationService.calculateQuestReputation(
         difficulty: quest.difficulty.clamp(1, 5),
         isGreatSuccess: resultType == QuestResult.greatSuccess,
         reputationGainModifier: PassiveBonusService.getReputationGainModifier(
-          passiveEffects,
+          gritMergedEffects,
         ),
       );
       // FR-11: 지명 의뢰 명성 배수 (결과 배수 직후, 칭호/세력/랭크 효과 직전)
@@ -388,8 +449,10 @@ class QuestCompletionService {
     }
 
     // M8b 페이즈 4 #3 — 단계 6: mercDamages 변환 분기 ([FR-8])
-    // passiveRecoveryMultiplier는 시뮬레이션/fallback 양쪽에서 공통 사용.
-    final passiveRecoveryMultiplier =
+    // M8.5 페이즈 4 #3 FR-18: fortitude는 per-merc 개인 효과.
+    // 파티 공통 passiveEffects 기반 base multiplier는 공통 보정값으로 유지하고,
+    // 부상/사망 용병 개별 hiddenStatEffects를 합산하여 per-merc 회복 시간 계산.
+    final double basePassiveRecoveryMultiplier =
         PassiveBonusService.getRecoveryTimeMultiplier(
           passiveEffects,
           'injured',
@@ -407,7 +470,8 @@ class QuestCompletionService {
         speedMultiplier: speedMultiplier,
         resultType: resultType,
         recoveryReduction: recoveryReduction,
-        passiveRecoveryMultiplier: passiveRecoveryMultiplier,
+        basePassiveRecoveryMultiplier: basePassiveRecoveryMultiplier,
+        mercHiddenStatEffects: mercHiddenStatEffects,
         legendaryEffects: legendaryEffects,
         mercCooldowns: mercCooldowns,
         now: now,
@@ -426,6 +490,15 @@ class QuestCompletionService {
 
       mercDamages = <MercDamageResult>[];
       for (final merc in mercs) {
+        // M8.5 페이즈 4 #3 FR-18: fortitude per-merc — 해당 용병의 hiddenStatEffects 합산
+        final mercEffects = mercHiddenStatEffects[merc.id] ?? const [];
+        final mercRecoveryMultiplier = mercEffects.isEmpty
+            ? basePassiveRecoveryMultiplier
+            : PassiveBonusService.getRecoveryTimeMultiplier(
+                CollectedEffects([...passiveEffects.effects, ...mercEffects]),
+                'injured',
+              );
+
         if (resultType == QuestResult.failure ||
             resultType == QuestResult.criticalFailure) {
           final damageRoll = random.nextDouble();
@@ -453,7 +526,7 @@ class QuestCompletionService {
               final adjustedRecoverySeconds =
                   (baseRecoverySeconds *
                           (1.0 - recoveryReduction) *
-                          passiveRecoveryMultiplier)
+                          mercRecoveryMultiplier)
                       .round();
               mercDamages.add(
                 MercDamageResult(
@@ -484,7 +557,7 @@ class QuestCompletionService {
             final adjustedRecoverySeconds =
                 (baseRecoverySeconds *
                         (1.0 - recoveryReduction) *
-                        passiveRecoveryMultiplier)
+                        mercRecoveryMultiplier)
                     .round();
             mercDamages.add(
               MercDamageResult(
@@ -621,6 +694,8 @@ class QuestCompletionService {
       // M8b 페이즈 4 #3 추가
       combatSimulationEligible: combatSimulationEligible,
       simulationResult: simulationResult,
+      // M8.5 페이즈 4 #3 추가 — luck 드랍 보너스 산출 (적용은 TASK-21 위임)
+      itemDropBonus: itemDropBonus,
     );
   }
 
@@ -678,6 +753,7 @@ class QuestCompletionService {
   /// legendary ⑤ canPrevent 평가 포함.
   /// case a (deceased): legendary 다운그레이드 분기 / case b (injured) / case c (tired).
   /// damageRoll: case a=1.0 / case b=0.5 / case c=0.0.
+  /// M8.5 페이즈 4 #3 FR-18: fortitude per-merc — 부상/사망 용병별 hiddenStatEffects 합산.
   static List<MercDamageResult> _convertSimulationToMercDamages({
     required CombatSimulationResult simulationResult,
     required List<Mercenary> mercs,
@@ -685,7 +761,8 @@ class QuestCompletionService {
     required double speedMultiplier,
     required QuestResult resultType,
     required double recoveryReduction,
-    required double passiveRecoveryMultiplier,
+    required double basePassiveRecoveryMultiplier,
+    required Map<String, List<PassiveEffect>> mercHiddenStatEffects,
     required List<LegendaryEffect> legendaryEffects,
     required Map<String, DateTime?> mercCooldowns,
     required DateTime now,
@@ -696,14 +773,40 @@ class QuestCompletionService {
 
     final baseRecoverySeconds = (difficulty.level * 10 * 60 / speedMultiplier)
         .round();
-    final adjustedRecoverySeconds =
-        (baseRecoverySeconds *
-                (1.0 - recoveryReduction) *
-                passiveRecoveryMultiplier)
-            .round();
     final tiredSeconds = (5 * 60 / speedMultiplier).round();
 
     for (final merc in mercs) {
+      // M8.5 페이즈 4 #3 FR-18: fortitude per-merc recovery multiplier
+      // 부상/사망 용병의 hiddenStatEffects를 base effects에 합산하여 개인별 회복 시간 계산.
+      final mercEffects = mercHiddenStatEffects[merc.id] ?? const [];
+      final mercRecoveryMultiplier = mercEffects.isEmpty
+          ? basePassiveRecoveryMultiplier
+          : () {
+              // passiveEffects 없이 hiddenStatEffects만으로 recovery reduction 계산.
+              // 기존 base multiplier는 파티 공통 passiveEffects 반영값이므로,
+              // hiddenStat effect가 있으면 hiddenStat 부분만 추가 reduction으로 곱셈 적용.
+              // 설계: mergedEffects = 빈 기반 + merc hiddenStatEffects → 회복 감소율 산출.
+              // 파티 공통 효과(basePassiveRecoveryMultiplier)와 개인 효과를 분리 계산 후 곱산.
+              // hiddenStat 단독 recovery multiplier (1.0 미만이면 추가 감소)
+              double hiddenSum = 0.0;
+              for (final e in mercEffects) {
+                if (e is RecoveryTimeReductionEffect &&
+                    (e.status == 'all' || e.status == 'injured')) {
+                  hiddenSum += e.value;
+                }
+              }
+              final hiddenMultiplier = (1.0 - hiddenSum).clamp(0.10, 1.0);
+              // 기존 base × hidden 순차 적용 (하한 0.10 재적용)
+              return (basePassiveRecoveryMultiplier * hiddenMultiplier)
+                  .clamp(0.10, 1.0);
+            }();
+
+      final adjustedRecoverySeconds =
+          (baseRecoverySeconds *
+                  (1.0 - recoveryReduction) *
+                  mercRecoveryMultiplier)
+              .round();
+
       // case a) 사망 마킹
       if (deceasedSet.contains(merc.id)) {
         // legendary ⑤ canPrevent 평가

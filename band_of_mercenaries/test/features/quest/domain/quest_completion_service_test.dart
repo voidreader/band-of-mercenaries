@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_completion_service.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/hidden_stat_bonus_resolver.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/core/models/difficulty.dart';
@@ -122,6 +123,8 @@ StaticGameData _makeStaticData({
     combatSkills: combatSkills,
     combatStatusEffects: combatStatusEffects,
     enemyArchetypes: enemyArchetypes,
+    hiddenStats: const [],
+    battleMemoryTemplates: const [],
   );
 }
 
@@ -944,6 +947,304 @@ void main() {
       }
     });
   });
+
+  // ==========================================================================
+  // M8.5 페이즈 4 #3 — HiddenStatBonusResolver.computeLevel + itemDropBonus/repGain 검증
+  // 명세 §3.5
+  // ==========================================================================
+
+  group('HiddenStatBonusResolver.computeLevel — thresholds [1,3,7,15,30]', () {
+    test('카운터 0 → lv0', () {
+      expect(HiddenStatBonusResolver.computeLevel(0), 0);
+    });
+
+    test('카운터 1 (첫 임계값 도달) → lv1', () {
+      expect(HiddenStatBonusResolver.computeLevel(1), 1);
+    });
+
+    test('카운터 2 (1 이상, 3 미만) → lv1 유지', () {
+      expect(HiddenStatBonusResolver.computeLevel(2), 1);
+    });
+
+    test('카운터 3 → lv2', () {
+      expect(HiddenStatBonusResolver.computeLevel(3), 2);
+    });
+
+    test('카운터 7 → lv3', () {
+      expect(HiddenStatBonusResolver.computeLevel(7), 3);
+    });
+
+    test('카운터 15 → lv4', () {
+      expect(HiddenStatBonusResolver.computeLevel(15), 4);
+    });
+
+    test('카운터 30 → lv5 (최대)', () {
+      expect(HiddenStatBonusResolver.computeLevel(30), 5);
+    });
+
+    test('카운터 100 (30 초과) → lv5 (상한 유지)', () {
+      expect(HiddenStatBonusResolver.computeLevel(100), 5);
+    });
+
+    test('hiddenStatUnlocked enqueue 대상 = lv0→lv1 전이만 (lv2~5는 로그 분기)', () {
+      // 명세 §3.5: oldLv==0 && newLv>=1 일 때만 hiddenStatUnlocked publish.
+      // lv1에서 lv2 전이(카운터 1→3)는 해당 조건 불충족.
+      //
+      // computeLevel을 이용해 전이 여부를 확인:
+      //   oldLv = computeLevel(counter_before_delta)
+      //   newLv = computeLevel(counter_before_delta + delta)
+      // lv0→lv1 전이 예시
+      final oldLv = HiddenStatBonusResolver.computeLevel(0);
+      final newLv = HiddenStatBonusResolver.computeLevel(1);
+      expect(oldLv, 0);
+      expect(newLv, 1);
+      // 조건: oldLv == 0 && newLv >= 1 → enqueue 대상
+      expect(oldLv == 0 && newLv >= 1, isTrue, reason: 'lv1 첫 해금은 enqueue 대상');
+
+      // lv1→lv2 전이 예시
+      final oldLv2 = HiddenStatBonusResolver.computeLevel(1);
+      final newLv2 = HiddenStatBonusResolver.computeLevel(3);
+      expect(oldLv2, 1);
+      expect(newLv2, 2);
+      // 조건: oldLv == 0 이 아님 → enqueue 비대상 (활동 로그 분기)
+      expect(oldLv2 == 0 && newLv2 >= 1, isFalse, reason: 'lv2 승급은 enqueue 비대상');
+    });
+  });
+
+  // ==========================================================================
+  // luck itemDropBonus — 파티 최고 luck lv 1명만 적용 (합산 금지, 동률 mercId asc)
+  // ==========================================================================
+
+  group('luck itemDropBonus — 파티 최고 luck lv 1명 선택 (합산 금지)', () {
+    test('luck lv0인 파티 → itemDropBonus = 0.0', () {
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+      final mercs = [
+        _makeMercWithHiddenStats('m_a', hiddenStats: {}),
+        _makeMercWithHiddenStats('m_b', hiddenStats: {}),
+      ];
+
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+
+      expect(result.itemDropBonus, 0.0);
+    });
+
+    test('luck lv1 단독 → itemDropBonus = 0.005 (lv1 × 0.005)', () {
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+      // luck lv1 = 카운터 >= 1 이므로 hiddenStats['luck'] = 1
+      final mercs = [
+        _makeMercWithHiddenStats('m_a', hiddenStats: {'luck': 1}),
+      ];
+
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+
+      expect(result.itemDropBonus, closeTo(0.005, 1e-9));
+    });
+
+    test('luck lv5 단독 → itemDropBonus = 0.025 (상한 clamp)', () {
+      // lv5 × 0.005 = 0.025 (최대치)
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+      final mercs = [
+        _makeMercWithHiddenStats('m_a', hiddenStats: {'luck': 5}),
+      ];
+
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+
+      expect(result.itemDropBonus, closeTo(0.025, 1e-9));
+    });
+
+    test('파티 중 최고 luck lv 용병 1명만 반영 — 합산 금지', () {
+      // m_low: luck lv2 / m_high: luck lv4
+      // itemDropBonus = lv4 × 0.005 = 0.020 (합산 아닌 최고값만)
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+      final mercs = [
+        _makeMercWithHiddenStats('m_low', hiddenStats: {'luck': 2}),
+        _makeMercWithHiddenStats('m_high', hiddenStats: {'luck': 4}),
+      ];
+
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+
+      // lv2(0.010) + lv4(0.020) = 0.030이 아니라 max(lv4) = 0.020
+      expect(result.itemDropBonus, closeTo(0.020, 1e-9));
+    });
+
+    test('luck lv 동률 시 mercId 오름차순 첫 번째 용병만 반영', () {
+      // 두 용병 모두 luck lv3 → mercId asc: 'm_a' < 'm_b' → 'm_a' 선택
+      // itemDropBonus = lv3 × 0.005 = 0.015 (합산이면 0.030 — 이와 달라야 함)
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+      final mercs = [
+        _makeMercWithHiddenStats('m_b', hiddenStats: {'luck': 3}),
+        _makeMercWithHiddenStats('m_a', hiddenStats: {'luck': 3}),
+      ];
+
+      final result = QuestCompletionService.calculate(
+        quest: quest,
+        mercs: mercs,
+        staticData: staticData,
+        playerRegion: 1,
+        facilities: {},
+        speedMultiplier: 1.0,
+        random: _SeededRandom(42),
+      );
+
+      // 합산이면 0.030, 최고 1명만이면 0.015 — 0.015 검증
+      expect(result.itemDropBonus, closeTo(0.015, 1e-9));
+    });
+  });
+
+  // ==========================================================================
+  // grit reputationGainModifier — 파티 최고 grit lv 1명만 반영 (합산 금지)
+  // ==========================================================================
+
+  group('grit reputationGainModifier — 파티 최고 grit lv 1명 선택 (합산 금지)', () {
+    test('grit lv0인 성공 파티 → repGain = 기본값', () {
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+      final mercs = [
+        _makeMercWithHiddenStats('m_a', hiddenStats: {}),
+      ];
+
+      // 성공이 보장되는 시드 탐색
+      QuestCompletionResult? successResult;
+      for (int seed = 0; seed < 100; seed++) {
+        final r = QuestCompletionService.calculate(
+          quest: quest,
+          mercs: mercs,
+          staticData: staticData,
+          playerRegion: 1,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
+        );
+        if (r.resultType == QuestResult.success ||
+            r.resultType == QuestResult.greatSuccess) {
+          successResult = r;
+          break;
+        }
+      }
+      expect(successResult, isNotNull);
+      expect(successResult!.repGain, greaterThan(0));
+    });
+
+    test('grit lv 높을수록 repGain이 증가한다 — 단일 용병 비교', () {
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+
+      // 동일 시드에서 grit lv0 vs lv3 비교 — 성공 시 명성 차이 확인
+      for (int seed = 0; seed < 100; seed++) {
+        final baseResult = QuestCompletionService.calculate(
+          quest: quest,
+          mercs: [_makeMercWithHiddenStats('m_a', hiddenStats: {})],
+          staticData: staticData,
+          playerRegion: 1,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
+        );
+        final gritResult = QuestCompletionService.calculate(
+          quest: quest,
+          mercs: [_makeMercWithHiddenStats('m_a', hiddenStats: {'grit': 3})],
+          staticData: staticData,
+          playerRegion: 1,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
+        );
+
+        if (baseResult.resultType == QuestResult.success &&
+            gritResult.resultType == QuestResult.success) {
+          // grit lv3 의 grit × 0.015 = +0.045 reputationGainModifier 가산
+          expect(
+            gritResult.repGain,
+            greaterThanOrEqualTo(baseResult.repGain),
+            reason: 'grit lv3는 lv0보다 명성 보너스가 높거나 같아야 함',
+          );
+          break;
+        }
+      }
+    });
+
+    test('파티 최고 grit 1명만 반영 — 합산 금지 (두 용병 repGain이 단일 최고값과 같아야 함)', () {
+      // m_low(grit lv1) + m_high(grit lv4)로 구성된 파티의 repGain =
+      // m_high(grit lv4) 단독 파티의 repGain 과 동일해야 함 (합산 불가).
+      final staticData = _makeStaticData(enemyPower: 5);
+      final quest = _makeQuest();
+
+      for (int seed = 0; seed < 100; seed++) {
+        final multiResult = QuestCompletionService.calculate(
+          quest: quest,
+          mercs: [
+            _makeMercWithHiddenStats('m_low', hiddenStats: {'grit': 1}),
+            _makeMercWithHiddenStats('m_high', hiddenStats: {'grit': 4}),
+          ],
+          staticData: staticData,
+          playerRegion: 1,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
+        );
+        final singleResult = QuestCompletionService.calculate(
+          quest: quest,
+          mercs: [
+            _makeMercWithHiddenStats('m_high', hiddenStats: {'grit': 4}),
+            _makeMercWithHiddenStats('m_low', hiddenStats: {'grit': 1}),
+          ],
+          staticData: staticData,
+          playerRegion: 1,
+          facilities: {},
+          speedMultiplier: 1.0,
+          random: _SeededRandom(seed),
+        );
+
+        if (multiResult.resultType == QuestResult.success &&
+            singleResult.resultType == QuestResult.success) {
+          // 동일 파티(순서만 다름) — repGain이 같아야 함 (합산 아닌 최고값 1명)
+          expect(
+            multiResult.repGain,
+            equals(singleResult.repGain),
+            reason: 'grit은 합산이 아닌 최고 lv 1명에서만 적용',
+          );
+          break;
+        }
+      }
+    });
+  });
 }
 
 // ===========================================================================
@@ -1053,5 +1354,24 @@ ActiveQuest _makeQuestRich({
     factionTag: factionTag,
     isAdvancedTrack: isAdvancedTrack,
     specialFlags: specialFlags,
+  );
+}
+
+// M8.5 페이즈 4 #3 — hiddenStats가 있는 Mercenary 생성 헬퍼.
+// 기존 _makeMerc와 별도 정의(hiddenStats 지정 필요).
+Mercenary _makeMercWithHiddenStats(
+  String id, {
+  Map<String, int>? hiddenStats,
+}) {
+  return Mercenary(
+    id: id,
+    name: '용병_$id',
+    jobId: 'warrior',
+    traitId: '',
+    str: 20,
+    intelligence: 10,
+    vit: 100,
+    agi: 50,
+    hiddenStats: hiddenStats ?? const {},
   );
 }

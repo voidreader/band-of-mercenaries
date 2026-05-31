@@ -709,6 +709,12 @@ class CombatSimulatorConstants {
   /// PRNG 도메인 키: 그룹 구성(적 archetype 선택) (FR-12)
   static const String seedKeyGroup = 'group';
 
+  /// PRNG 도메인 키: 감정 발동 확률 (FR-12)
+  static const String seedKeyEmotion = 'emotion';
+
+  /// PRNG 도메인 키: 슬픔 행동 스킵 (FR-12)
+  static const String seedKeySorrowSkip = 'sorrowskip';
+
   // ============================================================================
   // §FR-9: 행동 순서 동률 처리 (Tiebreak)
   // ============================================================================

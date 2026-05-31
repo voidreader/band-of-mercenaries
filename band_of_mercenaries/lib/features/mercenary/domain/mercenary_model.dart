@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/equipment_stat_bonus.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/battle_memory_entry.dart';
 
 part 'mercenary_model.g.dart';
 
@@ -103,6 +104,14 @@ class Mercenary extends HiveObject {
   @HiveField(25)
   DateTime? recruitedAt;
 
+  /// 히든 스탯 ID → 레벨(0~5) 맵
+  @HiveField(26)
+  Map<String, int> hiddenStats;
+
+  /// 전투 기억 목록 (최대 30 cap FIFO)
+  @HiveField(27)
+  List<BattleMemoryEntry> battleMemories;
+
   Mercenary({
     required this.id,
     required this.name,
@@ -130,11 +139,15 @@ class Mercenary extends HiveObject {
     this.traitLearningBoostUntil,
     List<String>? titleIds,
     this.recruitedAt,
+    Map<String, int>? hiddenStats,
+    List<BattleMemoryEntry>? battleMemories,
   })  : stats = stats ?? {},
         traitIds = traitIds ?? [],
         traitHistory = traitHistory ?? [],
         deletedTraitIds = deletedTraitIds ?? [],
-        titleIds = List<String>.from(titleIds ?? <String>[]);
+        titleIds = List<String>.from(titleIds ?? <String>[]),
+        hiddenStats = Map<String, int>.from(hiddenStats ?? const {}),
+        battleMemories = List<BattleMemoryEntry>.from(battleMemories ?? const []);
 
   List<String> get allTraitIds {
     if (traitIds.isNotEmpty) return traitIds;
@@ -191,6 +204,14 @@ class Mercenary extends HiveObject {
     return status == MercenaryStatus.tired
         ? (withLevel * GameConstants.tiredDebuffMultiplier).round()
         : withLevel;
+  }
+
+  /// 전투 기억을 추가하고 30 cap FIFO 유지
+  void addBattleMemory(BattleMemoryEntry entry) {
+    battleMemories.add(entry);
+    while (battleMemories.length > 30) {
+      battleMemories.removeAt(0);
+    }
   }
 
   bool get isAvailable =>

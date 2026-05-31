@@ -68,6 +68,9 @@ class AppTheme {
   // chain=금 / settlement=주황 / named=분홍 / faction=세력별 / elite=주황
   static const Color namedAccent = Color(0xFFE91E63);          // 지명 의뢰 분홍 마젠타
 
+  // Hidden stat accent (M8.5 페이즈 4 #3 — 숨겨진 스탯 보라계)
+  static const Color hiddenStatAccent = Color(0xFF7E57C2);     // 숨겨진 스탯 보라계
+
   // Memorial / Achievement colors
   static const Color memorialGray = Color(0xFF6E6E6E);        // 위업·연대기 회색
 

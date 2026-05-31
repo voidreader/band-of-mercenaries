@@ -7,6 +7,7 @@ import 'package:band_of_mercenaries/core/providers/dialog_queue_provider.dart';
 import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/battle_memory_entry.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 
 /// 위업 발급 시 칭호 hook 평가에 필요한 보조 컨텍스트.
@@ -292,6 +293,23 @@ class TitleService {
       '┝ ${mercenary.name}이(가) "${title.name}" 칭호를 얻었다',
       ActivityLogType.titleUnlocked,
     );
+    // FR-15: battleMemory trailing — 칭호 부여 기록.
+    try {
+      final entry = BattleMemoryEntry(
+        mercId: mercenary.id,
+        entryType: 'title_granted',
+        sourceEventId: 'title:${title.id}',
+        timestamp: DateTime.now(),
+        templateKey: null,
+        templateData: const {},
+      );
+      mercenary.addBattleMemory(entry);
+      // battleMemory는 UI 비노출 영속 데이터이므로 state 재로딩 불필요.
+      // 다음 mercenaryListProvider _load 시 자연 반영.
+      await mercenary.save();
+    } on Exception catch (e) {
+      debugPrint('[BOM][Title] battleMemory trailing 실패 (${title.id}): $e');
+    }
   }
 
   /// action_stat hook 발급 시 노출할 한국어 자연 문구.

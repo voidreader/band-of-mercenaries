@@ -19,7 +19,9 @@ import 'package:band_of_mercenaries/core/util/stable_seed.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/equipment_stat_bonus.dart';
 import 'package:band_of_mercenaries/features/investigation/domain/region_state_model.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/battle_memory_entry.dart';
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
+import 'package:band_of_mercenaries/features/quest/domain/emotional_reaction_config.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_action.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_enums_hive.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart';
@@ -27,6 +29,7 @@ import 'package:band_of_mercenaries/features/quest/domain/combat_simulator_const
 import 'package:band_of_mercenaries/features/quest/domain/combat_turn.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combatant_snapshot.dart';
 import 'package:band_of_mercenaries/features/quest/domain/enemy_snapshot.dart';
+import 'package:band_of_mercenaries/features/quest/domain/hidden_stat_bonus_resolver.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/status_effect_event.dart';
 
@@ -271,6 +274,8 @@ class CombatSimulator {
       combatantSnapshots: List<CombatantSnapshot>.from(partySnapshots),
       enemySnapshots: List<EnemySnapshot>.from(enemies),
       deathResistanceCaps: deathResistanceCaps,
+      flagshipMercId: userData.flagshipMercId,
+      battleTimestamp: quest.startTime ?? DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
@@ -301,6 +306,9 @@ class CombatSimulator {
       );
       if (_partyWiped(state) || _enemyWiped(state)) break;
     }
+    // M8.5 페이즈 4 #3 (FR-4·5): 선제 라운드 감정 latch 평가 후 flush.
+    _evaluateLatchedEmotions(state, 0);
+    _flushEmotionTriggers(state, 0);
     final turn = CombatTurn(
       roundIndex: 0,
       phase: 'initiative',
@@ -331,6 +339,9 @@ class CombatSimulator {
       exitCondition = _checkPostDotExit(state);
       if (exitCondition != null) {
         triggered.add(exitCondition.name);
+        // M8.5 페이즈 4 #3 (FR-5): DoT 조기 종료 라운드도 exit CombatTurn 직전 flush.
+        _evaluateLatchedEmotions(state, r);
+        _flushEmotionTriggers(state, r);
         state.turns.add(
           CombatTurn(
             roundIndex: r,
@@ -384,6 +395,11 @@ class CombatSimulator {
       // FR-9 §5: 라운드 종료 DoT bleeding + duration tick + 종료 조건.
       _applyDotRoundEnd(state, r, actions);
       _tickStatusEffects(state, r);
+
+      // M8.5 페이즈 4 #3 (FR-4·5): 절망·투지 latch 평가 후 우선순위 flush.
+      // tick 후 flush이므로 적용된 emotional은 다음 라운드부터 감소.
+      _evaluateLatchedEmotions(state, r);
+      _flushEmotionTriggers(state, r);
 
       exitCondition = _evaluateExitConditions(state, r);
       if (exitCondition != null) {
@@ -444,10 +460,21 @@ class CombatSimulator {
     );
 
     // FR-10 §2: protagonist + featured.
+    // M8.5 페이즈 4 #3: featured_score 히든 스탯 hook을 결정적 장면 점수에 가산하여
+    // 주인공/조연 선정에 반영(소수점 누적 허용, 결정적·RNG 무관).
+    double featuredScoreOf(_Combatant c) {
+      final base = (state.decisiveScores[c.id] ?? 0).toDouble();
+      final hiddenBonus = HiddenStatBonusResolver.resolveHookBonus(
+        hook: 'featured_score',
+        hiddenStats: c.hiddenStats,
+      );
+      return base + hiddenBonus;
+    }
+
     final partyByScoreDesc = state.partyState.toList()
       ..sort((a, b) {
-        final sa = state.decisiveScores[a.id] ?? 0;
-        final sb = state.decisiveScores[b.id] ?? 0;
+        final sa = featuredScoreOf(a);
+        final sb = featuredScoreOf(b);
         if (sb != sa) return sb.compareTo(sa);
         final da = state.damageDealt[a.id] ?? 0;
         final db = state.damageDealt[b.id] ?? 0;
@@ -461,7 +488,7 @@ class CombatSimulator {
     String? protagonistMercId;
     final featured = <String>[];
     for (final c in partyByScoreDesc) {
-      final score = state.decisiveScores[c.id] ?? 0;
+      final score = featuredScoreOf(c);
       if (score <= 0) continue;
       if (protagonistMercId == null) {
         protagonistMercId = c.id;
@@ -482,6 +509,22 @@ class CombatSimulator {
         .map((c) => c.id)
         .toList();
 
+    // M8.5 페이즈 4 #3 (FR-12): 결정적 장면 점수 임계 카운터.
+    // 용병별 최종 decisiveScores 기준 — >=5: 운 +1, 전장감각 +1 (전투당 1회);
+    // >=10: 전장감각 추가 +1.
+    for (final c in state.partyState) {
+      final ds = state.decisiveScores[c.id] ?? 0;
+      if (ds >= 5) {
+        state.recordHiddenStatEvent(c.id, HiddenStatBonusResolver.luckCounter);
+        state.recordHiddenStatEvent(
+            c.id, HiddenStatBonusResolver.battleSenseCounter);
+      }
+      if (ds >= 10) {
+        state.recordHiddenStatEvent(
+            c.id, HiddenStatBonusResolver.battleSenseCounter);
+      }
+    }
+
     // FR-10 §4: toneTags 산출.
     final toneTags = _computeToneTags(state: state, questResult: questResult);
 
@@ -499,6 +542,10 @@ class CombatSimulator {
       toneTags: toneTags,
       combatantSnapshots: state.combatantSnapshots,
       enemySnapshots: state.enemySnapshots,
+      // M8.5 페이즈 4 #3 (FR-12): 히든 스탯 카운터 이벤트 전달.
+      hiddenStatEvents: state.hiddenStatEventBuffer,
+      // M8.5 페이즈 4 #3 (FR-15): 감정 apply 전투 기억 이벤트 전달.
+      battleMemoryEvents: state.battleMemoryBuffer,
     );
   }
 
@@ -530,6 +577,28 @@ class CombatSimulator {
         ),
       );
       return;
+    }
+
+    // M8.5 페이즈 4 #3 (FR-6 슬픔): emotional_sorrow 보유 시 50% 확률로 행동 스킵.
+    // mez_stunned와 동형이나 별도 actionKind. seedKeySorrowSkip 도메인 RNG.
+    if (!actor.isEnemy && actor.hasEmotionalSorrow) {
+      final skipRng = Random(
+        state.seed ^
+            stableSeed32(
+              '${CombatSimulatorConstants.seedKeySorrowSkip}|$roundIndex|${actor.id}',
+            ),
+      );
+      if (skipRng.nextDouble() < EmotionalReactionConfig.sorrowSkipChance) {
+        actions.add(
+          CombatAction(
+            actorId: actor.id,
+            targetIds: const [],
+            actionKind: 'skipped_emotional_sorrow',
+            position: _resolvePosition(roundIndex, state.lastRoundIndexEstimate),
+          ),
+        );
+        return;
+      }
     }
 
     // FR-14 / FR-15: 스킬 자동 선택.
@@ -703,6 +772,7 @@ class CombatSimulator {
             roundIndex: roundIndex,
             applyChance: skill.statusEffectApplyChance ?? 1.0,
             applyRng: applyRng,
+            state: state,
             history: state.history,
           );
         }
@@ -747,9 +817,36 @@ class CombatSimulator {
         isHit: false,
       );
     }
+    // M8.5 페이즈 4 #3 (FR-12): 어려운 명중(hitChance<=0.50) 성공 → 전장감각 +1
+    // (용병 공격자, 전투당 최대 5회).
+    if (!actor.isEnemy && hitChance <= CombatSimulatorConstants.hitChanceMin) {
+      state.recordHiddenStatEvent(
+        actor.id,
+        HiddenStatBonusResolver.battleSenseCounter,
+        maxPerCombat: 5,
+      );
+    }
 
     // FR-11 §3: 회피.
-    final evaChance = _evaluateEvasionChance(actor, defender, state.envTags);
+    // M8.5 페이즈 4 #3: 적의 강공격(예상 단발 피해 >= 방어자 maxHp*0.30)에 대해
+    // 용병 방어자는 공포저항 strong_attack_evasion 만큼 회피율 가산(결정적, RNG 무관).
+    var evaChance = _evaluateEvasionChance(actor, defender, state.envTags);
+    final isStrongAttack =
+        actor.isEnemy &&
+        !defender.isEnemy &&
+        _isStrongAttackAgainst(actor, defender);
+    if (isStrongAttack) {
+      final strongEvaBonus = HiddenStatBonusResolver.resolveHookBonus(
+        hook: 'strong_attack_evasion',
+        hiddenStats: defender.hiddenStats,
+      );
+      if (strongEvaBonus > 0) {
+        evaChance = (evaChance + strongEvaBonus).clamp(
+          CombatSimulatorConstants.evasionChanceMin,
+          CombatSimulatorConstants.evasionChanceMax,
+        );
+      }
+    }
     final evaRng = Random(
       state.seed ^
           stableSeed32(
@@ -758,6 +855,21 @@ class CombatSimulator {
     );
     final isEvaded = evaRng.nextDouble() < evaChance;
     if (isEvaded) {
+      // M8.5 페이즈 4 #3 (FR-12): 회피 성공 → 운 +1 (용병 방어자).
+      if (!defender.isEnemy) {
+        state.recordHiddenStatEvent(
+          defender.id,
+          HiddenStatBonusResolver.luckCounter,
+        );
+        // 강공격 회피 → 공포저항 +1 (용병 방어자, 전투당 최대 3회).
+        if (isStrongAttack) {
+          state.recordHiddenStatEvent(
+            defender.id,
+            HiddenStatBonusResolver.fearResistanceCounter,
+            maxPerCombat: 3,
+          );
+        }
+      }
       return CombatAction(
         actorId: actor.id,
         targetIds: [defender.id],
@@ -795,6 +907,13 @@ class CombatSimulator {
           ),
     );
     final isCrit = critRng.nextDouble() < critChance;
+    // M8.5 페이즈 4 #3 (FR-12): 치명타 발동 → 운 +1 (용병 공격자).
+    if (!actor.isEnemy && isCrit) {
+      state.recordHiddenStatEvent(
+        actor.id,
+        HiddenStatBonusResolver.luckCounter,
+      );
+    }
     final critMul = isCrit
         ? (CombatSimulatorConstants.critMultiplier[actor.role] ?? 1.5)
         : 1.0;
@@ -839,11 +958,28 @@ class CombatSimulator {
       if (defender.isEnemy && died) {
         state.killedEnemyCount += 1;
       }
+      // M8.5 페이즈 4 #3 (FR-4): 파티 사망 → 분노 후보 / 중상 생존 → 슬픔 후보.
+      // sourceActionIndex = 현재 라운드 누적 후보 개수(발생 순서, 결정적).
+      if (!defender.isEnemy) {
+        final srcIdx = state.roundEmotionTriggers.length;
+        if (died) {
+          _onPartyMemberDeath(state, defender, roundIndex, srcIdx);
+        } else {
+          _onPartyMemberInjured(state, defender, roundIndex, srcIdx);
+        }
+      }
     }
 
     if (!actor.isEnemy) {
       if (isKill) {
         _accumulateDecisive(state, actor, isCrit ? 'criticalKill' : 'kill');
+        // M8.5 페이즈 4 #3 (FR-12): 치명타 처치 → 전장감각 +1 (용병 공격자).
+        if (isCrit) {
+          state.recordHiddenStatEvent(
+            actor.id,
+            HiddenStatBonusResolver.battleSenseCounter,
+          );
+        }
       } else if (isCrit) {
         _accumulateDecisive(state, actor, 'crit');
       }
@@ -899,6 +1035,7 @@ class CombatSimulator {
           applyChance: skill.statusEffectApplyChance ?? 1.0,
           applyRng: applyRng,
           history: state.history,
+          state: state,
         );
       }
     }
@@ -944,6 +1081,7 @@ class CombatSimulator {
           applyChance: skill.statusEffectApplyChance ?? 1.0,
           applyRng: applyRng,
           history: state.history,
+          state: state,
         );
       }
     }
@@ -1407,7 +1545,18 @@ class CombatSimulator {
     final buffSum = _sumStatusIntensities(atk, 'buff_accuracy_up');
     final debuffSum = _sumStatusIntensities(def, 'debuff_accuracy_down');
     final statusMod = buffSum - debuffSum;
-    final raw = base + agiDiff + traitBonus + envMod + statusMod;
+    // M8.5 페이즈 4 #3: 전장감각 히든 스탯 명중 hook (결정적, RNG 무관).
+    final hiddenBonus = HiddenStatBonusResolver.resolveHookBonus(
+      hook: 'hit_chance',
+      hiddenStats: atk.hiddenStats,
+    );
+    // M8.5 페이즈 4 #3 (FR-6): 절망 → 공격자 명중 -0.20 (signed 차감).
+    final despairMod = atk.hasEmotionalDespair
+        ? -EmotionalReactionConfig.despairHitPenalty
+        : 0.0;
+    final raw =
+        base + agiDiff + traitBonus + envMod + statusMod + hiddenBonus +
+            despairMod;
     return raw.clamp(
       CombatSimulatorConstants.hitChanceMin,
       CombatSimulatorConstants.hitChanceMax,
@@ -1428,7 +1577,23 @@ class CombatSimulator {
     ).clamp(0.0, CombatSimulatorConstants.traitEvasionCapPerMerc);
     final envMod = _envEvasionMod(def.role, envTags);
     final statusMod = _sumStatusIntensities(def, 'buff_evasion_up');
-    final raw = base + agiDiff + traitBonus + envMod + statusMod;
+    // M8.5 페이즈 4 #3: 운 히든 스탯 회피 hook (결정적, RNG 무관).
+    // strong_attack_evasion(공포저항) hook은 단발 피해 비중을 알 수 있는 호출부
+    // (_resolveAttack)에서 별도 가산하므로 여기서는 luck `evasion`만 가산한다.
+    final hiddenBonus = HiddenStatBonusResolver.resolveHookBonus(
+      hook: 'evasion',
+      hiddenStats: def.hiddenStats,
+    );
+    // M8.5 페이즈 4 #3 (FR-6): 절망 → 방어자 회피 -0.15 / 투지 → 방어자 회피 +0.15.
+    var emotionalMod = 0.0;
+    if (def.hasEmotionalDespair) {
+      emotionalMod -= EmotionalReactionConfig.despairEvaPenalty;
+    }
+    if (def.hasEmotionalDetermination) {
+      emotionalMod += EmotionalReactionConfig.determinationEvasionBonus;
+    }
+    final raw = base + agiDiff + traitBonus + envMod + statusMod + hiddenBonus +
+        emotionalMod;
     return raw.clamp(
       CombatSimulatorConstants.evasionChanceMin,
       CombatSimulatorConstants.evasionChanceMax,
@@ -1465,7 +1630,12 @@ class CombatSimulator {
         ? (CombatSimulatorConstants.flankBonus[atk.role] ?? 0.0)
         : 0.0;
     final skillBonus = skill?.critRateBonus ?? 0.0;
-    final raw = base + agiBonus + traitBonus + flank + skillBonus;
+    // M8.5 페이즈 4 #3: 운 히든 스탯 치명타 hook (결정적, RNG 무관).
+    final hiddenBonus = HiddenStatBonusResolver.resolveHookBonus(
+      hook: 'critical_rate',
+      hiddenStats: atk.hiddenStats,
+    );
+    final raw = base + agiBonus + traitBonus + flank + skillBonus + hiddenBonus;
     return raw.clamp(
       CombatSimulatorConstants.critChanceMin,
       CombatSimulatorConstants.critChanceMax,
@@ -1499,6 +1669,17 @@ class CombatSimulator {
     return sum;
   }
 
+  // M8.5 페이즈 4 #3 (FR-12): 강공격 판정.
+  // 공격자의 예상 단발 피해(치명타/노이즈 제외, baseAttack-defense)가 방어자 maxHp의
+  // 30% 이상이면 강공격으로 간주. 회피 판정 시점에 결정적으로 평가(RNG 무관).
+  static bool _isStrongAttackAgainst(_Combatant attacker, _Combatant defender) {
+    if (defender.maxHp <= 0) return false;
+    final baseAttack = _computeBaseAttack(attacker);
+    final defense = _computeDefense(defender);
+    final expectedDamage = (baseAttack - defense).clamp(1, 999999);
+    return expectedDamage >= defender.maxHp * 0.30;
+  }
+
   // M8.5 페이즈 4 #2: deathResistanceCaps per-merc cap 통합.
   // baseCap(체인 0.90 / 일반 0.80)과 perMercCap 중 더 높은 값을 effectiveMax로 단일 clamp.
   // 체인 주인공 보너스(`+= (1.0 - chance) * 0.5`)는 effectiveMax clamp 이전에 적용.
@@ -1514,12 +1695,22 @@ class CombatSimulator {
       c.traitIds,
       CombatSimulatorConstants.deathResistKeywords,
     ).clamp(0.0, CombatSimulatorConstants.traitDeathResistCapPerMerc);
-    var chance = (base + roleBonus + traitBonus).clamp(
+    // M8.5 페이즈 4 #3: 불굴 히든 스탯 사망 저항 hook (결정적, RNG 무관).
+    final hiddenBonus = HiddenStatBonusResolver.resolveHookBonus(
+      hook: 'death_resistance',
+      hiddenStats: c.hiddenStats,
+    );
+    var chance = (base + roleBonus + traitBonus + hiddenBonus).clamp(
       CombatSimulatorConstants.deathResistMin,
       CombatSimulatorConstants.deathResistMax,
     );
     if (isChainProtagonist) {
       chance += (1.0 - chance) * 0.5;
+    }
+    // M8.5 페이즈 4 #3 (FR-6 투지): emotional_determination 보유 시 사망 저항 +0.20.
+    // effectiveMax clamp 직전에 가산하여 cap을 재적용(cap 통과 후 별도 가산 금지).
+    if (c.hasEmotionalDetermination) {
+      chance += EmotionalReactionConfig.determinationDeathResistBonus;
     }
     final perMercCap = deathResistanceCaps[c.id];
     final baseCap = isChainProtagonist
@@ -1555,7 +1746,11 @@ class CombatSimulator {
     }
     final buffMul = _sumStatusIntensities(c, 'buff_attack_up');
     final debuffMul = _sumStatusIntensities(c, 'debuff_attack_down');
-    final modded = (raw * (1.0 + buffMul) * (1.0 - debuffMul)).round();
+    // M8.5 페이즈 4 #3 (FR-6): 분노 → 공격 ×(1+0.30) 합산.
+    final rageMul = c.hasEmotionalRage
+        ? EmotionalReactionConfig.rageAtkBonus
+        : 0.0;
+    final modded = (raw * (1.0 + buffMul + rageMul) * (1.0 - debuffMul)).round();
     return modded < 1 ? 1 : modded;
   }
 
@@ -1565,7 +1760,11 @@ class CombatSimulator {
     final raw = (c.vit * coef).round() + flat;
     final buffMul = _sumStatusIntensities(c, 'buff_defense_up');
     final debuffMul = _sumStatusIntensities(c, 'debuff_defense_down');
-    final modded = (raw * (1.0 + buffMul) * (1.0 - debuffMul)).round();
+    // M8.5 페이즈 4 #3 (FR-6): 분노 → 방어 ×(1-0.20) 합산.
+    final rageMul = c.hasEmotionalRage
+        ? EmotionalReactionConfig.rageDefPenalty
+        : 0.0;
+    final modded = (raw * (1.0 + buffMul) * (1.0 - debuffMul - rageMul)).round();
     return modded < 1 ? 1 : modded;
   }
 
@@ -1583,7 +1782,27 @@ class CombatSimulator {
     required double applyChance,
     Random? applyRng,
     required List<StatusEffectEvent> history,
+    // M8.5 페이즈 4 #3: mez 면제(공포저항 히든 스탯) 처리용. 카운터 수집에도 사용.
+    _Phase1State? state,
   }) {
+    // M8.5 페이즈 4 #3 (FR-12): mez 효과는 공포저항 히든 스탯만큼 면제 확률 적용.
+    // 용병 대상 + mez 종류 + fear>0일 때만 롤(빈 hiddenStats는 RNG 소비 없음 → 기존 동작 보존).
+    // 기존 apply RNG 채널 재사용(신규 도메인 키 미생성). applyChance 롤보다 먼저 소비.
+    if (!target.isEnemy && effect.kind == 'mez') {
+      final immuneChance = HiddenStatBonusResolver.resolveHookBonus(
+        hook: 'mez_immune_chance',
+        hiddenStats: target.hiddenStats,
+      );
+      if (immuneChance > 0 && applyRng != null) {
+        if (applyRng.nextDouble() < immuneChance) {
+          state?.recordHiddenStatEvent(
+            target.id,
+            HiddenStatBonusResolver.fearResistanceCounter,
+          );
+          return;
+        }
+      }
+    }
     if (applyRng != null && applyChance < 1.0) {
       if (applyRng.nextDouble() >= applyChance) return;
     }
@@ -1731,7 +1950,16 @@ class CombatSimulator {
           ),
         );
         if (c.hp <= 0) {
-          _resolveDeath(state, c, c.isChainProtagonist(state));
+          final died = _resolveDeath(state, c, c.isChainProtagonist(state));
+          // M8.5 페이즈 4 #3 (FR-4): DoT 사망/중상도 동일 채널.
+          if (!c.isEnemy) {
+            final srcIdx = state.roundEmotionTriggers.length;
+            if (died) {
+              _onPartyMemberDeath(state, c, roundIndex, srcIdx);
+            } else {
+              _onPartyMemberInjured(state, c, roundIndex, srcIdx);
+            }
+          }
           break;
         }
       }
@@ -1768,7 +1996,16 @@ class CombatSimulator {
           ),
         );
         if (c.hp <= 0) {
-          _resolveDeath(state, c, c.isChainProtagonist(state));
+          final died = _resolveDeath(state, c, c.isChainProtagonist(state));
+          // M8.5 페이즈 4 #3 (FR-4): DoT 사망/중상도 동일 채널.
+          if (!c.isEnemy) {
+            final srcIdx = state.roundEmotionTriggers.length;
+            if (died) {
+              _onPartyMemberDeath(state, c, roundIndex, srcIdx);
+            } else {
+              _onPartyMemberInjured(state, c, roundIndex, srcIdx);
+            }
+          }
           break;
         }
       }
@@ -1802,6 +2039,12 @@ class CombatSimulator {
     if (deathRng.nextDouble() < chance) {
       c.hp = 1;
       c.injured = true;
+      // M8.5 페이즈 4 #3 (FR-12): 사망 저항 생존 → 불굴 +1 (용병별 전투당 최대 3회).
+      state.recordHiddenStatEvent(
+        c.id,
+        HiddenStatBonusResolver.fortitudeCounter,
+        maxPerCombat: 3,
+      );
       return false;
     } else {
       c.deceased = true;
@@ -1903,12 +2146,19 @@ class CombatSimulator {
             CombatSimulatorConstants.actionKeywords,
           ).clamp(0, CombatSimulatorConstants.traitActionCapPerMerc);
           final envMod = _envActionMod(c.role, state.envTags);
+          // M8.5 페이즈 4 #3: 전장감각 히든 스탯 행동 순서 hook (결정적, RNG 무관).
+          // score가 int이므로 반올림하여 가산.
+          final hiddenBonus = HiddenStatBonusResolver.resolveHookBonus(
+            hook: 'action_score',
+            hiddenStats: c.hiddenStats,
+          ).round();
           final score =
               c.agi +
               (CombatSimulatorConstants.roleActionWeight[c.role] ?? 0) +
               traitBonus +
               envMod +
-              noise;
+              noise +
+              hiddenBonus;
           return _ScoredCombatant(c, score);
         }).toList()..sort((a, b) {
           if (b.score != a.score) return b.score.compareTo(a.score);
@@ -2258,6 +2508,318 @@ class CombatSimulator {
     state.decisiveScores[c.id] = (state.decisiveScores[c.id] ?? 0) + score;
   }
 
+  // ==========================================================================
+  // 감정 반응 — FR-4·5·6·7 (M8.5 페이즈 4 #3)
+  // ==========================================================================
+
+  /// 파티 전투원 사망 발생 → 분노 후보(생존 파티 전원).
+  /// 후보는 즉시 적용하지 않고 roundEmotionTriggers에 누적(라운드 종료 후 flush).
+  static void _onPartyMemberDeath(
+    _Phase1State state,
+    _Combatant deceased,
+    int roundIndex,
+    int sourceActionIndex,
+  ) {
+    try {
+      if (deceased.isEnemy) return;
+      for (final c in state.partyState) {
+        if (!c.alive) continue;
+        state.roundEmotionTriggers.add(
+          _EmotionTrigger(
+            emotion: 'rage',
+            targetMercId: c.id,
+            roundIndex: roundIndex,
+            sourceActionIndex: sourceActionIndex,
+          ),
+        );
+      }
+    } catch (_) {
+      // fail-soft
+    }
+  }
+
+  /// 파티 전투원 중상(사망 저항 생존) 발생 → 슬픔 후보(같은/인접 row 1명, sorrowBoost 가중).
+  static void _onPartyMemberInjured(
+    _Phase1State state,
+    _Combatant injured,
+    int roundIndex,
+    int sourceActionIndex,
+  ) {
+    try {
+      if (injured.isEnemy) return;
+      // 같은 row → 다른 row 순으로 생존 후보 수집(본인 제외).
+      final sameRow = state.partyState
+          .where(
+            (c) =>
+                c.alive &&
+                c.id != injured.id &&
+                c.positionRow == injured.positionRow,
+          )
+          .toList();
+      final otherRow = state.partyState
+          .where(
+            (c) =>
+                c.alive &&
+                c.id != injured.id &&
+                c.positionRow != injured.positionRow,
+          )
+          .toList();
+      final pool = [...sameRow, ...otherRow];
+      if (pool.isEmpty) return;
+      // sorrowBoost 트레잇 보유자 우선, 동률은 id asc(결정적).
+      pool.sort((a, b) {
+        final wa = _hasSorrowBoost(a) ? 1 : 0;
+        final wb = _hasSorrowBoost(b) ? 1 : 0;
+        if (wa != wb) return wb.compareTo(wa);
+        return a.id.compareTo(b.id);
+      });
+      state.roundEmotionTriggers.add(
+        _EmotionTrigger(
+          emotion: 'sorrow',
+          targetMercId: pool.first.id,
+          roundIndex: roundIndex,
+          sourceActionIndex: sourceActionIndex,
+        ),
+      );
+    } catch (_) {
+      // fail-soft
+    }
+  }
+
+  /// 액션/DoT 종료 후 절망·투지 latch 후보 평가.
+  /// - 절망: 파티 생존 HP 합계 / 파티 최대 HP 최초 <25% → 생존 전원(전투당 1회).
+  /// - 투지: trigger eligible 용병 HP 최초 <30% → 본인.
+  static void _evaluateLatchedEmotions(_Phase1State state, int roundIndex) {
+    try {
+      // 절망.
+      if (!state.despairTriggered) {
+        final hpMax = state.partyState.fold<int>(0, (s, c) => s + c.maxHp);
+        final hpRem = state.partyState.fold<int>(
+          0,
+          (s, c) => s + (c.hp > 0 ? c.hp : 0),
+        );
+        if (hpMax > 0 &&
+            hpRem / hpMax <
+                EmotionalReactionConfig.despairPartyHpThreshold) {
+          state.despairTriggered = true;
+          for (final c in state.partyState) {
+            if (!c.alive) continue;
+            state.roundEmotionTriggers.add(
+              _EmotionTrigger(
+                emotion: 'despair',
+                targetMercId: c.id,
+                roundIndex: roundIndex,
+                // latch 후보: 액션 기반 후보 뒤로 정렬(동률 타이브레이크용).
+                sourceActionIndex: 1 << 20,
+              ),
+            );
+          }
+        }
+      }
+      // 투지.
+      for (final c in state.partyState) {
+        if (!c.alive) continue;
+        if (state.determinationTriggeredMercIds.contains(c.id)) continue;
+        if (!_isDeterminationEligible(state, c)) continue;
+        final ratio = c.maxHp > 0 ? c.hp / c.maxHp : 1.0;
+        if (ratio <
+            EmotionalReactionConfig.determinationCombatantHpThreshold) {
+          state.determinationTriggeredMercIds.add(c.id);
+          state.roundEmotionTriggers.add(
+            _EmotionTrigger(
+              emotion: 'determination',
+              targetMercId: c.id,
+              roundIndex: roundIndex,
+              // latch 후보: 액션 기반 후보 뒤로 정렬(동률 타이브레이크용).
+              sourceActionIndex: 1 << 20,
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      // fail-soft
+    }
+  }
+
+  /// 투지 eligible: 간판 용병 / 솔로 파견 용병 / 체인 주인공.
+  static bool _isDeterminationEligible(_Phase1State state, _Combatant c) {
+    if (c.isEnemy) return false;
+    if (state.flagshipMercId != null && state.flagshipMercId == c.id) {
+      return true;
+    }
+    if (state.pool?.partySizeMax == 1) return true;
+    if (c.isChainProtagonist(state)) return true;
+    return false;
+  }
+
+  static bool _hasSorrowBoost(_Combatant c) =>
+      c.traitIds.any((t) => TraitEmotionalKeywords.sorrowBoost.contains(t));
+
+  static bool _hasRageBoost(_Combatant c) =>
+      c.traitIds.any((t) => TraitEmotionalKeywords.rageBoost.contains(t));
+
+  static bool _hasDespairImmuneTrait(_Combatant c) =>
+      c.traitIds.any((t) => TraitEmotionalKeywords.despairImmune.contains(t));
+
+  /// FR-5: 라운드 종료 시 누적 감정 trigger 후보를 우선순위로 평가·적용.
+  /// 정렬: (roundIndex ASC, priorityRank ASC, mercId ASC, sourceActionIndex ASC).
+  /// 1명 1감정. 확률 평가는 seedKeyEmotion 도메인 RNG.
+  static void _flushEmotionTriggers(_Phase1State state, int roundIndex) {
+    try {
+      final triggers = state.roundEmotionTriggers;
+      if (triggers.isEmpty) return;
+      final byId = {
+        for (final c in state.partyState) c.id: c,
+      };
+      int rankOf(String emotion) {
+        final idx = EmotionalReactionConfig.priority.indexOf(emotion);
+        return idx < 0 ? 99 : idx;
+      }
+
+      final sorted = triggers.toList()
+        ..sort((a, b) {
+          if (a.roundIndex != b.roundIndex) {
+            return a.roundIndex.compareTo(b.roundIndex);
+          }
+          final ra = rankOf(a.emotion);
+          final rb = rankOf(b.emotion);
+          if (ra != rb) return ra.compareTo(rb);
+          if (a.targetMercId != b.targetMercId) {
+            return a.targetMercId.compareTo(b.targetMercId);
+          }
+          return a.sourceActionIndex.compareTo(b.sourceActionIndex);
+        });
+
+      for (final t in sorted) {
+        final c = byId[t.targetMercId];
+        if (c == null || !c.alive) continue;
+        // 1명 1감정: 이미 emotional 보유 시 skip.
+        if (c.hasAnyEmotional) continue;
+        _applyEmotion(state, c, t.emotion, roundIndex);
+      }
+    } catch (_) {
+      // fail-soft
+    } finally {
+      state.roundEmotionTriggers.clear();
+    }
+  }
+
+  /// 단일 감정 적용 — 확률 평가 후 emotional effectId 부여 + battleMemory/카운터.
+  static void _applyEmotion(
+    _Phase1State state,
+    _Combatant c,
+    String emotion,
+    int roundIndex,
+  ) {
+    final effectId = switch (emotion) {
+      'rage' => 'emotional_rage',
+      'sorrow' => 'emotional_sorrow',
+      'despair' => 'emotional_despair',
+      'determination' => 'emotional_determination',
+      _ => null,
+    };
+    if (effectId == null) return;
+    final effect = state.staticIndex.statusEffects[effectId];
+    // 캐시에 emotional 행이 없으면 fail-soft 미발동.
+    if (effect == null) return;
+
+    // 발동 확률 산출.
+    double chance;
+    var despairImmune = false;
+    switch (emotion) {
+      case 'rage':
+        chance = EmotionalReactionConfig.rageBaseChance +
+            (_hasRageBoost(c) ? EmotionalReactionConfig.rageTraitBonus : 0.0);
+        break;
+      case 'sorrow':
+        chance = EmotionalReactionConfig.sorrowBaseChance +
+            (_hasSorrowBoost(c) ? EmotionalReactionConfig.sorrowTraitBonus : 0.0);
+        break;
+      case 'despair':
+        // despairImmune 트레잇 → 100% 면제(grit 면제 확률은 별도 롤).
+        if (_hasDespairImmuneTrait(c)) {
+          despairImmune = true;
+          chance = 0.0;
+        } else {
+          chance = EmotionalReactionConfig.despairBaseChance;
+        }
+        break;
+      case 'determination':
+        chance = EmotionalReactionConfig.determinationBaseChance;
+        break;
+      default:
+        return;
+    }
+
+    // grit(투지 면제 히든 스탯) 면제 롤 — 절망 한정.
+    if (emotion == 'despair' && !despairImmune) {
+      final immuneChance = HiddenStatBonusResolver.resolveHookBonus(
+        hook: 'despair_immune_chance',
+        hiddenStats: c.hiddenStats,
+      );
+      if (immuneChance > 0) {
+        final gritRng = Random(
+          state.seed ^
+              stableSeed32(
+                '${CombatSimulatorConstants.seedKeyEmotion}|grit|$roundIndex|${c.id}',
+              ),
+        );
+        if (gritRng.nextDouble() < immuneChance) {
+          despairImmune = true;
+        }
+      }
+    }
+
+    if (despairImmune) {
+      // 절망 면제 → grit 카운터 +1.
+      state.recordHiddenStatEvent(c.id, HiddenStatBonusResolver.gritCounter);
+      return;
+    }
+
+    // 확률 롤(투지=100%는 항상 발동).
+    if (chance < 1.0) {
+      final emoRng = Random(
+        state.seed ^
+            stableSeed32(
+              '${CombatSimulatorConstants.seedKeyEmotion}|$emotion|$roundIndex|${c.id}',
+            ),
+      );
+      if (emoRng.nextDouble() >= chance) return;
+    }
+
+    _applyStatusEffect(
+      target: c,
+      caster: c,
+      effect: effect,
+      intensity: effect.defaultIntensity,
+      duration: effect.defaultDurationTurns,
+      roundIndex: roundIndex,
+      applyChance: 1.0,
+      applyRng: null,
+      history: state.history,
+      state: state,
+    );
+
+    // FR-15: 감정 apply 전투 기억.
+    state.battleMemoryBuffer.add(
+      BattleMemoryEntry(
+        mercId: c.id,
+        entryType: 'emotional_apply',
+        sourceEventId: effectId,
+        timestamp: state.battleTimestamp,
+        templateData: {'emotion': emotion, 'round': roundIndex},
+      ),
+    );
+
+    // 투지 apply → fortitude 카운터 +1.
+    if (emotion == 'determination') {
+      state.recordHiddenStatEvent(
+        c.id,
+        HiddenStatBonusResolver.fortitudeCounter,
+      );
+    }
+  }
+
   static void _migrateNextRoundQueue(_Phase1State state) {
     for (final entry in state.nextRoundExtraAction.entries) {
       if (entry.value <= 0) continue;
@@ -2477,6 +3039,44 @@ class _Phase1State {
   int lastRoundIndex = 0;
   final Map<String, int> extraActionRoundStart = {};
   final Map<String, int> nextRoundExtraAction = {};
+  // M8.5 페이즈 4 #3 (FR-12): 히든 스탯 카운터 이벤트 누적.
+  // mercId → counterKey(fortitude/luck/fear_resistance/battle_sense) → delta.
+  final Map<String, Map<String, int>> hiddenStatEventBuffer = {};
+  // 중복 규칙(용병별 전투당 최대 N회) 추적용 보조 카운트.
+  // mercId → counterKey → 누적 발생 횟수.
+  final Map<String, Map<String, int>> hiddenStatEventCounts = {};
+
+  // M8.5 페이즈 4 #3 (FR-4~7): 감정 반응 상태.
+  /// 간판 용병 id(투지 eligible 판정용, 미설정 시 null).
+  final String? flagshipMercId;
+  /// 전투 기록(timestamp 기준) 시각 — quest.startTime.
+  final DateTime battleTimestamp;
+  /// 절망 trigger 전투당 1회 latch.
+  bool despairTriggered = false;
+  /// 투지 trigger 발동 완료 용병 id latch.
+  final Set<String> determinationTriggeredMercIds = {};
+  /// 라운드별 감정 trigger 후보(flush 후 clear).
+  final List<_EmotionTrigger> roundEmotionTriggers = [];
+  /// 감정 apply 성공 시 누적되는 전투 기억 이벤트.
+  final List<BattleMemoryEntry> battleMemoryBuffer = [];
+
+  // M8.5 페이즈 4 #3: 히든 스탯 카운터 이벤트 1건 누적.
+  // [maxPerCombat] 지정 시 용병별 전투당 해당 횟수까지만 누적(초과분 무시).
+  void recordHiddenStatEvent(
+    String mercId,
+    String counterKey, {
+    int delta = 1,
+    int? maxPerCombat,
+  }) {
+    if (maxPerCombat != null) {
+      final counts = hiddenStatEventCounts.putIfAbsent(mercId, () => {});
+      final current = counts[counterKey] ?? 0;
+      if (current >= maxPerCombat) return;
+      counts[counterKey] = current + 1;
+    }
+    final buffer = hiddenStatEventBuffer.putIfAbsent(mercId, () => {});
+    buffer[counterKey] = (buffer[counterKey] ?? 0) + delta;
+  }
 
   _Phase1State({
     required this.seed,
@@ -2497,6 +3097,8 @@ class _Phase1State {
     required this.combatantSnapshots,
     required this.enemySnapshots,
     required this.deathResistanceCaps,
+    this.flagshipMercId,
+    required this.battleTimestamp,
   });
 
   int get lastRoundIndexEstimate => lastRoundIndex < 1 ? 1 : lastRoundIndex;
@@ -2521,6 +3123,8 @@ class _Combatant {
   final BehaviorPattern? behaviorPattern;
   final String enemyKind; // 'normal'/'elite'/'unique' or '' for party
   final DateTime? recruitedAt;
+  // M8.5 페이즈 4 #3: 히든 스탯(불굴/투지/운/공포저항/전장감각). 적은 const {}.
+  final Map<String, int> hiddenStats;
   bool injured = false;
   bool deceased = false;
   bool flagBattleFuryUsed = false;
@@ -2549,12 +3153,38 @@ class _Combatant {
     this.behaviorPattern,
     this.enemyKind = '',
     this.recruitedAt,
+    this.hiddenStats = const {},
   });
 
   bool get alive => !deceased && hp > 0;
 
   bool get hasMezStunned =>
       statusEffects.any((e) => e.effectId == 'mez_stunned');
+
+  // M8.5 페이즈 4 #3 (FR-6 슬픔): 슬픔 감정 상태 보유 여부.
+  bool get hasEmotionalSorrow =>
+      statusEffects.any((e) => e.effectId == 'emotional_sorrow');
+
+  // M8.5 페이즈 4 #3 (FR-6): 분노 감정 상태 보유 여부.
+  bool get hasEmotionalRage =>
+      statusEffects.any((e) => e.effectId == 'emotional_rage');
+
+  // M8.5 페이즈 4 #3 (FR-6): 절망 감정 상태 보유 여부.
+  bool get hasEmotionalDespair =>
+      statusEffects.any((e) => e.effectId == 'emotional_despair');
+
+  // M8.5 페이즈 4 #3 (FR-6): 투지 감정 상태 보유 여부.
+  bool get hasEmotionalDetermination =>
+      statusEffects.any((e) => e.effectId == 'emotional_determination');
+
+  // M8.5 페이즈 4 #3: 감정 상태(분노/절망/슬픔/투지) 보유 여부 — 1명 1감정 가드.
+  bool get hasAnyEmotional => statusEffects.any(
+        (e) =>
+            e.effectId == 'emotional_rage' ||
+            e.effectId == 'emotional_despair' ||
+            e.effectId == 'emotional_sorrow' ||
+            e.effectId == 'emotional_determination',
+      );
 
   factory _Combatant.fromMerc(CombatantSnapshot s, Mercenary? merc) {
     final vitCoef = CombatSimulatorConstants.roleVitCoef[s.role] ?? 4.0;
@@ -2577,6 +3207,9 @@ class _Combatant {
       positionIndex: s.positionIndex,
       isEnemy: false,
       recruitedAt: merc?.recruitedAt,
+      hiddenStats: merc == null
+          ? const {}
+          : Map<String, int>.from(merc.hiddenStats),
     );
   }
 
@@ -2630,4 +3263,27 @@ class _ScoredCombatant {
   final _Combatant c;
   final int score;
   const _ScoredCombatant(this.c, this.score);
+}
+
+// M8.5 페이즈 4 #3 (FR-4~7): 감정 반응 trigger 후보(경량).
+// 라운드 중 수집 후 _flushEmotionTriggers에서 우선순위 정렬·확률 평가·적용.
+class _EmotionTrigger {
+  /// 감정 종류: 'rage' / 'sorrow' / 'despair' / 'determination'
+  final String emotion;
+
+  /// 적용 대상 전투원 id (용병)
+  final String targetMercId;
+
+  /// 후보 발생 라운드(정렬 결정성용)
+  final int roundIndex;
+
+  /// 후보 유발 액션 순번(정렬 결정성용). 현재 라운드 누적 액션 개수를 사용.
+  final int sourceActionIndex;
+
+  const _EmotionTrigger({
+    required this.emotion,
+    required this.targetMercId,
+    required this.roundIndex,
+    required this.sourceActionIndex,
+  });
 }

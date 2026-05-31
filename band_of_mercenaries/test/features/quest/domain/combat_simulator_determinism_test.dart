@@ -106,6 +106,63 @@ void main() {
         _expectDeterministic(first, second, scenario: '유니크 엘리트', seed: seed);
       });
 
+      // M8.5 페이즈 4 #3 TASK-25b: 감정 반응(emotional) + 히든 스탯 카운터 +
+      // 전투 기억(battleMemory) 이벤트의 시드 결정성 검증.
+      // 동료 사망(분노)·중상(슬픔)·파티 HP<25%(절망)·솔로 저HP(투지)를 동시에
+      // 유발할 수 있는 강력한 적 + 취약 파티 + emotional 캐시 4행을 구성한 뒤
+      // 2회 simulate 결과의 statusEffectHistory / hiddenStatEvents /
+      // battleMemoryEvents 3 버퍼가 완전히 동일한지 확인한다.
+      test('감정 반응·히든 스탯·전투 기억 — seed=$seed 동일 입력 2회 호출 결과 일치', () {
+        final quest = _quest(
+          chainId: 'chain_test',
+          isChainStep: true,
+          specialFlags: const {'chain_protagonist_id': 'merc_protagonist'},
+        );
+        final pool = _pool();
+        final party = [
+          // 체인 주인공(투지 eligible) + 불굴 lv 주입.
+          _emotionalMerc(
+            id: 'merc_protagonist',
+            str: 6,
+            vit: 1,
+            agi: 1,
+            hiddenStats: const {'fortitude': 3, 'grit': 2},
+          ),
+          _emotionalMerc(id: 'merc_ally_a', str: 4, vit: 1, agi: 1),
+          _emotionalMerc(id: 'merc_ally_b', str: 2, vit: 1, agi: 1),
+        ];
+        // 압도적 공격력의 적 → 동료 사망(분노)·중상(슬픔)·파티 HP<25%(절망)·
+        // 체인 주인공 저HP(투지)가 모두 발생하도록 구성한다.
+        final staticData = _emotionalStaticData(
+          enemies: [
+            _enemy(id: 'enemy_brutal', hp: 50, attack: 9999),
+            _enemy(id: 'enemy_brutal_2', hp: 50, attack: 9999),
+          ],
+        );
+
+        final first = CombatSimulator.simulate(
+          quest: quest,
+          partyMercs: party,
+          pool: pool,
+          staticData: staticData,
+          userData: _userData(),
+          factionStates: const [],
+          seed: seed,
+        );
+        final second = CombatSimulator.simulate(
+          quest: quest,
+          partyMercs: party,
+          pool: pool,
+          staticData: staticData,
+          userData: _userData(),
+          factionStates: const [],
+          seed: seed,
+        );
+
+        _expectDeterministic(first, second, scenario: '감정/히든/기억', seed: seed);
+        _expectEmotionalDeterministic(first, second, seed: seed);
+      });
+
       test('체인 핵심 단계 + 엘리트 동반 — seed=$seed 동일 입력 2회 호출 결과 일치', () {
         final quest = _quest(
           eliteId: 'elite_chain',
@@ -232,6 +289,57 @@ void _expectDeterministic(
     expect(e1.targetId, equals(e2.targetId), reason: '$reason event $i targetId');
     expect(e1.roundIndex, equals(e2.roundIndex), reason: '$reason event $i roundIndex');
   }
+}
+
+/// 감정 반응 결정성 — hiddenStatEvents / battleMemoryEvents 2 버퍼가 동일한지 검증.
+/// statusEffectHistory의 emotional effectId 발생 순서도 함께 확인한다.
+void _expectEmotionalDeterministic(
+  dynamic first,
+  dynamic second, {
+  required int seed,
+}) {
+  final reason = 'seed=$seed';
+
+  // hiddenStatEvents: Map<mercId, Map<counterKey, delta>> 완전 일치.
+  final Map<String, Map<String, int>> h1 =
+      Map<String, Map<String, int>>.from(first.hiddenStatEvents as Map);
+  final Map<String, Map<String, int>> h2 =
+      Map<String, Map<String, int>>.from(second.hiddenStatEvents as Map);
+  expect(h1.keys.toSet(), equals(h2.keys.toSet()),
+      reason: '$reason hiddenStatEvents mercId 집합');
+  for (final mercId in h1.keys) {
+    expect(h1[mercId], equals(h2[mercId]),
+        reason: '$reason hiddenStatEvents[$mercId]');
+  }
+
+  // battleMemoryEvents: 길이 + 각 엔트리의 mercId/entryType/sourceEventId 일치.
+  final List<dynamic> b1 = first.battleMemoryEvents as List;
+  final List<dynamic> b2 = second.battleMemoryEvents as List;
+  expect(b1.length, equals(b2.length), reason: '$reason battleMemoryEvents 길이');
+  for (var i = 0; i < b1.length; i++) {
+    expect(b1[i].mercId, equals(b2[i].mercId),
+        reason: '$reason battleMemory $i mercId');
+    expect(b1[i].entryType, equals(b2[i].entryType),
+        reason: '$reason battleMemory $i entryType');
+    expect(b1[i].sourceEventId, equals(b2[i].sourceEventId),
+        reason: '$reason battleMemory $i sourceEventId');
+  }
+
+  // emotional effectId 발생 시퀀스(apply 이벤트만) 일치.
+  final emo1 = first.statusEffectHistory
+      .where((e) => (e.effectId as String).startsWith('emotional_'))
+      .map((e) => '${e.eventType}:${e.effectId}:${e.targetId}:${e.roundIndex}')
+      .toList();
+  final emo2 = second.statusEffectHistory
+      .where((e) => (e.effectId as String).startsWith('emotional_'))
+      .map((e) => '${e.eventType}:${e.effectId}:${e.targetId}:${e.roundIndex}')
+      .toList();
+  expect(emo1, orderedEquals(emo2), reason: '$reason emotional 이벤트 시퀀스');
+
+  // 발동 보장: emotional 이벤트가 비어 있지 않아야 결정성 검증이 실질적 의미를
+  // 가진다(빈 버퍼끼리 일치는 무의미). hiddenStat/battleMemory는 seed에 따라
+  // 발생 시점이 달라질 수 있어 emotional 발동만 보장한다.
+  expect(emo1, isNotEmpty, reason: '$reason emotional 미발동');
 }
 
 // ============================================================================
@@ -440,5 +548,134 @@ StaticGameData _staticData({required List<EnemyArchetype> enemies}) {
       ),
     ],
     enemyArchetypes: enemies,
+    hiddenStats: const [],
+    battleMemoryTemplates: const [],
   );
 }
+
+// ============================================================================
+// 감정 반응(emotional) 전용 헬퍼 (TASK-25b)
+// ============================================================================
+
+/// hiddenStats(레벨 맵)를 주입할 수 있는 mercenary 헬퍼.
+Mercenary _emotionalMerc({
+  String id = 'merc_a',
+  int str = 30,
+  int intelligence = 10,
+  int vit = 30,
+  int agi = 20,
+  List<String> traitIds = const [],
+  Map<String, int> hiddenStats = const {},
+}) {
+  return Mercenary(
+    id: id,
+    name: id,
+    jobId: 'job_warrior',
+    traitId: '',
+    str: str,
+    intelligence: intelligence,
+    vit: vit,
+    agi: agi,
+    traitIds: traitIds,
+    hiddenStats: hiddenStats,
+    recruitedAt: DateTime.utc(2026, 1, 1),
+  );
+}
+
+/// emotional 4행(분노/슬픔/절망/투지)을 combatStatusEffects에 포함하는 staticData.
+/// 명세 §2.2 수치 기반. 실제 효과(공격/방어/명중/회피/사망저항)는 simulator의
+/// boolean 분기로 적용되므로 본 행은 effectId/kind/duration/intensity만 의미가 있다.
+StaticGameData _emotionalStaticData({required List<EnemyArchetype> enemies}) {
+  final base = _staticData(enemies: enemies);
+  return StaticGameData(
+    difficulties: base.difficulties,
+    jobs: base.jobs,
+    traits: base.traits,
+    traitCategories: base.traitCategories,
+    traitConflicts: base.traitConflicts,
+    traitTransitions: base.traitTransitions,
+    traitComboEvolutions: base.traitComboEvolutions,
+    traitSynergies: base.traitSynergies,
+    regions: base.regions,
+    regionAdjacencies: base.regionAdjacencies,
+    regionSectors: base.regionSectors,
+    questTypes: base.questTypes,
+    questPools: base.questPools,
+    personNames: base.personNames,
+    travelEvents: base.travelEvents,
+    facilities: base.facilities,
+    ranks: base.ranks,
+    mercenaryWages: base.mercenaryWages,
+    regionDiscoveries: base.regionDiscoveries,
+    factions: base.factions,
+    items: base.items,
+    eliteMonsters: base.eliteMonsters,
+    eliteLootEntries: base.eliteLootEntries,
+    chainQuests: base.chainQuests,
+    questNarratives: base.questNarratives,
+    travelChoiceEvents: base.travelChoiceEvents,
+    travelChoiceOptions: base.travelChoiceOptions,
+    travelChoiceResults: base.travelChoiceResults,
+    craftingRecipes: base.craftingRecipes,
+    questPoolMaterialDrops: base.questPoolMaterialDrops,
+    bandAchievementTemplates: base.bandAchievementTemplates,
+    titles: base.titles,
+    factionContacts: base.factionContacts,
+    factionReactions: base.factionReactions,
+    factionShopItems: base.factionShopItems,
+    combatReportTemplates: base.combatReportTemplates,
+    combatReportKeywords: base.combatReportKeywords,
+    combatSkills: base.combatSkills,
+    combatStatusEffects: [...base.combatStatusEffects, ..._emotionalEffects],
+    enemyArchetypes: enemies,
+    hiddenStats: base.hiddenStats,
+    battleMemoryTemplates: base.battleMemoryTemplates,
+  );
+}
+
+const List<CombatStatusEffect> _emotionalEffects = [
+  CombatStatusEffect(
+    id: 'emotional_rage',
+    kind: 'emotional',
+    displayLabel: '분노',
+    defaultDurationTurns: 3,
+    defaultIntensity: 0.30,
+    stackPolicy: StackPolicy.ignore,
+    hookTarget: ['attack', 'defense'],
+    applyMethod: ApplyMethod.none,
+    description: '동료의 죽음에 분노한다',
+  ),
+  CombatStatusEffect(
+    id: 'emotional_sorrow',
+    kind: 'emotional',
+    displayLabel: '슬픔',
+    defaultDurationTurns: 2,
+    defaultIntensity: 0.50,
+    stackPolicy: StackPolicy.ignore,
+    hookTarget: ['action'],
+    applyMethod: ApplyMethod.none,
+    description: '동료의 부상에 위축된다',
+  ),
+  CombatStatusEffect(
+    id: 'emotional_despair',
+    kind: 'emotional',
+    displayLabel: '절망',
+    defaultDurationTurns: 3,
+    defaultIntensity: 0.20,
+    stackPolicy: StackPolicy.ignore,
+    hookTarget: ['hit', 'evasion'],
+    applyMethod: ApplyMethod.none,
+    description: '전멸의 공포에 휩싸인다',
+  ),
+  CombatStatusEffect(
+    id: 'emotional_determination',
+    kind: 'emotional',
+    displayLabel: '투지',
+    defaultDurationTurns: 3,
+    defaultIntensity: 0.20,
+    stackPolicy: StackPolicy.ignore,
+    hookTarget: ['death_resistance', 'evasion'],
+    applyMethod: ApplyMethod.none,
+    description: '위기 속에서 투지를 불태운다',
+  ),
+];

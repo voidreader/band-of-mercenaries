@@ -53,6 +53,10 @@ import 'package:band_of_mercenaries/features/info/domain/faction_contact_service
 import 'package:band_of_mercenaries/features/info/domain/faction_reward_service.dart';
 import 'package:band_of_mercenaries/core/util/stable_seed.dart';
 import 'package:band_of_mercenaries/features/quest/domain/flagship_solo_quest_config.dart';
+import 'package:band_of_mercenaries/features/quest/domain/hidden_stat_bonus_resolver.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/battle_memory_entry.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/hidden_stat_unlocked_provider.dart';
+import 'package:band_of_mercenaries/core/models/hidden_stat_data.dart';
 
 final questRepositoryProvider = Provider((ref) => QuestRepository());
 
@@ -1031,6 +1035,29 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
                 'questId': quest.id,
               },
             );
+            // M8.5 페이즈 4 #3 (FR-15) — 유니크 엘리트 첫 처치 전투 기억 (파견 생존자 전원)
+            try {
+              final mercRepo = ref.read(mercenaryRepositoryProvider);
+              final now = DateTime.now();
+              for (final damage in result.mercDamages) {
+                if (damage.newStatus == MercenaryStatus.dead) continue;
+                if (!quest.dispatchedMercIds.contains(damage.mercId)) continue;
+                final body = mercRepo
+                        .getAll()
+                        .where((m) => m.id == damage.mercId)
+                        .firstOrNull;
+                if (body == null) continue;
+                body.addBattleMemory(BattleMemoryEntry(
+                  mercId: body.id,
+                  entryType: 'unique_elite_first_kill',
+                  sourceEventId: 'elite:${quest.eliteId}',
+                  timestamp: now,
+                ));
+                await body.save();
+              }
+            } on Exception catch (e) {
+              debugPrint('[FR-15] unique_elite_first_kill memory 실패: $e');
+            }
           } on Exception catch (e) {
             debugPrint('[BOM][Achievement] elite hook 실패: $e');
           }
@@ -1072,6 +1099,8 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
     }
 
     // M5 페이즈 4 #3 — quest_pool_material_drops: 퀘스트 풀에 연결된 재료를 확률 드롭
+    // M8.5 페이즈 4 #3 (FR-19) — 운 itemDropBonus 가산 (파티 최고 luck 1명 기준 단일 값, 합산 금지)
+    var materialDropGranted = false;
     final materialDrops = staticData.questPoolMaterialDrops
         .where((d) => d.poolId == quest.questPoolId)
         .toList();
@@ -1081,7 +1110,9 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       final logger = ref.read(activityLogProvider.notifier);
       final random = Random();
       for (final drop in materialDrops) {
-        if (random.nextDouble() >= drop.dropRate) continue;
+        if (random.nextDouble() >= (drop.dropRate + result.itemDropBonus)) {
+          continue;
+        }
         final qty = drop.qtyMax > drop.qtyMin
             ? drop.qtyMin + random.nextInt(drop.qtyMax - drop.qtyMin + 1)
             : drop.qtyMin;
@@ -1102,6 +1133,7 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
           items: staticData.items,
         );
         await regionRepo.addAcquiredMaterial(quest.region, drop.itemId);
+        materialDropGranted = true;
       }
     }
 
@@ -1526,6 +1558,17 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
       debugPrint('[FR-21] epilogueMessage error: $e');
     }
 
+    // M8.5 페이즈 4 #3 (FR-12·15·16) — 히든 스탯 카운터/lv 평가 + 전투 기억 영속
+    // 솔로/region 카운터 갱신 이후 실행하여 최신 stats를 본체에서 재조회한다.
+    // 전부 fail-soft. 사망 mercenary는 제외(본체 없는 용병에 stats/memory 쓰지 않음).
+    await _applyHiddenStatAndBattleMemoryTrailing(
+      quest,
+      result,
+      soloPool,
+      materialDropGranted: materialDropGranted,
+      staticData: staticData,
+    );
+
     // M6 페이즈 4 #2 (FR-27·FR-29) — 성공/대성공 시 최고 기여 mercenary 캐시
     if (result.resultType == QuestResult.success ||
         result.resultType == QuestResult.greatSuccess) {
@@ -1853,6 +1896,233 @@ class QuestListNotifier extends StateNotifier<List<ActiveQuest>> {
 
     ref.read(mercenaryListProvider.notifier).refresh();
     _load();
+  }
+
+  /// M8.5 페이즈 4 #3 (FR-12·15·16) — 히든 스탯 카운터 합산·lv 임계 평가 +
+  /// 전투 기억(battleMemoryEvents 및 trailing 6 entryType) 영속.
+  ///
+  /// 전부 fail-soft. 사망 mercenary는 제외한다(본체가 곧 삭제되므로 stats/memory 미적용).
+  /// `MercenarySnapshot.fromMercenary`가 사망 시 발급 시점 hiddenStats/battleMemories를
+  /// 자동 동결하므로 별도 동결 코드는 불필요하다.
+  Future<void> _applyHiddenStatAndBattleMemoryTrailing(
+    ActiveQuest quest,
+    QuestCompletionResult result,
+    QuestPool? soloPool, {
+    required bool materialDropGranted,
+    required StaticGameData staticData,
+  }) async {
+    try {
+      final mercRepo = ref.read(mercenaryRepositoryProvider);
+      final sim = result.simulationResult;
+
+      // mercId→Mercenary 1회 인덱싱 (updateStats 등 선행 저장 이후 최신 stats 반영).
+      // 단계 (2)(3)(4)는 이 맵에서 O(1) 조회하고, 변이한 id는 dirty에 모아 말미에 단일 저장.
+      final byId = {for (final m in mercRepo.getAll()) m.id: m};
+      final dirty = <String>{};
+
+      // 생존 파견 mercId 집합 (사망 제외)
+      final survivorIds = <String>{};
+      for (final damage in result.mercDamages) {
+        if (damage.newStatus == MercenaryStatus.dead) continue;
+        if (!quest.dispatchedMercIds.contains(damage.mercId)) continue;
+        survivorIds.add(damage.mercId);
+      }
+
+      final isSuccess = result.resultType == QuestResult.success ||
+          result.resultType == QuestResult.greatSuccess;
+
+      // 1) 완료 trailing 카운터를 mercId→counterKey→delta로 누적
+      final counterDeltas = <String, Map<String, int>>{};
+      void addCounter(String mercId, String key, int delta) {
+        if (delta == 0) return;
+        final m = counterDeltas.putIfAbsent(mercId, () => <String, int>{});
+        m[key] = (m[key] ?? 0) + delta;
+      }
+
+      // (a) simulationResult.hiddenStatEvents — 생존자만
+      if (sim != null) {
+        sim.hiddenStatEvents.forEach((mercId, deltas) {
+          if (!survivorIds.contains(mercId)) return;
+          deltas.forEach((counterKey, delta) {
+            addCounter(mercId, counterKey, delta);
+          });
+        });
+      }
+
+      // (b) 솔로 의뢰 완수/대성공 (대상 용병 1명)
+      if (soloPool != null &&
+          soloPool.partySizeMax == 1 &&
+          isSuccess &&
+          quest.dispatchedMercIds.isNotEmpty) {
+        final soloMercId = quest.dispatchedMercIds.first;
+        if (survivorIds.contains(soloMercId)) {
+          addCounter(soloMercId, HiddenStatBonusResolver.fortitudeCounter, 2);
+          if (result.resultType == QuestResult.greatSuccess) {
+            addCounter(soloMercId, HiddenStatBonusResolver.gritCounter, 3);
+          }
+        }
+      }
+
+      // (c) 체인 주인공 위기 극복 (HP<30% 기록 후 생존 → 부상 생존자로 근사)
+      if (quest.isChainQuest && sim != null) {
+        final protagonist = sim.protagonistMercId;
+        if (protagonist != null &&
+            survivorIds.contains(protagonist) &&
+            sim.injuredMercIds.contains(protagonist)) {
+          addCounter(protagonist, HiddenStatBonusResolver.gritCounter, 2);
+        }
+      }
+
+      // (d) 유니크 엘리트 전투 생존 (파견 생존자별 1회)
+      if (quest.eliteId != null && isSuccess) {
+        final eliteData = staticData.eliteMonsters
+            .where((e) => e.id == quest.eliteId)
+            .firstOrNull;
+        if (eliteData != null && eliteData.isUnique) {
+          for (final mercId in survivorIds) {
+            addCounter(
+              mercId,
+              HiddenStatBonusResolver.fearResistanceCounter,
+              1,
+            );
+          }
+        }
+      }
+
+      // (e) 보상 아이템 드랍 획득 (용병별 의뢰당 1회)
+      if (materialDropGranted) {
+        for (final mercId in survivorIds) {
+          addCounter(mercId, HiddenStatBonusResolver.luckCounter, 1);
+        }
+      }
+
+      final now = DateTime.now();
+
+      // 2) battleMemoryEvents(emotional_apply 등) 영속 — 생존자만
+      if (sim != null) {
+        for (final event in sim.battleMemoryEvents) {
+          if (!survivorIds.contains(event.mercId)) continue;
+          final body = byId[event.mercId];
+          if (body == null) continue;
+          // timestamp가 epoch 0 placeholder면 실제 완료 시각으로 보정
+          final ts = event.timestamp.millisecondsSinceEpoch == 0
+              ? now
+              : event.timestamp;
+          body.addBattleMemory(BattleMemoryEntry(
+            mercId: event.mercId,
+            entryType: event.entryType,
+            sourceEventId: event.sourceEventId,
+            timestamp: ts,
+            templateKey: event.templateKey,
+            templateData: event.templateData,
+          ));
+          dirty.add(body.id);
+        }
+      }
+
+      // 3) solo_great_success 전투 기억 (솔로 대성공 대상 용병)
+      if (soloPool != null &&
+          soloPool.partySizeMax == 1 &&
+          result.resultType == QuestResult.greatSuccess &&
+          quest.dispatchedMercIds.isNotEmpty) {
+        final soloMercId = quest.dispatchedMercIds.first;
+        if (survivorIds.contains(soloMercId)) {
+          final body = byId[soloMercId];
+          if (body != null) {
+            body.addBattleMemory(BattleMemoryEntry(
+              mercId: soloMercId,
+              entryType: 'solo_great_success',
+              sourceEventId: 'quest:${soloPool.id}',
+              timestamp: now,
+            ));
+            dirty.add(body.id);
+          }
+        }
+      }
+
+      // 4) 카운터 합산 + lv 임계 평가 (영향 받은 생존자 전원)
+      final affectedIds = <String>{...counterDeltas.keys}
+        ..removeWhere((id) => !survivorIds.contains(id));
+      for (final mercId in affectedIds) {
+        final deltas = counterDeltas[mercId];
+        if (deltas == null || deltas.isEmpty) continue;
+        final body = byId[mercId];
+        if (body == null) continue;
+
+        // stats 합산 (최신 본체 기준 → save)
+        final newStats = Map<String, int>.from(body.stats);
+        deltas.forEach((key, delta) {
+          newStats[key] = (newStats[key] ?? 0) + delta;
+        });
+        body.stats = newStats;
+
+        // lv 임계 평가 — 각 히든 스탯
+        for (final stat in staticData.hiddenStats) {
+          final counter = body.stats[stat.counterKey] ?? 0;
+          final newLv = HiddenStatBonusResolver.computeLevel(counter);
+          final oldLv = body.hiddenStats[stat.id] ?? 0;
+          if (newLv <= oldLv) continue;
+          body.hiddenStats[stat.id] = newLv;
+
+          if (oldLv == 0 && newLv >= 1) {
+            // lv1 첫 해금 → 이벤트 채널 publish (app.dart 리스너가 enqueue + state=null)
+            try {
+              ref.read(hiddenStatUnlockedProvider.notifier).state =
+                  HiddenStatUnlockEvent(
+                mercId: body.id,
+                mercName: body.name,
+                statId: stat.id,
+                statName: stat.name,
+                description: '${stat.name} 능력이 처음으로 발현되었다',
+                effects: _hiddenStatEffectSummary(stat),
+              );
+            } on Exception catch (e) {
+              debugPrint('[FR-16] hiddenStat unlock publish 실패: $e');
+            }
+          } else {
+            // lv2~lv5 승급 → 활동 로그 1줄
+            try {
+              ref.read(activityLogProvider.notifier).addLog(
+                    '${body.name}의 ${stat.name}이(가) Lv$newLv(으)로 성장했다',
+                    ActivityLogType.hiddenStatLevelUp,
+                  );
+            } on Exception catch (e) {
+              debugPrint('[FR-12] hiddenStat levelUp log 실패: $e');
+            }
+          }
+
+          // lv1·lv5 도달 → hidden_stat_unlock 전투 기억
+          if (newLv == 1 || newLv == 5) {
+            body.addBattleMemory(BattleMemoryEntry(
+              mercId: body.id,
+              entryType: 'hidden_stat_unlock',
+              sourceEventId: 'hidden_${stat.id}_$newLv',
+              timestamp: now,
+            ));
+          }
+        }
+
+        dirty.add(body.id);
+      }
+
+      // 5) 단일 저장 패스 — 변이한 본체를 1회씩만 저장(부분 실패 격리).
+      for (final id in dirty) {
+        try {
+          await byId[id]?.save();
+        } on Exception catch (e) {
+          debugPrint('[FR-12/15/16] mercenary save 실패 ($id): $e');
+        }
+      }
+    } catch (e, st) {
+      debugPrint('[FR-12/15/16] hiddenStat/battleMemory trailing 실패: $e\n$st');
+    }
+  }
+
+  /// 히든 스탯 해금 다이얼로그용 효과 요약(한국어, 간결).
+  /// raw `combatEffectsJson` 키 노출 방지를 위해 `description`을 요약으로 사용.
+  /// (표시용 라벨 매핑은 후속 UI 단계에서 처리)
+  List<String> _hiddenStatEffectSummary(HiddenStatData stat) {
+    return [stat.description];
   }
 
   List<String> _currentRegionEnvironmentTags(

@@ -32,6 +32,8 @@ class DialogTypeRegistry {
   static const String settlementInfrastructureUpgraded = 'settlementInfrastructureUpgraded';
   // M8a — 세력 접촉점 도착 다이얼로그 (FR-G2)
   static const String factionContactArrived = 'factionContactArrived';
+  // M8.5 페이즈 4 #3 — 숨겨진 스탯 해금 다이얼로그 (FR-16)
+  static const String hiddenStatUnlocked = 'hiddenStatUnlocked';
 
   /// 등록된 전체 dialogType 키 집합. 영속 복원 시 필터링 기준으로 사용.
   static Set<String> get keys => {
@@ -49,6 +51,7 @@ class DialogTypeRegistry {
     regionStateChanged,
     settlementInfrastructureUpgraded,
     factionContactArrived,
+    hiddenStatUnlocked,
   };
 }
 
@@ -215,6 +218,12 @@ class DialogQueueNotifier extends StateNotifier<List<DialogRequest>> {
         return (npcName == null || factionName == null)
             ? '세력 접촉점이 새로 활성화되었습니다.'
             : '$factionName의 $npcName이(가) 도착했습니다.';
+      case DialogTypeRegistry.hiddenStatUnlocked:
+        final mercName = map['mercName'];
+        final statName = map['statName'];
+        return (mercName == null || statName == null)
+            ? '숨겨진 스탯이 해금되었습니다.'
+            : '$mercName의 $statName이(가) 해금되었습니다.';
       default:
         return '표시되지 않은 알림이 있습니다.';
     }

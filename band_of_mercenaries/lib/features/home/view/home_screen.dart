@@ -634,6 +634,10 @@ class _ActivityLog extends ConsumerWidget {
         return (icon: '📋', color: d, bold: false);
       case ActivityLogType.soloQuestInjuredReturn:
         return (icon: '💊', color: d, bold: false);
+      case ActivityLogType.hiddenStatUnlocked:
+        return (icon: '✦', color: AppTheme.chainGold, bold: true);
+      case ActivityLogType.hiddenStatLevelUp:
+        return (icon: '⬆', color: AppTheme.chainGold, bold: false);
     }
   }
 

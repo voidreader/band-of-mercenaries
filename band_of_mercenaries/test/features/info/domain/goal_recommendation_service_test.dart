@@ -152,6 +152,8 @@ StaticGameData _buildStaticData({
     combatSkills: const [],
     combatStatusEffects: const [],
     enemyArchetypes: const [],
+    hiddenStats: const [],
+    battleMemoryTemplates: const [],
   );
 }
 

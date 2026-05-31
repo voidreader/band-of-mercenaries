@@ -10,6 +10,8 @@ import 'package:band_of_mercenaries/core/providers/dialog_queue_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/memorial_cause.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/mercenary_snapshot_model.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/battle_memory_entry.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/title/domain/title_service.dart'
     show AchievementHookContext;
 
@@ -28,6 +30,8 @@ class AchievementService {
     required this.buildAchievementDialog,
     this.evaluateAchievementHook,
     this.buildHookContext,
+    this.getMercenary,
+    this.updateMercenary,
   });
 
   final Box<BandAchievement> box;
@@ -53,6 +57,12 @@ class AchievementService {
   /// hook 컨텍스트 빌더 콜백 (M6 페이즈 4 #2) — nullable, 페이즈 4 #1 호환.
   final AchievementHookContext Function(BandAchievement achievement)?
       buildHookContext;
+
+  /// 용병 본체 lookup 콜백 — battleMemory trailing용. nullable, 미주입 시 skip.
+  final Mercenary? Function(String mercId)? getMercenary;
+
+  /// 용병 본체 저장 콜백 — battleMemory trailing용. nullable, 미주입 시 skip.
+  final Future<void> Function(Mercenary merc)? updateMercenary;
 
   /// 위업 발급. 멱등성 보장 ([hasAchievement] 사전 체크).
   ///
@@ -122,6 +132,26 @@ class AchievementService {
                 buildAchievementDialog(achievement, grantedTitles, onDismiss),
           ),
         );
+      }
+
+      // (3) battleMemory trailing — 주인공 위업(mercSnapshot non-null)만 기록.
+      if (mercSnapshot != null && getMercenary != null && updateMercenary != null) {
+        try {
+          final merc = getMercenary!(mercSnapshot.id);
+          if (merc != null) {
+            merc.addBattleMemory(BattleMemoryEntry(
+              mercId: merc.id,
+              entryType: 'achievement_granted',
+              sourceEventId: 'achievement:$templateId',
+              timestamp: DateTime.now(),
+              templateKey: null,
+              templateData: const {},
+            ));
+            await updateMercenary!(merc);
+          }
+        } on Exception catch (e) {
+          debugPrint('[BOM][Achievement] battleMemory trailing 실패 ($templateId): $e');
+        }
       }
 
       return achievement;

@@ -56,6 +56,8 @@ class SyncService {
     'combat_skills', // 38. 전투 스킬 (M8b 페이즈 4 #2 추가)
     'combat_status_effects', // 39. 전투 상태 이상 (M8b 페이즈 4 #2 추가)
     'enemies', // 40. 적 정의 (M8b 페이즈 4 #2 추가)
+    'hidden_stats', // 41. 숨겨진 통계 (M8.5 페이즈 4 #3 추가)
+    'battle_memory_templates', // 42. 전투 기억 템플릿 (M8.5 페이즈 4 #3 추가)
   ];
 
   /// 비어 있어도 로컬 앱이 기동 가능해야 하는 보조 정적 데이터.
@@ -73,6 +75,8 @@ class SyncService {
     'combat_skills',
     'combat_status_effects',
     'enemies',
+    'hidden_stats',
+    'battle_memory_templates',
   };
 
   static List<String> get requiredTables =>

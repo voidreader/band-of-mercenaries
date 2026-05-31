@@ -9,6 +9,7 @@ import 'package:band_of_mercenaries/core/providers/static_data_provider.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/achievement_service.dart';
 import 'package:band_of_mercenaries/features/achievement/domain/band_achievement_model.dart';
 import 'package:band_of_mercenaries/features/achievement/view/achievement_unlocked_dialog.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_provider.dart';
 import 'package:band_of_mercenaries/features/title/domain/achievement_hook_context_builder.dart';
 import 'package:band_of_mercenaries/features/title/domain/title_service_provider.dart';
 
@@ -45,5 +46,17 @@ final achievementServiceProvider = Provider<AchievementService>((ref) {
       return await ref.read(titleServiceProvider).evaluateAchievementHook(ach, ctx);
     },
     buildHookContext: (ach) => buildAchievementHookContext(ref, ach),
+    getMercenary: (mercId) {
+      final list = ref.read(mercenaryListProvider);
+      for (final m in list) {
+        if (m.id == mercId) return m;
+      }
+      return null;
+    },
+    updateMercenary: (merc) async {
+      // battleMemory는 UI 비노출 영속 데이터이므로 state 재로딩 불필요.
+      // 다음 mercenaryListProvider _load 시 자연 반영.
+      return merc.save();
+    },
   );
 });

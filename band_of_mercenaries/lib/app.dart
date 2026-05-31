@@ -55,6 +55,8 @@ import 'package:band_of_mercenaries/core/widgets/settlement_infrastructure_upgra
 import 'package:band_of_mercenaries/features/info/domain/faction_contact_arrived_event.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_contact_service.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_contact_arrived_dialog.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/hidden_stat_unlocked_provider.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/hidden_stat_unlocked_dialog.dart';
 
 class BandOfMercenariesApp extends StatelessWidget {
   const BandOfMercenariesApp({super.key});
@@ -461,6 +463,28 @@ class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserv
         ),
       ));
       ref.read(factionContactArrivedProvider.notifier).state = null;
+    });
+
+    // 은닉 스탯 해금 (medium) — M8.5 페이즈 4 #3 FR-16
+    ref.listen<HiddenStatUnlockEvent?>(hiddenStatUnlockedProvider, (_, next) {
+      if (next == null) return;
+      final captured = next;
+      ref.read(dialogQueueProvider.notifier).enqueue(DialogRequest(
+        id: 'hiddenStatUnlocked_${next.mercId}_${next.statId}_${DateTime.now().millisecondsSinceEpoch}',
+        priority: DialogPriority.medium,
+        dialogType: DialogTypeRegistry.hiddenStatUnlocked,
+        payload: {
+          'mercId': next.mercId,
+          'mercName': next.mercName,
+          'statId': next.statId,
+          'statName': next.statName,
+        },
+        builder: (ctx, dismiss) => HiddenStatUnlockedDialog(
+          event: captured,
+          onDismiss: dismiss,
+        ),
+      ));
+      ref.read(hiddenStatUnlockedProvider.notifier).state = null;
     });
 
     // ── 큐 → 단일 표시 listen ────────────────────────────────────────────────

@@ -23,13 +23,15 @@ class MercenarySnapshotAdapter extends TypeAdapter<MercenarySnapshot> {
       jobName: fields[3] as String,
       tier: fields[4] as int,
       titleIds: (fields[5] as List).cast<String>(),
+      hiddenStats: (fields[6] as Map).cast<String, int>(),
+      battleMemories: (fields[7] as List).cast<BattleMemoryEntry>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, MercenarySnapshot obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +43,11 @@ class MercenarySnapshotAdapter extends TypeAdapter<MercenarySnapshot> {
       ..writeByte(4)
       ..write(obj.tier)
       ..writeByte(5)
-      ..write(obj.titleIds);
+      ..write(obj.titleIds)
+      ..writeByte(6)
+      ..write(obj.hiddenStats)
+      ..writeByte(7)
+      ..write(obj.battleMemories);
   }
 
   @override

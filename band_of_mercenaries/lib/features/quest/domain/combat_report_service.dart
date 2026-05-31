@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:band_of_mercenaries/core/domain/template_context.dart';
 import 'package:band_of_mercenaries/core/domain/template_engine.dart';
 import 'package:band_of_mercenaries/core/models/combat_report_keyword.dart';
@@ -11,8 +13,10 @@ import 'package:band_of_mercenaries/features/investigation/domain/region_state_m
 import 'package:band_of_mercenaries/features/mercenary/domain/mercenary_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_report_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_simulation_result.dart';
+import 'package:band_of_mercenaries/features/quest/domain/emotional_reaction_config.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_model.dart';
 import 'package:band_of_mercenaries/features/quest/domain/quest_narrative_service.dart';
+import 'package:band_of_mercenaries/features/quest/domain/status_effect_event.dart';
 
 /// 전투 보고서 중요도 레벨. 외부 노출 불필요.
 enum ImportanceLevel { normal, high, veryHigh }
@@ -187,10 +191,30 @@ class CombatReportService {
       ...details.map((t) => t.id),
     ];
 
-    // 14. CombatReport 반환
+    // 14. 감정 장면 섹션 (M8.5 페이즈 4 #3 FR-17)
+    // simulationResult.statusEffectHistory에서 emotional_ apply 이벤트를 추출하여
+    // scope='emotional' 템플릿으로 보고서 하단에 최대 3줄 추가.
+    // 빈 풀이면 fail-soft skip (renderedDetails 그대로 유지).
+    final List<String> finalDetails;
+    {
+      final emotionalLines = _buildEmotionalScenes(
+        simulationResult: simulationResult,
+        templates: templates,
+        resultKey: resultKey,
+        quest: quest,
+        context: context,
+        templateEngine: templateEngine,
+        random: random,
+      );
+      finalDetails = emotionalLines.isEmpty
+          ? renderedDetails
+          : [...renderedDetails, ...emotionalLines];
+    }
+
+    // 15. CombatReport 반환
     return CombatReport(
       summary: renderedSummary,
-      details: renderedDetails,
+      details: finalDetails,
       seed: effectiveSeed,
       protagonistMercId: simulationResult?.protagonistMercId ?? protagonist?.id,
       featuredMercIds: featuredMercIds,
@@ -211,6 +235,130 @@ class CombatReportService {
   // ===========================================================================
   // private helpers
   // ===========================================================================
+
+  /// M8.5 페이즈 4 #3 FR-17 — 감정 장면 섹션 생성.
+  ///
+  /// 1. statusEffectHistory에서 effectId.startsWith('emotional_') && eventType=='apply'
+  ///    인 이벤트를 추출.
+  /// 2. 추출된 effectId를 우선순위(투지 > 분노 > 슬픔 > 절망) 순으로 정렬하고
+  ///    중복 effectId 제거 후 상위 3개까지 사용.
+  /// 3. 각 effectId에 매칭되는 scope='emotional' 템플릿 풀에서 가중 랜덤 선택.
+  /// 4. TemplateEngine으로 렌더링. 최대 3줄 반환.
+  /// 5. scope='emotional' 템플릿이 없으면 빈 리스트 반환(fail-soft skip).
+  static List<String> _buildEmotionalScenes({
+    required CombatSimulationResult? simulationResult,
+    required List<CombatReportTemplate> templates,
+    required String resultKey,
+    required ActiveQuest quest,
+    required TemplateContext context,
+    required TemplateEngine templateEngine,
+    required Random random,
+  }) {
+    if (simulationResult == null) return const [];
+
+    // 1. emotional apply 이벤트 추출 (중복 effectId 제거)
+    final emotionalEffectIds = _extractEmotionalEffectIds(
+      simulationResult.statusEffectHistory,
+    );
+    if (emotionalEffectIds.isEmpty) return const [];
+
+    // 2. scope='emotional' 템플릿 풀 존재 확인 (fail-soft skip)
+    final emotionalPool = templates
+        .where(
+          (t) =>
+              t.scope == 'emotional' &&
+              (t.resultType == null || t.resultType == resultKey) &&
+              (t.questType == null || t.questType == quest.questTypeId) &&
+              (t.factionId == null || t.factionId == quest.factionTag),
+        )
+        .toList(growable: false);
+    if (emotionalPool.isEmpty) return const [];
+
+    // 3. 우선순위 정렬된 effectId별 템플릿 선택 + 렌더링 (최대 3줄)
+    final result = <String>[];
+    final usedTemplateIds = <String>{};
+
+    for (final effectId in emotionalEffectIds) {
+      if (result.length >= 3) break;
+
+      // TODO(Q-1): combat_report_templates emotion 매칭 컬럼 확정 후 정합 — 현재
+      // tags_json.emotion 또는 tags_json.effect_id 키로 effectId를 매칭하는 잠정 로직.
+      // DB 스키마에 전용 컬럼(예: emotion_type, source_effect_id) 확정 시 이 필터를 교체할 것.
+      final candidates = emotionalPool
+          .where((t) {
+            if (usedTemplateIds.contains(t.id)) return false;
+            final tags = t.parsedTags;
+            // tags_json.emotion 키 매칭 시도 (예: {"emotion": "determination"})
+            final emotionTag = tags['emotion'];
+            if (emotionTag is String && emotionTag.isNotEmpty) {
+              return effectId == 'emotional_$emotionTag';
+            }
+            // tags_json.effect_id 키 매칭 시도 (예: {"effect_id": "emotional_rage"})
+            final effectIdTag = tags['effect_id'];
+            if (effectIdTag is String && effectIdTag.isNotEmpty) {
+              return effectId == effectIdTag;
+            }
+            // 매칭 키 미확정: effectId 전용 태그가 없는 템플릿은 이 effectId에서 사용하지 않음.
+            // 전체 emotional 풀을 공유 사용하려면 위 2개 키 중 하나로 확정 후 수정.
+            return false;
+          })
+          .toList(growable: false);
+
+      // 매칭 템플릿이 없으면 전체 emotional 풀에서 fallback 선택
+      if (candidates.isEmpty) {
+        debugPrint(
+          '[BOM][CombatReport] emotional 매칭 키 미확정 — 전풀 fallback',
+        );
+      }
+      final fallbackCandidates = candidates.isNotEmpty
+          ? candidates
+          : emotionalPool
+                .where((t) => !usedTemplateIds.contains(t.id))
+                .toList(growable: false);
+
+      final picked = _weightedPick(fallbackCandidates, random);
+      if (picked == null) continue;
+
+      usedTemplateIds.add(picked.id);
+      result.add(templateEngine.render(picked.template, context));
+    }
+
+    return result;
+  }
+
+  /// statusEffectHistory에서 emotional_ apply 이벤트를 추출하고
+  /// 우선순위(투지 > 분노 > 슬픔 > 절망) 순으로 중복 제거 후 반환.
+  static List<String> _extractEmotionalEffectIds(
+    List<StatusEffectEvent> history,
+  ) {
+    // apply 이벤트 중 emotional_ prefix를 가진 것만 추출 (중복 effectId 제거)
+    final seen = <String>{};
+    final extracted = <String>[];
+    for (final event in history) {
+      if (event.eventType != 'apply') continue;
+      if (!event.effectId.startsWith('emotional_')) continue;
+      if (seen.contains(event.effectId)) continue;
+      seen.add(event.effectId);
+      extracted.add(event.effectId);
+    }
+
+    // EmotionalReactionConfig.priority 순서(determination/rage/sorrow/despair)로 정렬
+    const priorityOrder = EmotionalReactionConfig.priority;
+    extracted.sort((a, b) {
+      // "emotional_" prefix 제거 후 priority 리스트에서 인덱스 비교
+      final aKind = a.replaceFirst('emotional_', '');
+      final bKind = b.replaceFirst('emotional_', '');
+      final aIdx = priorityOrder.indexOf(aKind);
+      final bIdx = priorityOrder.indexOf(bKind);
+      // priority 리스트에 없는 effectId는 최후순위로
+      final aRank = aIdx < 0 ? priorityOrder.length : aIdx;
+      final bRank = bIdx < 0 ? priorityOrder.length : bIdx;
+      final cmp = aRank.compareTo(bRank);
+      return cmp != 0 ? cmp : a.compareTo(b);
+    });
+
+    return extracted;
+  }
 
   static String _fallbackSimulationSummary(
     ActiveQuest quest,

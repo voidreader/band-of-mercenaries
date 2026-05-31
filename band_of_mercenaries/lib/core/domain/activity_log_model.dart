@@ -86,6 +86,10 @@ enum ActivityLogType {
   combatReportGenerated,
   @HiveField(40)
   soloQuestInjuredReturn,
+  @HiveField(41)
+  hiddenStatUnlocked,
+  @HiveField(42)
+  hiddenStatLevelUp,
 }
 
 @HiveType(typeId: 7)

@@ -27,6 +27,7 @@ class PassiveBonusService {
     List<PassiveEffect> personalEquipmentLegendaries = const [],
     List<PassiveEffect> guildEquipments = const [],
     List<PassiveEffect> titleEffects = const [],  // 신규 (M6 페이즈 4 #2)
+    List<PassiveEffect> hiddenStatEffects = const [],  // 신규 (M8.5 페이즈 4 #3)
   }) {
     final buffer = <PassiveEffect>[];
 
@@ -51,6 +52,8 @@ class PassiveBonusService {
     buffer.addAll(guildEquipments);
     // 칭호 효과 append (M6 페이즈 4 #2)
     buffer.addAll(titleEffects);
+    // 숨겨진 스탯 효과 append (M8.5 페이즈 4 #3)
+    buffer.addAll(hiddenStatEffects);
 
     return CollectedEffects(buffer);
   }

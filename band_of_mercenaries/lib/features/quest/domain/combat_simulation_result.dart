@@ -1,5 +1,6 @@
 // M8b 페이즈 4 #2 — 시뮬레이션 영속 결과 (typeId 22)
 import 'package:hive/hive.dart';
+import 'package:band_of_mercenaries/features/mercenary/domain/battle_memory_entry.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_enums_hive.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combat_turn.dart';
 import 'package:band_of_mercenaries/features/quest/domain/combatant_snapshot.dart';
@@ -50,6 +51,12 @@ class CombatSimulationResult extends HiveObject {
   @HiveField(12)
   List<EnemySnapshot> enemySnapshots;
 
+  @HiveField(13)
+  Map<String, Map<String, int>> hiddenStatEvents;
+
+  @HiveField(14)
+  List<BattleMemoryEntry> battleMemoryEvents;
+
   CombatSimulationResult({
     required this.questResult,
     required this.turns,
@@ -64,5 +71,8 @@ class CombatSimulationResult extends HiveObject {
     this.toneTags = const [],
     this.combatantSnapshots = const [],
     this.enemySnapshots = const [],
-  });
+    Map<String, Map<String, int>>? hiddenStatEvents,
+    List<BattleMemoryEntry>? battleMemoryEvents,
+  })  : hiddenStatEvents = hiddenStatEvents ?? {},
+        battleMemoryEvents = battleMemoryEvents ?? [];
 }

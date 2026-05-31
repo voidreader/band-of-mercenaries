@@ -135,6 +135,10 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         return ActivityLogType.combatReportGenerated;
       case 40:
         return ActivityLogType.soloQuestInjuredReturn;
+      case 41:
+        return ActivityLogType.hiddenStatUnlocked;
+      case 42:
+        return ActivityLogType.hiddenStatLevelUp;
       default:
         return ActivityLogType.questResult;
     }
@@ -265,6 +269,12 @@ class ActivityLogTypeAdapter extends TypeAdapter<ActivityLogType> {
         break;
       case ActivityLogType.soloQuestInjuredReturn:
         writer.writeByte(40);
+        break;
+      case ActivityLogType.hiddenStatUnlocked:
+        writer.writeByte(41);
+        break;
+      case ActivityLogType.hiddenStatLevelUp:
+        writer.writeByte(42);
         break;
     }
   }

@@ -43,6 +43,8 @@ import 'package:band_of_mercenaries/core/models/combat_report_keyword.dart'; // 
 import 'package:band_of_mercenaries/core/models/combat_skill.dart'; // M8b 페이즈 4 #2 추가
 import 'package:band_of_mercenaries/core/models/combat_status_effect.dart'; // M8b 페이즈 4 #2 추가
 import 'package:band_of_mercenaries/core/models/enemy_archetype.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/core/models/hidden_stat_data.dart'; // M8.5 페이즈 4 #3 추가
+import 'package:band_of_mercenaries/core/models/battle_memory_template.dart'; // M8.5 페이즈 4 #3 추가
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -86,6 +88,8 @@ class StaticGameData {
   final List<CombatSkill> combatSkills; // M8b 페이즈 4 #2 추가
   final List<CombatStatusEffect> combatStatusEffects; // M8b 페이즈 4 #2 추가
   final List<EnemyArchetype> enemyArchetypes; // M8b 페이즈 4 #2 추가
+  final List<HiddenStatData> hiddenStats; // M8.5 페이즈 4 #3 추가
+  final List<BattleMemoryTemplate> battleMemoryTemplates; // M8.5 페이즈 4 #3 추가
 
   StaticGameData({
     required this.difficulties,
@@ -128,6 +132,8 @@ class StaticGameData {
     required this.combatSkills, // M8b 페이즈 4 #2 추가
     required this.combatStatusEffects, // M8b 페이즈 4 #2 추가
     required this.enemyArchetypes, // M8b 페이즈 4 #2 추가
+    required this.hiddenStats, // M8.5 페이즈 4 #3 추가
+    required this.battleMemoryTemplates, // M8.5 페이즈 4 #3 추가
   });
 
   /// from_region → (to_region → distance_units) 인덱싱 (M7 페이즈 4 #3)
@@ -279,5 +285,13 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
       'enemies',
       EnemyArchetype.fromJson,
     ), // M8b 페이즈 4 #2 추가
+    hiddenStats: dataLoader.loadFromCache(
+      'hidden_stats',
+      HiddenStatData.fromJson,
+    ), // M8.5 페이즈 4 #3 추가
+    battleMemoryTemplates: dataLoader.loadFromCache(
+      'battle_memory_templates',
+      BattleMemoryTemplate.fromJson,
+    ), // M8.5 페이즈 4 #3 추가
   );
 });

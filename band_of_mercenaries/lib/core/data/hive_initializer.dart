@@ -21,6 +21,7 @@ import 'package:band_of_mercenaries/features/quest/domain/combat_action.dart'; /
 import 'package:band_of_mercenaries/features/quest/domain/status_effect_event.dart'; // M8b 페이즈 4 #2 추가
 import 'package:band_of_mercenaries/features/quest/domain/combatant_snapshot.dart'; // M8b 페이즈 4 #2 추가
 import 'package:band_of_mercenaries/features/quest/domain/enemy_snapshot.dart'; // M8b 페이즈 4 #2 추가
+import 'package:band_of_mercenaries/features/mercenary/domain/battle_memory_entry.dart'; // M8.5 페이즈 4 #3 추가
 
 class HiveInitializer {
   static const String userBoxName = 'user';
@@ -47,6 +48,8 @@ class HiveInitializer {
     Hive.registerAdapter(CombatExitConditionAdapter());      // 28
     Hive.registerAdapter(BehaviorPatternAdapter());          // 29
     Hive.registerAdapter(PositionRowAdapter());              // 30
+    // M8.5 페이즈 4 #3 — 전투 기억
+    Hive.registerAdapter(BattleMemoryEntryAdapter());        // 31
     // M8b 페이즈 4 #2 — 시뮬레이션 영속 (typeId 22~27)
     Hive.registerAdapter(CombatSimulationResultAdapter());   // 22
     Hive.registerAdapter(CombatTurnAdapter());               // 23
