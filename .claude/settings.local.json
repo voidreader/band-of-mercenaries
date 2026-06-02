@@ -125,7 +125,16 @@
       "Bash(sort -k7n)",
       "Skill(spec-pipeline)",
       "Skill(using-superpowers)",
-      "Bash(sort -t':' -k3 -n)"
+      "Bash(sort -t':' -k3 -n)",
+      "Bash(awk -F: '$2>=870 && $2<=1330')",
+      "Bash(awk 'NR>=870 && NR<=1330 && /pool/' /Users/radiogaga/git/band-of-mercenaries/band_of_mercenaries/lib/features/quest/domain/quest_provider.dart)",
+      "Bash(awk -F: '{print $1}')",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/content-design/[content]20260521_m8.5_flagship_solo_quests.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260523_m8.5_flagship_solo_quests/design_content.md\")",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/balance-design/[balance]20260521_m8.5_flagship_solo_quest_balance.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260523_m8.5_flagship_solo_quests/design_balance.md\")",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260523_m8.5_flagship_solo_quests.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260523_m8.5_flagship_solo_quests/spec.md\")",
+      "Bash(cp \"/Users/radiogaga/git/band-of-mercenaries/Docs/spec/[spec]20260523_m8.5_flagship_solo_quests_plan.md\" \"/Users/radiogaga/git/band-of-mercenaries/Docs/Archive/20260523_m8.5_flagship_solo_quests/plan.md\")",
+      "mcp__plugin_supabase_supabase__get_advisors",
+      "Bash(awk '/## 페이즈 3/,0' Docs/milestone-runs/M8.5/state.md)"
     ]
   },
   "enabledPlugins": {
