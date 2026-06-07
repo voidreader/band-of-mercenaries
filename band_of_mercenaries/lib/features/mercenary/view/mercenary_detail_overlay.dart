@@ -20,6 +20,9 @@ import 'package:band_of_mercenaries/features/mercenary/view/trait_detail_dialog.
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_profile_header.dart';
 import 'package:band_of_mercenaries/features/mercenary/view/mercenary_role_synergy_section.dart';
 import 'package:band_of_mercenaries/features/title/view/titles_section.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/mastery_progress_section.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/hidden_stats_section.dart';
+import 'package:band_of_mercenaries/features/mercenary/view/battle_memory_section.dart';
 import 'package:band_of_mercenaries/shared/widgets/status_badge.dart';
 import 'package:band_of_mercenaries/features/inventory/view/essence_select_sheet.dart';
 
@@ -191,6 +194,10 @@ class _MercenaryDetailOverlayState
                       MercenarySynergySection(merc: merc, job: job, allTraits: allTraits),
                       const SizedBox(height: 16),
                       TitlesSection(mercenary: merc),
+                      // 3 신규 섹션 — shrink 가능(자체 상단 간격 포함), 사이에 SizedBox 생략
+                      MasteryProgressSection(merc: merc),
+                      HiddenStatsSection(merc: merc),
+                      BattleMemorySection(merc: merc),
                       const SizedBox(height: 16),
                       BehaviorStatsSection(stats: merc.stats),
                       const SizedBox(height: 16),
