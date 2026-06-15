@@ -9,6 +9,7 @@ import 'package:band_of_mercenaries/features/info/domain/faction_codex_providers
 import 'package:band_of_mercenaries/features/info/domain/faction_contact_service.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_data.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
+import 'package:band_of_mercenaries/shared/widgets/game_image.dart';
 
 class FactionCodexScreen extends ConsumerStatefulWidget {
   final VoidCallback onBack;
@@ -236,7 +237,17 @@ class _FactionCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
+                // M8.5 페이즈 4 #5 — 세력 엠블럼 슬롯 (FR-B4)
+                GameImage(
+                  assetKey: 'faction_emblem_${faction.id}',
+                  category: ImageAssetCategory.factionEmblem,
+                  fallbackBg: factionColor.withValues(alpha: 0.1),
+                  width: 44,
+                  height: 44,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

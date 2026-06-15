@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/features/info/domain/info_screen_auto_show_p
 import 'package:band_of_mercenaries/features/info/domain/livingsphere_dashboard_models.dart';
 import 'package:band_of_mercenaries/features/info/domain/livingsphere_dashboard_provider.dart';
 import 'package:band_of_mercenaries/features/info/domain/livingsphere_goal_provider.dart';
+import 'package:band_of_mercenaries/shared/widgets/game_image.dart';
 
 /// 생활권 완성도 요약 카드 위젯 (홈 야영지 화면 배치)
 class LivingsphereSummarySection extends ConsumerWidget {
@@ -25,71 +26,89 @@ class LivingsphereSummarySection extends ConsumerWidget {
     final longGoal = ref.watch(livingsphereGoalProvider(GoalSlot.long8Hour));
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 헤더
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // FR-B2: 지역 썸네일 헤더 이미지
+          GameImage(
+            assetKey: 'region_thumb_3',
+            category: ImageAssetCategory.regionThumbnail,
+            width: double.infinity,
+            height: 60,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '🏘️ 더스트플레인 생활권',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                // 헤더
+                Row(
+                  children: [
+                    const Text(
+                      '🏘️ 더스트플레인 생활권',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '완성도 ${snapshot.totalCompletionPct.toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  '완성도 ${snapshot.totalCompletionPct.toStringAsFixed(0)}%',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(height: 8),
+
+                // 6 지표 미니 행
+                ...MetricKey.values.map((key) {
+                  final value = snapshot.metrics[key];
+                  return _MetricMiniRow(
+                    metricKey: key,
+                    label: _metricLabel(key),
+                    value: value,
+                    color: _metricColor(key, value),
+                  );
+                }),
+
+                const Divider(height: 16),
+
+                // 30분 목표 행
+                _GoalRow(prefix: '30분', goal: shortGoal),
+                const SizedBox(height: 2),
+                // 8시간 목표 행
+                _GoalRow(prefix: '8시간', goal: longGoal),
+                const SizedBox(height: 4),
+
+                // 자세히 보기 버튼
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      ref
+                          .read(infoScreenAutoShowLivingsphereProvider.notifier)
+                          .state = true;
+                      ref.read(currentTabProvider.notifier).state = 5;
+                    },
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 28),
+                    ),
+                    child: const Text(
+                      '자세히 보기 →',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-
-            // 6 지표 미니 행
-            ...MetricKey.values.map((key) {
-              final value = snapshot.metrics[key];
-              return _MetricMiniRow(
-                label: _metricLabel(key),
-                value: value,
-                color: _metricColor(key, value),
-              );
-            }),
-
-            const Divider(height: 16),
-
-            // 30분 목표 행
-            _GoalRow(prefix: '30분', goal: shortGoal),
-            const SizedBox(height: 2),
-            // 8시간 목표 행
-            _GoalRow(prefix: '8시간', goal: longGoal),
-            const SizedBox(height: 4),
-
-            // 자세히 보기 버튼
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  ref
-                      .read(infoScreenAutoShowLivingsphereProvider.notifier)
-                      .state = true;
-                  ref.read(currentTabProvider.notifier).state = 5;
-                },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 28),
-                ),
-                child: const Text(
-                  '자세히 보기 →',
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -137,11 +156,13 @@ class LivingsphereSummarySection extends ConsumerWidget {
 // =========================================================================
 
 class _MetricMiniRow extends StatelessWidget {
+  final MetricKey metricKey;
   final String label;
   final MetricValue? value;
   final Color color;
 
   const _MetricMiniRow({
+    required this.metricKey,
     required this.label,
     required this.value,
     required this.color,
@@ -156,8 +177,18 @@ class _MetricMiniRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
+          // FR-B3: 지표 아이콘
+          GameImage(
+            assetKey: 'dashboard_metric_${_metricKeyId(metricKey)}',
+            category: ImageAssetCategory.dashboardMetricIcon,
+            fallbackEmoji: _metricEmoji(metricKey),
+            width: 20,
+            height: 20,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(width: 6),
           SizedBox(
-            width: 60,
+            width: 48,
             child: Text(
               label,
               style: const TextStyle(
@@ -190,6 +221,24 @@ class _MetricMiniRow extends StatelessWidget {
       ),
     );
   }
+
+  static String _metricKeyId(MetricKey key) => switch (key) {
+        MetricKey.stability => 'stability',
+        MetricKey.infrastructure => 'infrastructure',
+        MetricKey.eventCompletion => 'event',
+        MetricKey.resourceCraft => 'resource',
+        MetricKey.influence => 'influence',
+        MetricKey.achievement => 'achievement',
+      };
+
+  static String _metricEmoji(MetricKey key) => switch (key) {
+        MetricKey.stability => '🛡',
+        MetricKey.infrastructure => '🏘',
+        MetricKey.eventCompletion => '📜',
+        MetricKey.resourceCraft => '📦',
+        MetricKey.influence => '🔱',
+        MetricKey.achievement => '★',
+      };
 
   String _resolveDisplayText(MetricValue? value) {
     if (value == null) return '—';

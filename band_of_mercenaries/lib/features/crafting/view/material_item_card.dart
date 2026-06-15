@@ -6,6 +6,7 @@ import 'package:band_of_mercenaries/features/crafting/domain/crafting_provider.d
 import 'package:band_of_mercenaries/features/crafting/domain/material_acquisition_hints.dart';
 import 'package:band_of_mercenaries/features/crafting/domain/material_slot_labels.dart';
 import 'package:band_of_mercenaries/features/crafting/domain/recipe_filter_provider.dart';
+import 'package:band_of_mercenaries/shared/widgets/game_image.dart';
 
 /// 인벤토리 재료 탭 — 재료 1종 카드 (tier 색 바 + 펼침 출처 힌트 + 대장간 점프 배지).
 class MaterialItemCard extends ConsumerStatefulWidget {
@@ -26,6 +27,23 @@ class MaterialItemCard extends ConsumerStatefulWidget {
 
 class _MaterialItemCardState extends ConsumerState<MaterialItemCard> {
   bool _isExpanded = false;
+
+  String _slotEmoji(String slot) {
+    switch (slot) {
+      case 'material_ore':
+        return '⛏';
+      case 'material_hide':
+        return '🐾';
+      case 'material_herb':
+        return '🌿';
+      case 'material_relic_fragment':
+        return '🔮';
+      case 'material_monster_part':
+        return '🦷';
+      default:
+        return '📦';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +73,20 @@ class _MaterialItemCardState extends ConsumerState<MaterialItemCard> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // 아이템 아이콘 (M8.5 페이즈 4 #5)
+                    Align(
+                      alignment: Alignment.center,
+                      child: GameImage(
+                        assetKey: 'item_icon_${widget.itemData.id}',
+                        category: ImageAssetCategory.itemIcon,
+                        fallbackEmoji: _slotEmoji(widget.itemData.slot),
+                        fallbackBg: AppTheme.surfaceAlt,
+                        width: 32,
+                        height: 32,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     // 좌측 4px tier 색 바
                     Container(width: 4, color: tierColor),
                     const SizedBox(width: 8),

@@ -45,6 +45,7 @@ import 'package:band_of_mercenaries/core/models/combat_status_effect.dart'; // M
 import 'package:band_of_mercenaries/core/models/enemy_archetype.dart'; // M8b 페이즈 4 #2 추가
 import 'package:band_of_mercenaries/core/models/hidden_stat_data.dart'; // M8.5 페이즈 4 #3 추가
 import 'package:band_of_mercenaries/core/models/battle_memory_template.dart'; // M8.5 페이즈 4 #3 추가
+import 'package:band_of_mercenaries/core/models/image_asset.dart'; // M8.5 페이즈 4 #5 추가
 
 class StaticGameData {
   final List<Difficulty> difficulties;
@@ -90,6 +91,7 @@ class StaticGameData {
   final List<EnemyArchetype> enemyArchetypes; // M8b 페이즈 4 #2 추가
   final List<HiddenStatData> hiddenStats; // M8.5 페이즈 4 #3 추가
   final List<BattleMemoryTemplate> battleMemoryTemplates; // M8.5 페이즈 4 #3 추가
+  final List<ImageAsset> imageAssets; // M8.5 페이즈 4 #5 추가
 
   StaticGameData({
     required this.difficulties,
@@ -134,6 +136,7 @@ class StaticGameData {
     required this.enemyArchetypes, // M8b 페이즈 4 #2 추가
     required this.hiddenStats, // M8.5 페이즈 4 #3 추가
     required this.battleMemoryTemplates, // M8.5 페이즈 4 #3 추가
+    required this.imageAssets, // M8.5 페이즈 4 #5 추가
   });
 
   /// from_region → (to_region → distance_units) 인덱싱 (M7 페이즈 4 #3)
@@ -148,6 +151,18 @@ class StaticGameData {
     }
     _regionAdjacencyMapCache = map;
     return map;
+  }
+
+  /// asset_key로 ImageAsset 조회. 없으면 null.
+  ImageAsset? findImageAsset(String assetKey) {
+    return imageAssets.where((a) => a.assetKey == assetKey).firstOrNull;
+  }
+
+  /// category + entityId 조합으로 ImageAsset 조회. 없으면 null.
+  ImageAsset? findImageAssetByEntity(String category, String entityId) {
+    return imageAssets
+        .where((a) => a.category == category && a.entityId == entityId)
+        .firstOrNull;
   }
 }
 
@@ -293,5 +308,9 @@ final staticDataProvider = FutureProvider<StaticGameData>((ref) async {
       'battle_memory_templates',
       BattleMemoryTemplate.fromJson,
     ), // M8.5 페이즈 4 #3 추가
+    imageAssets: dataLoader.loadFromCache(
+      'image_assets',
+      ImageAsset.fromJson,
+    ), // M8.5 페이즈 4 #5 추가
   );
 });

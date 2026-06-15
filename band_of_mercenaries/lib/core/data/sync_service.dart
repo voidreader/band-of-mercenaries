@@ -58,6 +58,7 @@ class SyncService {
     'enemies', // 40. 적 정의 (M8b 페이즈 4 #2 추가)
     'hidden_stats', // 41. 숨겨진 통계 (M8.5 페이즈 4 #3 추가)
     'battle_memory_templates', // 42. 전투 기억 템플릿 (M8.5 페이즈 4 #3 추가)
+    'image_assets', // 43. 이미지 에셋 (M8.5 페이즈 4 #5 추가)
   ];
 
   /// 비어 있어도 로컬 앱이 기동 가능해야 하는 보조 정적 데이터.
@@ -77,6 +78,7 @@ class SyncService {
     'enemies',
     'hidden_stats',
     'battle_memory_templates',
+    'image_assets',
   };
 
   static List<String> get requiredTables =>

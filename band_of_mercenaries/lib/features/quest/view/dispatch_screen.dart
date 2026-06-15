@@ -31,6 +31,7 @@ import 'package:band_of_mercenaries/features/chain_quest/domain/chain_quest_prog
 import 'package:band_of_mercenaries/shared/widgets/timer_display.dart';
 import 'package:band_of_mercenaries/shared/widgets/layer_sidebar.dart';
 import 'package:band_of_mercenaries/shared/widgets/quest_card_badges.dart';
+import 'package:band_of_mercenaries/shared/widgets/game_image.dart';
 
 const Map<String, IconData> _roleIcons = {
   'warrior': Icons.shield,
@@ -575,6 +576,14 @@ class _QuestCard extends ConsumerWidget {
                               color: nameColor,
                             ),
                           ),
+                        ),
+                        // M8.5 페이즈 4 #5 — 지역 썸네일 미니 (FR-B9, quest.region = HiveField 4)
+                        GameImage(
+                          assetKey: 'region_thumb_${quest.region}',
+                          category: ImageAssetCategory.regionThumbnail,
+                          width: 32,
+                          height: 32,
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         const SizedBox(width: 6),
                         Text(questType.name,

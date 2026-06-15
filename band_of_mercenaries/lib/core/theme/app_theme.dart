@@ -77,6 +77,20 @@ class AppTheme {
   // Crafting / RecipeCard insufficient 색상 (M5 페이즈 4 #2)
   static const Color dangerRed = Color(0xFFC62828);
 
+  // === M8.5 페이즈 4 #5 추가 ===
+  // 섹션 헤더 TextStyle 토큰 — 화면마다 산재된 fontSize 13~15/w600~700을 통일
+  static const TextStyle sectionTitle = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    color: textPrimary,
+  );
+
+  static const TextStyle sectionSubtitle = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    color: textSecondary,
+  );
+
   // Elite monster colors
   static const Color eliteAccent = Color(0xFFFB923C);         // 엘리트 보통 이름색 (주황)
   static const Color eliteUniqueAccent = Color(0xFFC084FC);   // 엘리트 유니크 이름색 (보라)

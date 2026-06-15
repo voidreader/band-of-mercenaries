@@ -31,6 +31,7 @@ import 'package:band_of_mercenaries/features/achievement/view/chronicle_home_car
 import 'package:band_of_mercenaries/features/achievement/view/chronicle_screen.dart';
 import 'package:band_of_mercenaries/features/title/view/flagship_home_card.dart';
 import 'package:band_of_mercenaries/features/home/view/livingsphere_summary_section.dart';
+import 'package:band_of_mercenaries/shared/widgets/section_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -319,17 +320,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               children: [
                 // 진행 상황 패널 (이동 / 업그레이드 / 임무)
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: const BoxDecoration(
-                    color: AppTheme.surface,
-                    border: Border(top: BorderSide(color: AppTheme.borderLight)),
-                  ),
+                SectionCard(
+                  title: '진행 상황',
+                  margin: const EdgeInsets.only(left: 14, right: 14, top: 4, bottom: 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('진행 상황', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 10),
                       if (userData.isMoving && userData.moveEndTime != null)
                         TimerDisplay(
                           label: '🗺 이동 → 지역 ${userData.moveTargetRegion}',
@@ -377,18 +373,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: FlagshipHomeCard(),
                 ),
 
+                // 생활권 대시보드 카드 (M8.5 페이즈 4 #1)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  child: LivingsphereSummarySection(),
+                ),
+
                 // 연대기 카드
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                   child: ChronicleHomeCard(
                     onTap: () => setState(() => _showChronicle = true),
                   ),
-                ),
-
-                // 생활권 대시보드 카드 (M8.5 페이즈 4 #1)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  child: LivingsphereSummarySection(),
                 ),
 
                 // 최근 활동

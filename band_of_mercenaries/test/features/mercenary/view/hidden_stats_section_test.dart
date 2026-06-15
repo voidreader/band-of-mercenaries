@@ -100,6 +100,7 @@ StaticGameData _makeStaticData(List<HiddenStatData> hiddenStats) {
     enemyArchetypes: const [],
     hiddenStats: hiddenStats,
     battleMemoryTemplates: const [],
+    imageAssets: const [],
   );
 }
 

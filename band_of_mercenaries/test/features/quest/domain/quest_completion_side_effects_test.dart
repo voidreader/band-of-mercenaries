@@ -168,6 +168,7 @@ StaticGameData _emptyStaticData() => StaticGameData(
   enemyArchetypes: [],
   hiddenStats: [],
   battleMemoryTemplates: [],
+  imageAssets: [],
 );
 
 // ---------------------------------------------------------------------------

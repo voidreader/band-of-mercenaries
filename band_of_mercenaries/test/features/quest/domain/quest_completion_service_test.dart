@@ -125,6 +125,7 @@ StaticGameData _makeStaticData({
     enemyArchetypes: enemyArchetypes,
     hiddenStats: const [],
     battleMemoryTemplates: const [],
+    imageAssets: const [],
   );
 }
 

@@ -26,6 +26,7 @@ import 'package:band_of_mercenaries/features/settlement/domain/settlement_infras
 import 'package:band_of_mercenaries/core/constants/game_constants.dart';
 import 'package:band_of_mercenaries/features/movement/domain/livingsphere_movement_target_provider.dart';
 import 'package:band_of_mercenaries/features/settlement/domain/settlement_facility_target_provider.dart';
+import 'package:band_of_mercenaries/shared/widgets/game_image.dart';
 
 class MovementScreen extends ConsumerStatefulWidget {
   const MovementScreen({super.key});
@@ -214,6 +215,14 @@ class _MovementScreenState extends ConsumerState<MovementScreen> {
                       child: Column(
                         children: [
                           const Text('지역 선택', style: TextStyle(fontSize: 13, color: AppTheme.textHint)),
+                          const SizedBox(height: 8),
+                          GameImage(
+                            assetKey: 'region_thumb_$_selectedRegion',
+                            category: ImageAssetCategory.regionThumbnail,
+                            width: double.infinity,
+                            height: 80,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,

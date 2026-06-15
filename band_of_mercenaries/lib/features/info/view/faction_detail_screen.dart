@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/core/domain/passive_bonus_formatter.dart';
 import 'package:band_of_mercenaries/features/info/domain/faction_state_model.dart';
 import 'package:band_of_mercenaries/core/providers/game_state_provider.dart';
 import 'package:band_of_mercenaries/shared/widgets/card_container.dart';
+import 'package:band_of_mercenaries/shared/widgets/game_image.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_join_section.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_top_bar.dart';
 import 'package:band_of_mercenaries/features/info/view/faction_contact_section.dart';
@@ -209,8 +210,20 @@ class _FactionBody extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // M8.5 페이즈 4 #5 — 세력 엠블럼 슬롯 64×64 (FR-B5)
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  GameImage(
+                    assetKey: 'faction_emblem_${faction.id}',
+                    category: ImageAssetCategory.factionEmblem,
+                    fallbackBg: FactionData.parseColor(faction.color)
+                        .withValues(alpha: 0.1),
+                    width: 64,
+                    height: 64,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

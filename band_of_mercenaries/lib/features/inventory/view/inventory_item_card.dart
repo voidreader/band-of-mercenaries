@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:band_of_mercenaries/core/theme/app_theme.dart';
 import 'package:band_of_mercenaries/core/models/item_data.dart';
 import 'package:band_of_mercenaries/features/inventory/domain/inventory_item_model.dart';
+import 'package:band_of_mercenaries/shared/widgets/game_image.dart';
 import 'package:band_of_mercenaries/shared/widgets/tier_badge.dart';
 
 class InventoryItemCard extends StatelessWidget {
@@ -22,8 +23,6 @@ class InventoryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tierColor = AppTheme.tierColor(itemData.tier);
-    final tierBgColor = AppTheme.tierBgColor(itemData.tier);
     final isConsumable = itemData.category == 'consumable';
 
     String? equipLabel;
@@ -47,21 +46,15 @@ class InventoryItemCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 아이콘 원형
-            Container(
+            // 아이콘 원형 (M8.5 페이즈 4 #5 — GameImage 교체)
+            GameImage(
+              assetKey: 'item_icon_${itemData.id}',
+              category: ImageAssetCategory.itemIcon,
+              fallbackEmoji: _categoryIcon(itemData.category),
+              fallbackBg: AppTheme.tierBgColor(itemData.tier),
               width: 36,
               height: 36,
-              decoration: BoxDecoration(
-                color: tierBgColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: tierColor.withValues(alpha: 0.4)),
-              ),
-              child: Center(
-                child: Text(
-                  _categoryIcon(itemData.category),
-                  style: TextStyle(fontSize: 16, color: tierColor),
-                ),
-              ),
+              borderRadius: BorderRadius.circular(18),
             ),
             const SizedBox(width: 12),
             // 이름 + 상태

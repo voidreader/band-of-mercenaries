@@ -100,6 +100,7 @@ StaticGameData _emptyStaticData() {
     enemyArchetypes: const [],
     hiddenStats: const [],
     battleMemoryTemplates: const [],
+    imageAssets: const [],
   );
 }
 

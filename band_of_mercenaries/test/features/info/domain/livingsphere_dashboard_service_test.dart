@@ -184,6 +184,7 @@ StaticGameData _buildStaticData(List<String> recipeIds) {
     enemyArchetypes: const [],
     hiddenStats: const [],
     battleMemoryTemplates: const [],
+    imageAssets: const [],
   );
 }
 

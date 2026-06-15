@@ -10,6 +10,7 @@ import 'package:band_of_mercenaries/features/crafting/domain/crafting_service.da
 import 'package:band_of_mercenaries/features/crafting/domain/material_acquisition_hints.dart';
 import 'package:band_of_mercenaries/features/crafting/domain/material_jump_provider.dart';
 import 'package:band_of_mercenaries/features/inventory/data/inventory_repository.dart';
+import 'package:band_of_mercenaries/shared/widgets/game_image.dart';
 
 /// 레시피 1건 카드 — locked / insufficient / ready 4상태를 시각적으로 분기한다.
 class RecipeCard extends ConsumerStatefulWidget {
@@ -288,27 +289,45 @@ class _RecipeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          recipe.name,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+        // 결과물 아이템 아이콘 (M8.5 페이즈 4 #5)
+        GameImage(
+          assetKey: 'item_icon_${recipe.resultItemId}',
+          category: ImageAssetCategory.itemIcon,
+          fallbackEmoji: '⚒',
+          fallbackBg: AppTheme.surfaceAlt,
+          width: 32,
+          height: 32,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                recipe.name,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              if (recipe.description.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  recipe.description,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-        if (recipe.description.isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(
-            recipe.description,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-            ),
-          ),
-        ],
       ],
     );
   }

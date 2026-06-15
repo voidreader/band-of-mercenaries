@@ -415,6 +415,7 @@ StaticGameData _staticData({
     enemyArchetypes: enemies,
     hiddenStats: const [],
     battleMemoryTemplates: const [],
+    imageAssets: const [],
   );
 }
 
@@ -526,6 +527,7 @@ StaticGameData _soloStaticData({
     enemyArchetypes: enemies,
     hiddenStats: base.hiddenStats,
     battleMemoryTemplates: base.battleMemoryTemplates,
+    imageAssets: base.imageAssets,
   );
 }
 

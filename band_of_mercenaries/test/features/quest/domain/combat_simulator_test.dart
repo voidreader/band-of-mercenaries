@@ -418,6 +418,7 @@ StaticGameData _emotionalStaticData({
     enemyArchetypes: enemies,
     hiddenStats: base.hiddenStats,
     battleMemoryTemplates: base.battleMemoryTemplates,
+    imageAssets: base.imageAssets,
   );
 }
 
@@ -706,5 +707,6 @@ StaticGameData _staticData({required List<EnemyArchetype> enemies}) {
     enemyArchetypes: enemies,
     hiddenStats: const [],
     battleMemoryTemplates: const [],
+    imageAssets: const [],
   );
 }
