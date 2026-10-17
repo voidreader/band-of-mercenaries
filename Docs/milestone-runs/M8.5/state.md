@@ -1,7 +1,7 @@
 # M8.5 실행 상태
 
 > 시작: 2026-05-20T19:05:00+09:00
-> 마지막 업데이트: 2026-06-07T00:00:00+09:00
+> 마지막 업데이트: 2026-06-14T00:00:00+09:00
 > 현재 페이즈: 4
 > 상태: in_progress
 
@@ -133,11 +133,12 @@ M8.5 "재미 가시화와 폴리싱"은 M4~M8b에서 만든 기능을 플레이�
   - 구현 계획서(implement-agent 부산물): `Docs/spec/[spec]20260531_m8.5_combat_emotion_hidden_stats_plan.md`
   - 데이터 산출물(SQL, 적용 별도 승인 대기): `Docs/content-data/[data]20260531_m8.5_combat_emotion_hidden_stats_sql.md`
   - 완료: 2026-05-31T20:42:00+09:00 (spec 작성) / 2026-05-31T23:20:00+09:00 (구현 완료, 커밋 `288fc71`)
-- [ ] 4. 용병 상세 화면 전투 기억·히든 스탯·개인 숙련도 섹션 명세
+- [x] 4. 용병 상세 화면 전투 기억·히든 스탯·개인 숙련도 섹션 명세
   - 입력 의존: 페이즈 1 #5 + 페이즈 4 #2·#3
   - 권장 내용: `MercenaryDetailScreen` 확장, 신규 `BattleMemorySection`·`HiddenStatsSection`·`MasteryProgressSection`, 위업/칭호 섹션 연계
   - 산출물: `Docs/spec/[spec]20260607_m8.5_mercenary_detail_sections.md`
-  - spec 작성 완료: 2026-06-07 (spec-pipeline — verify-spec PASS 1회 통과) / 구현 대기
+  - 구현 계획서(implement-agent 부산물): `Docs/spec/[spec]20260607_m8.5_mercenary_detail_sections_plan.md`
+  - 완료: 2026-06-07T21:03:00+09:00 (spec 작성, verify-spec PASS 1회) / 2026-06-08T07:41:45+09:00 (구현 완료, 커밋 `0ed0c8f`)
 - [ ] 5. UI 폴리싱 1차 + 이미지 에셋 적용 명세 (홈/파견/이동/제작)
   - 입력 의존: 페이즈 1 전체 + 페이즈 3 #1 위임 결정
   - 권장 내용: 정보 위계 재정렬, 이미지 슬롯, 카드 위계, 요약/상세 전환, `AppTheme` 확장
@@ -208,4 +209,6 @@ M8.5 "재미 가시화와 폴리싱"은 M4~M8b에서 만든 기능을 플레이�
 - 2026-05-31T23:20:00+09:00: 페이즈 4 #3 implement-agent 구현 완료 — 커밋 `288fc71`. 감정 반응 4종 trigger·우선순위 flush / 히든 스탯 5종 9 hook·3계층 효과·lv 임계 [1,3,7,15,30] / 전투 기억 6 entryType trailing / lv1 hiddenStatUnlockedProvider(medium) 다이얼로그 / SQL 산출물 4 블록(`Docs/content-data/[data]20260531_m8.5_combat_emotion_hidden_stats_sql.md`, 실제 Supabase 적용 별도 승인 대기) / 테스트 64 신규 762 PASS. 구현 계획서 `Docs/spec/[spec]20260531_m8.5_combat_emotion_hidden_stats_plan.md` (104 라인).
 - 2026-06-07T00:00:00+09:00: 페이즈 4 #3 사후 검증 — verifier PASS(FR-1~19 전체 충족, 이슈 없음), `flutter analyze` error 0(info 1건 use_null_aware_elements), `flutter test` 762/762 PASS 재확인. state.md 동기화 누락분 소급 반영(#3 완료 처리). 다음 액션: 페이즈 4 #4 "용병 상세 화면 전투 기억·히든 스탯·개인 숙련도 섹션 명세" spec-writer 호출.
 - 2026-06-07T00:05:00+09:00: milestone-runner --resume — 페이즈 4 산출물 스캔 결과 state.md와 파일시스템 일치(추가 누락분 없음). 사용자 결정: 페이즈 4 #4를 spec-pipeline으로 진행. 실행 명령어 `/spec-pipeline @Docs/content-design/[content]20260521_m8.5_battle_memory.md @Docs/spec/[spec]20260531_m8.5_combat_emotion_hidden_stats.md` 안내. 예상 산출물 `Docs/spec/[spec]20260607_m8.5_mercenary_detail_sections.md`. spec 생성 후 `--resume` 재진입 대기.
-- 2026-06-07T00:30:00+09:00: 페이즈 4 #4 "용병 상세 화면 전투 기억·히든 스탯·개인 숙련도 섹션 명세" spec 작성 완료 — `Docs/spec/[spec]20260607_m8.5_mercenary_detail_sections.md`. UI 표시 계층 전용(데이터/도메인은 #3 완비, 읽기 전용). 8 FR: HiddenStatsSection(lv1+ 노출/진행도 바) / BattleMemorySection(desc 정렬/6 entryType 렌더/lookup fail-soft) / MasteryProgressSection(솔로 4 카운터 + 미획득 전용 칭호 진행도, 독립 섹션 — 사용자 결정) / MercenaryDetailOverlay 섹션 통합(TitlesSection→숙련도→히든스탯→전투기억→행동지표) / ChronicleScreen _MemorialCard 펼침(titleIds/hiddenStats/battleMemories). 신규 위젯 3 + 수정 2. verify-spec PASS 1회 통과(코드 대조 — 파일/라인/필드/Provider/색상 실측 일치, 수정 지시 없음). 사용자 결정: 개인 숙련도 독립 섹션 + 목업 없이 텍스트 명세. 구현 방식 추천 implement-agent(3/6). 구현 대기.
+- 2026-06-07T00:30:00+09:00: 페이즈 4 #4 "용병 상세 화면 전투 기억·히든 스탯·개인 숙련도 섹션 명세" spec 작성 완료 — `Docs/spec/[spec]20260607_m8.5_mercenary_detail_sections.md`. UI 표시 계층 전용(데이터/도메인은 #3 완비, 읽기 전용). 8 FR: HiddenStatsSection(lv1+ 노출/진행도 바) / BattleMemorySection(desc 정렬/6 entryType 렌더/lookup fail-soft) / MasteryProgressSection(솔로 4 카운터 + 미획득 전용 칭호 진행도, 독립 섹션 — 사용자 결정) / MercenaryDetailOverlay 섹션 통합(TitlesSection→숙련도→히든스탯→전투기억→행동지표) / ChronicleScreen _MemorialCard 펼침(titleIds/hiddenStats/battleMemories). 신규 위젯 3 + 수정 2. verify-spec PASS 1회 통과(코드 대조 — 파일/라인/필드/Provider/색상 실측 일치, 수정 지시 없음). 사용자 결정: 개인 숙련도 독립 섹션 + 목업 없이 텍스트 명세. 구현 방식 추천 implement-agent(3/6).
+- 2026-06-08T07:41:45+09:00: 페이즈 4 #4 implement-agent 구현 완료 — 커밋 `0ed0c8f`. 신규 위젯 3종(`HiddenStatsSection`/`BattleMemorySection`/`MasteryProgressSection`) + `MercenaryDetailOverlay` 섹션 통합 + `ChronicleScreen._MemorialCard` 펼침(동결 titleIds/hiddenStats/battleMemories 열람). 위젯 테스트 27 신규(chronicle 434/battle_memory 425/hidden_stats 259/mastery 306 라인). 구현 계획서 `Docs/spec/[spec]20260607_m8.5_mercenary_detail_sections_plan.md`.
+- 2026-06-14T00:00:00+09:00: milestone-runner --resume — 페이즈 4 #4 매칭 확인 완료(state.md 동기화 누락분 소급 반영, 커밋 `0ed0c8f` 기준). 페이즈 4 잔여: #5 UI 폴리싱 + 이미지 에셋 / #6 주간 기여도 랭킹 MVP / #7 검증·회귀. 다음 액션: 페이즈 4 #5 "UI 폴리싱 1차 + 이미지 에셋 적용 명세" content-designer/spec-writer 호출 안내.
